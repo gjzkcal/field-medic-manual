@@ -1,0 +1,20 @@
+# Private: design docs and Claude Code files
+dev-docs/
+/CLAUDE.md
+CLAUDE.local.md
+.claude/
+
+# Dependencies and build output
+node_modules/
+dist/
+src-tauri/target/
+
+# Local data and secrets
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+.env
+.env.*
+*.key
+*.log
