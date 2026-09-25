@@ -12,6 +12,8 @@ pub enum AppError {
     InvalidInput(String),
     #[error("内部エラー: {0}")]
     Internal(String),
+    #[error("データベースエラー: {0}")]
+    Db(#[from] rusqlite::Error),
 }
 
 /// TS 側で分岐に使うエラーの種類。文字列リテラルの union として生成される。
@@ -40,7 +42,8 @@ impl AppError {
             Self::Io(_) => ErrorKind::Io,
             Self::NotFound(_) => ErrorKind::NotFound,
             Self::InvalidInput(_) => ErrorKind::InvalidInput,
-            Self::Internal(_) => ErrorKind::Internal,
+            // DB の失敗は利用者が対処できる種類のエラーではないため、TS 側では内部エラーとして扱う
+            Self::Internal(_) | Self::Db(_) => ErrorKind::Internal,
         }
     }
 }
