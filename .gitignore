@@ -7,7 +7,9 @@ CLAUDE.local.md
 # Dependencies and build output
 node_modules/
 dist/
+dist-ssr/
 src-tauri/target/
+*.tsbuildinfo
 
 # Local data and secrets
 *.db
@@ -16,5 +18,17 @@ src-tauri/target/
 *.db-shm
 .env
 .env.*
+*.local
 *.key
+
+# Logs
+logs/
 *.log
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.sw?

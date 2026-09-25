@@ -1,0 +1,3 @@
+[env]
+# ts-rs は `cargo test` のときに型を書き出す。フロントエンドが生成物を直接 import できるよう src/lib/bindings に出す
+TS_RS_EXPORT_DIR = { value = "../src/lib/bindings", relative = true }

@@ -1,0 +1,7 @@
+dist/
+src-tauri/target/
+src-tauri/gen/
+pnpm-lock.yaml
+dev-docs/
+# ts-rs の生成物。整形すると `cargo test` のたびに差分が出る
+src/lib/bindings/

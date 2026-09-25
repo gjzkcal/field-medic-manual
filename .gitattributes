@@ -1,0 +1,5 @@
+# Prettier は LF を前提にしている。Windows の core.autocrlf で CRLF に変わり lint が落ちないよう固定する
+* text=auto eol=lf
+*.png binary
+*.ico binary
+*.icns binary
