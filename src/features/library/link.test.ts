@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { decodeAnchor, docHref, resolveLink } from "@/features/library/link";
+import { decodeAnchor, docHref, highlightTermsOf, resolveLink } from "@/features/library/link";
 
 describe("resolveLink", () => {
   it("http / https / mailto は外部リンク", () => {
@@ -51,5 +51,17 @@ describe("docHref", () => {
   it("アンカーを % エンコードして付ける", () => {
     expect(docHref("d1", null)).toBe("/doc/d1");
     expect(docHref("d1", "止血帯")).toBe("/doc/d1#%E6%AD%A2%E8%A1%80%E5%B8%AF");
+  });
+
+  it("ハイライトする語は検索部分に載せ、読み出すと元に戻る", () => {
+    const href = docHref("d1", "a", ["止血帯", "C&P R"]);
+    expect(href).toMatch(/^\/doc\/d1\?hl=.+&hl=.+#a$/u);
+    const search = href.slice(href.indexOf("?"), href.indexOf("#"));
+    expect(highlightTermsOf(search)).toEqual(["止血帯", "C&P R"]);
+  });
+
+  it("空の語は読み出さない", () => {
+    expect(highlightTermsOf("?hl=&hl=%20&hl=TQ")).toEqual(["TQ"]);
+    expect(highlightTermsOf("")).toEqual([]);
   });
 });

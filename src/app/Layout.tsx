@@ -1,18 +1,10 @@
-import {
-  HeartPulseIcon,
-  LibraryIcon,
-  SearchIcon,
-  SettingsIcon,
-  TableIcon,
-  WorkflowIcon,
-} from "lucide-react";
+import { HeartPulseIcon, LibraryIcon, SettingsIcon, TableIcon, WorkflowIcon } from "lucide-react";
 import type { JSX } from "react";
 import { matchPath, NavLink, Outlet, useLocation } from "react-router";
 
 import { AppVersion } from "@/app/AppVersion";
 import { useUiStore } from "@/app/store";
 import { WindowControls } from "@/app/WindowControls";
-import { Button } from "@/components/ui/button";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -29,6 +21,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { HeaderSearch } from "@/features/search/HeaderSearch";
 
 interface NavItem {
   to: string;
@@ -72,20 +65,7 @@ export function Layout(): JSX.Element {
           Field Medic Manual
         </span>
         <div data-tauri-drag-region className="h-full min-w-8 flex-1" />
-        {/* 検索は Step 05 で実装する。場所だけ先に確保しておく。
-            Button は既定で shrink-0 なので、shrink を付けないと狭いウィンドウで横にはみ出す */}
-        <Button
-          variant="outline"
-          className="w-full max-w-xl min-w-0 shrink justify-start text-muted-foreground"
-          disabled
-        >
-          <SearchIcon />
-          <span className="truncate">マニュアルを検索…</span>
-          <KbdGroup className="ml-auto">
-            <Kbd>Ctrl</Kbd>
-            <Kbd>K</Kbd>
-          </KbdGroup>
-        </Button>
+        <HeaderSearch />
         <div data-tauri-drag-region className="h-full min-w-8 flex-1" />
         <WindowControls />
       </header>

@@ -41,6 +41,14 @@ impl TermGroup {
     }
 }
 
+impl Candidate {
+    fn contains(&self, term: &str) -> bool {
+        contains_ci(&self.title, term)
+            || contains_ci(&self.keywords, term)
+            || contains_ci(&self.plain_text, term)
+    }
+}
+
 struct Candidate {
     id: i64,
     title: String,
@@ -86,11 +94,14 @@ pub fn search(
     let mut hits: Vec<SectionHit> = candidates
         .into_iter()
         .map(|c| {
-            let synonym_only = groups.iter().any(|g| {
-                !(contains_ci(&c.title, &g.original)
-                    || contains_ci(&c.keywords, &g.original)
-                    || contains_ci(&c.plain_text, &g.original))
-            });
+            let synonym_only = groups.iter().any(|g| !c.contains(&g.original));
+            let mut matched_terms: Vec<String> = Vec::new();
+            for term in all_alternatives.iter().filter(|a| c.contains(a)) {
+                // 語をまたいで同じ候補が出ることがある（「止血 止血帯」と同義語の展開など）
+                if !matched_terms.iter().any(|m| m.eq_ignore_ascii_case(term)) {
+                    matched_terms.push(term.clone());
+                }
+            }
             let (snippet, base_score) = match c.fts {
                 // bm25 は小さいほど良いので、符号を反転して「大きいほど上位」に揃える
                 Some((snippet, bm25)) => (snippet, -bm25),
@@ -112,6 +123,7 @@ pub fn search(
                 document_title: c.document_title,
                 anchor: c.anchor,
                 synonym_only,
+                matched_terms,
             }
         })
         .collect();
@@ -469,6 +481,30 @@ mod tests {
             assert_eq!(anchors(&result), ["use-tourniquet"], "{query}");
             assert!(result[0].synonym_only, "{query}");
         }
+    }
+
+    #[test]
+    fn matched_terms_include_synonyms_found_in_the_section() {
+        let conn = seeded();
+        let result = hits(&conn, "TQ");
+        // TQ そのものは節に無いので含めず、節に含まれる同義語（止血帯）を返す
+        assert!(result[0].matched_terms.iter().any(|t| t == "止血帯"));
+        assert!(
+            !result[0]
+                .matched_terms
+                .iter()
+                .any(|t| t.eq_ignore_ascii_case("tq"))
+        );
+
+        let result = hits(&conn, "止血帯 止血帯");
+        assert_eq!(
+            result[0]
+                .matched_terms
+                .iter()
+                .filter(|t| *t == "止血帯")
+                .count(),
+            1
+        );
     }
 
     #[test]

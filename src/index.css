@@ -284,3 +284,11 @@
     --alert-color: oklch(0.72 0.19 25);
   }
 }
+
+/*
+ * 検索結果から開いたときの検索語（CSS Custom Highlight API。src/features/search/highlight.ts）。
+ * 警告の Alert（黄）と紛れないよう青緑にし、文字の色は変えずに背景だけ付ける。
+ */
+::highlight(search-hit) {
+  background-color: oklch(0.7 0.14 200 / 0.45);
+}

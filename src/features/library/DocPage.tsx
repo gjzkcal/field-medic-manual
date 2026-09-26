@@ -21,7 +21,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { manualSourcePath } from "@/features/content/path";
-import { decodeAnchor, docHref, resolveLink } from "@/features/library/link";
+import { decodeAnchor, docHref, highlightTermsOf, resolveLink } from "@/features/library/link";
 import { AssetUrlCache } from "@/features/library/viewer/asset-urls";
 import { DocFooter } from "@/features/library/viewer/DocFooter";
 import { DocTitleMeta } from "@/features/library/viewer/DocTitleMeta";
@@ -31,6 +31,7 @@ import { MetaBar } from "@/features/library/viewer/MetaBar";
 import { SectionBody } from "@/features/library/viewer/SectionBody";
 import { useActiveAnchor } from "@/features/library/viewer/use-active-anchor";
 import { useDoc, useOutline } from "@/features/library/viewer/use-doc-data";
+import { findTextRanges, paintSearchHighlight } from "@/features/search/highlight";
 import {
   FONT_SIZE_PX,
   LINE_HEIGHT_VALUE,
@@ -199,6 +200,17 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
       }
     };
   }, [viewport, doc.id, hashAnchor, location.key]);
+
+  // 検索結果から開いたときは検索語をハイライトする。目次などで移ると URL から語が消えて解除される。
+  // 本文は子の layout effect で差し込まれるので、ここでは差し込み後の DOM を探せる
+  const highlightTerms = useMemo(() => highlightTermsOf(location.search), [location.search]);
+  useLayoutEffect(() => {
+    const article = articleRef.current;
+    if (article === null || highlightTerms.length === 0) {
+      return undefined;
+    }
+    return paintSearchHighlight(findTextRanges(article, highlightTerms));
+  }, [doc, highlightTerms]);
 
   // 本文のリンクはまとめてここで受け、WebView の中では遷移させない（外部のページを開かせないため）
   function handleBodyClick(event: MouseEvent<HTMLElement>): void {

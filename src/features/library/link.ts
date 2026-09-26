@@ -38,8 +38,24 @@ export function decodeAnchor(raw: string): string {
   }
 }
 
-/** ビューアの URL。アンカーは日本語を含むので % エンコードする（読むときは decodeAnchor で戻す）。 */
-export function docHref(docId: string, anchor: string | null): string {
-  const path = `/doc/${encodeURIComponent(docId)}`;
-  return anchor === null ? path : `${path}#${encodeURIComponent(anchor)}`;
+export const HIGHLIGHT_PARAM = "hl";
+
+/**
+ * ビューアの URL。アンカーは日本語を含むので % エンコードする（読むときは decodeAnchor で戻す）。
+ * highlight を渡すと、開いた先でその語をハイライトする（検索結果から開いたとき）。
+ */
+export function docHref(
+  docId: string,
+  anchor: string | null,
+  highlight: readonly string[] = [],
+): string {
+  const params = new URLSearchParams(highlight.map((term) => [HIGHLIGHT_PARAM, term]));
+  const query = params.size === 0 ? "" : `?${params.toString()}`;
+  const hash = anchor === null ? "" : `#${encodeURIComponent(anchor)}`;
+  return `/doc/${encodeURIComponent(docId)}${query}${hash}`;
+}
+
+/** URL の検索部分（location.search）から、ハイライトする語を取り出す。 */
+export function highlightTermsOf(search: string): string[] {
+  return new URLSearchParams(search).getAll(HIGHLIGHT_PARAM).filter((term) => term.trim() !== "");
 }

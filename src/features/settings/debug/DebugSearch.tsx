@@ -34,7 +34,9 @@ const MOD_TARGETS: readonly ModTarget[] = [
 const MOD_CHANNELS: readonly ModChannel[] = ["release", "dev"];
 
 type SearchState =
-  { status: "idle" } | { status: "ok"; hits: SearchHit[] } | { status: "error"; message: string };
+  | { status: "idle" }
+  | { status: "ok"; hits: SearchHit[]; elapsedMs: number }
+  | { status: "error"; message: string };
 
 interface DebugSearchProps {
   /** 変わったら検索し直す（データを投入・削除したとき） */
@@ -61,10 +63,12 @@ export function DebugSearch({ revision }: DebugSearchProps): JSX.Element {
     if (tags.length > 0) {
       filter.tags = tags;
     }
+    // 性能の目安（1000 節で 100ms 以内）を確かめるため、IPC を含めた 1 回の検索の時間を出す
+    const started = performance.now();
     searchQuery(query, { filter })
       .then((hits) => {
         if (!cancelled) {
-          setState({ status: "ok", hits });
+          setState({ status: "ok", hits, elapsedMs: performance.now() - started });
         }
       })
       .catch((error: unknown) => {
@@ -144,10 +148,15 @@ function SearchResults({ state }: { state: SearchState }): JSX.Element | null {
       return <p className="text-sm text-destructive">{state.message}</p>;
     case "ok":
       if (state.hits.length === 0) {
-        return <p className="text-sm text-muted-foreground">該当なし</p>;
+        return (
+          <p className="text-sm text-muted-foreground">該当なし（{formatMs(state.elapsedMs)}）</p>
+        );
       }
       return (
         <ul className="flex flex-col gap-2">
+          <li className="text-xs text-muted-foreground">
+            {state.hits.length} 件（{formatMs(state.elapsedMs)}）
+          </li>
           {state.hits.map((hit) => (
             <li
               key={`${hit.kind}:${String(hit.id)}`}
@@ -167,4 +176,8 @@ function SearchResults({ state }: { state: SearchState }): JSX.Element | null {
         </ul>
       );
   }
+}
+
+function formatMs(ms: number): string {
+  return `${ms.toFixed(1)} ms`;
 }

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { syncBundledManuals } from "@/features/content/sync";
 import { DebugSearch } from "@/features/settings/debug/DebugSearch";
+import { insertDummyDocs, removeDummyDocs } from "@/features/settings/debug/dummy";
 import type { DocSummary } from "@/lib/bindings/DocSummary";
 import type { SynonymGroup } from "@/lib/bindings/SynonymGroup";
 import type { TagCount } from "@/lib/bindings/TagCount";
@@ -63,6 +64,16 @@ export function DebugPanel(): JSX.Element {
     return `同期しました: 追加 ${String(result.added)} / 更新 ${String(result.updated)} / 変更なし ${String(result.unchanged)} / 削除 ${String(result.removed)} / 失敗 ${String(result.failed.length)}`;
   }
 
+  async function insertDummy(): Promise<string> {
+    const started = performance.now();
+    const sections = await insertDummyDocs();
+    return `ダミーを ${String(sections)} 節入れました（${(performance.now() - started).toFixed(0)} ms）。次の起動時の同期で消えます`;
+  }
+
+  async function removeDummy(): Promise<string> {
+    return `ダミーを ${String(await removeDummyDocs())} 文書消しました`;
+  }
+
   async function remove(doc: DocSummary): Promise<string> {
     await docDelete(doc.id);
     return `「${doc.title}」を削除しました`;
@@ -85,6 +96,24 @@ export function DebugPanel(): JSX.Element {
             }}
           >
             同梱の原稿を同期し直す
+          </Button>
+          <Button
+            variant="outline"
+            disabled={busy}
+            onClick={() => {
+              void run(insertDummy);
+            }}
+          >
+            ダミー 1000 節を投入
+          </Button>
+          <Button
+            variant="outline"
+            disabled={busy}
+            onClick={() => {
+              void run(removeDummy);
+            }}
+          >
+            ダミーを削除
           </Button>
           {message !== null && <span className="text-sm text-muted-foreground">{message}</span>}
         </div>

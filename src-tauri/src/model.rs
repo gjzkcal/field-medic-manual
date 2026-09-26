@@ -228,6 +228,8 @@ pub struct SectionHit {
     pub anchor: String,
     /// 入力した語そのものは含まず、同義語だけでヒットした
     pub synonym_only: bool,
+    /// この節に実際に含まれていた語（同義語で広げた候補を含む）。開いた先で検索語をハイライトするのに使う
+    pub matched_terms: Vec<String>,
 }
 
 /// 横断検索の結果。Step 06 / 07 でクイック表とフローの種類を足す。
@@ -305,10 +307,12 @@ mod tests {
             document_title: "dt".to_owned(),
             anchor: "a".to_owned(),
             synonym_only: false,
+            matched_terms: vec!["t".to_owned()],
         });
         let json = serde_json::to_value(hit).expect("SearchHit はシリアライズできる");
         assert_eq!(json["kind"], "section");
         assert_eq!(json["documentId"], "d");
+        assert_eq!(json["matchedTerms"][0], "t");
     }
 }
 

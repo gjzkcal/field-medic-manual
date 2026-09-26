@@ -1,5 +1,5 @@
 import { clearMocks, mockIPC } from "@tauri-apps/api/mocks";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -225,6 +225,38 @@ describe("DocPage", () => {
 
     expect(router.state.location.pathname).toBe("/doc/d2");
     expect(decodeURIComponent(router.state.location.hash)).toBe("#cpr-の手順");
+  });
+
+  it("検索結果から開いたときは検索語をハイライトし、目次で移ると消す", async () => {
+    // jsdom には CSS Custom Highlight API がないので、登録された範囲だけを見られる代わりを置く
+    const highlights = new Map<string, { ranges: Range[] }>();
+    vi.stubGlobal("CSS", { highlights });
+    vi.stubGlobal(
+      "Highlight",
+      class {
+        ranges: Range[];
+        constructor(...ranges: Range[]) {
+          this.ranges = ranges;
+        }
+      },
+    );
+    const router = renderDoc(
+      `/doc/d1?hl=${encodeURIComponent("包帯")}#${encodeURIComponent("包帯を巻く")}`,
+    );
+    await screen.findByRole("heading", { level: 2, name: "包帯を巻く" });
+
+    await waitFor(() => {
+      // 見出しと本文の 2 か所（目次の中は本文の外なので数えない）
+      expect(highlights.get("search-hit")?.ranges.map(String)).toEqual(["包帯", "包帯"]);
+    });
+
+    fireEvent.click(
+      within(screen.getByRole("navigation", { name: "目次" })).getByText("止血帯を使う"),
+    );
+    await waitFor(() => {
+      expect(router.state.location.search).toBe("");
+    });
+    expect(highlights.has("search-hit")).toBe(false);
   });
 
   it("見つからない文書はその旨を出す", async () => {

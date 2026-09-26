@@ -5,6 +5,7 @@ import { createRoot } from "react-dom/client";
 
 import { App } from "@/app/App";
 import { syncBundledManuals } from "@/features/content/sync";
+import { loadSearchFilter } from "@/features/search/search-filter";
 import { loadViewerSettings } from "@/features/settings/viewer-settings";
 
 const rootElement = document.getElementById("root");
@@ -16,6 +17,7 @@ if (rootElement === null) {
 void syncBundledManuals();
 // 表示設定も描画を待たせずに読む。読み終わるまでの一瞬は既定の文字サイズで表示される
 void loadViewerSettings();
+void loadSearchFilter();
 
 createRoot(rootElement).render(
   <StrictMode>

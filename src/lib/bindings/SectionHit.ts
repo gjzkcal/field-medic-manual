@@ -16,4 +16,8 @@ score: number, documentId: string, documentTitle: string, anchor: string,
 /**
  * 入力した語そのものは含まず、同義語だけでヒットした
  */
-synonymOnly: boolean, };
+synonymOnly: boolean, 
+/**
+ * この節に実際に含まれていた語（同義語で広げた候補を含む）。開いた先で検索語をハイライトするのに使う
+ */
+matchedTerms: Array<string>, };
