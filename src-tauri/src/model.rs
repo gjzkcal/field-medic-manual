@@ -149,6 +149,8 @@ pub struct DocSummary {
     pub title: String,
     pub source_type: SourceType,
     pub source_path: Option<String>,
+    /// 取り込み直しで「変更なし」を判定するために一覧でも返す
+    pub source_hash: String,
     pub meta: DocMeta,
     pub section_count: u32,
     pub created_at: String,
@@ -191,7 +193,6 @@ pub struct AssetMeta {
 pub struct DocDetail {
     #[serde(flatten)]
     pub summary: DocSummary,
-    pub source_hash: String,
     pub original_asset_id: Option<String>,
     pub assets: Vec<AssetMeta>,
     pub sections: Vec<Section>,

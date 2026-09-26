@@ -250,7 +250,7 @@ fn delete_unused_tags(conn: &Connection) -> Result<(), AppError> {
 const SUMMARY_COLUMNS: &str =
     "d.id, d.title, d.source_type, d.source_path, d.mod_target, d.mod_channel,
        d.mod_version, d.verified_at, d.created_at, d.updated_at,
-       (SELECT COUNT(*) FROM sections s WHERE s.document_id = d.id)";
+       (SELECT COUNT(*) FROM sections s WHERE s.document_id = d.id), d.source_hash";
 
 fn read_summary(row: &Row<'_>) -> rusqlite::Result<DocSummary> {
     Ok(DocSummary {
@@ -258,6 +258,7 @@ fn read_summary(row: &Row<'_>) -> rusqlite::Result<DocSummary> {
         title: row.get(1)?,
         source_type: row.get(2)?,
         source_path: row.get(3)?,
+        source_hash: row.get(11)?,
         meta: DocMeta {
             mod_target: row.get(4)?,
             mod_channel: row.get(5)?,
@@ -306,14 +307,14 @@ pub fn list(conn: &Connection) -> Result<Vec<DocSummary>, AppError> {
 ///
 /// 見つからなければ `NotFound`。
 pub fn get(conn: &Connection, id: &str) -> Result<DocDetail, AppError> {
-    let (mut summary, source_hash, original_asset_id) = conn
+    let (mut summary, original_asset_id) = conn
         .query_row(
             &format!(
-                "SELECT {SUMMARY_COLUMNS}, d.source_hash, d.original_asset_id
+                "SELECT {SUMMARY_COLUMNS}, d.original_asset_id
                  FROM documents d WHERE d.id = ?1"
             ),
             [id],
-            |r| Ok((read_summary(r)?, r.get(11)?, r.get(12)?)),
+            |r| Ok((read_summary(r)?, r.get(12)?)),
         )
         .optional()?
         .ok_or_else(|| AppError::NotFound(format!("ドキュメント {id}")))?;
@@ -383,7 +384,6 @@ pub fn get(conn: &Connection, id: &str) -> Result<DocDetail, AppError> {
 
     Ok(DocDetail {
         summary,
-        source_hash,
         original_asset_id,
         assets,
         sections,
@@ -563,6 +563,7 @@ mod tests {
         let bleeding = docs.iter().find(|d| d.title == "出血").expect("出血がある");
         assert_eq!(bleeding.section_count, 2);
         assert_eq!(bleeding.meta.tags, ["出血"]);
+        assert_eq!(bleeding.source_hash, fixtures::bleeding().source_hash);
     }
 
     #[test]

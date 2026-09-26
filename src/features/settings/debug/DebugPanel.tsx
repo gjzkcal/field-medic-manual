@@ -3,12 +3,12 @@ import { useEffect, useState, type JSX } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { syncBundledManuals } from "@/features/content/sync";
 import { DebugSearch } from "@/features/settings/debug/DebugSearch";
-import { SAMPLE_DOCS } from "@/features/settings/debug/sampleDocs";
 import type { DocSummary } from "@/lib/bindings/DocSummary";
 import type { SynonymGroup } from "@/lib/bindings/SynonymGroup";
 import type { TagCount } from "@/lib/bindings/TagCount";
-import { docDelete, docList, docUpsert, errorMessage, synonymList, tagList } from "@/lib/tauri";
+import { docDelete, docList, errorMessage, synonymList, tagList } from "@/lib/tauri";
 
 interface DebugData {
   docs: DocSummary[];
@@ -16,7 +16,7 @@ interface DebugData {
   synonyms: SynonymGroup[];
 }
 
-/** 開発ビルドだけで出す、データ層の動作確認用の画面。取り込み機能（Step 03）ができるまでの代わり。 */
+/** 開発ビルドだけで出す、データ層の動作確認用の画面。ライブラリの一覧（Step 04）ができるまでの代わりも兼ねる。 */
 export function DebugPanel(): JSX.Element {
   const [data, setData] = useState<DebugData>({ docs: [], tags: [], synonyms: [] });
   const [message, setMessage] = useState<string | null>(null);
@@ -55,11 +55,12 @@ export function DebugPanel(): JSX.Element {
     }
   }
 
-  async function seed(): Promise<string> {
-    for (const doc of SAMPLE_DOCS) {
-      await docUpsert(doc);
+  async function resync(): Promise<string> {
+    const result = await syncBundledManuals();
+    if (result === null) {
+      return "同期に失敗しました（ライブラリ画面に理由が出ます）";
     }
-    return `サンプルを ${String(SAMPLE_DOCS.length)} 件投入しました（同じものは置き換え）`;
+    return `同期しました: 追加 ${String(result.added)} / 更新 ${String(result.updated)} / 変更なし ${String(result.unchanged)} / 削除 ${String(result.removed)} / 失敗 ${String(result.failed.length)}`;
   }
 
   async function remove(doc: DocSummary): Promise<string> {
@@ -72,7 +73,7 @@ export function DebugPanel(): JSX.Element {
       <CardHeader>
         <CardTitle>デバッグ（開発ビルドのみ）</CardTitle>
         <CardDescription>
-          データ層と検索の動作確認用。サンプルの本文は骨子だけです【要確認】。
+          データ層と検索の動作確認用。同梱の原稿（content/manuals）は起動時に同期される。
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
@@ -80,10 +81,10 @@ export function DebugPanel(): JSX.Element {
           <Button
             disabled={busy}
             onClick={() => {
-              void run(seed);
+              void run(resync);
             }}
           >
-            サンプルを投入
+            同梱の原稿を同期し直す
           </Button>
           {message !== null && <span className="text-sm text-muted-foreground">{message}</span>}
         </div>

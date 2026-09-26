@@ -5,3 +5,5 @@ pnpm-lock.yaml
 dev-docs/
 # ts-rs の生成物。整形すると `cargo test` のたびに差分が出る
 src/lib/bindings/
+# 作者が書いてアプリに同梱する原稿。整形ツールの都合で書き方を縛らないため
+content

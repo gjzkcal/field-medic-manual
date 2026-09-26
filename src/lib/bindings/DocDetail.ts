@@ -4,4 +4,8 @@ import type { DocMeta } from "./DocMeta";
 import type { Section } from "./Section";
 import type { SourceType } from "./SourceType";
 
-export type DocDetail = { sourceHash: string, originalAssetId: string | null, assets: Array<AssetMeta>, sections: Array<Section>, id: string, title: string, sourceType: SourceType, sourcePath: string | null, meta: DocMeta, sectionCount: number, createdAt: string, updatedAt: string, };
+export type DocDetail = { originalAssetId: string | null, assets: Array<AssetMeta>, sections: Array<Section>, id: string, title: string, sourceType: SourceType, sourcePath: string | null, 
+/**
+ * 取り込み直しで「変更なし」を判定するために一覧でも返す
+ */
+sourceHash: string, meta: DocMeta, sectionCount: number, createdAt: string, updatedAt: string, };

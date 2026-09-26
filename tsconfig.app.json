@@ -9,5 +9,7 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src"],
+  // テストは Node の API（サンプルファイルの読み込み）を使うため tsconfig.test.json で扱う。アプリ本体に Node の型を混ぜないため
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/test"]
 }
