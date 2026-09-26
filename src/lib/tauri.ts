@@ -2,9 +2,11 @@
 // コマンド名の文字列と戻り値の型を 1 か所にまとめ、呼び出し側で invoke の型引数を書き間違えないようにするため。
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { openUrl } from "@tauri-apps/plugin-opener";
 
 import type { AppError } from "@/lib/bindings/AppError";
 import type { DocDetail } from "@/lib/bindings/DocDetail";
+import type { DocOutline } from "@/lib/bindings/DocOutline";
 import type { DocSummary } from "@/lib/bindings/DocSummary";
 import type { DocUpsertInput } from "@/lib/bindings/DocUpsertInput";
 import type { ErrorKind } from "@/lib/bindings/ErrorKind";
@@ -58,6 +60,11 @@ export async function docGet(id: string): Promise<DocDetail> {
   return invoke<DocDetail>("doc_get", { id });
 }
 
+/** 全ドキュメントの h1〜h3 の見出し（本文なし）。 */
+export async function docOutline(): Promise<DocOutline[]> {
+  return invoke<DocOutline[]>("doc_outline");
+}
+
 export async function docDelete(id: string): Promise<void> {
   return invoke<undefined>("doc_delete", { id });
 }
@@ -109,6 +116,23 @@ export async function synonymSave(group: SynonymGroupInput): Promise<SynonymGrou
 
 export async function synonymDelete(id: number): Promise<void> {
   return invoke<undefined>("synonym_delete", { id });
+}
+
+/**
+ * 設定の値を返す。保存されていなければ null。
+ * 中身は任意の JSON なので unknown で返し、呼び出し側で形を検査する（古い版で保存した値などに備えるため）。
+ */
+export async function settingsGet(key: string): Promise<unknown> {
+  return invoke<unknown>("settings_get", { key });
+}
+
+export async function settingsSet(key: string, value: unknown): Promise<void> {
+  return invoke<undefined>("settings_set", { key, value });
+}
+
+/** 既定のブラウザ（mailto はメールソフト）で開く。WebView の中では開かない。 */
+export async function openExternal(url: string): Promise<void> {
+  return openUrl(url);
 }
 
 export async function windowMinimize(): Promise<void> {

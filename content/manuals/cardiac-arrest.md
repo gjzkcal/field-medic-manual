@@ -11,6 +11,7 @@ tags: [心停止, CPR, 循環]
 
 【要確認】動作確認用のダミー原稿です。処置の内容は確認していません。Circulation を入れた Dev 版の内容として書く。
 出典: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)（2026-09-25 確認）
+関連: [止血](hemorrhage.md)
 
 ## 心停止の見分け方
 

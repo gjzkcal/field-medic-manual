@@ -2,7 +2,7 @@ use tauri::State;
 
 use crate::db::{Db, docs};
 use crate::error::AppError;
-use crate::model::{DocDetail, DocSummary, DocUpsertInput};
+use crate::model::{DocDetail, DocOutline, DocSummary, DocUpsertInput};
 
 /// ドキュメントを保存し、id を返す（同じ `sourcePath` なら置き換え）。
 ///
@@ -36,4 +36,14 @@ pub async fn doc_get(db: State<'_, Db>, id: String) -> Result<DocDetail, AppErro
 #[tauri::command]
 pub async fn doc_delete(db: State<'_, Db>, id: String) -> Result<(), AppError> {
     db.run(move |conn, _| docs::delete(conn, &id)).await
+}
+
+/// 全ドキュメントの見出し（ビューアの左のツリー用）。
+///
+/// # Errors
+///
+/// DB の読み取りに失敗した場合。
+#[tauri::command]
+pub async fn doc_outline(db: State<'_, Db>) -> Result<Vec<DocOutline>, AppError> {
+    db.run(|conn, _| docs::outline(conn)).await
 }

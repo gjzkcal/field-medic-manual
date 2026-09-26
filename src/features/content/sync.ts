@@ -4,6 +4,7 @@ import { create } from "zustand";
 
 import { bundledManuals, readBundledImage } from "@/features/content/bundle";
 import { convertManual } from "@/features/content/markdown";
+import { manualSourcePath } from "@/features/content/path";
 import { saveDocument } from "@/features/content/save";
 import type { ManualSource, NormalizedDoc, ReadImage } from "@/features/content/types";
 import type { DocSummary } from "@/lib/bindings/DocSummary";
@@ -33,6 +34,8 @@ export interface SyncDeps {
   readImage: ReadImage;
 }
 
+const RETRY_SUFFIX = ":retry";
+
 export async function syncManuals(
   manuals: readonly ManualSource[],
   deps: SyncDeps,
@@ -49,7 +52,7 @@ export async function syncManuals(
   const bundledPaths = new Set<string>();
 
   for (const manual of manuals) {
-    const sourcePath = `bundle://manuals/${manual.fileName}`;
+    const sourcePath = manualSourcePath(manual.fileName);
     bundledPaths.add(sourcePath);
     const current = existing.get(sourcePath);
     if (current?.sourceHash === manual.hash) {
@@ -58,7 +61,11 @@ export async function syncManuals(
     }
     try {
       const { doc, warnings } = await convertManual(manual, deps.readImage);
-      await deps.saveDoc(doc);
+      // 警告のある原稿（画像を読めなかったなど）は一部を欠いたまま保存される。ハッシュを変えて保存し、
+      // 次の起動で入れ直させる（原稿が同じだと「変更なし」になり、欠けたままになるため）
+      await deps.saveDoc(
+        warnings.length === 0 ? doc : { ...doc, sourceHash: `${doc.sourceHash}${RETRY_SUFFIX}` },
+      );
       result.warnings.push(...warnings.map((message) => ({ fileName: manual.fileName, message })));
       if (current === undefined) {
         result.added++;

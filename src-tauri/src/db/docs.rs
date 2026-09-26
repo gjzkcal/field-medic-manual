@@ -4,9 +4,13 @@ use rusqlite::{Connection, OptionalExtension, Row, Transaction, params};
 
 use super::text::{normalize_tags, strip_marks};
 use crate::error::AppError;
-use crate::model::{AssetMeta, DocDetail, DocMeta, DocSummary, DocUpsertInput, Section};
+use crate::model::{
+    AssetMeta, DocDetail, DocMeta, DocOutline, DocSummary, DocUpsertInput, OutlineHeading, Section,
+};
 
 const MAX_LEVEL: u8 = 6;
+/// 原稿は h1〜h3 で節に分けるので、ツリーもそこまでにする（bundled-content.md §5）
+const OUTLINE_MAX_LEVEL: u8 = 3;
 
 /// ドキュメントを保存する。同じ `source_path` のドキュメントがあれば置き換える。
 ///
@@ -301,6 +305,43 @@ pub fn list(conn: &Connection) -> Result<Vec<DocSummary>, AppError> {
     Ok(docs)
 }
 
+/// 全ドキュメントの h1〜h3 の見出し（タイトル順、見出しは本文の順）。導入部（level 0）は見出しがないので含めない。
+///
+/// # Errors
+///
+/// DB の読み取りに失敗した場合。
+pub fn outline(conn: &Connection) -> Result<Vec<DocOutline>, AppError> {
+    let mut headings: HashMap<String, Vec<OutlineHeading>> = HashMap::new();
+    let mut stmt = conn.prepare(
+        "SELECT document_id, level, title, anchor FROM sections
+         WHERE level BETWEEN 1 AND ?1 ORDER BY document_id, order_index",
+    )?;
+    let rows = stmt.query_map([OUTLINE_MAX_LEVEL], |r| {
+        Ok((
+            r.get::<_, String>(0)?,
+            OutlineHeading {
+                level: r.get(1)?,
+                title: r.get(2)?,
+                anchor: r.get(3)?,
+            },
+        ))
+    })?;
+    for row in rows {
+        let (doc_id, heading) = row?;
+        headings.entry(doc_id).or_default().push(heading);
+    }
+    Ok(list(conn)?
+        .into_iter()
+        .map(|doc| DocOutline {
+            headings: headings.remove(&doc.id).unwrap_or_default(),
+            id: doc.id,
+            title: doc.title,
+            source_path: doc.source_path,
+            meta: doc.meta,
+        })
+        .collect())
+}
+
 /// ドキュメントの全体（セクション・アセット込み）。
 ///
 /// # Errors
@@ -564,6 +605,34 @@ mod tests {
         assert_eq!(bleeding.section_count, 2);
         assert_eq!(bleeding.meta.tags, ["出血"]);
         assert_eq!(bleeding.source_hash, fixtures::bleeding().source_hash);
+    }
+
+    #[test]
+    fn outline_lists_headings_in_order_without_intro_or_deep_levels() {
+        let mut conn = test_conn();
+        let mut input = fixtures::bleeding();
+        input.sections = vec![
+            section(0, "", "intro", "導入", &[]),
+            section(1, "A", "a", "a", &[]),
+            section(2, "A-1", "a-1", "a1", &[]),
+            section(4, "深い見出し", "deep", "d", &[]),
+            section(3, "A-1-x", "a-1-x", "a1x", &[]),
+        ];
+        let id = upsert(&mut conn, &input).expect("保存できる");
+        upsert(&mut conn, &fixtures::cpr()).expect("保存できる");
+
+        let docs = outline(&conn).expect("見出しを取れる");
+        assert_eq!(docs.len(), 2);
+        let bleeding = docs.iter().find(|d| d.id == id).expect("出血がある");
+        assert_eq!(bleeding.meta.tags, ["出血"]);
+        assert_eq!(bleeding.source_path, input.source_path);
+        let anchors: Vec<&str> = bleeding
+            .headings
+            .iter()
+            .map(|h| h.anchor.as_str())
+            .collect();
+        assert_eq!(anchors, ["a", "a-1", "a-1-x"]);
+        assert_eq!(bleeding.headings[2].level, 3);
     }
 
     #[test]

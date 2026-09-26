@@ -92,4 +92,16 @@ describe("syncManuals", () => {
       { fileName: "warn.md", message: expect.stringContaining("mod の値が不明です") as unknown },
     ]);
   });
+
+  it("警告のあった原稿は、次の同期で入れ直す（画像を読めなかったときに欠けたまま残さないため）", async () => {
+    const withImage = manual("img.md", "h", "# A\n![図](images/none.png)");
+    const db = fakeDb([]);
+    await syncManuals([withImage], db);
+    const saved = db.saved[0];
+    expect(saved?.sourceHash).not.toBe("h");
+
+    const next = fakeDb([summary("img", "bundle://manuals/img.md", saved?.sourceHash ?? "")]);
+    const result = await syncManuals([withImage], next);
+    expect(result).toMatchObject({ updated: 1, unchanged: 0 });
+  });
 });

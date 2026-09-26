@@ -23,6 +23,7 @@ pub fn run() {
             commands::docs::doc_list,
             commands::docs::doc_get,
             commands::docs::doc_delete,
+            commands::docs::doc_outline,
             commands::assets::asset_put,
             commands::assets::asset_get,
             commands::search::search_query,
@@ -30,6 +31,8 @@ pub fn run() {
             commands::dict::synonym_list,
             commands::dict::synonym_save,
             commands::dict::synonym_delete,
+            commands::settings::settings_get,
+            commands::settings::settings_set,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -50,6 +50,9 @@ const NAV_ITEMS: readonly NavItem[] = [
   { to: "/settings", label: "設定", icon: SettingsIcon, activePatterns: ["/settings"] },
 ];
 
+// 自分で列ごとのスクロールを持つ画面。ビューアは本文だけをスクロールさせ、ツリーと目次を止めておくため
+const FULL_HEIGHT_PATTERNS: readonly string[] = ["/doc/:id"];
+
 export function Layout(): JSX.Element {
   const { pathname } = useLocation();
   const sidebarOpen = useUiStore((state) => state.sidebarOpen);
@@ -138,11 +141,17 @@ export function Layout(): JSX.Element {
           </SidebarFooter>
         </Sidebar>
         <SidebarInset className="min-h-0 min-w-0">
-          <ScrollArea className="min-h-0 flex-1">
-            <div className="p-6">
+          {FULL_HEIGHT_PATTERNS.some((pattern) => matchPath(pattern, pathname) !== null) ? (
+            <div className="min-h-0 flex-1">
               <Outlet />
             </div>
-          </ScrollArea>
+          ) : (
+            <ScrollArea className="min-h-0 flex-1">
+              <div className="p-6">
+                <Outlet />
+              </div>
+            </ScrollArea>
+          )}
         </SidebarInset>
       </SidebarProvider>
     </div>

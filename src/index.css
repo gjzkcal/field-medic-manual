@@ -129,3 +129,158 @@
     @apply font-sans;
   }
 }
+
+/*
+ * マニュアル本文（ビューア）。ゲームの横で目を離しながら読むので、コントラストを高くし、見出しと Alert を目立たせる。
+ * 文字サイズと行間は設定で変わるので、余白と見出しの大きさは em で書き、設定に合わせて伸び縮みさせる。
+ */
+@layer components {
+  .manual-body {
+    overflow-wrap: anywhere;
+    color: var(--foreground);
+  }
+  .manual-body :where(h1, h2, h3, h4, h5, h6) {
+    font-weight: 700;
+    line-height: 1.35;
+  }
+  .manual-body h1 {
+    margin: 0 0 0.6em;
+    font-size: 1.6em;
+  }
+  .manual-body h2 {
+    margin: 1.6em 0 0.5em;
+    padding-bottom: 0.2em;
+    border-bottom: 1px solid var(--border);
+    font-size: 1.35em;
+  }
+  .manual-body h3 {
+    margin: 1.3em 0 0.4em;
+    font-size: 1.15em;
+  }
+  .manual-body :where(h4, h5, h6) {
+    margin: 1em 0 0.3em;
+    font-size: 1em;
+  }
+  .manual-body section:first-child > :first-child {
+    margin-top: 0;
+  }
+  .manual-body :where(p, ul, ol, pre, table, blockquote, figure) {
+    margin: 0 0 0.8em;
+  }
+  .manual-body :where(ul, ol) {
+    padding-left: 1.6em;
+  }
+  .manual-body ul {
+    list-style: disc;
+  }
+  .manual-body ol {
+    list-style: decimal;
+  }
+  .manual-body li {
+    margin: 0.25em 0;
+  }
+  .manual-body li > :where(ul, ol, p) {
+    margin: 0.2em 0;
+  }
+  /* 手順の番号は目で追う起点になるので太くする */
+  .manual-body ol > li::marker {
+    font-weight: 700;
+  }
+  .manual-body strong {
+    font-weight: 700;
+  }
+  .manual-body a {
+    color: oklch(0.82 0.11 235);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+  .manual-body :where(code, kbd) {
+    border-radius: 4px;
+    background: var(--muted);
+    padding: 0.1em 0.35em;
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 0.9em;
+  }
+  .manual-body pre {
+    overflow-x: auto;
+    border-radius: 8px;
+    background: var(--muted);
+    padding: 0.8em 1em;
+  }
+  .manual-body pre code {
+    background: none;
+    padding: 0;
+  }
+  /* 表は幅が足りないときに本文ごと横に広がらないよう、表だけを横にスクロールさせる */
+  .manual-body table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+  }
+  .manual-body :where(th, td) {
+    border: 1px solid var(--border);
+    padding: 0.4em 0.75em;
+    text-align: left;
+    vertical-align: top;
+  }
+  .manual-body th {
+    background: var(--muted);
+    font-weight: 700;
+  }
+  .manual-body img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 0.5em 0;
+    border-radius: 6px;
+  }
+  .manual-body hr {
+    margin: 1.5em 0;
+    border: 0;
+    border-top: 1px solid var(--border);
+  }
+  .manual-body blockquote {
+    border-left: 4px solid var(--border);
+    padding: 0.2em 0 0.2em 1em;
+    color: var(--muted-foreground);
+  }
+  .manual-body .manual-missing-image {
+    display: inline-block;
+    color: var(--muted-foreground);
+    font-size: 0.9em;
+  }
+
+  /* GFM の Alert。種類ごとに色を変え、左の太線と見出しで一目で分かるようにする */
+  .manual-body .markdown-alert {
+    border-left: 5px solid var(--alert-color);
+    border-radius: 0 8px 8px 0;
+    background: color-mix(in oklch, var(--alert-color) 14%, transparent);
+    padding: 0.6em 1em;
+    color: var(--foreground);
+  }
+  .manual-body .markdown-alert > :last-child {
+    margin-bottom: 0;
+  }
+  .manual-body .markdown-alert-title {
+    margin-bottom: 0.3em;
+    color: var(--alert-color);
+    font-weight: 700;
+  }
+  .manual-body .markdown-alert-note {
+    --alert-color: oklch(0.75 0.13 250);
+  }
+  .manual-body .markdown-alert-tip {
+    --alert-color: oklch(0.78 0.15 150);
+  }
+  .manual-body .markdown-alert-important {
+    --alert-color: oklch(0.75 0.15 300);
+  }
+  .manual-body .markdown-alert-warning {
+    --alert-color: oklch(0.84 0.15 80);
+  }
+  .manual-body .markdown-alert-caution {
+    --alert-color: oklch(0.72 0.19 25);
+  }
+}

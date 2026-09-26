@@ -1,6 +1,11 @@
 // Windows のパス（`C:\dir\a.md`）と `/` 区切りの両方を扱う小さな関数群。
 // Node の path は WebView にないため自前で持つ。
 
+/** 同梱した原稿の sourcePath。同期で保存するときと、ビューアで内部リンクの行き先を探すときに同じ形を使う。 */
+export function manualSourcePath(fileName: string): string {
+  return `bundle://manuals/${fileName}`;
+}
+
 export function fileName(path: string): string {
   return path.split(/[\\/]/).pop() ?? path;
 }

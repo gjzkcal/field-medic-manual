@@ -1,4 +1,4 @@
-// 取り込んだ HTML の無害化。どの Importer もここを通す（設定を 1 か所にまとめ、形式ごとの漏れを防ぐため）。
+// 原稿の HTML の無害化。保存するとき（document.ts）と表示するとき（ビューア）の両方でここを通す（設定を 1 か所にまとめ、漏れを防ぐため）。
 import DOMPurify, { type Config } from "dompurify";
 
 const CONFIG: Config = {
@@ -31,8 +31,16 @@ export interface SanitizedHtml {
   plainText: string;
 }
 
+/**
+ * ビューアで表示する直前の無害化。保存時にも通しているが、DB の中身を書き換えられた場合に備えてもう一度通す（多層防御）。
+ * 文字列ではなく DOM で返し、innerHTML を使わずにそのまま差し込めるようにする。
+ */
+export function sanitizeToFragment(dirty: string): DocumentFragment {
+  return DOMPurify.sanitize(dirty, { ...CONFIG, RETURN_DOM_FRAGMENT: true });
+}
+
 export function sanitizeHtml(dirty: string): SanitizedHtml {
-  const fragment = DOMPurify.sanitize(dirty, { ...CONFIG, RETURN_DOM_FRAGMENT: true });
+  const fragment = sanitizeToFragment(dirty);
   const container = document.createElement("div");
   container.append(fragment);
   return { html: container.innerHTML.trim(), plainText: toPlainText(container) };

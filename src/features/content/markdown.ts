@@ -2,7 +2,13 @@
 import { sectionsFromBody } from "@/features/content/document";
 import { sha256Hex } from "@/features/content/hash";
 import { emptyMeta, toDocMeta } from "@/features/content/meta";
-import { fileName, fileStem, imageMime, resolveRelative } from "@/features/content/path";
+import {
+  fileName,
+  fileStem,
+  imageMime,
+  manualSourcePath,
+  resolveRelative,
+} from "@/features/content/path";
 import type {
   ConvertedManual,
   ManualSource,
@@ -59,7 +65,7 @@ export async function convertManual(
     doc: {
       title,
       sourceType: "markdown",
-      sourcePath: `bundle://manuals/${manual.fileName}`,
+      sourcePath: manualSourcePath(manual.fileName),
       sourceHash: manual.hash,
       meta,
       sections: result.sections,

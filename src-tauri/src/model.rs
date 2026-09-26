@@ -311,3 +311,25 @@ mod tests {
         assert_eq!(json["documentId"], "d");
     }
 }
+
+/// ビューアの左のツリーに出す見出し（h1〜h3）。
+#[derive(Debug, Clone, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct OutlineHeading {
+    pub level: u8,
+    pub title: String,
+    pub anchor: String,
+}
+
+/// 全ドキュメントの見出しの一覧。ツリーのために全文書の本文の HTML を IPC で運ばないよう、見出しだけを返す。
+#[derive(Debug, Clone, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct DocOutline {
+    pub id: String,
+    pub title: String,
+    pub source_path: Option<String>,
+    pub meta: DocMeta,
+    pub headings: Vec<OutlineHeading>,
+}
