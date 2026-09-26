@@ -8,8 +8,10 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default defineConfig(
-  // bindings は ts-rs の生成物。手で直さないので対象外にする
-  globalIgnores(["dist", "src-tauri/target", "src-tauri/gen", "src/lib/bindings"]),
+  // bindings は ts-rs の生成物。手で直さないので対象外にする。
+  // dev-docs は .gitignore 済みの非公開の資料置き場で、他のプロジェクトのソースや設定ファイルも置く。
+  // ESLint は .gitignore を読まず、そこにある別の eslint.config.js まで読みに行って落ちるので明示する
+  globalIgnores(["dist", "src-tauri/target", "src-tauri/gen", "src/lib/bindings", "dev-docs"]),
   {
     linterOptions: {
       reportUnusedDisableDirectives: "error",
