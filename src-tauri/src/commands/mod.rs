@@ -2,6 +2,8 @@ pub mod app;
 pub mod assets;
 pub mod dict;
 pub mod docs;
+pub mod prefs;
 pub mod search;
 pub mod settings;
 pub mod triage;
+pub mod window;

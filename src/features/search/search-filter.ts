@@ -85,11 +85,14 @@ export const useSearchFilter = create<SearchFilterState>()((set, get) => ({
   },
 }));
 
-/** 保存した絞り込みを読み込む。起動時に 1 回呼ぶ。読めなければ絞り込みなしで検索できるようにする。 */
-export async function loadSearchFilter(): Promise<void> {
+/**
+ * 保存した絞り込みを読み込む。起動時に 1 回呼ぶ。読めなければ絞り込みなしで検索できるようにする。
+ * force は、別のウィンドウで変えた値を拾うとき（小窓を出すたび）
+ */
+export async function loadSearchFilter(force = false): Promise<void> {
   try {
     const filter = parseSearchFilter(await settingsGet(SETTINGS_KEY));
-    if (!useSearchFilter.getState().changed) {
+    if (force || !useSearchFilter.getState().changed) {
       useSearchFilter.setState({ filter });
     }
   } catch (error: unknown) {

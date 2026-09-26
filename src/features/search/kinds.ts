@@ -3,6 +3,7 @@
 import { FileTextIcon, WorkflowIcon, type LucideIcon } from "lucide-react";
 
 import { docHref } from "@/features/library/link";
+import type { PrefTarget } from "@/lib/bindings/PrefTarget";
 import type { SearchHit } from "@/lib/bindings/SearchHit";
 
 type HitKind = SearchHit["kind"];
@@ -18,6 +19,8 @@ export interface SearchKind<H> {
   badge: (hit: H) => string | null;
   /** 開く先。パレットはルーターを持たないので、置き場所がこの文字列で遷移する */
   href: (hit: H) => string;
+  /** お気に入り（Ctrl+Enter）で入れる対象 */
+  favoriteTarget: (hit: H) => PrefTarget;
 }
 
 const SEARCH_KINDS: { [K in HitKind]: SearchKind<HitOf<K>> } = {
@@ -27,6 +30,11 @@ const SEARCH_KINDS: { [K in HitKind]: SearchKind<HitOf<K>> } = {
     context: (hit) => hit.documentTitle,
     badge: (hit) => (hit.synonymOnly ? "同義語" : null),
     href: (hit) => docHref(hit.documentId, hit.anchor, hit.matchedTerms),
+    favoriteTarget: (hit) => ({
+      kind: "section",
+      documentId: hit.documentId,
+      anchor: hit.anchor,
+    }),
   },
   flow: {
     label: "トリアージ",
@@ -34,6 +42,7 @@ const SEARCH_KINDS: { [K in HitKind]: SearchKind<HitOf<K>> } = {
     context: () => "トリアージ",
     badge: (hit) => (hit.synonymOnly ? "同義語" : null),
     href: (hit) => `/triage/${encodeURIComponent(hit.id)}`,
+    favoriteTarget: (hit) => ({ kind: "flow", flowId: hit.id }),
   },
 };
 

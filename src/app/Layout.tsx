@@ -1,6 +1,6 @@
 import { HeartPulseIcon, LibraryIcon, SettingsIcon, TableIcon, WorkflowIcon } from "lucide-react";
-import type { JSX } from "react";
-import { matchPath, NavLink, Outlet, useLocation } from "react-router";
+import { useEffect, type JSX } from "react";
+import { matchPath, NavLink, Outlet, useLocation, useNavigate } from "react-router";
 
 import { AppVersion } from "@/app/AppVersion";
 import { useUiStore } from "@/app/store";
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { HeaderSearch } from "@/features/search/HeaderSearch";
+import { onOpenHref } from "@/lib/tauri";
 
 interface NavItem {
   to: string;
@@ -46,8 +47,36 @@ const NAV_ITEMS: readonly NavItem[] = [
 // 自分で列ごとのスクロールを持つ画面。ビューアは本文だけをスクロールさせ、ツリーと目次を止めておくため
 const FULL_HEIGHT_PATTERNS: readonly string[] = ["/doc/:id"];
 
+/** 小窓の「メインで開く」とトレイの「設定」から、この画面へ移る。 */
+function useOpenHrefFromRust(): void {
+  const navigate = useNavigate();
+  useEffect(() => {
+    // アンマウント後（StrictMode の二重実行を含む）に購読を残さないため
+    let cancelled = false;
+    let unlisten: (() => void) | undefined;
+    onOpenHref((href) => {
+      void navigate(href);
+    })
+      .then((fn) => {
+        if (cancelled) {
+          fn();
+        } else {
+          unlisten = fn;
+        }
+      })
+      .catch(() => {
+        // 受け取れなくても、メインの画面は普通に使える
+      });
+    return () => {
+      cancelled = true;
+      unlisten?.();
+    };
+  }, [navigate]);
+}
+
 export function Layout(): JSX.Element {
   const { pathname } = useLocation();
+  useOpenHrefFromRust();
   const sidebarOpen = useUiStore((state) => state.sidebarOpen);
   const setSidebarOpen = useUiStore((state) => state.setSidebarOpen);
 

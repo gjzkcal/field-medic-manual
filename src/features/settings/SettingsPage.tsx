@@ -2,6 +2,8 @@ import type { JSX } from "react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DebugPanel } from "@/features/settings/debug/DebugPanel";
+import { HotkeySettings } from "@/features/settings/HotkeySettings";
+import { OverlaySettingsCard } from "@/features/settings/OverlaySettingsCard";
 import {
   FONT_SIZE_PX,
   LINE_HEIGHT_VALUE,
@@ -25,6 +27,8 @@ export function SettingsPage(): JSX.Element {
           <Preview />
         </CardContent>
       </Card>
+      <HotkeySettings />
+      <OverlaySettingsCard />
       {/* 配布版に開発用の操作を出さないため、開発ビルドだけで表示する */}
       {import.meta.env.DEV && <DebugPanel />}
     </section>

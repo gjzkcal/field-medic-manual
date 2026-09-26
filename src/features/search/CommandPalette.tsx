@@ -1,5 +1,6 @@
 import { cn } from "cn";
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -9,6 +10,8 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
+
+import { StarIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -20,6 +23,7 @@ import {
 } from "@/components/ui/command";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { hitKey, searchKind } from "@/features/search/kinds";
+import { PaletteOpenContext } from "@/features/search/palette-open";
 import { toQueryFilter, useSearchFilter } from "@/features/search/search-filter";
 import { SearchFilterPopover } from "@/features/search/SearchFilterPopover";
 import { SnippetText } from "@/features/search/SnippetText";
@@ -43,11 +47,22 @@ export interface CommandPaletteProps {
   variant?: "inline" | "dropdown";
   /** 外から入力欄にフォーカスするため（Ctrl+K） */
   inputRef?: RefObject<HTMLInputElement | null>;
-  /** 結果を選んだとき。開く先の URL を渡すので、置き場所（上部の検索欄、Step 08 の小窓）が遷移する */
-  onSelect: (href: string, hit: SearchHit) => void;
-  /** Ctrl+Enter。お気に入りへの追加（Step 08 で有効にする）。省略時は何もしない */
+  /**
+   * 入力を外で持つとき（小窓）。結果を開いて「戻る」でパレットが作り直されても、入力と結果を残すため。
+   * 省略時はパレットの中で持つ
+   */
+  query?: string;
+  onQueryChange?: (query: string) => void;
+  /** 結果を選んだとき。開く先の URL を渡すので、置き場所（上部の検索欄、小窓）が遷移する */
+  onSelect: (href: string) => void;
+  /** Ctrl+Enter。お気に入りの切り替え。省略時は何もしない */
   onFavorite?: (hit: SearchHit) => void;
-  /** 入力が空のときに出す中身（最近見たもの。Step 08）。省略時は使い方の案内 */
+  /** 結果に星を付けるか（お気に入りに入っているもの） */
+  isFavorite?: (hit: SearchHit) => boolean;
+  /**
+   * 入力が空のときに出す中身（お気に入りと最近見たもの）。中で usePaletteOpen() の関数で開くと、
+   * 結果を選んだときと同じく欄を閉じてから onSelect を呼ぶ。省略時は使い方の案内
+   */
   emptySlot?: ReactNode;
   className?: string;
 }
@@ -59,8 +74,11 @@ export interface CommandPaletteProps {
 export function CommandPalette({
   variant = "inline",
   inputRef,
+  query: outerQuery,
+  onQueryChange,
   onSelect,
   onFavorite,
+  isFavorite,
   emptySlot,
   className,
 }: CommandPaletteProps): JSX.Element {
@@ -69,7 +87,9 @@ export function CommandPalette({
   const input = inputRef ?? ownInputRef;
   const rootRef = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState(false);
-  const [query, setQuery] = useState("");
+  const [ownQuery, setOwnQuery] = useState("");
+  const query = outerQuery ?? ownQuery;
+  const setQuery = onQueryChange ?? setOwnQuery;
   const [result, setResult] = useState<ResultState>({ status: "idle" });
   const [selected, setSelected] = useState("");
   const filter = useSearchFilter((s) => s.filter);
@@ -132,13 +152,25 @@ export function CommandPalette({
     input.current?.blur();
   }
 
+  // 空のときの中身にコンテキストで渡すので、描画のたびに作り直さない（中身の再描画を防ぐため）
+  const open = useCallback(
+    (href: string): void => {
+      if (dropdown) {
+        // 開いたあとは本文を読むので、入力欄を空にしてフォーカスを外す（キー操作を本文へ返すため）
+        setQuery("");
+        setExpanded(false);
+        const active = document.activeElement;
+        if (active instanceof HTMLElement && rootRef.current?.contains(active) === true) {
+          active.blur();
+        }
+      }
+      onSelect(href);
+    },
+    [dropdown, setQuery, onSelect],
+  );
+
   function select(hit: SearchHit): void {
-    if (dropdown) {
-      // 開いたあとは本文を読むので、入力欄を空にしてフォーカスを外す（キー操作を本文へ返すため）
-      setQuery("");
-      collapse();
-    }
-    onSelect(searchKind(hit.kind).href(hit), hit);
+    open(searchKind(hit.kind).href(hit));
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>): void {
@@ -169,16 +201,23 @@ export function CommandPalette({
     <>
       <CommandList className="max-h-[min(60vh,32rem)] pt-1">
         {trimmed === "" ? (
-          (emptySlot ?? <EmptyHint />)
+          <PaletteOpenContext value={open}>{emptySlot ?? <EmptyHint />}</PaletteOpenContext>
         ) : (
-          <SearchResults result={result} hits={hits} query={trimmed} onSelect={select} />
+          <SearchResults
+            result={result}
+            hits={hits}
+            query={trimmed}
+            onSelect={select}
+            isFavorite={isFavorite}
+          />
         )}
       </CommandList>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t px-3 pt-1.5 text-xs text-muted-foreground">
         <KeyHint keys={["↑", "↓"]} label="選択" />
         <KeyHint keys={["Enter"]} label="開く" />
         {onFavorite !== undefined && <KeyHint keys={["Ctrl", "Enter"]} label="お気に入り" />}
-        <KeyHint keys={["Esc"]} label="閉じる" />
+        {/* 常に一覧を出す置き場所（小窓）では、Esc で閉じるものがない */}
+        {dropdown && <KeyHint keys={["Esc"]} label="閉じる" />}
         <div className="ml-auto">
           <SearchFilterPopover />
         </div>
@@ -245,9 +284,16 @@ interface SearchResultsProps {
   hits: readonly SearchHit[];
   query: string;
   onSelect: (hit: SearchHit) => void;
+  isFavorite: ((hit: SearchHit) => boolean) | undefined;
 }
 
-function SearchResults({ result, hits, query, onSelect }: SearchResultsProps): JSX.Element | null {
+function SearchResults({
+  result,
+  hits,
+  query,
+  onSelect,
+  isFavorite,
+}: SearchResultsProps): JSX.Element | null {
   switch (result.status) {
     // 最初の結果が届くまでは何も出さない（100ms ほどなので「検索中」を出すとかえってちらつく）
     case "idle":
@@ -263,7 +309,12 @@ function SearchResults({ result, hits, query, onSelect }: SearchResultsProps): J
         <>
           <CommandEmpty>「{query}」に一致する項目はありません</CommandEmpty>
           {hits.map((hit) => (
-            <HitItem key={hitKey(hit)} hit={hit} onSelect={onSelect} />
+            <HitItem
+              key={hitKey(hit)}
+              hit={hit}
+              favorite={isFavorite?.(hit) ?? false}
+              onSelect={onSelect}
+            />
           ))}
         </>
       );
@@ -272,9 +323,11 @@ function SearchResults({ result, hits, query, onSelect }: SearchResultsProps): J
 
 function HitItem({
   hit,
+  favorite,
   onSelect,
 }: {
   hit: SearchHit;
+  favorite: boolean;
   onSelect: (hit: SearchHit) => void;
 }): JSX.Element {
   const kind = searchKind(hit.kind);
@@ -293,6 +346,13 @@ function HitItem({
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <div className="flex min-w-0 items-center gap-2">
           <span className="truncate font-medium">{hit.title}</span>
+          {favorite && (
+            <StarIcon
+              role="img"
+              aria-label="お気に入り"
+              className="size-3.5 shrink-0 fill-amber-400 text-amber-400"
+            />
+          )}
           {badge !== null && (
             <Badge variant="secondary" className="shrink-0">
               {badge}

@@ -2,7 +2,10 @@ import { clearMocks, mockIPC } from "@tauri-apps/api/mocks";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { JSX } from "react";
+
 import { CommandPalette } from "@/features/search/CommandPalette";
+import { usePaletteOpen } from "@/features/search/palette-open";
 import { EMPTY_SEARCH_FILTER, useSearchFilter } from "@/features/search/search-filter";
 import { MARK_END, MARK_START } from "@/features/search/snippet";
 import type { SearchHit } from "@/lib/bindings/SearchHit";
@@ -20,6 +23,21 @@ function hit(id: number, title: string, matchedTerms: string[], synonymOnly = fa
     synonymOnly,
     matchedTerms,
   };
+}
+
+/** 空のときの中身の代わり。パレットから受け取った open で開く */
+function RecentFlowButton(): JSX.Element {
+  const open = usePaletteOpen();
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        open("/triage/first-contact");
+      }}
+    >
+      最近見たフロー
+    </button>
+  );
 }
 
 const HITS = [hit(1, "止血帯を使う", ["止血帯"]), hit(2, "包帯を巻く", ["止血"])];
@@ -95,8 +113,14 @@ describe("CommandPalette", () => {
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect).toHaveBeenCalledWith(
       `/doc/d2?hl=${encodeURIComponent("止血")}#${encodeURIComponent("包帯を巻く")}`,
-      HITS[1],
     );
+  });
+
+  it("お気に入りに入っている結果には星を付ける", async () => {
+    render(<CommandPalette onSelect={vi.fn()} isFavorite={(hit) => hit.id === 2} />);
+    fireEvent.change(input(), { target: { value: "止血" } });
+    await screen.findByText("包帯を巻く");
+    expect(screen.getAllByRole("img", { name: "お気に入り" })).toHaveLength(1);
   });
 
   it("変換中の Enter と Ctrl+Enter では開かない。Ctrl+Enter はお気に入りに渡す", async () => {
@@ -172,6 +196,17 @@ describe("CommandPalette（上部の検索欄）", () => {
     fireEvent.keyDown(input(), { key: "Enter" });
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(input()).toHaveProperty("value", "");
+    expect(list()).toBeNull();
+  });
+
+  it("空のときの中身から開いても、一覧を閉じて開く先を渡す", () => {
+    const onSelect = vi.fn();
+    render(
+      <CommandPalette variant="dropdown" onSelect={onSelect} emptySlot={<RecentFlowButton />} />,
+    );
+    fireEvent.focus(input());
+    fireEvent.click(screen.getByText("最近見たフロー"));
+    expect(onSelect).toHaveBeenCalledWith("/triage/first-contact");
     expect(list()).toBeNull();
   });
 });

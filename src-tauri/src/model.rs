@@ -400,3 +400,67 @@ pub struct DocOutline {
     pub meta: DocMeta,
     pub headings: Vec<OutlineHeading>,
 }
+
+/// お気に入り・履歴の対象。節は同期で INTEGER の id が振り直されるので、文書の id とアンカーで指す。
+/// クイック表は Step 06 で足す。
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+#[ts(export)]
+pub enum PrefTarget {
+    #[serde(rename_all = "camelCase")]
+    Section { document_id: String, anchor: String },
+    #[serde(rename_all = "camelCase")]
+    Document { document_id: String },
+    #[serde(rename_all = "camelCase")]
+    Flow { flow_id: String },
+}
+
+/// お気に入り・履歴の一覧の 1 行。対象が今も DB にあるものだけを返す。
+#[derive(Debug, Clone, PartialEq, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct PrefItem {
+    pub target: PrefTarget,
+    /// 節の題名 / 文書の題名 / フローの題名
+    pub title: String,
+    /// どこにあるか（節なら文書の題名）。なければ null
+    pub context: Option<String>,
+    /// お気に入りに入れた日時、または最後に開いた日時（UTC の ISO 8601）
+    pub at: String,
+}
+
+/// ホットキーで呼び出す動作。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+pub enum HotkeyAction {
+    /// 小窓の表示 / 非表示（フォーカスしない）
+    Toggle,
+    /// 小窓を出して検索欄にフォーカス
+    Search,
+    /// 小窓で直近のフローを開く
+    Triage,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct HotkeyBinding {
+    pub action: HotkeyAction,
+    /// `Ctrl+Shift+M` の形
+    pub accelerator: String,
+    pub default_accelerator: String,
+    /// 登録に失敗したときの理由（他のアプリが使っているなど）。登録できていれば null
+    pub error: Option<String>,
+}
+
+/// Rust から小窓へ送る、呼び出しのモード（イベント `overlay-mode`）。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+pub enum OverlayMode {
+    /// 表示だけ（フォーカスしない）
+    View,
+    Search,
+    Triage,
+}

@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Kbd } from "@/components/ui/kbd";
 import { daysSinceVerified, isStale } from "@/features/library/stale";
+import { FavoriteButton } from "@/features/prefs/FavoriteButton";
 import { hasModifier, isActivatable, isTextEntry } from "@/features/triage/keyboard";
 import {
   formatPath,
@@ -120,6 +121,7 @@ export function FlowRunner({ root, lookup }: FlowRunnerProps): JSX.Element {
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
         <h1 className="text-lg font-semibold">{root.title}</h1>
+        <FavoriteButton target={{ kind: "flow", flowId: root.id }} label="このフロー" />
         {state.depth > 0 && (
           <Badge variant="secondary">
             <CornerDownLeftIcon className="rotate-90" />

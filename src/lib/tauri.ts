@@ -1,6 +1,7 @@
 // Rust 側の呼び出し（自作コマンドと Tauri のウィンドウ API）はすべてこのファイルを経由する。
 // コマンド名の文字列と戻り値の型を 1 か所にまとめ、呼び出し側で invoke の型引数を書き間違えないようにするため。
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { openUrl } from "@tauri-apps/plugin-opener";
 
@@ -10,6 +11,11 @@ import type { DocOutline } from "@/lib/bindings/DocOutline";
 import type { DocSummary } from "@/lib/bindings/DocSummary";
 import type { DocUpsertInput } from "@/lib/bindings/DocUpsertInput";
 import type { ErrorKind } from "@/lib/bindings/ErrorKind";
+import type { HotkeyAction } from "@/lib/bindings/HotkeyAction";
+import type { HotkeyBinding } from "@/lib/bindings/HotkeyBinding";
+import type { OverlayMode } from "@/lib/bindings/OverlayMode";
+import type { PrefItem } from "@/lib/bindings/PrefItem";
+import type { PrefTarget } from "@/lib/bindings/PrefTarget";
 import type { SearchFilter } from "@/lib/bindings/SearchFilter";
 import type { SearchHit } from "@/lib/bindings/SearchHit";
 import type { SynonymGroup } from "@/lib/bindings/SynonymGroup";
@@ -151,6 +157,67 @@ export async function settingsSet(key: string, value: unknown): Promise<void> {
   return invoke<undefined>("settings_set", { key, value });
 }
 
+/** お気に入りに入れたら true、外したら false。 */
+export async function favToggle(target: PrefTarget): Promise<boolean> {
+  return invoke<boolean>("fav_toggle", { target });
+}
+
+/** お気に入りを新しい順に。対象（文書・節・フロー）が消えたものは含まない。 */
+export async function favList(): Promise<PrefItem[]> {
+  return invoke<PrefItem[]>("fav_list");
+}
+
+export async function historyPush(target: PrefTarget): Promise<void> {
+  return invoke<undefined>("history_push", { target });
+}
+
+/** 最近開いたものを新しい順に、対象ごとに 1 件ずつ。 */
+export async function historyList(limit: number): Promise<PrefItem[]> {
+  return invoke<PrefItem[]>("history_list", { limit });
+}
+
+export async function hotkeyList(): Promise<HotkeyBinding[]> {
+  return invoke<HotkeyBinding[]>("hotkey_list");
+}
+
+/** 登録できなければ（ほかのアプリが使っているなど）元のキーのまま AppError で失敗する。 */
+export async function hotkeySet(action: HotkeyAction, accelerator: string): Promise<void> {
+  return invoke<undefined>("hotkey_set", { action, accelerator });
+}
+
+/** 小窓で開いている画面（アプリ内のパス）を、メインウィンドウで開く。 */
+export async function windowOpenInMain(href: string): Promise<void> {
+  return invoke<undefined>("window_open_in_main", { href });
+}
+
+/** 閲覧モードの小窓（フォーカスしない表示）で、文字を打つためにフォーカスを移す。 */
+export async function overlayActivate(): Promise<void> {
+  return invoke<undefined>("overlay_activate");
+}
+
+/** Rust と取り決めたイベント名（src-tauri/src/window/overlay.rs）。 */
+const OVERLAY_MODE_EVENT = "overlay-mode";
+const OPEN_HREF_EVENT = "open-href";
+
+/** 小窓が呼び出されたとき（ホットキーやトレイ）。戻り値の関数を呼ぶと購読を解除する。 */
+export async function onOverlayMode(handler: (mode: OverlayMode) => void): Promise<() => void> {
+  return listen<OverlayMode>(OVERLAY_MODE_EVENT, (event) => {
+    handler(event.payload);
+  });
+}
+
+/** 小窓の「メインで開く」やトレイの「設定」で、メインウィンドウに開かせる画面。 */
+export async function onOpenHref(handler: (href: string) => void): Promise<() => void> {
+  return listen<string>(OPEN_HREF_EVENT, (event) => {
+    handler(event.payload);
+  });
+}
+
+/** 今のウィンドウのラベル（`main` / `overlay`）。同じ index.html を読むので、描く画面をこれで分ける。 */
+export function currentWindowLabel(): string {
+  return getCurrentWindow().label;
+}
+
 /** 既定のブラウザ（mailto はメールソフト）で開く。WebView の中では開かない。 */
 export async function openExternal(url: string): Promise<void> {
   return openUrl(url);
@@ -166,6 +233,10 @@ export async function windowToggleMaximize(): Promise<void> {
 
 export async function windowClose(): Promise<void> {
   return getCurrentWindow().close();
+}
+
+export async function windowHide(): Promise<void> {
+  return getCurrentWindow().hide();
 }
 
 export async function windowIsMaximized(): Promise<boolean> {

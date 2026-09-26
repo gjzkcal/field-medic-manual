@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useEffectEvent,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -31,6 +32,7 @@ import { MetaBar } from "@/features/library/viewer/MetaBar";
 import { SectionBody } from "@/features/library/viewer/SectionBody";
 import { useActiveAnchor } from "@/features/library/viewer/use-active-anchor";
 import { useDoc, useOutline } from "@/features/library/viewer/use-doc-data";
+import { recordHistory } from "@/features/prefs/prefs-store";
 import { findTextRanges, paintSearchHighlight } from "@/features/search/highlight";
 import {
   FONT_SIZE_PX,
@@ -152,6 +154,19 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
 
   // URL のアンカー（ツリー・目次・内部リンクで変わる）の見出しへ移る。同じアンカーを 2 回押しても移るよう location.key も見る
   const hashAnchor = decodeAnchor(location.hash.replace(/^#/, ""));
+  // 開いたものを履歴に積む。目次などで同じ文書の中を移るたびには積まない（最近見たものが同じ文書で埋まるため）。
+  // 検索やリンクでアンカー付きで開いたときは節として積む
+  const recordOpen = useEffectEvent(() => {
+    recordHistory(
+      hashAnchor === ""
+        ? { kind: "document", documentId: doc.id }
+        : { kind: "section", documentId: doc.id, anchor: hashAnchor },
+    );
+  });
+  useEffect(() => {
+    recordOpen();
+  }, [doc.id]);
+
   const activeAnchor = useActiveAnchor(
     viewport,
     anchors,
@@ -264,6 +279,7 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <MetaBar
+          docId={doc.id}
           title={doc.title}
           notice={notice}
           onDismissNotice={() => {

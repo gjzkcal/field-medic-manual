@@ -1,12 +1,15 @@
 import { useEffect, useRef, type JSX } from "react";
 import { useNavigate } from "react-router";
 
+import { PrefsCommandGroups } from "@/features/prefs/PrefsCommandGroups";
+import { usePalettePrefs } from "@/features/prefs/use-palette-prefs";
 import { CommandPalette } from "@/features/search/CommandPalette";
 
 /** メインウィンドウの上部の検索欄。欄に直接打ち、結果は欄の下に出る。Ctrl+K でここへ移る。 */
 export function HeaderSearch(): JSX.Element {
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const { onFavorite, isFavorite } = usePalettePrefs();
 
   // 本文を読んでいる途中でもすぐ探せるよう、ウィンドウ全体で受ける
   useEffect(() => {
@@ -38,6 +41,9 @@ export function HeaderSearch(): JSX.Element {
       onSelect={(href) => {
         void navigate(href);
       }}
+      onFavorite={onFavorite}
+      isFavorite={isFavorite}
+      emptySlot={<PrefsCommandGroups />}
     />
   );
 }

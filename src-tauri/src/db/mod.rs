@@ -6,6 +6,7 @@ pub mod docs;
 #[cfg(test)]
 pub mod fixtures;
 mod migrate;
+pub mod prefs;
 pub mod search;
 pub mod settings;
 mod text;

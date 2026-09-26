@@ -125,6 +125,11 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* 小窓はウィンドウを透明にし、背景は画面の側で不透明度を付けて塗る（設定の透明度のため） */
+  html.overlay-window,
+  html.overlay-window body {
+    background: transparent;
+  }
   html {
     @apply font-sans;
   }

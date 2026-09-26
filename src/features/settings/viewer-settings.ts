@@ -71,11 +71,14 @@ export const useViewerSettings = create<ViewerSettingsState>()((set, get) => ({
   },
 }));
 
-/** 保存した設定を読み込む。起動時に 1 回呼ぶ。読めなければ既定値のまま表示を続ける（設定のために閲覧を止めない）。 */
-export async function loadViewerSettings(): Promise<void> {
+/**
+ * 保存した設定を読み込む。起動時に 1 回呼ぶ。読めなければ既定値のまま表示を続ける（設定のために閲覧を止めない）。
+ * force は、別のウィンドウで変えた値を拾うとき（小窓を出すたび）。この画面で変えた値も保存済みなので上書きしてよい
+ */
+export async function loadViewerSettings(force = false): Promise<void> {
   try {
     const settings = parseViewerSettings(await settingsGet(SETTINGS_KEY));
-    if (!useViewerSettings.getState().changed) {
+    if (force || !useViewerSettings.getState().changed) {
       useViewerSettings.setState({ settings });
     }
   } catch (error: unknown) {
