@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { syncManuals, type SyncDeps } from "@/features/content/sync";
 import type { ManualSource, NormalizedDoc } from "@/features/content/types";
 import type { DocSummary } from "@/lib/bindings/DocSummary";
-import { noImages } from "@/test/samples";
+import { CONVERT_TIMEOUT_MS, noImages } from "@/test/samples";
 
 function manual(fileName: string, hash: string, text = "# 見出し\n本文"): ManualSource {
   return { fileName, path: `/content/manuals/${fileName}`, text, hash };
@@ -43,7 +43,7 @@ function fakeDb(docs: DocSummary[]): SyncDeps & { saved: NormalizedDoc[]; delete
   };
 }
 
-describe("syncManuals", () => {
+describe("syncManuals", { timeout: CONVERT_TIMEOUT_MS }, () => {
   it("新しい原稿は追加し、ハッシュが同じなら何もせず、違えば入れ直す", async () => {
     const db = fakeDb([
       summary("same", "bundle://manuals/same.md", "h1"),

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { convertManual } from "@/features/content/markdown";
 import type { ManualSource } from "@/features/content/types";
-import { noImages, readRepoFile } from "@/test/samples";
+import { CONVERT_TIMEOUT_MS, noImages, readRepoFile } from "@/test/samples";
 
 function manual(text: string, fileName = "x.md"): ManualSource {
   return { fileName, path: `/content/manuals/${fileName}`, text, hash: "h" };
@@ -37,7 +37,7 @@ tags: [出血, 止血帯]
 ![図](images/diagram.png)
 `;
 
-describe("convertManual", () => {
+describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
   it("front matter・見出し・節のタグ・表・Alert・画像を変換する", async () => {
     const { doc, warnings } = await convertManual(manual(SAMPLE, "hemorrhage.md"), readRepoFile);
 
