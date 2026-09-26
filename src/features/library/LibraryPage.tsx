@@ -2,6 +2,7 @@ import { LayoutGridIcon, ListIcon } from "lucide-react";
 import { useEffect, useMemo, useState, type JSX } from "react";
 import { Link } from "react-router";
 
+import { IssueCard } from "@/components/IssueCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -15,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Toggle } from "@/components/ui/toggle";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { MOD_CHANNEL_LABELS, MOD_TARGET_LABELS, MOD_TARGET_VALUES } from "@/features/content/meta";
-import { useContentSync, type SyncIssue } from "@/features/content/sync";
+import { useContentSync } from "@/features/content/sync";
 import { DocMetaBadges } from "@/features/library/DocMetaBadges";
 import { DocTags } from "@/features/library/DocTags";
 import {
@@ -359,32 +360,4 @@ function SyncStatus(): JSX.Element | null {
     return <IssueCard title="原稿の警告（開発ビルドのみ）" detail="" issues={warnings} />;
   }
   return null;
-}
-
-interface IssueCardProps {
-  title: string;
-  detail: string;
-  issues: readonly SyncIssue[];
-}
-
-function IssueCard({ title, detail, issues }: IssueCardProps): JSX.Element {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-destructive">{title}</CardTitle>
-        {detail !== "" && <CardDescription>{detail}</CardDescription>}
-      </CardHeader>
-      {issues.length > 0 && (
-        <CardContent>
-          <ul className="flex list-disc flex-col gap-1 pl-5 text-sm">
-            {issues.map((issue) => (
-              <li key={`${issue.fileName}:${issue.message}`}>
-                {issue.fileName}: {issue.message}
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      )}
-    </Card>
-  );
 }

@@ -15,6 +15,9 @@ import type { SearchHit } from "@/lib/bindings/SearchHit";
 import type { SynonymGroup } from "@/lib/bindings/SynonymGroup";
 import type { SynonymGroupInput } from "@/lib/bindings/SynonymGroupInput";
 import type { TagCount } from "@/lib/bindings/TagCount";
+import type { TriageDetail } from "@/lib/bindings/TriageDetail";
+import type { TriageSummary } from "@/lib/bindings/TriageSummary";
+import type { TriageUpsertInput } from "@/lib/bindings/TriageUpsertInput";
 
 // Record にしておくと、Rust 側で ErrorKind が増えたときに生成された型との不一致がコンパイルエラーになる
 const ERROR_KINDS: Record<ErrorKind, true> = {
@@ -116,6 +119,24 @@ export async function synonymSave(group: SynonymGroupInput): Promise<SynonymGrou
 
 export async function synonymDelete(id: number): Promise<void> {
   return invoke<undefined>("synonym_delete", { id });
+}
+
+export async function triageList(): Promise<TriageSummary[]> {
+  return invoke<TriageSummary[]>("triage_list");
+}
+
+/** json はフロー全体の JSON の文字列。形は呼び出し側で zod で確かめる。 */
+export async function triageGet(id: string): Promise<TriageDetail> {
+  return invoke<TriageDetail>("triage_get", { id });
+}
+
+/** 同じ id のフローがあれば置き換える。 */
+export async function triageUpsert(input: TriageUpsertInput): Promise<void> {
+  return invoke<undefined>("triage_upsert", { input });
+}
+
+export async function triageDelete(id: string): Promise<void> {
+  return invoke<undefined>("triage_delete", { id });
 }
 
 /**

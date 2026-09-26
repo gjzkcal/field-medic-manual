@@ -33,6 +33,10 @@ pub fn run() {
             commands::dict::synonym_delete,
             commands::settings::settings_get,
             commands::settings::settings_set,
+            commands::triage::triage_list,
+            commands::triage::triage_get,
+            commands::triage::triage_upsert,
+            commands::triage::triage_delete,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

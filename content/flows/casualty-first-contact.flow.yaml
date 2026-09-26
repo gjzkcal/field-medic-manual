@@ -1,0 +1,135 @@
+# 【要確認】動作確認用の骨子です。処置の順番・物品・タイマーの長さは確認していません。
+# 出典の手がかり: ACE Anvil – Medical https://anvil.acemod.org/dev/components/medical/（2026-09-25 取得）
+$schema: ace-triage/v1
+id: casualty-first-contact
+title: 負傷者を見つけたら
+description: 最初の 60 秒でやること（【要確認】骨子だけで、処置の内容は未確認）
+modTarget: [core, circulation, breathing]
+modChannel: dev
+verifiedAt: "2026-09-26"
+version: 1
+start: q-safe
+nodes:
+  q-safe:
+    type: question
+    text: 周囲は安全？
+    help: 撃たれている最中なら、処置より移動を優先する
+    choices:
+      - { label: はい, tone: yes, next: q-bleeding }
+      - { label: いいえ, tone: no, next: a-move-cover }
+
+  a-move-cover:
+    type: action
+    text: 負傷者を遮蔽物の陰へ引きずる
+    help: 【要確認】引きずる操作の方法は ACE Anvil で確かめる
+    next: q-safe
+
+  q-bleeding:
+    type: question
+    text: 大量出血がある？
+    help: 【要確認】見分け方はマニュアルの「出血の見分け方」
+    choices:
+      - { label: はい, tone: danger, next: a-stop-bleeding }
+      - { label: いいえ, tone: no, next: q-conscious }
+
+  a-stop-bleeding:
+    type: action
+    text: 止血帯・包帯で止血する
+    help: 【要確認】どこに何を使うか、手順と物品は公式ドキュメントで確かめる。止血したらもう一度出血を確かめる
+    items: [止血帯, 包帯]
+    ifMissing: { label: 止血帯も包帯も持っていない, next: a-bleeding-no-kit }
+    links:
+      - doc:hemorrhage.md#止血帯を使う
+      - doc:hemorrhage.md#包帯を巻く
+    next: q-bleeding
+
+  a-bleeding-no-kit:
+    type: action
+    text: 止血帯・包帯なしで出血に対処する
+    help: 【要確認】物品がないときにできること（仲間から受け取る、後送を優先するなど）と、このあとどこへ進むかは公式ドキュメントで確かめる
+    next: q-conscious
+
+  q-conscious:
+    type: question
+    text: 意識がある？
+    choices:
+      - { label: はい, tone: yes, next: q-pain }
+      - { label: いいえ, tone: no, next: sf-airway-breathing }
+
+  sf-airway-breathing:
+    type: subflow
+    flowId: airway-breathing
+    next: q-pulse
+
+  q-pulse:
+    type: question
+    text: 脈がある？
+    help: 【要確認】脈の確かめ方（Circulation モジュールが必要）
+    choices:
+      - { label: ある, tone: yes, next: a-wake }
+      - { label: ない（心停止）, tone: danger, next: a-cpr }
+
+  a-cpr:
+    type: action
+    text: CPR を行い、エピネフリンを使う
+    help: 【要確認】CPR の手順、エピネフリンの使いどころ、タイマーの長さ（仮に 60 秒）は公式ドキュメントで確かめる
+    items: [エピネフリン]
+    ifMissing: { next: a-cpr-no-epi }
+    timerSec: 60
+    links:
+      - doc:cardiac-arrest.md#cpr-の手順
+      - doc:cardiac-arrest.md#エピネフリンの役割
+    next: q-pulse
+
+  a-cpr-no-epi:
+    type: action
+    text: エピネフリンなしで CPR を続ける
+    help: 【要確認】エピネフリンがないときの CPR の続け方と、タイマーの長さ（仮に 60 秒）は公式ドキュメントで確かめる
+    timerSec: 60
+    links:
+      - doc:cardiac-arrest.md#cpr-の手順
+    next: q-pulse
+
+  a-wake:
+    type: action
+    text: 炭酸アンモニウムで意識の回復を試みる
+    help: 【要確認】Circulation を入れると、意識回復の役割がエピネフリンから炭酸アンモニウムに移る。版とモジュールで確かめる
+    items: [炭酸アンモニウム]
+    ifMissing: { next: a-wake-no-ammonia }
+    links:
+      - doc:cardiac-arrest.md#エピネフリンの役割
+    next: q-pain
+
+  a-wake-no-ammonia:
+    type: action
+    text: 炭酸アンモニウムなしで、意識の回復を待つ
+    help: 【要確認】物品がないときに意識が戻るまでの扱い（待つ、ほかの物品で代わりになるか）は公式ドキュメントで確かめる
+    next: q-pain
+
+  q-pain:
+    type: question
+    text: 痛みがある？
+    choices:
+      - { label: はい, tone: yes, next: a-morphine }
+      - { label: いいえ, tone: no, next: end-stable }
+
+  a-morphine:
+    type: action
+    text: モルヒネを使う（過量ならナロキソン）
+    help: 【要確認】量と間隔、過量の見分け方は公式ドキュメントで確かめる
+    items: [モルヒネ, ナロキソン]
+    # ナロキソンは過量のときだけ使うので、「持っていない」はモルヒネについて聞く
+    ifMissing: { label: モルヒネを持っていない, next: a-pain-no-morphine }
+    next: end-stable
+
+  a-pain-no-morphine:
+    type: action
+    text: モルヒネなしで痛みに対処する
+    help: 【要確認】痛み止めがないときの扱い（我慢して動けるか、後送を優先するかなど）は公式ドキュメントで確かめる
+    next: end-stable
+
+  end-stable:
+    type: end
+    outcome: ok
+    text: 安定。定期的に再評価する
+    help: 状態が変わったら、最初からやり直す

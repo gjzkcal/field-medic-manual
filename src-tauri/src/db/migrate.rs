@@ -6,6 +6,7 @@ use crate::error::AppError;
 const MIGRATIONS: &[&str] = &[
     include_str!("migrations/0001_init.sql"),
     include_str!("migrations/0002_seed_synonyms.sql"),
+    include_str!("migrations/0003_triage.sql"),
 ];
 
 /// `PRAGMA user_version` を「適用済みのマイグレーションの数」として使い、未適用分を順に適用する。
@@ -53,7 +54,7 @@ mod tests {
     #[test]
     fn applies_all_migrations() {
         let conn = test_conn();
-        assert_eq!(user_version(&conn), 2);
+        assert_eq!(user_version(&conn), 3);
         for table in [
             "documents",
             "sections",
@@ -66,12 +67,12 @@ mod tests {
             "section_tags",
             "synonym_groups",
             "synonyms",
+            "triage_flows",
         ] {
             assert!(table_exists(&conn, table), "{table} がない");
         }
         // 後のステップで作る表は、まだない
         assert!(!table_exists(&conn, "quickref_rows"));
-        assert!(!table_exists(&conn, "triage_flows"));
     }
 
     #[test]
@@ -81,7 +82,7 @@ mod tests {
         conn.execute("DELETE FROM synonym_groups WHERE id = 1", [])
             .expect("削除できる");
         migrate(&mut conn).expect("再実行できる");
-        assert_eq!(user_version(&conn), 2);
+        assert_eq!(user_version(&conn), 3);
         let count: i64 = conn
             .query_row(
                 "SELECT COUNT(*) FROM synonym_groups WHERE id = 1",

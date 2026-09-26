@@ -9,6 +9,7 @@ mod migrate;
 pub mod search;
 pub mod settings;
 mod text;
+pub mod triage;
 
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};

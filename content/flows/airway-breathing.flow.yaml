@@ -1,0 +1,96 @@
+# 【要確認】動作確認用の骨子です。処置の順番・物品は確認していません。
+# 「負傷者を見つけたら」から、意識がないときにサブフローとして呼ばれる。単独でも実行できる。
+# 出典の手がかり: ACE Anvil – Medical https://anvil.acemod.org/dev/components/medical/（2026-09-25 取得）
+$schema: ace-triage/v1
+id: airway-breathing
+title: 気道と呼吸を確かめる
+description: 意識がない負傷者の気道閉塞と気胸を確かめる（【要確認】骨子だけで、処置の内容は未確認）
+modTarget: [breathing]
+modChannel: dev
+verifiedAt: "2026-09-26"
+version: 1
+start: q-airway
+nodes:
+  q-airway:
+    type: question
+    text: 気道がふさがっている？
+    help: 【要確認】見分け方はマニュアルの「気道閉塞の見分け方」
+    choices:
+      - { label: はい, tone: danger, next: a-king-lt }
+      - { label: いいえ, tone: no, next: q-chest }
+
+  a-king-lt:
+    type: action
+    text: King LT で気道を確保する
+    help: 【要確認】使う条件と手順は公式ドキュメントで確かめる
+    items: [King LT]
+    ifMissing: { next: a-airway-no-kinglt }
+    links:
+      - doc:airway.md#king-lt-を使う
+      - doc:airway.md#気道閉塞の見分け方
+    next: q-chest
+
+  a-airway-no-kinglt:
+    type: action
+    text: King LT なしで気道を確保する
+    help: 【要確認】物品がないときにできること（回復体位にするなど）は公式ドキュメントで確かめる
+    links:
+      - doc:airway.md#回復体位
+    next: q-chest
+
+  q-chest:
+    type: question
+    text: 呼吸が苦しそう・胸部に被弾している？
+    help: 【要確認】気胸を疑う目安はマニュアルの「気胸の見分け方」
+    choices:
+      - { label: はい, tone: danger, next: a-chest-seal }
+      - { label: いいえ, tone: no, next: end-ok }
+
+  a-chest-seal:
+    type: action
+    text: チェストシールを貼る
+    help: 【要確認】貼る場所と手順は公式ドキュメントで確かめる
+    items: [チェストシール]
+    ifMissing: { next: a-no-chest-seal }
+    links:
+      - doc:breathing.md#チェストシールを使う
+    next: q-still-hard
+
+  a-no-chest-seal:
+    type: action
+    text: チェストシールなしで、呼吸の様子を見る
+    help: 【要確認】チェストシールがないときの扱い（NCD キットに進むかなど）は公式ドキュメントで確かめる
+    next: q-still-hard
+
+  q-still-hard:
+    type: question
+    text: まだ呼吸が苦しそう？
+    choices:
+      - { label: はい, tone: danger, next: a-ncd }
+      - { label: いいえ, tone: no, next: end-ok }
+
+  a-ncd:
+    type: action
+    text: NCD キットで減圧する
+    help: 【要確認】緊張性気胸のときの処置。使う条件は公式ドキュメントで確かめる
+    items: [NCD キット]
+    ifMissing: { next: end-no-ncd }
+    links:
+      - doc:breathing.md#ncd-キット
+    next: end-watch
+
+  end-no-ncd:
+    type: end
+    outcome: critical
+    text: NCD キットがなく、減圧できない
+    help: 【要確認】このときにどうするか（持っている仲間を探す、後送を優先するなど）は公式ドキュメントで確かめる
+
+  end-watch:
+    type: end
+    outcome: warn
+    text: 気胸の処置をした。呼吸の様子を見守る
+
+  end-ok:
+    type: end
+    outcome: ok
+    text: 気道と呼吸を確かめた

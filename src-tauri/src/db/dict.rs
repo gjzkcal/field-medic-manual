@@ -148,7 +148,10 @@ mod tests {
         search::search(conn, query, None, &SearchFilter::default())
             .expect("検索できる")
             .into_iter()
-            .map(|SearchHit::Section(h)| h.anchor)
+            .filter_map(|hit| match hit {
+                SearchHit::Section(h) => Some(h.anchor),
+                SearchHit::Flow(_) => None,
+            })
             .collect()
     }
 

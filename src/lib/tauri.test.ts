@@ -10,6 +10,10 @@ import {
   isAppError,
   searchQuery,
   synonymSave,
+  triageDelete,
+  triageGet,
+  triageList,
+  triageUpsert,
 } from "@/lib/tauri";
 
 afterEach(() => {
@@ -101,6 +105,33 @@ describe("データ層のラッパ", () => {
 
     await synonymSave(group);
     expect(calls).toEqual([{ cmd: "synonym_save", payload: { group } }]);
+  });
+
+  it("triage のラッパは input / id で送る", async () => {
+    const calls = recordCalls(null);
+    const input = {
+      id: "f",
+      title: "t",
+      description: null,
+      modTargets: [],
+      modChannel: null,
+      verifiedAt: null,
+      version: 1,
+      json: "{}",
+      searchText: "",
+      sourceHash: "h",
+    };
+
+    await triageUpsert(input);
+    await triageGet("f");
+    await triageDelete("f");
+    await triageList();
+    expect(calls).toEqual([
+      { cmd: "triage_upsert", payload: { input } },
+      { cmd: "triage_get", payload: { id: "f" } },
+      { cmd: "triage_delete", payload: { id: "f" } },
+      { cmd: "triage_list", payload: {} },
+    ]);
   });
 });
 

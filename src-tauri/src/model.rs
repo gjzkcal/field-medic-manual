@@ -232,12 +232,75 @@ pub struct SectionHit {
     pub matched_terms: Vec<String>,
 }
 
-/// 横断検索の結果。Step 06 / 07 でクイック表とフローの種類を足す。
+#[derive(Debug, Clone, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct FlowHit {
+    /// フローの id（スラッグ）
+    pub id: String,
+    pub title: String,
+    /// `SectionHit.snippet` と同じ形（U+E000 / U+E001 で強調）。ノードの文から作る
+    pub snippet: String,
+    /// 大きいほど上位。LIKE の当たり方で付けるので、節の score とは比べられない
+    pub score: f64,
+    /// 入力した語そのものは含まず、同義語だけでヒットした
+    pub synonym_only: bool,
+}
+
+/// 横断検索の結果。Step 06 でクイック表の種類を足す。
 #[derive(Debug, Clone, Serialize, TS)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 #[ts(export)]
 pub enum SearchHit {
     Section(SectionHit),
+    Flow(FlowHit),
+}
+
+/// `triage_upsert` の入力。一覧・絞り込み・検索に使う値は、TS がフローの JSON から写して渡す
+/// （Rust がフローの形を解釈せずに済むようにするため。形の検査は TS の zod と validate.ts で行う）。
+#[derive(Debug, Clone, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct TriageUpsertInput {
+    /// スラッグ。同じ id のフローがあれば置き換える
+    pub id: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub mod_targets: Vec<ModTarget>,
+    pub mod_channel: Option<ModChannel>,
+    /// YYYY-MM-DD
+    pub verified_at: Option<String>,
+    pub version: u32,
+    /// フロー全体の JSON（triage-format.md）
+    pub json: String,
+    /// ノードの文などを改行でつないだもの（検索用）
+    pub search_text: String,
+    pub source_hash: String,
+}
+
+#[derive(Debug, Clone, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct TriageSummary {
+    pub id: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub mod_targets: Vec<ModTarget>,
+    pub mod_channel: Option<ModChannel>,
+    pub verified_at: Option<String>,
+    pub version: u32,
+    /// 起動時の同期で「変更なし」を判定するために一覧でも返す
+    pub source_hash: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct TriageDetail {
+    #[serde(flatten)]
+    pub summary: TriageSummary,
+    pub json: String,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]

@@ -197,14 +197,14 @@ fn validate(input: &DocUpsertInput) -> Result<DocUpsertInput, AppError> {
     Ok(input)
 }
 
-fn non_empty(value: Option<&str>) -> Option<String> {
+pub(super) fn non_empty(value: Option<&str>) -> Option<String> {
     value
         .map(str::trim)
         .filter(|v| !v.is_empty())
         .map(str::to_owned)
 }
 
-fn is_iso_date(s: &str) -> bool {
+pub(super) fn is_iso_date(s: &str) -> bool {
     let b = s.as_bytes();
     b.len() == 10
         && b.iter().enumerate().all(|(i, c)| match i {

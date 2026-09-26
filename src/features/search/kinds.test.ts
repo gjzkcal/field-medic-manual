@@ -34,3 +34,20 @@ describe("searchKind（section）", () => {
     expect(hitKey(HIT)).toBe("section:7");
   });
 });
+
+describe("searchKind（flow）", () => {
+  const FLOW_HIT: SearchHit = {
+    kind: "flow",
+    id: "casualty-first-contact",
+    title: "負傷者を見つけたら",
+    snippet: "",
+    score: 3,
+    synonymOnly: false,
+  };
+
+  it("開く先はフローの実行画面", () => {
+    expect(searchKind(FLOW_HIT.kind).href(FLOW_HIT)).toBe("/triage/casualty-first-contact");
+    expect(searchKind(FLOW_HIT.kind).context(FLOW_HIT)).toBe("トリアージ");
+    expect(hitKey(FLOW_HIT)).toBe("flow:casualty-first-contact");
+  });
+});

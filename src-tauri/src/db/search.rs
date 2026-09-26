@@ -1,4 +1,4 @@
-//! セクションの全文検索。仕様は dev-docs/reference/data-model.md §3。
+//! セクションの全文検索と、フローの検索。仕様は dev-docs/reference/data-model.md §3。
 
 use rusqlite::types::Value;
 use rusqlite::{Connection, params_from_iter};
@@ -8,7 +8,7 @@ use super::text::{
     normalize_tags, split_terms,
 };
 use crate::error::AppError;
-use crate::model::{SearchFilter, SearchHit, SectionHit};
+use crate::model::{FlowHit, SearchFilter, SearchHit, SectionHit};
 
 pub const DEFAULT_LIMIT: u32 = 20;
 pub const MAX_LIMIT: u32 = 100;
@@ -60,7 +60,10 @@ struct Candidate {
     fts: Option<(String, f64)>,
 }
 
-/// セクションを検索する。
+/// セクションとフローを検索する。
+///
+/// 並びは「タイトルに当たったフロー → 節 → ノードの文だけに当たったフロー」。
+/// フローの LIKE と節の bm25 は点数を比べられないので、当たった場所で段を分ける（data-model.md §3）。
 ///
 /// # Errors
 ///
@@ -134,8 +137,95 @@ pub fn search(
             .cmp(&b.synonym_only)
             .then(b.score.total_cmp(&a.score))
     });
-    hits.truncate(usize::try_from(limit).unwrap_or(usize::MAX));
-    Ok(hits.into_iter().map(SearchHit::Section).collect())
+    let limit = usize::try_from(limit).unwrap_or(usize::MAX);
+    hits.truncate(limit);
+
+    let (title_flows, body_flows): (Vec<_>, Vec<_>) =
+        search_flows(conn, &groups, &all_alternatives, filter, limit)?
+            .into_iter()
+            .partition(|(title_match, _)| *title_match);
+    let mut out: Vec<SearchHit> = title_flows
+        .into_iter()
+        .map(|(_, hit)| SearchHit::Flow(hit))
+        .collect();
+    out.extend(hits.into_iter().map(SearchHit::Section));
+    out.extend(body_flows.into_iter().map(|(_, hit)| SearchHit::Flow(hit)));
+    out.truncate(limit);
+    Ok(out)
+}
+
+/// フローをタイトルとノードの文（`search_text`）の LIKE で探す。フローは数本なので FTS は使わない。
+/// 返す bool は、すべての語がタイトルに当たったか。
+fn search_flows(
+    conn: &Connection,
+    groups: &[TermGroup],
+    alternatives: &[String],
+    filter: &SearchFilter,
+    limit: usize,
+) -> Result<Vec<(bool, FlowHit)>, AppError> {
+    // フローにタグはないので、タグで絞り込んでいるときは出さない
+    if !normalize_tags(filter.tags.as_deref().unwrap_or_default()).is_empty() {
+        return Ok(Vec::new());
+    }
+    let mut params = Vec::new();
+    let mut conditions: Vec<String> = groups
+        .iter()
+        .map(|g| like_condition(g, &["f.title", "f.search_text"], &mut params))
+        .collect();
+    if let Some(targets) = filter.mod_targets.as_ref().filter(|t| !t.is_empty()) {
+        let placeholders = vec!["?"; targets.len()].join(", ");
+        conditions.push(format!(
+            "EXISTS (SELECT 1 FROM json_each(f.mod_targets) WHERE value IN ({placeholders}))"
+        ));
+        params.extend(targets.iter().map(|t| Value::Text(t.as_str().to_owned())));
+    }
+    if let Some(channel) = filter.mod_channel {
+        conditions.push("(f.mod_channel = ? OR f.mod_channel IS NULL)".to_owned());
+        params.push(Value::Text(channel.as_str().to_owned()));
+    }
+    let sql = format!(
+        "SELECT f.id, f.title, f.search_text FROM triage_flows f
+         WHERE {} ORDER BY f.title COLLATE NOCASE, f.id",
+        conditions.join(" AND ")
+    );
+    let mut stmt = conn.prepare(&sql)?;
+    let rows = stmt.query_map(params_from_iter(params), |r| {
+        Ok((
+            r.get::<_, String>(0)?,
+            r.get::<_, String>(1)?,
+            r.get::<_, String>(2)?,
+        ))
+    })?;
+    let mut flows = Vec::new();
+    for row in rows {
+        let (id, title, search_text) = row?;
+        let title_match = groups.iter().all(|g| g.found_in(&title));
+        let synonym_only = groups
+            .iter()
+            .any(|g| !contains_ci(&title, &g.original) && !contains_ci(&search_text, &g.original));
+        let base_score = if title_match { 3.0 } else { 1.0 };
+        flows.push((
+            title_match,
+            FlowHit {
+                id,
+                snippet: make_snippet(&search_text, alternatives, SNIPPET_CONTEXT_CHARS),
+                title,
+                score: if synonym_only {
+                    base_score * SYNONYM_PENALTY
+                } else {
+                    base_score
+                },
+                synonym_only,
+            },
+        ));
+    }
+    flows.sort_by(|(_, a), (_, b)| {
+        a.synonym_only
+            .cmp(&b.synonym_only)
+            .then(b.score.total_cmp(&a.score))
+    });
+    flows.truncate(limit);
+    Ok(flows)
 }
 
 /// LIKE には関連度がないので、どこに当たったかで点を付ける（タイトル一致を優先する仕様のため）。
@@ -329,7 +419,7 @@ mod tests {
     use super::*;
     use crate::db::fixtures::{self, section};
     use crate::db::text::{MARK_END, MARK_START};
-    use crate::db::{docs, test_conn};
+    use crate::db::{docs, test_conn, triage};
     use crate::model::{ModChannel, ModTarget};
 
     fn seeded() -> Connection {
@@ -352,12 +442,109 @@ mod tests {
         search(conn, query, None, filter)
             .unwrap_or_else(|e| panic!("「{query}」で検索できない: {e}"))
             .into_iter()
-            .map(|SearchHit::Section(h)| h)
+            .filter_map(|hit| match hit {
+                SearchHit::Section(h) => Some(h),
+                SearchHit::Flow(_) => None,
+            })
             .collect()
     }
 
     fn anchors(hits: &[SectionHit]) -> Vec<&str> {
         hits.iter().map(|h| h.anchor.as_str()).collect()
+    }
+
+    fn flow_seeded() -> Connection {
+        let conn = seeded();
+        for flow in [
+            triage::fixtures::flow(
+                "casualty-first-contact",
+                "負傷者を見つけたら",
+                "最初の 60 秒でやること\n周囲は安全？\n止血帯で止血する",
+            ),
+            triage::fixtures::dev_flow("cpr-flow", "心停止の対応", "CPR を始める"),
+        ] {
+            triage::upsert(&conn, &flow).expect("フローを保存できる");
+        }
+        conn
+    }
+
+    /// 結果の並びを「種類:id または anchor」で返す。
+    fn kinds(conn: &Connection, query: &str, filter: &SearchFilter) -> Vec<String> {
+        search(conn, query, None, filter)
+            .unwrap_or_else(|e| panic!("「{query}」で検索できない: {e}"))
+            .into_iter()
+            .map(|hit| match hit {
+                SearchHit::Section(h) => format!("section:{}", h.anchor),
+                SearchHit::Flow(h) => format!("flow:{}", h.id),
+            })
+            .collect()
+    }
+
+    fn first_flow(conn: &Connection, query: &str) -> FlowHit {
+        search(conn, query, None, &SearchFilter::default())
+            .expect("検索できる")
+            .into_iter()
+            .find_map(|h| match h {
+                SearchHit::Flow(f) => Some(f),
+                SearchHit::Section(_) => None,
+            })
+            .unwrap_or_else(|| panic!("「{query}」でフローが当たらない"))
+    }
+
+    #[test]
+    fn flow_title_match_comes_first() {
+        let conn = flow_seeded();
+        assert_eq!(
+            kinds(&conn, "負傷者", &SearchFilter::default()),
+            ["flow:casualty-first-contact"]
+        );
+        let found = kinds(&conn, "心停止", &SearchFilter::default());
+        assert_eq!(found[0], "flow:cpr-flow", "{found:?}");
+        assert!(found.contains(&"section:cpr-steps".to_owned()));
+    }
+
+    #[test]
+    fn flow_body_match_comes_after_sections() {
+        let conn = flow_seeded();
+        assert_eq!(
+            kinds(&conn, "止血帯", &SearchFilter::default()),
+            ["section:use-tourniquet", "flow:casualty-first-contact"]
+        );
+        let hit = first_flow(&conn, "止血帯");
+        assert!(hit.snippet.contains(MARK_START), "{}", hit.snippet);
+        assert!(!hit.synonym_only);
+    }
+
+    #[test]
+    fn flows_use_synonyms() {
+        let conn = flow_seeded();
+        let hit = first_flow(&conn, "TQ");
+        assert_eq!(hit.id, "casualty-first-contact");
+        assert!(hit.synonym_only);
+    }
+
+    #[test]
+    fn flows_follow_filters() {
+        let conn = flow_seeded();
+        let release = SearchFilter {
+            mod_channel: Some(ModChannel::Release),
+            ..SearchFilter::default()
+        };
+        assert!(!kinds(&conn, "心停止", &release).contains(&"flow:cpr-flow".to_owned()));
+        let breathing = SearchFilter {
+            mod_targets: Some(vec![ModTarget::Breathing]),
+            ..SearchFilter::default()
+        };
+        assert_eq!(kinds(&conn, "心停止", &breathing), ["flow:cpr-flow"]);
+        let tagged = SearchFilter {
+            tags: Some(vec!["止血帯".to_owned()]),
+            ..SearchFilter::default()
+        };
+        assert_eq!(
+            kinds(&conn, "止血帯", &tagged),
+            ["section:use-tourniquet"],
+            "タグで絞るとフローは出ない"
+        );
     }
 
     #[test]

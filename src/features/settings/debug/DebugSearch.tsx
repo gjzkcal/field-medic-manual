@@ -3,6 +3,7 @@ import { useEffect, useState, type JSX } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { searchKind } from "@/features/search/kinds";
 import { SnippetText } from "@/features/search/SnippetText";
 import type { ModChannel } from "@/lib/bindings/ModChannel";
 import type { ModTarget } from "@/lib/bindings/ModTarget";
@@ -163,7 +164,9 @@ function SearchResults({ state }: { state: SearchState }): JSX.Element | null {
               className="flex flex-col gap-1 rounded-lg border px-3 py-2"
             >
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs text-muted-foreground">{hit.documentTitle} ›</span>
+                <span className="text-xs text-muted-foreground">
+                  {searchKind(hit.kind).context(hit)} ›
+                </span>
                 <span className="font-medium">{hit.title}</span>
                 {hit.synonymOnly && <Badge variant="secondary">同義語</Badge>}
                 <span className="ml-auto text-xs text-muted-foreground tabular-nums">

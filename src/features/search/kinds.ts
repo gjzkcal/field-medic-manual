@@ -1,6 +1,6 @@
-// 検索結果の種類ごとの表示と遷移の登録表。Step 06 / 07 でクイック表（quickref）とフロー（flow）を足す。
+// 検索結果の種類ごとの表示と遷移の登録表。Step 06 でクイック表（quickref）を足す。
 // SearchHit["kind"] を添字にしたマップ型なので、Rust 側で種類が増えたのに登録を忘れるとコンパイルエラーになる。
-import { FileTextIcon, type LucideIcon } from "lucide-react";
+import { FileTextIcon, WorkflowIcon, type LucideIcon } from "lucide-react";
 
 import { docHref } from "@/features/library/link";
 import type { SearchHit } from "@/lib/bindings/SearchHit";
@@ -27,6 +27,13 @@ const SEARCH_KINDS: { [K in HitKind]: SearchKind<HitOf<K>> } = {
     context: (hit) => hit.documentTitle,
     badge: (hit) => (hit.synonymOnly ? "同義語" : null),
     href: (hit) => docHref(hit.documentId, hit.anchor, hit.matchedTerms),
+  },
+  flow: {
+    label: "トリアージ",
+    icon: WorkflowIcon,
+    context: () => "トリアージ",
+    badge: (hit) => (hit.synonymOnly ? "同義語" : null),
+    href: (hit) => `/triage/${encodeURIComponent(hit.id)}`,
   },
 };
 

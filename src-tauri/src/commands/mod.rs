@@ -4,3 +4,4 @@ pub mod dict;
 pub mod docs;
 pub mod search;
 pub mod settings;
+pub mod triage;
