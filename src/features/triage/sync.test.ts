@@ -132,7 +132,7 @@ describe("syncFlows", () => {
   it("YAML も読む", async () => {
     const db = fakeDb([]);
     const yaml = [
-      "$schema: ace-triage/v1",
+      "$schema: ./triage-flow.v1.schema.json",
       "id: yaml-flow",
       "title: YAML のフロー",
       "verifiedAt: 2026-09-26",

@@ -13,6 +13,11 @@ const FLOW_LINK = /^flow:([a-z0-9]+(?:-[a-z0-9]+)*)$/;
 const QUICKREF_LINK = /^quickref:(\S+)$/;
 const EXTERNAL_LINK = /^https:\/\/\S+$/;
 
+/** 上の 4 つの書式をまとめた正規表現の文字列。JSON Schema の pattern にしてエディタでも書式を確かめる */
+export const FLOW_LINK_PATTERN = `^(?:${[DOC_LINK, FLOW_LINK, QUICKREF_LINK, EXTERNAL_LINK]
+  .map((r) => r.source.slice(1, -1))
+  .join("|")})$`;
+
 /** 書式に合わなければ null。 */
 export function parseFlowLink(text: string): FlowLink | null {
   const doc = DOC_LINK.exec(text);

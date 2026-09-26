@@ -263,7 +263,7 @@ describe("validateFlows", () => {
 describe("parseFlow（形の検査）", () => {
   it("正しい形を読む", () => {
     const result = parseFlow({
-      $schema: "ace-triage/v1",
+      $schema: "./triage-flow.v1.schema.json",
       id: "a",
       title: "t",
       modTarget: ["core", "circulation"],
@@ -280,7 +280,7 @@ describe("parseFlow（形の検査）", () => {
 
   it("違う形は、どこが違うかを返す", () => {
     const result = parseFlow({
-      $schema: "ace-triage/v1",
+      $schema: "./triage-flow.v1.schema.json",
       id: "a",
       title: "t",
       modTarget: ["unknown"],

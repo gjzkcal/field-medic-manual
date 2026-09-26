@@ -1,7 +1,8 @@
 # 【要確認】動作確認用の骨子です。処置の順番・物品は確認していません。
 # 「負傷者を見つけたら」から、意識がないときにサブフローとして呼ばれる。単独でも実行できる。
 # 出典の手がかり: ACE Anvil – Medical https://anvil.acemod.org/dev/components/medical/（2026-09-25 取得）
-$schema: ace-triage/v1
+# 次の行はフローの形式（JSON Schema）。VS Code で開くと、キーの補完と書き間違いの表示が効く
+$schema: ./triage-flow.v1.schema.json
 id: airway-breathing
 title: 気道と呼吸を確かめる
 description: 意識がない負傷者の気道閉塞と気胸を確かめる（【要確認】骨子だけで、処置の内容は未確認）
