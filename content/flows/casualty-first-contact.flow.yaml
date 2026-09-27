@@ -1,136 +1,342 @@
-# 【要確認】動作確認用の骨子です。処置の順番・物品・タイマーの長さは確認していません。
-# 出典の手がかり: ACE Anvil – Medical https://anvil.acemod.org/dev/components/medical/（2026-09-25 取得）
+# 負傷者を見つけたときの流れ。気道と呼吸はサブフロー（airway-breathing）で確かめる。
+# 各ノードの説明は ACE Medical Dev 1.5.36 の仕様（ソースと実機で確かめた事実）に基づく。
+# 処置の順番と選び方は作者の方針（普段の組み合わせ Core + Circulation + Breathing での遊び方）。
 # 次の行はフローの形式（JSON Schema）。VS Code で開くと、キーの補完と書き間違いの表示が効く
 $schema: ./triage-flow.v1.schema.json
 id: casualty-first-contact
 title: 負傷者を見つけたら
-description: 最初の 60 秒でやること（【要確認】骨子だけで、処置の内容は未確認）
+description: 出血を止め、脈で分けて、回復体位と覚醒か、気道確保・Epinephrine・CPR へ進む（Core + Circulation + Breathing 向け）
 modTarget: [core, circulation, breathing]
 modChannel: dev
-verifiedAt: "2026-09-26"
-version: 1
+verifiedAt: "2026-09-28"
+version: 3
 start: q-safe
 nodes:
   q-safe:
     type: question
     text: 周囲は安全？
-    help: 撃たれている最中なら、処置より移動を優先する
+    help: 意識を失ってから 1 秒たった後に致命打を受けると、Second Chance の判定なしで即死する
     choices:
       - { label: はい, tone: yes, next: q-bleeding }
-      - { label: いいえ, tone: no, next: a-move-cover }
+      - { label: いいえ（撃たれている）, tone: no, next: q-class-under-fire }
+
+  q-class-under-fire:
+    type: question
+    text: 失血は Class III 以上？
+    help: >-
+      Circulation を入れていれば、診察（医療ラジアルメニューの「診察する」）とインベントリに「Class I〜IV hemorrhage」と出る。
+      Class III は血液 40% 以下、Class IV は 20% 以下
+    choices:
+      - { label: Class III 以上, tone: danger, next: a-phenyl-saline }
+      - { label: Class II 以下, tone: no, next: a-move-cover }
+      - { label: Circulation を入れていない, tone: neutral, next: a-move-cover }
+
+  a-phenyl-saline:
+    type: action
+    text: フェニレフリンと生理食塩水を入れてから移動する
+    help: >-
+      フェニレフリン（Phenylephrine）は出血だけを遅くする（1 本で最大約 0.69 倍、約 3 分）。出血は止まらない。
+      生理食塩水は 1 袋で血液の 25%（750 ml）を 90 秒かけて入れる。付けている間は次の袋を付けられない。
+      注意: 激痛の患者は、フェニレフリン約 1 本で心停止しうる（痛みがなければ約 2.9 本までは心停止しない）
+    items: [フェニレフリン（Phenylephrine）, 生理食塩水]
+    ifMissing: { label: どちらも持っていない, next: a-move-cover }
+    links:
+      - doc:pain-medications.md#フェニレフリン
+      - doc:pain-medications.md#過量投与
+      - doc:hemorrhage.md#生理食塩水を使う
+    next: a-move-cover
 
   a-move-cover:
     type: action
-    text: 負傷者を遮蔽物の陰へ引きずる
-    help: 【要確認】引きずる操作の方法は ACE Anvil で確かめる
+    text: 負傷者を遮蔽物の陰へ運ぶ
+    help: >-
+      腰の「引きずって運ぶ（Drag）」（1 秒、しゃがんで後ろ向きにだけ動ける）か、「持ちあげて運ぶ（Carry）」（3 秒、立ったまま）。
+      移動は半分の速さになる。離すのは Ctrl+X。武器を選ぶと手を離す
+    links:
+      - doc:items-and-timing.md#負傷者を運ぶ
+      - doc:death-second-chance.md#倒れた後の追い打ち
     next: q-safe
 
   q-bleeding:
     type: question
-    text: 大量出血がある？
-    help: 【要確認】見分け方はマニュアルの「出血の見分け方」
+    text: 出血している？
+    help: >-
+      診察に出血が出る。出血の程度は 3 段階（10 ml/s 未満、10〜20、20 以上）で表示される。
+      自分が出血していると、画面の縁が赤く脈打つ
     choices:
-      - { label: はい, tone: danger, next: a-stop-bleeding }
+      - { label: はい, tone: danger, next: a-bandage }
       - { label: いいえ, tone: no, next: q-conscious }
 
-  a-stop-bleeding:
+  a-bandage:
     type: action
-    text: 止血帯・包帯で止血する
-    help: 【要確認】どこに何を使うか、手順と物品は公式ドキュメントで確かめる。止血したらもう一度出血を確かめる
-    items: [止血帯, 包帯]
-    ifMissing: { label: 止血帯も包帯も持っていない, next: a-bleeding-no-kit }
+    text: 包帯を巻く
+    help: >-
+      包帯は 1 本で、巻いた部位のグループ全体の出血を消す（例: 頭と首、腹と腰、片腕全体）。
+      出血が 1 つもなくなると、10 秒後から血液が回復し始める。
+      止血帯（「止血帯を使う」）は腕・脚だけに巻け、出血はほぼ止まるが、包帯を巻くまで血液は回復しない
+    items: [包帯]
+    ifMissing: { next: a-bleeding-no-kit }
     links:
-      - doc:hemorrhage.md#止血帯を使う
       - doc:hemorrhage.md#包帯を巻く
+      - doc:hemorrhage.md#止血帯を使う
     next: q-bleeding
 
   a-bleeding-no-kit:
     type: action
-    text: 止血帯・包帯なしで出血に対処する
-    help: 【要確認】物品がないときにできること（仲間から受け取る、後送を優先するなど）と、このあとどこへ進むかは公式ドキュメントで確かめる
-    next: q-conscious
+    text: 医療キットの包帯を使うか、仲間から受け取る
+    help: >-
+      医療キットには包帯が 8 個入っている。医療キットで部位を治しても、出血は止まらず血液も戻らない。
+      止血帯があれば、腕・脚の出血はほぼ止められる
+    links:
+      - doc:items-and-timing.md#医療キット
+    next: q-bleeding
 
   q-conscious:
     type: question
     text: 意識がある？
+    help: >-
+      Circulation を入れていれば、状態が Critical 以上になると強制的に意識を失う。
+      Circulation なしでは、血液 33.3% 以下でも意識を失う
     choices:
       - { label: はい, tone: yes, next: q-pain }
-      - { label: いいえ, tone: no, next: sf-airway-breathing }
-
-  sf-airway-breathing:
-    type: subflow
-    flowId: airway-breathing
-    next: q-pulse
+      - { label: いいえ, tone: no, next: q-pulse }
 
   q-pulse:
     type: question
     text: 脈がある？
-    help: 【要確認】脈の確かめ方（Circulation モジュールが必要）
+    help: >-
+      「Check pulse」（頭・胸・腕・脚。3 秒、意識不明の相手だけ）か、医療ラジアルメニューの診察で確かめる。
+      心停止中は「You find a heart rate of 0」と出る。心停止した本人の画面はほぼ真っ黒になる
     choices:
-      - { label: ある, tone: yes, next: a-wake }
-      - { label: ない（心停止）, tone: danger, next: a-cpr }
+      - { label: ある, tone: yes, next: a-recovery }
+      - { label: ない（心停止）, tone: danger, next: a-airway }
+      - { label: Circulation を入れていない, tone: neutral, next: a-epi-core }
 
-  a-cpr:
+  a-recovery:
     type: action
-    text: CPR を行い、エピネフリンを使う
-    help: 【要確認】CPR の手順、エピネフリンの使いどころ、タイマーの長さ（仮に 60 秒）は公式ドキュメントで確かめる
-    items: [エピネフリン]
-    ifMissing: { next: a-cpr-no-epi }
-    timerSec: 60
+    text: 回復体位にする
+    help: >-
+      腰の「左向きに寝かせる」か「右向きに寝かせる」（1 秒）。舌根沈下が解除され、以後の嘔吐も起きない。
+      注意: 既に嘔吐で塞がっている気道（頭に「Clear vomit」が出る）と、緊張性気胸は回復体位では解けない。次のバイタルの確認で分かる
     links:
-      - doc:cardiac-arrest.md#cpr-の手順
-      - doc:cardiac-arrest.md#エピネフリンの役割
-    next: q-pulse
+      - doc:airway.md#回復体位
+      - doc:items-and-timing.md#体位を変える
+    next: a-vitals
 
-  a-cpr-no-epi:
+  a-vitals:
     type: action
-    text: エピネフリンなしで CPR を続ける
-    help: 【要確認】エピネフリンがないときの CPR の続け方と、タイマーの長さ（仮に 60 秒）は公式ドキュメントで確かめる
-    timerSec: 60
+    text: バイタルと失血を確かめる
+    help: >-
+      医療ラジアルメニューの「診察する」から、Check pulse・Check blood pressure・Check respiratory rate・Check SpO2（照準の先の相手に、待ち時間なし）。
+      失血は診察の「Class I〜IV hemorrhage」。正常値は心拍 80、血圧 119/79、呼吸数 14、SpO2 97
     links:
-      - doc:cardiac-arrest.md#cpr-の手順
-    next: q-pulse
+      - doc:vitals.md#バイタルを確かめる操作
+      - doc:vitals.md#正常値と表示
+    next: q-vitals
+
+  q-vitals:
+    type: question
+    text: 当てはまるものは？
+    help: >-
+      炭酸アンモニウムは状態が Stable のときだけ効く。Stable でなくなる主な条件は、血液 70% 以下（Class II 以上）、SpO2 85% 未満、心拍 40 未満
+    choices:
+      - { label: 失血が Class II 以上, tone: danger, next: a-saline }
+      - { label: SpO2 が低い・呼吸数が 0 か速い, tone: danger, next: sf-airway-breathing }
+      - { label: どちらでもない, tone: yes, next: a-wake }
+
+  a-saline:
+    type: action
+    text: 生理食塩水を入れる
+    help: >-
+      1 袋で血液の 25%（750 ml）を 90 秒かけて入れる（例: 38% → 63%、もう 1 袋で 88%）。付けている間は次の袋を付けられない。
+      出血が残っていると追いつかないことがある。タイマーは 1 袋が入る時間（90 秒）
+    items: [生理食塩水]
+    ifMissing: { next: a-no-saline }
+    timerSec: 90
+    links:
+      - doc:hemorrhage.md#生理食塩水を使う
+    next: a-vitals
+
+  a-no-saline:
+    type: action
+    text: 医療キットか仲間から生理食塩水を受け取る
+    help: >-
+      医療キットには生理食塩水が 3 袋入っている。
+      なければ、出血が止まっていれば 10 秒後から毎分 4.4% ずつ血液が戻る（40% → 70% に約 7 分）
+    links:
+      - doc:hemorrhage.md#血液の回復
+    next: a-vitals
+
+  sf-airway-breathing:
+    type: subflow
+    flowId: airway-breathing
+    next: a-vitals
 
   a-wake:
     type: action
-    text: 炭酸アンモニウムで意識の回復を試みる
-    help: 【要確認】Circulation を入れると、意識回復の役割がエピネフリンから炭酸アンモニウムに移る。版とモジュールで確かめる
-    items: [炭酸アンモニウム]
+    text: 炭酸アンモニウム（Ammonium Carbonate）で起こす
+    help: >-
+      頭の「Hold under nose」で使う。Stable の患者にだけ効き、それ以外では何も起きないが物品は減る。
+      蘇生していない患者なら、脳が 75% 以上で必ず成功し、約 3 秒で目覚める。蘇生した後の患者は、脳の状態で成功率が下がる
+    items: [炭酸アンモニウム（Ammonium Carbonate）]
     ifMissing: { next: a-wake-no-ammonia }
     links:
-      - doc:cardiac-arrest.md#エピネフリンの役割
+      - doc:consciousness.md#炭酸アンモニウムで起こす
+      - doc:vitals.md#5-つの状態と閾値
     next: q-pain
 
   a-wake-no-ammonia:
     type: action
-    text: 炭酸アンモニウムなしで、意識の回復を待つ
-    help: 【要確認】物品がないときに意識が戻るまでの扱い（待つ、ほかの物品で代わりになるか）は公式ドキュメントで確かめる
+    text: 医療キットか仲間から炭酸アンモニウムを受け取る
+    help: >-
+      医療キットには炭酸アンモニウムが 8 個入っている（Circulation）。
+      なければ、Stable なら意識は自然に戻る（蘇生していなければ約 60〜70 秒。蘇生した後は遅く、脳 83% で約 113 秒）
+    links:
+      - doc:consciousness.md#意識が戻る条件と時間
+    next: q-pain
+
+  a-airway:
+    type: action
+    text: 仰向けにして、King LT で気道を確保する
+    help: >-
+      CPR は仰向けでないとできない（横向きなら腰の「仰向けに寝かせる」、1 秒）。
+      King LT（頭の「Insert King LT」）は、入れた時点で舌根沈下と嘔吐の両方を解除し、以後どちらも起きない。
+      気道が塞がったままでは SpO2 が 65% を超えず、CPR で蘇生しない
+    items: [King LT]
+    ifMissing: { next: a-airway-no-kinglt }
+    links:
+      - doc:airway.md#king-lt-を使う
+      - doc:cardiac-arrest.md#breathing-を入れているとき
+    next: a-oxygen
+
+  a-airway-no-kinglt:
+    type: action
+    text: 嘔吐物の除去とあご先挙上で気道を開ける
+    help: >-
+      頭に「Clear vomit」が出ていれば嘔吐物を除去する（1 秒）。続けてあご先挙上（Lift chin、1 秒）で舌根沈下を解除する。
+      仰向けに戻すたびに 15% で舌根沈下し直す。King LT は初期装備に無く、補給で手に入れる
+    links:
+      - doc:airway.md#嘔吐物の除去
+      - doc:airway.md#あご先挙上
+    next: a-oxygen
+
+  a-oxygen:
+    type: action
+    text: 酸素マスクを付ける
+    help: >-
+      頭の「Put oxygen mask on」（3.3 秒）。気道が開いている間、心停止中・CPR 中にも最低限の換気を保つ。
+      付けていると CPR 中の SpO2 が 82% で安定する（付けていないと約 74〜80% を頂点にゆっくり下がる）。SpO2 が 65% 未満の間は蘇生の判定が必ず失敗する。
+      消費せず口元に残る。気道が塞がっているときと緊張性気胸のときは効かない。初期装備には無く、補給で手に入れる
+    items: [酸素マスク（Oxygen Mask）]
+    ifMissing: { next: a-epi }
+    links:
+      - doc:breathing.md#酸素マスクを使う
+    next: a-epi
+
+  a-epi:
+    type: action
+    text: Epinephrine を 1 本打つ
+    help: >-
+      蘇生の判定の頻度を上げる（打って約 23 秒で最大 1.43 倍、約 164 秒で体内から消える）。1 回の成功率は変えない。
+      このあと蘇生しないまま約 3 分たったら、もう 1 本打つ。同時に 2 本以上は打たない（一度に約 4.4 本、激痛なら約 2.4 本で心停止に当たる過量になる）
+    items: [Epinephrine]
+    ifMissing: { next: a-cpr }
+    links:
+      - doc:cardiac-arrest.md#エピネフリンの役割
+      - doc:pain-medications.md#過量投与
+    next: a-cpr
+
+  a-cpr:
+    type: action
+    text: CPR を行う（Perform CPR）
+    help: >-
+      胸に対して行う。CPR をした時間 22 秒ごとに蘇生の判定があり、成功率は血液量で決まる（70% 以上で 40%、20% 以下で 0%）。
+      CPR 中は脳が損傷しない。蘇生しても CPR は自動では止まらないので、脈を確かめる。
+      生理食塩水は CPR の合間に付ける（付ければ 90 秒かけて自動で入る）。タイマーは判定の間隔（22 秒）
+    timerSec: 22
+    links:
+      - doc:cardiac-arrest.md#cpr-を行う
+      - doc:cardiac-arrest.md#蘇生の判定
+    next: q-rosc
+
+  q-rosc:
+    type: question
+    text: 脈が戻った？
+    help: 蘇生した直後は状態が Critical で、意識は戻らない。血液が十分なら約 2 秒で Stable になる
+    choices:
+      - { label: 戻った, tone: yes, next: a-recovery }
+      - { label: 戻らない, tone: danger, next: a-cpr }
+      - { label: 戻らない・失血が Class II 以上, tone: danger, next: a-saline-cpr }
+      - { label: 戻らないまま約 3 分たった, tone: danger, next: a-epi }
+
+  a-saline-cpr:
+    type: action
+    text: 生理食塩水を付けて、CPR を続ける
+    help: 血液が戻るほど蘇生の成功率が上がる（血液 20〜70% の間は直線で 0〜40%）。1 袋で血液の 25% が 90 秒かけて入る
+    items: [生理食塩水]
+    ifMissing: { next: a-cpr }
+    links:
+      - doc:cardiac-arrest.md#蘇生までの時間
+    next: a-cpr
+
+  a-epi-core:
+    type: action
+    text: エピネフリンで意識の回復を早める（Circulation なし）
+    help: >-
+      使える条件: 意識不明、エピネフリンの効果がまだない、出血していない（止血帯だけで止めた傷も出血に数える）、全体の健康度 0.33 以上（Hitzones を入れていれば、この条件はない）。
+      Second Chance の後でも、打ってから約 19 秒で目覚める。血液が 33.3% 以下なら目覚めない
+    items: [エピネフリン]
+    ifMissing: { next: a-wake-core-no-epi }
+    links:
+      - doc:consciousness.md#エピネフリンで起こす
+    next: q-pain
+
+  a-wake-core-no-epi:
+    type: action
+    text: 医療キットか仲間からエピネフリンを受け取る（Circulation なし）
+    help: >-
+      医療キットにはエピネフリンが 8 本入っている。
+      なければ、意識は最後の被弾から 10 秒後に回復し始め、0 からなら約 73 秒で目覚める。
+      Second Chance の後は自然には回復しない（`m_fSecondChanceResilienceRegenScale` の既定 0 のとき）。血液が 33.3% 以下の間も回復しない
+    links:
+      - doc:consciousness.md#意識が戻る条件と時間
+      - doc:death-second-chance.md#second-chance-とは
     next: q-pain
 
   q-pain:
     type: question
-    text: 痛みがある？
+    text: 意識があって、痛みがある？
+    help: >-
+      痛みがあると、白い点滅の画面効果が出る。Circulation を入れていれば、痛みで心拍数が上がる（激痛で約 130）。
+      痛みそのものは命に関わらない
     choices:
       - { label: はい, tone: yes, next: a-morphine }
       - { label: いいえ, tone: no, next: end-stable }
 
   a-morphine:
     type: action
-    text: モルヒネを使う（過量ならナロキソン）
-    help: 【要確認】量と間隔、過量の見分け方は公式ドキュメントで確かめる
-    items: [モルヒネ, ナロキソン]
-    # ナロキソンは過量のときだけ使うので、「持っていない」はモルヒネについて聞く
-    ifMissing: { label: モルヒネを持っていない, next: a-pain-no-morphine }
+    text: モルヒネ注射器を 1 本打つ
+    help: >-
+      フェニレフリンを使ったときは、止血が済んでから打つ。
+      Circulation あり: 約 30 秒で痛みが消えるが、痛み自体は残る。約 15 分で効き目が半分になり、激痛なら痛みが戻るので、戻ったら 1 本足す。同時に 2 本以上は打たない（一度に約 3 本で Critical、約 4 本で心停止）。過量ならナロキソン（Naloxone）で弱められる。
+      Circulation なし: 痛みを 60 秒かけて治す。効果が切れるまで次は打てない
+    items: [モルヒネ注射器]
+    ifMissing: { next: a-pain-no-morphine }
+    links:
+      - doc:pain-medications.md#モルヒネ注射器
+      - doc:pain-medications.md#過量投与
     next: end-stable
 
   a-pain-no-morphine:
     type: action
-    text: モルヒネなしで痛みに対処する
-    help: 【要確認】痛み止めがないときの扱い（我慢して動けるか、後送を優先するかなど）は公式ドキュメントで確かめる
+    text: 医療キットか仲間からモルヒネ注射器を受け取る
+    help: 医療キットにはモルヒネ注射器が 8 本入っている。なければ後回しでよい（痛みの自然回復はとても遅い）
+    links:
+      - doc:pain-medications.md#痛みの仕組み
     next: end-stable
 
   end-stable:
     type: end
     outcome: ok
-    text: 安定。定期的に再評価する
+    text: ひととおり確かめた。定期的に確かめ直す
     help: 状態が変わったら、最初からやり直す

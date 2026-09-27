@@ -1,12 +1,19 @@
 import { describe, expect, it } from "vitest";
 
 import { convertManual } from "@/features/content/markdown";
-import type { ManualSource } from "@/features/content/types";
-import { CONVERT_TIMEOUT_MS, noImages, readRepoFile } from "@/test/samples";
+import type { ManualSource, ReadImage } from "@/features/content/types";
+import { CONVERT_TIMEOUT_MS, noImages } from "@/test/samples";
 
 function manual(text: string, fileName = "x.md"): ManualSource {
   return { fileName, path: `/content/manuals/${fileName}`, text, hash: "h" };
 }
+
+// 同梱の原稿には画像を置いていないので、読む先のパスを確かめたうえで PNG の先頭のバイト列を返す
+const PNG_SIGNATURE = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const readSampleImage: ReadImage = (path) =>
+  path === "/content/manuals/images/diagram.png"
+    ? Promise.resolve(PNG_SIGNATURE)
+    : Promise.reject(new Error(`想定外の画像: ${path}`));
 
 const SAMPLE = `---
 title: 止血
@@ -39,7 +46,7 @@ tags: [出血, 止血帯]
 
 describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
   it("front matter・見出し・節のタグ・表・Alert・画像を変換する", async () => {
-    const { doc, warnings } = await convertManual(manual(SAMPLE, "hemorrhage.md"), readRepoFile);
+    const { doc, warnings } = await convertManual(manual(SAMPLE, "hemorrhage.md"), readSampleImage);
 
     expect(warnings).toEqual([]);
     expect(doc.title).toBe("止血");
