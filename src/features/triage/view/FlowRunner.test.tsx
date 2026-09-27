@@ -4,11 +4,12 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { todayJst } from "@/features/library/stale";
+import { DEFAULT_MOD_SETTINGS, useModSettings } from "@/features/settings/mod-settings";
 import type { FlowLookup } from "@/features/triage/runner";
 import type { Flow } from "@/features/triage/schema";
 import { FlowRunner } from "@/features/triage/view/FlowRunner";
 import type { DocOutline } from "@/lib/bindings/DocOutline";
-import { end, makeFlow, subflow } from "@/test/flows";
+import { action, branch, end, makeFlow, question, subflow } from "@/test/flows";
 
 const CHILD = makeFlow("child", "cq", {
   cq: {
@@ -92,6 +93,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   clearMocks();
+  useModSettings.setState({ settings: DEFAULT_MOD_SETTINGS, storageError: null });
 });
 
 describe("FlowRunner", () => {
@@ -190,5 +192,23 @@ describe("FlowRunner", () => {
     cleanup();
     renderRunner("/triage/root", { ...ROOT, verifiedAt: todayJst(new Date()) });
     expect(screen.queryByText("内容が古い可能性があります")).toBeNull();
+  });
+
+  it("設定の MOD で branch を自動で進め、どの設定で分岐しているかを出す", () => {
+    const flow = makeFlow("root", "b-pulse", {
+      "b-pulse": branch([[["circulation"], "q-pulse"]], "a-core"),
+      "q-pulse": question("脈がある？", "e", "e"),
+      "a-core": action("Core のエピネフリン", "e"),
+      e: end("終わり"),
+    });
+    renderRunner("/triage/root", flow);
+    expect(heading()).toBe("脈がある？");
+    expect(screen.getByText(/Core \+ Circulation \+ Breathing/)).toBeDefined();
+    cleanup();
+
+    useModSettings.setState({ settings: { enabled: ["breathing"] } });
+    renderRunner("/triage/root", flow);
+    expect(heading()).toBe("Core のエピネフリン");
+    expect(screen.getByText(/Core \+ Breathing/)).toBeDefined();
   });
 });

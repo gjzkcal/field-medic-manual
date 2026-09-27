@@ -14,6 +14,7 @@ import { OverlayLayout } from "@/features/overlay/OverlayLayout";
 import { OverlaySearchPage } from "@/features/overlay/OverlaySearchPage";
 import { refreshPrefs } from "@/features/prefs/prefs-store";
 import { loadSearchFilter } from "@/features/search/search-filter";
+import { loadModSettings } from "@/features/settings/mod-settings";
 import { loadOverlaySettings, useOverlaySettings } from "@/features/settings/overlay-settings";
 import { loadViewerSettings } from "@/features/settings/viewer-settings";
 import { isTextEntry } from "@/features/triage/keyboard";
@@ -50,6 +51,7 @@ async function handleOverlayMode(mode: OverlayMode): Promise<void> {
   void loadViewerSettings(true);
   void loadSearchFilter(true);
   void loadOverlaySettings();
+  void loadModSettings();
   void refreshPrefs();
   const history = mode === "triage" ? await historyList(TRIAGE_HISTORY_DEPTH).catch(() => []) : [];
   const href = hrefForMode(mode, history);

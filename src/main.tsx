@@ -8,6 +8,7 @@ import { syncBundledManuals } from "@/features/content/sync";
 import { OverlayApp } from "@/features/overlay/OverlayApp";
 import { refreshPrefs } from "@/features/prefs/prefs-store";
 import { loadSearchFilter } from "@/features/search/search-filter";
+import { loadModSettings } from "@/features/settings/mod-settings";
 import { loadOverlaySettings } from "@/features/settings/overlay-settings";
 import { loadViewerSettings } from "@/features/settings/viewer-settings";
 import { syncBundledFlows } from "@/features/triage/sync";
@@ -34,6 +35,7 @@ if (isOverlay) {
 void loadViewerSettings();
 void loadSearchFilter();
 void loadOverlaySettings();
+void loadModSettings();
 void refreshPrefs();
 
 createRoot(rootElement).render(<StrictMode>{isOverlay ? <OverlayApp /> : <App />}</StrictMode>);

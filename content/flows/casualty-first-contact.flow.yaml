@@ -1,15 +1,16 @@
 # 負傷者を見つけたときの流れ。気道と呼吸はサブフロー（airway-breathing）で確かめる。
 # 各ノードの説明は ACE Medical Dev 1.5.36 の仕様（ソースと実機で確かめた事実）に基づく。
 # 処置の順番と選び方は作者の方針（普段の組み合わせ Core + Circulation + Breathing での遊び方）。
+# MOD の有無は利用者に尋ねず、設定の「使っている MOD」で branch ノードが自動に分岐する。
 # 次の行はフローの形式（JSON Schema）。VS Code で開くと、キーの補完と書き間違いの表示が効く
 $schema: ./triage-flow.v1.schema.json
 id: casualty-first-contact
 title: 負傷者を見つけたら
-description: 出血を止め、脈で分けて、回復体位と覚醒か、気道確保・Epinephrine・CPR へ進む（Core + Circulation + Breathing 向け）
+description: 出血を止め、脈で分けて、回復体位と覚醒か、気道確保・Epinephrine・CPR へ進む（設定の MOD に合わせて分岐する）
 modTarget: [core, circulation, breathing]
 modChannel: dev
 verifiedAt: "2026-09-28"
-version: 3
+version: 4
 start: q-safe
 nodes:
   q-safe:
@@ -18,7 +19,14 @@ nodes:
     help: 意識を失ってから 1 秒たった後に致命打を受けると、Second Chance の判定なしで即死する
     choices:
       - { label: はい, tone: yes, next: q-bleeding }
-      - { label: いいえ（撃たれている）, tone: no, next: q-class-under-fire }
+      - { label: いいえ（撃たれている）, tone: no, next: b-under-fire }
+
+  # 失血の Class は Circulation を入れていないと表示されない
+  b-under-fire:
+    type: branch
+    cases:
+      - { mods: [circulation], next: q-class-under-fire }
+    else: a-move-cover
 
   q-class-under-fire:
     type: question
@@ -29,7 +37,6 @@ nodes:
     choices:
       - { label: Class III 以上, tone: danger, next: a-phenyl-saline }
       - { label: Class II 以下, tone: no, next: a-move-cover }
-      - { label: Circulation を入れていない, tone: neutral, next: a-move-cover }
 
   a-phenyl-saline:
     type: action
@@ -99,7 +106,14 @@ nodes:
       Circulation なしでは、血液 33.3% 以下でも意識を失う
     choices:
       - { label: はい, tone: yes, next: q-pain }
-      - { label: いいえ, tone: no, next: q-pulse }
+      - { label: いいえ, tone: no, next: b-pulse }
+
+  # 脈と心停止は Circulation の仕組み。なければ Core のエピネフリンで起こす
+  b-pulse:
+    type: branch
+    cases:
+      - { mods: [circulation], next: q-pulse }
+    else: a-epi-core
 
   q-pulse:
     type: question
@@ -109,8 +123,14 @@ nodes:
       心停止中は「You find a heart rate of 0」と出る。心停止した本人の画面はほぼ真っ黒になる
     choices:
       - { label: ある, tone: yes, next: a-recovery }
-      - { label: ない（心停止）, tone: danger, next: a-airway }
-      - { label: Circulation を入れていない, tone: neutral, next: a-epi-core }
+      - { label: ない（心停止）, tone: danger, next: b-arrest }
+
+  # 気道閉塞・酸素マスクは Breathing の仕組み
+  b-arrest:
+    type: branch
+    cases:
+      - { mods: [breathing], next: a-airway }
+    else: a-epi
 
   a-recovery:
     type: action
@@ -132,7 +152,14 @@ nodes:
     links:
       - doc:vitals.md#バイタルを確かめる操作
       - doc:vitals.md#正常値と表示
-    next: q-vitals
+    next: b-vitals
+
+  # SpO2 と呼吸数は Breathing を入れているときだけ測れる
+  b-vitals:
+    type: branch
+    cases:
+      - { mods: [breathing], next: q-vitals }
+    else: q-vitals-no-breathing
 
   q-vitals:
     type: question
@@ -143,6 +170,15 @@ nodes:
       - { label: 失血が Class II 以上, tone: danger, next: a-saline }
       - { label: SpO2 が低い・呼吸数が 0 か速い, tone: danger, next: sf-airway-breathing }
       - { label: どちらでもない, tone: yes, next: a-wake }
+
+  q-vitals-no-breathing:
+    type: question
+    text: 失血は Class II 以上？
+    help: >-
+      炭酸アンモニウムは状態が Stable のときだけ効く。Stable でなくなる主な条件は、血液 70% 以下（Class II 以上）、心拍 40 未満
+    choices:
+      - { label: Class II 以上, tone: danger, next: a-saline }
+      - { label: Class I か失血なし, tone: yes, next: a-wake }
 
   a-saline:
     type: action

@@ -1,5 +1,6 @@
 # 「負傷者を見つけたら」から、意識がないときにサブフローとして呼ばれる。単独でも実行できる。
 # 各ノードの説明は ACE Medical Dev 1.5.36 の仕様（ソースと実機で確かめた事実）に基づく。
+# Breathing を入れていなければ、設定の「使っている MOD」で branch がすぐ終わりへ進む。
 # 処置の選び方は作者の方針（気道は King LT、なければ嘔吐物の除去とあご先挙上。物品がなければ仲間から受け取る）。
 # 詳しくはマニュアルの「気道管理」「呼吸と気胸」を見る。
 # 次の行はフローの形式（JSON Schema）。VS Code で開くと、キーの補完と書き間違いの表示が効く
@@ -10,9 +11,15 @@ description: 意識がない負傷者の気道閉塞と気胸を確かめる（B
 modTarget: [breathing]
 modChannel: dev
 verifiedAt: "2026-09-28"
-version: 3
-start: q-airway
+version: 4
+start: b-breathing
 nodes:
+  b-breathing:
+    type: branch
+    cases:
+      - { mods: [breathing], next: q-airway }
+    else: end-no-breathing
+
   q-airway:
     type: question
     text: 気道が塞がっている？
@@ -23,7 +30,6 @@ nodes:
     choices:
       - { label: 塞がっている（呼吸数 0）, tone: danger, next: a-king-lt }
       - { label: 塞がっていない, tone: no, next: q-chest }
-      - { label: Breathing を入れていない, tone: neutral, next: end-no-breathing }
 
   a-king-lt:
     type: action

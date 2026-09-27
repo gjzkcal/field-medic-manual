@@ -1,4 +1,4 @@
-// V1〜V8（dev-docs/reference/triage-format.md §3）の正常系と異常系。
+// V1〜V9（dev-docs/reference/triage-format.md §3）の正常系と異常系。
 import { describe, expect, it } from "vitest";
 
 import { parseFlow } from "@/features/triage/schema";
@@ -12,6 +12,7 @@ import {
 import {
   action,
   actionWithItems,
+  branch,
   end,
   makeFlow,
   question,
@@ -246,6 +247,45 @@ describe("validateFlow", () => {
   });
 });
 
+describe("validateFlow（branch）", () => {
+  it("case と else の行き先もつながりとして数える", () => {
+    const flow = makeFlow("b", "b1", {
+      b1: branch([[["circulation"], "q1"]], "e"),
+      q1: question("q1", "e", "e"),
+      e: end("e"),
+    });
+    expect(validateAlone(flow)).toEqual([]);
+  });
+
+  it("行き先が無ければ V2", () => {
+    const flow = makeFlow("b", "b1", {
+      b1: branch([[["circulation"], "nowhere"]], "e"),
+      e: end("e"),
+    });
+    expect(codes(validateAlone(flow), "error")).toContain("V2");
+  });
+
+  it("branch どうしだけの循環は、画面に何も出ないまま止まらなくなるので V9", () => {
+    const flow = makeFlow("b", "b1", {
+      b1: branch([[["circulation"], "b2"]], "e"),
+      b2: branch([[["breathing"], "b1"]], "e"),
+      e: end("e"),
+    });
+    const issues = validateAlone(flow);
+    expect(hasErrors(issues)).toBe(true);
+    expect(codes(issues, "error")).toContain("V9");
+  });
+
+  it("画面に出るノードを挟む循環は V9 にしない（再評価のループ）", () => {
+    const flow = makeFlow("b", "b1", {
+      b1: branch([[["circulation"], "q1"]], "e"),
+      q1: question("q1", "b1", "e"),
+      e: end("e"),
+    });
+    expect(codes(validateAlone(flow))).not.toContain("V9");
+  });
+});
+
 describe("validateFlows", () => {
   it("フローの並びをまとめて検証し、入力と同じ順で返す", () => {
     const child = simpleFlow("child");
@@ -276,6 +316,24 @@ describe("parseFlow（形の検査）", () => {
     });
     expect(result.ok).toBe(true);
     expect(result.ok && result.flow.verifiedAt).toBe("2026-09-25");
+  });
+
+  it("branch は case と mods が 1 つ以上要る", () => {
+    const result = parseFlow({
+      $schema: "./triage-flow.v1.schema.json",
+      id: "a",
+      title: "t",
+      start: "b",
+      nodes: {
+        b: { type: "branch", cases: [{ mods: [], next: "e" }], else: "e" },
+        c: { type: "branch", cases: [], else: "e" },
+        e: { type: "end", text: "e", outcome: "ok" },
+      },
+    });
+    expect(result.ok).toBe(false);
+    const messages = result.ok ? [] : result.messages.join("\n");
+    expect(messages).toMatch(/nodes\.b\.cases\.0\.mods/);
+    expect(messages).toMatch(/nodes\.c\.cases/);
   });
 
   it("違う形は、どこが違うかを返す", () => {

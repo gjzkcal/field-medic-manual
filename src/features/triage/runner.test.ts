@@ -5,6 +5,7 @@ import type { Flow } from "@/features/triage/schema";
 import {
   action,
   actionWithItems,
+  branch,
   end,
   makeFlow,
   question,
@@ -200,5 +201,63 @@ describe("再評価のループ", () => {
     const state = replay(flow, lookupOf(flow), [0, 0, 0, 0, 1]);
     expect(state.nodeId).toBe("e");
     expect(state.trail).toHaveLength(5);
+  });
+});
+
+describe("replay（branch）", () => {
+  // 脈を測れるのは Circulation を入れているときだけ、という形
+  const flow = makeFlow("mods", "b-pulse", {
+    "b-pulse": branch(
+      [
+        [["circulation", "breathing"], "q-both"],
+        [["circulation"], "q-pulse"],
+      ],
+      "a-core",
+    ),
+    "q-both": question("両方", "e", "e"),
+    "q-pulse": question("脈がある？", "e", "e"),
+    "a-core": action("Core のエピネフリン", "b-again"),
+    // 分岐が続いても 1 回で画面に出るノードまで進む
+    "b-again": branch([[["hitzones"], "e"]], "e"),
+    e: end("終わり"),
+  });
+  const modsLookup = lookupOf(flow);
+
+  it("mods がすべて有効な最初の case へ自動で進み、経路とパンくずには載せない", () => {
+    const both = replay(flow, modsLookup, [], new Set(["core", "circulation", "breathing"]));
+    expect(both.nodeId).toBe("q-both");
+    expect(both.trail).toEqual([]);
+
+    const circulation = replay(flow, modsLookup, [], new Set(["core", "circulation"]));
+    expect(circulation.nodeId).toBe("q-pulse");
+  });
+
+  it("どの case にも当たらなければ else へ進む。MOD を渡さなければ Core だけとみなす", () => {
+    const core = replay(flow, modsLookup, []);
+    expect(core.nodeId).toBe("a-core");
+    const next = replay(flow, modsLookup, [0]);
+    expect(next.nodeId).toBe("e");
+    expect(next.trail.map((t) => t.nodeId)).toEqual(["a-core"]);
+  });
+
+  it("core と general は渡さなくても有効", () => {
+    const always = makeFlow("always", "b", {
+      b: branch([[["core", "general"], "e"]], "x"),
+      x: action("来ない", "e"),
+      e: end("終わり"),
+    });
+    expect(replay(always, lookupOf(always), [], new Set()).nodeId).toBe("e");
+  });
+
+  it("サブフローの start が branch でも続けて進む", () => {
+    const child = makeFlow("child", "b", {
+      b: branch([[["breathing"], "q"]], "ce"),
+      q: question("気道？", "ce", "ce"),
+      ce: end("子の終わり"),
+    });
+    const parent = makeFlow("parent", "sf", { sf: subflow("child", "e"), e: end("親の終わり") });
+    const lookupBoth = lookupOf(parent, child);
+    expect(replay(parent, lookupBoth, [], new Set(["breathing"])).nodeId).toBe("q");
+    expect(replay(parent, lookupBoth, []).nodeId).toBe("ce");
   });
 });

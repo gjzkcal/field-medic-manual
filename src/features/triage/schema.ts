@@ -1,5 +1,5 @@
 // トリアージフローの形（dev-docs/reference/triage-format.md §2）。
-// ここでは形だけを確かめ、つながり（next の行き先、到達可能性など）は validate.ts の V1〜V8 で確かめる。
+// ここでは形だけを確かめ、つながり（next の行き先、到達可能性など）は validate.ts の V1〜V9 で確かめる。
 // .meta() の説明と値の一覧は、ここから生成する JSON Schema（json-schema.ts）に載り、エディタの補完とホバーに出る。
 import { z } from "zod";
 
@@ -111,11 +111,29 @@ const subflowSchema = z.strictObject({
   next: text.meta({ description: "サブフローが end に着いたら戻る先のノードの id" }),
 });
 
+// 使っている MOD は設定で決めるので、フローの中で利用者に尋ねず、この分岐で自動に進む（triage-format.md §2）
+const branchSchema = z.strictObject({
+  type: z.literal("branch"),
+  cases: z
+    .array(
+      z.strictObject({
+        mods: z.array(modTarget).min(1, "mods には 1 つ以上書いてください").meta({
+          description: "すべて有効なときにこの case へ進む MOD（core と general は常に有効）",
+        }),
+        next: text.meta({ description: "進むノードの id" }),
+      }),
+    )
+    .min(1, "cases には 1 つ以上書いてください")
+    .meta({ description: "上から順に見て、mods がすべて有効な最初の case へ進む" }),
+  else: text.meta({ description: "どの case にも当たらないときに進むノードの id" }),
+});
+
 export const nodeSchema = z.discriminatedUnion("type", [
   questionSchema,
   actionSchema,
   endSchema,
   subflowSchema,
+  branchSchema,
 ]);
 
 export const flowSchema = z
@@ -141,6 +159,7 @@ export type FlowNode = z.infer<typeof nodeSchema>;
 export type QuestionNode = z.infer<typeof questionSchema>;
 export type ActionNode = z.infer<typeof actionSchema>;
 export type EndNode = z.infer<typeof endSchema>;
+export type BranchNode = z.infer<typeof branchSchema>;
 export type Choice = z.infer<typeof choiceSchema>;
 export type ChoiceTone = NonNullable<Choice["tone"]>;
 export type Outcome = EndNode["outcome"];

@@ -3,6 +3,7 @@ import type { JSX } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DebugPanel } from "@/features/settings/debug/DebugPanel";
 import { HotkeySettings } from "@/features/settings/HotkeySettings";
+import { ModSettingsCard } from "@/features/settings/ModSettingsCard";
 import { OverlaySettingsCard } from "@/features/settings/OverlaySettingsCard";
 import {
   FONT_SIZE_PX,
@@ -27,6 +28,7 @@ export function SettingsPage(): JSX.Element {
           <Preview />
         </CardContent>
       </Card>
+      <ModSettingsCard />
       <HotkeySettings />
       <OverlaySettingsCard />
       {/* 配布版に開発用の操作を出さないため、開発ビルドだけで表示する */}

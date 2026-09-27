@@ -264,6 +264,63 @@
               "next"
             ],
             "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "branch"
+              },
+              "cases": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "mods": {
+                      "minItems": 1,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "core",
+                          "hitzones",
+                          "circulation",
+                          "breathing",
+                          "defibrillation",
+                          "ai",
+                          "general"
+                        ]
+                      },
+                      "description": "すべて有効なときにこの case へ進む MOD（core と general は常に有効）"
+                    },
+                    "next": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "進むノードの id"
+                    }
+                  },
+                  "required": [
+                    "mods",
+                    "next"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "上から順に見て、mods がすべて有効な最初の case へ進む"
+              },
+              "else": {
+                "type": "string",
+                "minLength": 1,
+                "description": "どの case にも当たらないときに進むノードの id"
+              }
+            },
+            "required": [
+              "type",
+              "cases",
+              "else"
+            ],
+            "additionalProperties": false
           }
         ]
       },

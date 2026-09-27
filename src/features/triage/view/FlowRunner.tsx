@@ -17,6 +17,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Kbd } from "@/components/ui/kbd";
 import { daysSinceVerified, isStale } from "@/features/library/stale";
 import { FavoriteButton } from "@/features/prefs/FavoriteButton";
+import { modSummary, useModSettings } from "@/features/settings/mod-settings";
 import { hasModifier, isActivatable, isTextEntry } from "@/features/triage/keyboard";
 import {
   formatPath,
@@ -113,6 +114,7 @@ export function FlowRunner({ root, lookup }: FlowRunnerProps): JSX.Element {
     };
   }, []);
 
+  const modSettings = useModSettings((s) => s.settings);
   const now = useNow();
   const staleFlow = [root, state.flow].find((f) => isStale(f.verifiedAt ?? null, now));
   const atStart = state.path.length === 0;
@@ -129,6 +131,11 @@ export function FlowRunner({ root, lookup }: FlowRunnerProps): JSX.Element {
           </Badge>
         )}
       </div>
+
+      {/* MOD の有無はフローの中で尋ねずに設定で分岐するので、どの設定で進んでいるかを見せる */}
+      <p className="-mt-2 text-xs text-muted-foreground">
+        {modSummary(modSettings)} で分岐（設定画面の「使っている MOD」で変えられます）
+      </p>
 
       {staleFlow !== undefined && <StaleAlert flow={staleFlow} now={now} />}
 

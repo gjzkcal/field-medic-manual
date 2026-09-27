@@ -1,10 +1,18 @@
 // トリアージの実行の状態機械。状態は「ルートのフローの start から、どの選択肢を選んだか」の番号の列だけで表し、
 // 毎回それを再生して作る（URL の ?path= に載せて小窓とメイン画面で引き継ぐため。dev-docs/reference/triage-format.md §4）。
-import type { ActionNode, ChoiceTone, EndNode, Flow, QuestionNode } from "@/features/triage/schema";
+import type {
+  ActionNode,
+  BranchNode,
+  ChoiceTone,
+  EndNode,
+  Flow,
+  QuestionNode,
+} from "@/features/triage/schema";
+import type { ModTarget } from "@/lib/bindings/ModTarget";
 
 export type FlowLookup = (id: string) => Flow | undefined;
 
-/** 画面に出すノード。subflow は入った時点でサブフローの start に置き換わるので出てこない。 */
+/** 画面に出すノード。subflow と branch は着いた時点で行き先に置き換わるので出てこない。 */
 export type ShownNode = QuestionNode | ActionNode | EndNode;
 
 export interface RunnerOption {
@@ -63,18 +71,46 @@ interface Position {
   stack: Frame[];
 }
 
+/** 有効な MOD */
+export type ActiveMods = ReadonlySet<ModTarget>;
+/** 設定に関係なく常に有効とみなす MOD。general は MOD を問わない内容 */
+export const ALWAYS_ACTIVE_MODS: ActiveMods = new Set(["core", "general"]);
+
+/** mods がすべて有効な最初の case の行き先。どれにも当たらなければ else */
+function branchTarget(node: BranchNode, mods: ActiveMods): string {
+  const hit = node.cases.find((c) => c.mods.every((m) => ALWAYS_ACTIVE_MODS.has(m) || mods.has(m)));
+  return hit === undefined ? node.else : hit.next;
+}
+
+/** 検証（V9）で branch どうしの循環は弾いているが、DB が同梱物とずれた場合に止まらなくならないための上限 */
+const MAX_HOPS = 64;
+
 /**
- * フロー `flow` のノード `nodeId` に移る。subflow ならサブフローの start へ入る（start が subflow でも続けて入る）。
+ * フロー `flow` のノード `nodeId` に移る。subflow ならサブフローの start へ入り、branch なら MOD で行き先を選ぶ
+ * （どちらも画面に出さず、続けて進む）。
  * フローの形の誤り（存在しないノードやフロー）は、読み込みと検証で先に弾いている前提なので例外にする。
  */
-function arrive(flow: Flow, nodeId: string, stack: Frame[], lookup: FlowLookup): Position {
+function arrive(
+  flow: Flow,
+  nodeId: string,
+  stack: Frame[],
+  lookup: FlowLookup,
+  mods: ActiveMods,
+): Position {
   let current = flow;
   let id = nodeId;
   let frames = stack;
-  for (;;) {
+  for (let hops = 0; ; hops++) {
     const node = current.nodes[id];
     if (node === undefined) {
       throw new Error(`フロー ${current.id} にノード ${id} がありません`);
+    }
+    if (node.type === "branch") {
+      if (hops >= MAX_HOPS) {
+        throw new Error(`フロー ${current.id} の分岐が循環しています（${id}）`);
+      }
+      id = branchTarget(node, mods);
+      continue;
     }
     if (node.type !== "subflow") {
       return { flow: current, nodeId: id, node, stack: frames };
@@ -109,38 +145,51 @@ function optionsOf(position: Position): RunnerOption[] {
 }
 
 /** 選択肢 `choice` を選んだ次の位置。選べない番号なら null。 */
-function step(position: Position, choice: number, lookup: FlowLookup): Position | null {
+function step(
+  position: Position,
+  choice: number,
+  lookup: FlowLookup,
+  mods: ActiveMods,
+): Position | null {
   const { node, flow, stack } = position;
   switch (node.type) {
     case "question": {
       const picked = node.choices[choice];
-      return picked === undefined ? null : arrive(flow, picked.next, stack, lookup);
+      return picked === undefined ? null : arrive(flow, picked.next, stack, lookup, mods);
     }
     case "action":
       if (choice === 0) {
-        return arrive(flow, node.next, stack, lookup);
+        return arrive(flow, node.next, stack, lookup, mods);
       }
       return choice === 1 && node.ifMissing !== undefined
-        ? arrive(flow, node.ifMissing.next, stack, lookup)
+        ? arrive(flow, node.ifMissing.next, stack, lookup, mods)
         : null;
     case "end": {
       const frame = stack.at(-1);
       if (choice !== 0 || frame === undefined) {
         return null;
       }
-      return arrive(frame.flow, frame.returnTo, stack.slice(0, -1), lookup);
+      return arrive(frame.flow, frame.returnTo, stack.slice(0, -1), lookup, mods);
     }
   }
 }
 
-/** ルートのフロー `root` を経路 `path` のとおりに進めた状態。 */
-export function replay(root: Flow, lookup: FlowLookup, path: readonly number[]): RunnerState {
-  let position = arrive(root, root.start, [], lookup);
+/**
+ * ルートのフロー `root` を経路 `path` のとおりに進めた状態。`mods` は branch の判定に使う有効な MOD
+ * （省略すると Core だけ）。
+ */
+export function replay(
+  root: Flow,
+  lookup: FlowLookup,
+  path: readonly number[],
+  mods: ActiveMods = ALWAYS_ACTIVE_MODS,
+): RunnerState {
+  let position = arrive(root, root.start, [], lookup, mods);
   const trail: TrailStep[] = [];
   const valid: number[] = [];
   for (const choice of path) {
     const options = optionsOf(position);
-    const next = step(position, choice, lookup);
+    const next = step(position, choice, lookup, mods);
     const answer = options[choice]?.label;
     if (next === null || answer === undefined) {
       break;

@@ -80,9 +80,10 @@ export function flowSearchText(flow: Flow): string {
         parts.push(node.text);
         break;
       case "subflow":
+      case "branch":
         break;
     }
-    if (node.type !== "subflow" && node.help !== undefined) {
+    if (node.type !== "subflow" && node.type !== "branch" && node.help !== undefined) {
       parts.push(node.help);
     }
   }

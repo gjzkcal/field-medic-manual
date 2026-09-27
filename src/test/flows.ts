@@ -1,5 +1,6 @@
 // フローのテスト用の組み立て。validate とランナーのテストで同じ形を使う。
 import { FLOW_SCHEMA_ID, type Flow, type FlowNode } from "@/features/triage/schema";
+import type { ModTarget } from "@/lib/bindings/ModTarget";
 
 export function makeFlow(
   id: string,
@@ -28,6 +29,15 @@ export function end(text: string, outcome: "ok" | "warn" | "critical" = "ok"): F
 
 export function subflow(flowId: string, next: string): FlowNode {
   return { type: "subflow", flowId, next };
+}
+
+/** `cases` は [mods, next] の組。どれにも当たらなければ `elseNext`。 */
+export function branch(cases: [ModTarget[], string][], elseNext: string): FlowNode {
+  return {
+    type: "branch",
+    cases: cases.map(([mods, next]) => ({ mods, next })),
+    else: elseNext,
+  };
 }
 
 /** q1 → (はい) a1 → end / (いいえ) end の正しいフロー。 */

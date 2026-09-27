@@ -1,7 +1,7 @@
-// フローのつながりの検証 V1〜V8（dev-docs/reference/triage-format.md §3）。形は schema.ts で確かめ済みの前提。
+// フローのつながりの検証 V1〜V9（dev-docs/reference/triage-format.md §3）。形は schema.ts で確かめ済みの前提。
 import type { Flow, FlowNode } from "@/features/triage/schema";
 
-export type IssueCode = "V1" | "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8" | "duplicate";
+export type IssueCode = "V1" | "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8" | "V9" | "duplicate";
 
 export interface FlowIssue {
   code: IssueCode;
@@ -30,6 +30,8 @@ export function nextIds(node: FlowNode): string[] {
       return node.ifMissing === undefined ? [node.next] : [node.next, node.ifMissing.next];
     case "subflow":
       return [node.next];
+    case "branch":
+      return [...node.cases.map((c) => c.next), node.else];
     case "end":
       return [];
   }
@@ -140,6 +142,21 @@ export function validateFlow(flow: Flow, flows: ReadonlyMap<string, Flow>): Flow
       code: "V6",
       level: "warning",
       message: `end を通らない循環があります: ${cycle.join(" → ")}（再評価のループなら問題ありません）`,
+      nodeId: cycle[0] ?? null,
+    });
+  }
+
+  // V9: branch は画面に出ずに自動で進むので、branch どうしだけで回ると実行が止まらなくなる
+  const branchEdges = new Map(
+    Array.from(edges)
+      .filter(([id]) => nodes.get(id)?.type === "branch")
+      .map(([id, tos]) => [id, tos.filter((to) => nodes.get(to)?.type === "branch")]),
+  );
+  for (const cycle of findCycles(branchEdges)) {
+    issues.push({
+      code: "V9",
+      level: "error",
+      message: `branch だけの循環があります: ${cycle.join(" → ")}（画面に出るノードを挟んでください）`,
       nodeId: cycle[0] ?? null,
     });
   }

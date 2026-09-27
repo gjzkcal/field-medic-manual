@@ -2,6 +2,7 @@
 import { useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router";
 
+import { activeMods, useModSettings } from "@/features/settings/mod-settings";
 import {
   formatPath,
   parsePath,
@@ -26,7 +27,13 @@ export interface TriageRunner {
 export function useTriageRunner(root: Flow, lookup: FlowLookup): TriageRunner {
   const [searchParams, setSearchParams] = useSearchParams();
   const rawPath = searchParams.get(PATH_PARAM);
-  const state = useMemo(() => replay(root, lookup, parsePath(rawPath)), [root, lookup, rawPath]);
+  // branch ノードは設定の MOD で行き先が決まるので、設定を変えるとその場で経路を再生し直す
+  const modSettings = useModSettings((s) => s.settings);
+  const mods = useMemo(() => activeMods(modSettings), [modSettings]);
+  const state = useMemo(
+    () => replay(root, lookup, parsePath(rawPath), mods),
+    [root, lookup, rawPath, mods],
+  );
 
   const go = useCallback(
     (path: readonly number[]) => {
