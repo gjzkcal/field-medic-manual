@@ -1,4 +1,4 @@
-import { FileTextIcon, HashIcon, WorkflowIcon } from "lucide-react";
+import { FileTextIcon, HashIcon, TableIcon, WorkflowIcon } from "lucide-react";
 import type { JSX } from "react";
 
 import type { PrefTarget } from "@/lib/bindings/PrefTarget";
@@ -17,5 +17,7 @@ export function PrefIcon({
       return <FileTextIcon aria-hidden className={className} />;
     case "flow":
       return <WorkflowIcon aria-hidden className={className} />;
+    case "quickref":
+      return <TableIcon aria-hidden className={className} />;
   }
 }

@@ -1,4 +1,4 @@
-//! セクションの全文検索と、フローの検索。仕様は dev-docs/reference/data-model.md §3。
+//! セクションの全文検索と、フロー・クイック表の検索。仕様は dev-docs/reference/data-model.md §3。
 
 use rusqlite::types::Value;
 use rusqlite::{Connection, params_from_iter};
@@ -8,7 +8,7 @@ use super::text::{
     normalize_tags, split_terms,
 };
 use crate::error::AppError;
-use crate::model::{FlowHit, SearchFilter, SearchHit, SectionHit};
+use crate::model::{FlowHit, ModTarget, QuickrefHit, SearchFilter, SearchHit, SectionHit};
 
 pub const DEFAULT_LIMIT: u32 = 20;
 pub const MAX_LIMIT: u32 = 100;
@@ -60,10 +60,10 @@ struct Candidate {
     fts: Option<(String, f64)>,
 }
 
-/// セクションとフローを検索する。
+/// セクション・フロー・クイック表を検索する。
 ///
-/// 並びは「タイトルに当たったフロー → 節 → ノードの文だけに当たったフロー」。
-/// フローの LIKE と節の bm25 は点数を比べられないので、当たった場所で段を分ける（data-model.md §3）。
+/// 並びは「症状に当たったクイック表の行 → タイトルに当たったフロー → 節 → 本文だけに当たった行 → ノードの文だけに当たったフロー」。
+/// LIKE と節の bm25 は点数を比べられないので、当たった場所で段を分ける（data-model.md §3）。
 ///
 /// # Errors
 ///
@@ -144,11 +144,22 @@ pub fn search(
         search_flows(conn, &groups, &all_alternatives, filter, limit)?
             .into_iter()
             .partition(|(title_match, _)| *title_match);
-    let mut out: Vec<SearchHit> = title_flows
+    let (symptom_rows, body_rows): (Vec<_>, Vec<_>) =
+        search_quickref(conn, &groups, &all_alternatives, filter, limit)?
+            .into_iter()
+            .partition(|(symptom_match, _)| *symptom_match);
+    // 症状に当たった行は「この症状ならこれ」の答えそのものなので最も上に置く
+    let mut out: Vec<SearchHit> = symptom_rows
         .into_iter()
-        .map(|(_, hit)| SearchHit::Flow(hit))
+        .map(|(_, hit)| SearchHit::Quickref(hit))
         .collect();
+    out.extend(title_flows.into_iter().map(|(_, hit)| SearchHit::Flow(hit)));
     out.extend(hits.into_iter().map(SearchHit::Section));
+    out.extend(
+        body_rows
+            .into_iter()
+            .map(|(_, hit)| SearchHit::Quickref(hit)),
+    );
     out.extend(body_flows.into_iter().map(|(_, hit)| SearchHit::Flow(hit)));
     out.truncate(limit);
     Ok(out)
@@ -172,17 +183,7 @@ fn search_flows(
         .iter()
         .map(|g| like_condition(g, &["f.title", "f.search_text"], &mut params))
         .collect();
-    if let Some(targets) = filter.mod_targets.as_ref().filter(|t| !t.is_empty()) {
-        let placeholders = vec!["?"; targets.len()].join(", ");
-        conditions.push(format!(
-            "EXISTS (SELECT 1 FROM json_each(f.mod_targets) WHERE value IN ({placeholders}))"
-        ));
-        params.extend(targets.iter().map(|t| Value::Text(t.as_str().to_owned())));
-    }
-    if let Some(channel) = filter.mod_channel {
-        conditions.push("(f.mod_channel = ? OR f.mod_channel IS NULL)".to_owned());
-        params.push(Value::Text(channel.as_str().to_owned()));
-    }
+    conditions.extend(json_mod_conditions(filter, "f", &mut params));
     let sql = format!(
         "SELECT f.id, f.title, f.search_text FROM triage_flows f
          WHERE {} ORDER BY f.title COLLATE NOCASE, f.id",
@@ -226,6 +227,118 @@ fn search_flows(
     });
     flows.truncate(limit);
     Ok(flows)
+}
+
+/// `mod_targets`（JSON 配列）と `mod_channel` の列を持つ表（フロー・クイック表）の絞り込み。
+fn json_mod_conditions(filter: &SearchFilter, alias: &str, params: &mut Vec<Value>) -> Vec<String> {
+    let mut conditions = Vec::new();
+    if let Some(targets) = filter.mod_targets.as_ref().filter(|t| !t.is_empty()) {
+        let placeholders = vec!["?"; targets.len()].join(", ");
+        conditions.push(format!(
+            "EXISTS (SELECT 1 FROM json_each({alias}.mod_targets) WHERE value IN ({placeholders}))"
+        ));
+        params.extend(targets.iter().map(|t| Value::Text(t.as_str().to_owned())));
+    }
+    if let Some(channel) = filter.mod_channel {
+        conditions.push(format!(
+            "({alias}.mod_channel = ? OR {alias}.mod_channel IS NULL)"
+        ));
+        params.push(Value::Text(channel.as_str().to_owned()));
+    }
+    conditions
+}
+
+/// クイック表の 1 行分の検索結果の元。
+struct QuickrefCandidate {
+    id: String,
+    symptom: String,
+    category: String,
+    severity: u8,
+    mods: String,
+    without_mods: String,
+    search_text: String,
+}
+
+/// クイック表の行を症状・カテゴリ・本文（`search_text`）の LIKE で探す。行は数十なので FTS は使わない。
+/// 返す bool は、すべての語が症状に当たったか（カテゴリだけの当たりは含めない。「出血」でカテゴリの全行が節より上に並ばないように）。
+fn search_quickref(
+    conn: &Connection,
+    groups: &[TermGroup],
+    alternatives: &[String],
+    filter: &SearchFilter,
+    limit: usize,
+) -> Result<Vec<(bool, QuickrefHit)>, AppError> {
+    // クイック表の行にタグはないので、タグで絞り込んでいるときは出さない
+    if !normalize_tags(filter.tags.as_deref().unwrap_or_default()).is_empty() {
+        return Ok(Vec::new());
+    }
+    let mut params = Vec::new();
+    let mut conditions: Vec<String> = groups
+        .iter()
+        .map(|g| {
+            like_condition(
+                g,
+                &["q.symptom", "q.category", "q.search_text"],
+                &mut params,
+            )
+        })
+        .collect();
+    conditions.extend(json_mod_conditions(filter, "q", &mut params));
+    let sql = format!(
+        "SELECT q.id, q.symptom, q.category, q.severity, q.mods, q.without_mods, q.search_text
+         FROM quickref_rows q WHERE {} ORDER BY q.order_index",
+        conditions.join(" AND ")
+    );
+    let mut stmt = conn.prepare(&sql)?;
+    let rows = stmt.query_map(params_from_iter(params), |r| {
+        Ok(QuickrefCandidate {
+            id: r.get(0)?,
+            symptom: r.get(1)?,
+            category: r.get(2)?,
+            severity: r.get(3)?,
+            mods: r.get(4)?,
+            without_mods: r.get(5)?,
+            search_text: r.get(6)?,
+        })
+    })?;
+    let mut found = Vec::new();
+    for row in rows {
+        let c = row?;
+        let symptom_match = groups.iter().all(|g| g.found_in(&c.symptom));
+        let synonym_only = groups.iter().any(|g| {
+            !contains_ci(&c.symptom, &g.original)
+                && !contains_ci(&c.category, &g.original)
+                && !contains_ci(&c.search_text, &g.original)
+        });
+        let base_score = if symptom_match { 3.0 } else { 1.0 };
+        found.push((
+            symptom_match,
+            QuickrefHit {
+                snippet: make_snippet(&c.search_text, alternatives, SNIPPET_CONTEXT_CHARS),
+                mods: parse_mods(&c.mods)?,
+                without_mods: parse_mods(&c.without_mods)?,
+                id: c.id,
+                title: c.symptom,
+                category: c.category,
+                severity: c.severity,
+                score: if synonym_only {
+                    base_score * SYNONYM_PENALTY
+                } else {
+                    base_score
+                },
+                synonym_only,
+            },
+        ));
+    }
+    // 同じ段の中はファイルに書いた順（作者が重要な順に並べている）のまま、同義語だけの行を後ろに回す
+    found.sort_by_key(|(_, hit)| hit.synonym_only);
+    found.truncate(limit);
+    Ok(found)
+}
+
+fn parse_mods(json: &str) -> Result<Vec<ModTarget>, AppError> {
+    serde_json::from_str(json)
+        .map_err(|e| AppError::Internal(format!("クイック表の MOD の条件を読めません: {e}")))
 }
 
 /// LIKE には関連度がないので、どこに当たったかで点を付ける（タイトル一致を優先する仕様のため）。
@@ -419,8 +532,8 @@ mod tests {
     use super::*;
     use crate::db::fixtures::{self, section};
     use crate::db::text::{MARK_END, MARK_START};
-    use crate::db::{docs, test_conn, triage};
-    use crate::model::{ModChannel, ModTarget};
+    use crate::db::{docs, quickref, test_conn, triage};
+    use crate::model::ModChannel;
 
     fn seeded() -> Connection {
         let mut conn = test_conn();
@@ -444,7 +557,7 @@ mod tests {
             .into_iter()
             .filter_map(|hit| match hit {
                 SearchHit::Section(h) => Some(h),
-                SearchHit::Flow(_) => None,
+                SearchHit::Flow(_) | SearchHit::Quickref(_) => None,
             })
             .collect()
     }
@@ -476,6 +589,7 @@ mod tests {
             .map(|hit| match hit {
                 SearchHit::Section(h) => format!("section:{}", h.anchor),
                 SearchHit::Flow(h) => format!("flow:{}", h.id),
+                SearchHit::Quickref(h) => format!("quickref:{}", h.id),
             })
             .collect()
     }
@@ -486,9 +600,105 @@ mod tests {
             .into_iter()
             .find_map(|h| match h {
                 SearchHit::Flow(f) => Some(f),
-                SearchHit::Section(_) => None,
+                SearchHit::Section(_) | SearchHit::Quickref(_) => None,
             })
             .unwrap_or_else(|| panic!("「{query}」でフローが当たらない"))
+    }
+
+    fn quickref_seeded() -> Connection {
+        let mut conn = flow_seeded();
+        quickref::replace_all(&mut conn, &quickref::fixtures::table("hash"))
+            .expect("クイック表を保存できる");
+        conn
+    }
+
+    fn first_quickref(conn: &Connection, query: &str) -> QuickrefHit {
+        search(conn, query, None, &SearchFilter::default())
+            .expect("検索できる")
+            .into_iter()
+            .find_map(|h| match h {
+                SearchHit::Quickref(q) => Some(q),
+                SearchHit::Section(_) | SearchHit::Flow(_) => None,
+            })
+            .unwrap_or_else(|| panic!("「{query}」でクイック表が当たらない"))
+    }
+
+    #[test]
+    fn quickref_symptom_match_comes_first() {
+        let conn = quickref_seeded();
+        // 2 文字の語は trigram に掛からないので LIKE で引く（完了条件の「気胸」）
+        assert_eq!(
+            kinds(&conn, "気胸", &SearchFilter::default()),
+            ["quickref:tension-ptx"]
+        );
+        let hit = first_quickref(&conn, "気胸");
+        assert_eq!(hit.title, "緊張性気胸");
+        assert_eq!(hit.category, "気道・呼吸");
+        assert_eq!(hit.severity, 4);
+        assert_eq!(hit.mods, [ModTarget::Breathing]);
+        let found = kinds(&conn, "出血", &SearchFilter::default());
+        assert_eq!(found[0], "quickref:limb-bleeding", "{found:?}");
+        assert!(found.contains(&"section:bleeding".to_owned()), "{found:?}");
+    }
+
+    #[test]
+    fn quickref_body_match_comes_after_sections() {
+        let conn = quickref_seeded();
+        assert_eq!(
+            kinds(&conn, "止血帯", &SearchFilter::default()),
+            [
+                "section:use-tourniquet",
+                "quickref:limb-bleeding",
+                "flow:casualty-first-contact"
+            ]
+        );
+        let hit = first_quickref(&conn, "止血帯");
+        assert!(hit.snippet.contains(MARK_START), "{}", hit.snippet);
+        assert!(!hit.synonym_only);
+    }
+
+    #[test]
+    fn quickref_uses_synonyms() {
+        let conn = quickref_seeded();
+        let hit = first_quickref(&conn, "アドレナリン");
+        assert_eq!(hit.id, "unconscious-core");
+        assert!(hit.synonym_only);
+    }
+
+    #[test]
+    fn quickref_follows_filters() {
+        let conn = quickref_seeded();
+        let release = SearchFilter {
+            mod_channel: Some(ModChannel::Release),
+            ..SearchFilter::default()
+        };
+        assert!(
+            kinds(&conn, "気胸", &release).is_empty(),
+            "Dev の表は出ない"
+        );
+        let breathing = SearchFilter {
+            mod_targets: Some(vec![ModTarget::Breathing]),
+            ..SearchFilter::default()
+        };
+        assert_eq!(kinds(&conn, "気胸", &breathing), ["quickref:tension-ptx"]);
+        assert!(
+            !kinds(&conn, "出血", &breathing).contains(&"quickref:limb-bleeding".to_owned()),
+            "条件のない行は Core として扱う"
+        );
+        let core = SearchFilter {
+            mod_targets: Some(vec![ModTarget::Core]),
+            ..SearchFilter::default()
+        };
+        assert!(kinds(&conn, "出血", &core).contains(&"quickref:limb-bleeding".to_owned()));
+        let tagged = SearchFilter {
+            tags: Some(vec!["止血帯".to_owned()]),
+            ..SearchFilter::default()
+        };
+        assert_eq!(
+            kinds(&conn, "止血帯", &tagged),
+            ["section:use-tourniquet"],
+            "タグで絞るとクイック表は出ない"
+        );
     }
 
     #[test]

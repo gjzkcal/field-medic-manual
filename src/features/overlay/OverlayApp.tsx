@@ -13,6 +13,8 @@ import { OverlayFavoritesPage } from "@/features/overlay/OverlayFavoritesPage";
 import { OverlayLayout } from "@/features/overlay/OverlayLayout";
 import { OverlaySearchPage } from "@/features/overlay/OverlaySearchPage";
 import { refreshPrefs } from "@/features/prefs/prefs-store";
+import { QuickrefPage } from "@/features/quickref/QuickrefPage";
+import { loadQuickrefSettings } from "@/features/quickref/quickref-settings";
 import { loadSearchFilter } from "@/features/search/search-filter";
 import { loadModSettings } from "@/features/settings/mod-settings";
 import { loadOverlaySettings, useOverlaySettings } from "@/features/settings/overlay-settings";
@@ -37,6 +39,7 @@ const overlayRouter = createMemoryRouter(
         { path: "doc/:id", element: <DocPage /> },
         { path: "triage", element: <TriageListPage /> },
         { path: "triage/:id", element: <TriageRunPage /> },
+        { path: "quickref", element: <QuickrefPage compact /> },
         { path: "favorites", element: <OverlayFavoritesPage /> },
         // メインの画面へのリンク（ビューアの「ライブラリ」など）は、小窓では検索に置き換える
         { path: "*", element: <Navigate to={OVERLAY_SEARCH_PATH} replace /> },
@@ -52,6 +55,7 @@ async function handleOverlayMode(mode: OverlayMode): Promise<void> {
   void loadSearchFilter(true);
   void loadOverlaySettings();
   void loadModSettings();
+  void loadQuickrefSettings(true);
   void refreshPrefs();
   const history = mode === "triage" ? await historyList(TRIAGE_HISTORY_DEPTH).catch(() => []) : [];
   const href = hrefForMode(mode, history);

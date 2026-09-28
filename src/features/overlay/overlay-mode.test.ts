@@ -38,6 +38,15 @@ describe("mainHrefOf", () => {
     expect(mainHrefOf({ pathname: "/triage", search: "", hash: "" })).toBe("/triage");
   });
 
+  it("クイック表は、指した行と絞り込みを引き継いでメインで開く", () => {
+    expect(mainHrefOf({ pathname: "/quickref", search: "?row=tension-ptx", hash: "" })).toBe(
+      "/quickref?row=tension-ptx",
+    );
+    expect(mainHrefOf({ pathname: "/quickref", search: "?sev=4", hash: "" })).toBe(
+      "/quickref?sev=4",
+    );
+  });
+
   it("小窓にしかない画面（検索・お気に入り）はライブラリを開く", () => {
     expect(mainHrefOf({ pathname: "/search", search: "", hash: "" })).toBe("/library");
     expect(mainHrefOf({ pathname: "/favorites", search: "", hash: "" })).toBe("/library");

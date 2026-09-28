@@ -35,6 +35,38 @@ describe("searchKind（section）", () => {
   });
 });
 
+describe("searchKind（quickref）", () => {
+  const QUICKREF_HIT: SearchHit = {
+    kind: "quickref",
+    id: "tension-ptx",
+    title: "緊張性気胸",
+    category: "気道・呼吸",
+    severity: 4,
+    mods: ["breathing"],
+    withoutMods: [],
+    snippet: "",
+    score: 3,
+    synonymOnly: false,
+  };
+
+  it("開く先はその行を指したクイック表", () => {
+    expect(searchKind(QUICKREF_HIT.kind).href(QUICKREF_HIT)).toBe("/quickref?row=tension-ptx");
+    expect(searchKind(QUICKREF_HIT.kind).favoriteTarget(QUICKREF_HIT)).toEqual({
+      kind: "quickref",
+      rowId: "tension-ptx",
+    });
+    expect(hitKey(QUICKREF_HIT)).toBe("quickref:tension-ptx");
+  });
+
+  it("重症度・カテゴリと、表示条件の MOD を示す（検索は MOD の設定で絞らないため）", () => {
+    const kind = searchKind(QUICKREF_HIT.kind);
+    expect(kind.context(QUICKREF_HIT)).toBe("致命的 · 気道・呼吸");
+    expect(kind.badge(QUICKREF_HIT)).toBe("Breathing あり");
+    expect(kind.badge({ ...QUICKREF_HIT, mods: [], synonymOnly: true })).toBe("同義語");
+    expect(kind.badge({ ...QUICKREF_HIT, mods: [] })).toBeNull();
+  });
+});
+
 describe("searchKind（flow）", () => {
   const FLOW_HIT: SearchHit = {
     kind: "flow",

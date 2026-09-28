@@ -6,6 +6,7 @@ import type { PrefTarget } from "@/lib/bindings/PrefTarget";
 const SECTION: PrefTarget = { kind: "section", documentId: "d1", anchor: "止血帯を使う" };
 const DOCUMENT: PrefTarget = { kind: "document", documentId: "d1" };
 const FLOW: PrefTarget = { kind: "flow", flowId: "first-contact" };
+const QUICKREF: PrefTarget = { kind: "quickref", rowId: "tension-ptx" };
 
 describe("prefHref", () => {
   it("節はアンカー付きのビューア、文書はビューア、フローは実行画面を開く", () => {
@@ -13,13 +14,22 @@ describe("prefHref", () => {
     expect(prefHref(DOCUMENT)).toBe("/doc/d1");
     expect(prefHref(FLOW)).toBe("/triage/first-contact");
   });
+
+  it("クイック表の行は、その行を指したクイック表を開く", () => {
+    expect(prefHref(QUICKREF)).toBe("/quickref?row=tension-ptx");
+  });
 });
 
 describe("prefKey", () => {
   it("種類が違えば同じ id でも別のキーになる", () => {
-    const keys = [SECTION, DOCUMENT, FLOW, { kind: "flow", flowId: "d1" } satisfies PrefTarget].map(
-      prefKey,
-    );
+    const keys = [
+      SECTION,
+      DOCUMENT,
+      FLOW,
+      QUICKREF,
+      { kind: "flow", flowId: "d1" } satisfies PrefTarget,
+      { kind: "quickref", rowId: "first-contact" } satisfies PrefTarget,
+    ].map(prefKey);
     expect(new Set(keys).size).toBe(keys.length);
   });
 

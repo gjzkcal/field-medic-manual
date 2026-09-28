@@ -1,4 +1,11 @@
-import { AppWindowIcon, EyeOffIcon, SearchIcon, StarIcon, WorkflowIcon } from "lucide-react";
+import {
+  AppWindowIcon,
+  EyeOffIcon,
+  SearchIcon,
+  StarIcon,
+  TableIcon,
+  WorkflowIcon,
+} from "lucide-react";
 import type { JSX } from "react";
 import { matchPath, NavLink, Outlet, useLocation } from "react-router";
 
@@ -8,6 +15,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import {
   mainHrefOf,
   OVERLAY_FAVORITES_PATH,
+  OVERLAY_QUICKREF_PATH,
   OVERLAY_SEARCH_PATH,
   OVERLAY_TRIAGE_PATH,
 } from "@/features/overlay/overlay-mode";
@@ -21,7 +29,6 @@ interface OverlayTab {
   activePatterns: readonly string[];
 }
 
-// クイック表のタブは Step 06 で足す
 const TABS: readonly OverlayTab[] = [
   {
     to: OVERLAY_SEARCH_PATH,
@@ -34,6 +41,12 @@ const TABS: readonly OverlayTab[] = [
     label: "トリアージ",
     icon: WorkflowIcon,
     activePatterns: [OVERLAY_TRIAGE_PATH, `${OVERLAY_TRIAGE_PATH}/*`],
+  },
+  {
+    to: OVERLAY_QUICKREF_PATH,
+    label: "クイック表",
+    icon: TableIcon,
+    activePatterns: [OVERLAY_QUICKREF_PATH],
   },
   {
     to: OVERLAY_FAVORITES_PATH,

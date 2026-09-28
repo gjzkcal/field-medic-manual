@@ -3,6 +3,7 @@ pub mod assets;
 pub mod dict;
 pub mod docs;
 pub mod prefs;
+pub mod quickref;
 pub mod search;
 pub mod settings;
 pub mod triage;

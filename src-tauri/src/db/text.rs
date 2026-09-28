@@ -147,6 +147,17 @@ pub fn make_snippet(text: &str, terms: &[String], context_chars: usize) -> Strin
     out
 }
 
+/// 英小文字・数字を `-` でつないだ形（先頭・末尾・連続の `-` は不可）。URL・原稿のファイル名・リンクに使うため。
+pub fn is_slug(s: &str) -> bool {
+    !s.is_empty()
+        && s.split('-').all(|part| {
+            !part.is_empty()
+                && part
+                    .bytes()
+                    .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit())
+        })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

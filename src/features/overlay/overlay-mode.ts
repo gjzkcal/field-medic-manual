@@ -7,6 +7,7 @@ import type { PrefItem } from "@/lib/bindings/PrefItem";
 export const OVERLAY_SEARCH_PATH = "/search";
 export const OVERLAY_TRIAGE_PATH = "/triage";
 export const OVERLAY_FAVORITES_PATH = "/favorites";
+export const OVERLAY_QUICKREF_PATH = "/quickref";
 
 /** モードで移る先。閲覧（Ctrl+Shift+M）は前に見ていた画面をそのまま出すので null。 */
 export function hrefForMode(mode: OverlayMode, history: readonly PrefItem[]): string | null {
@@ -34,7 +35,11 @@ interface LocationLike {
 /** 「メインで開く」の行き先。メインにもある画面はそのまま、小窓にしかない画面はライブラリにする。 */
 export function mainHrefOf(location: LocationLike): string {
   const { pathname, search, hash } = location;
-  if (pathname.startsWith("/doc/") || pathname.startsWith(OVERLAY_TRIAGE_PATH)) {
+  if (
+    pathname.startsWith("/doc/") ||
+    pathname.startsWith(OVERLAY_TRIAGE_PATH) ||
+    pathname === OVERLAY_QUICKREF_PATH
+  ) {
     return `${pathname}${search}${hash}`;
   }
   return "/library";

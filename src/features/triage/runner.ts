@@ -76,9 +76,14 @@ export type ActiveMods = ReadonlySet<ModTarget>;
 /** 設定に関係なく常に有効とみなす MOD。general は MOD を問わない内容 */
 export const ALWAYS_ACTIVE_MODS: ActiveMods = new Set(["core", "general"]);
 
+/** mods がすべて有効か。branch とクイック表の表示条件で同じ判定を使う */
+export function modsActive(required: readonly ModTarget[], mods: ActiveMods): boolean {
+  return required.every((m) => ALWAYS_ACTIVE_MODS.has(m) || mods.has(m));
+}
+
 /** mods がすべて有効な最初の case の行き先。どれにも当たらなければ else */
 function branchTarget(node: BranchNode, mods: ActiveMods): string {
-  const hit = node.cases.find((c) => c.mods.every((m) => ALWAYS_ACTIVE_MODS.has(m) || mods.has(m)));
+  const hit = node.cases.find((c) => modsActive(c.mods, mods));
   return hit === undefined ? node.else : hit.next;
 }
 

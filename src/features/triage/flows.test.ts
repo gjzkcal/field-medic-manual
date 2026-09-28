@@ -2,13 +2,11 @@
 // アプリと同じ bundle.ts（import.meta.glob）から読むので、同梱のされ方も一緒に確かめられる。
 import { describe, expect, it } from "vitest";
 
-import { bundledManuals } from "@/features/content/bundle";
-import { convertManual } from "@/features/content/markdown";
 import { bundledFlows, flowIdOfFileName, readFlowSource } from "@/features/triage/bundle";
 import { parseFlowLink } from "@/features/triage/links";
 import type { Flow } from "@/features/triage/schema";
 import { validateFlows } from "@/features/triage/validate";
-import { readRepoFile } from "@/test/samples";
+import { linkTargetExists, loadLinkTargets } from "@/test/content-links";
 
 const sources = await bundledFlows();
 const read = await Promise.all(
@@ -17,15 +15,7 @@ const read = await Promise.all(
 const flows: Flow[] = read.flatMap(({ result }) => (result.ok ? [result.flow] : []));
 const issuesById = new Map(validateFlows(flows).map((issues, i) => [flows[i]?.id, issues]));
 
-const manuals = await Promise.all(
-  (await bundledManuals()).map(async (manual) => convertManual(manual, readRepoFile)),
-);
-const anchorsByFile = new Map(
-  manuals.map(({ doc }) => [
-    doc.sourcePath.replace("bundle://manuals/", ""),
-    new Set(doc.sections.map((s) => s.anchor)),
-  ]),
-);
+const targets = await loadLinkTargets();
 
 describe("同梱したフロー", () => {
   it("1 つ以上ある", () => {
@@ -67,29 +57,16 @@ describe("同梱したフロー", () => {
   );
 
   it.each(flows.map((flow) => [flow.id, flow] as const))(
-    "%s: リンクの行き先（マニュアルのファイルとアンカー、フロー）がある",
+    "%s: リンクの行き先（マニュアルのファイルとアンカー、フロー、クイック表の行）がある",
     (_, flow) => {
       const broken: string[] = [];
       for (const node of Object.values(flow.nodes)) {
         const links = node.type === "action" || node.type === "end" ? (node.links ?? []) : [];
-        for (const text of links) {
-          const link = parseFlowLink(text);
-          const ok =
-            link?.kind === "external" ||
-            link?.kind === "quickref" ||
-            (link?.kind === "flow" && flows.some((f) => f.id === link.flowId)) ||
-            (link?.kind === "doc" &&
-              anchorsByFile.has(link.fileName) &&
-              (link.anchor === null ||
-                anchorsByFile.get(link.fileName)?.has(link.anchor) === true));
-          if (!ok) {
-            broken.push(text);
-          }
-        }
+        broken.push(...links.filter((text) => !linkTargetExists(parseFlowLink(text), targets)));
       }
       expect(
         broken,
-        "リンク切れです。doc: は content/manuals/ のファイル名と見出しのアンカー（例 doc:hemorrhage.md#止血帯を使う）",
+        "リンク切れです。doc: は content/manuals/ のファイル名と見出しのアンカー（例 doc:hemorrhage.md#止血帯を使う）、quickref: は content/quickref.yaml の行の id",
       ).toEqual([]);
     },
   );

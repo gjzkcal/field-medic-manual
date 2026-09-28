@@ -7,6 +7,7 @@ pub mod docs;
 pub mod fixtures;
 mod migrate;
 pub mod prefs;
+pub mod quickref;
 pub mod search;
 pub mod settings;
 mod text;

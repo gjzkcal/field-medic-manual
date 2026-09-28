@@ -24,7 +24,7 @@ export function PrefsCommandGroups(): JSX.Element {
     return (
       <p className="px-3 py-6 text-center text-sm text-muted-foreground">
         {error === null
-          ? "語を入力すると、マニュアルの節とトリアージのフローを探します。開いたものとお気に入り（Ctrl+Enter）はここに出ます。"
+          ? "語を入力すると、マニュアルの節・トリアージのフロー・クイック表を探します。開いたものとお気に入り（Ctrl+Enter）はここに出ます。"
           : `お気に入りと履歴を読み込めませんでした: ${error}`}
       </p>
     );

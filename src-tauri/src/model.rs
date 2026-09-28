@@ -247,13 +247,84 @@ pub struct FlowHit {
     pub synonym_only: bool,
 }
 
-/// 横断検索の結果。Step 06 でクイック表の種類を足す。
+#[derive(Debug, Clone, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct QuickrefHit {
+    /// 行の id（スラッグ）
+    pub id: String,
+    /// 症状
+    pub title: String,
+    pub category: String,
+    /// 1=軽度 2=中等度 3=重度 4=致命的
+    pub severity: u8,
+    /// 表示条件（結果の説明に出す。検索は設定の「使っている MOD」では絞らないため）
+    pub mods: Vec<ModTarget>,
+    pub without_mods: Vec<ModTarget>,
+    /// `SectionHit.snippet` と同じ形（U+E000 / U+E001 で強調）。手順・物品・備考から作る
+    pub snippet: String,
+    /// 大きいほど上位。LIKE の当たり方で付けるので、節の score とは比べられない
+    pub score: f64,
+    /// 入力した語そのものは含まず、同義語だけでヒットした
+    pub synonym_only: bool,
+}
+
+/// 横断検索の結果。
 #[derive(Debug, Clone, Serialize, TS)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 #[ts(export)]
 pub enum SearchHit {
     Section(SectionHit),
     Flow(FlowHit),
+    Quickref(QuickrefHit),
+}
+
+/// クイック表の 1 行（content-guide.md §8）。形の検査は TS の zod で行い、Rust は DB に入れてよい最低限を確かめる。
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct QuickrefRow {
+    /// スラッグ。お気に入りと `quickref:<id>` のリンクで使う
+    pub id: String,
+    pub category: String,
+    pub symptom: String,
+    /// 1=軽度 2=中等度 3=重度 4=致命的
+    pub severity: u8,
+    /// 手順（1 要素 1 動作）
+    pub treatment: Vec<String>,
+    pub items: Vec<String>,
+    pub notes: Option<String>,
+    /// `doc:<ファイル名>#<anchor>` / `flow:<id>` / `quickref:<id>` / `https://…`
+    pub links: Vec<String>,
+    /// この MOD をすべて入れているときだけ出す
+    pub mods: Vec<ModTarget>,
+    /// この MOD をどれも入れていないときだけ出す
+    pub without_mods: Vec<ModTarget>,
+}
+
+/// `quickref_replace_all` の入力。同梱ファイル 1 つ分で、全行を置き換える。
+#[derive(Debug, Clone, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct QuickrefReplaceInput {
+    pub source_hash: String,
+    pub mod_channel: Option<ModChannel>,
+    /// YYYY-MM-DD
+    pub verified_at: Option<String>,
+    /// ファイルに書いた順
+    pub rows: Vec<QuickrefRow>,
+}
+
+#[derive(Debug, Clone, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct QuickrefTable {
+    /// まだ一度も同期していなければ null（起動時の同期で「変更なし」を判定するため）
+    pub source_hash: Option<String>,
+    pub mod_channel: Option<ModChannel>,
+    pub verified_at: Option<String>,
+    /// ファイルに書いた順
+    pub rows: Vec<QuickrefRow>,
 }
 
 /// `triage_upsert` の入力。一覧・絞り込み・検索に使う値は、TS がフローの JSON から写して渡す
@@ -402,7 +473,6 @@ pub struct DocOutline {
 }
 
 /// お気に入り・履歴の対象。節は同期で INTEGER の id が振り直されるので、文書の id とアンカーで指す。
-/// クイック表は Step 06 で足す。
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 #[ts(export)]
@@ -413,6 +483,8 @@ pub enum PrefTarget {
     Document { document_id: String },
     #[serde(rename_all = "camelCase")]
     Flow { flow_id: String },
+    #[serde(rename_all = "camelCase")]
+    Quickref { row_id: String },
 }
 
 /// お気に入り・履歴の一覧の 1 行。対象が今も DB にあるものだけを返す。
@@ -421,9 +493,9 @@ pub enum PrefTarget {
 #[ts(export)]
 pub struct PrefItem {
     pub target: PrefTarget,
-    /// 節の題名 / 文書の題名 / フローの題名
+    /// 節の題名 / 文書の題名 / フローの題名 / クイック表の症状
     pub title: String,
-    /// どこにあるか（節なら文書の題名）。なければ null
+    /// どこにあるか（節なら文書の題名、クイック表の行ならカテゴリ）。なければ null
     pub context: Option<String>,
     /// お気に入りに入れた日時、または最後に開いた日時（UTC の ISO 8601）
     pub at: String,

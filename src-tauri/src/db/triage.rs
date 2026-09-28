@@ -4,7 +4,7 @@
 use rusqlite::{Connection, OptionalExtension, Row, params};
 
 use super::docs::{is_iso_date, non_empty};
-use super::text::strip_marks;
+use super::text::{is_slug, strip_marks};
 use crate::error::AppError;
 use crate::model::{ModTarget, TriageDetail, TriageSummary, TriageUpsertInput};
 
@@ -89,17 +89,6 @@ fn validate(input: &TriageUpsertInput) -> Result<TriageUpsertInput, AppError> {
     }
     input.mod_targets = targets;
     Ok(input)
-}
-
-/// 英小文字・数字を `-` でつないだ形（先頭・末尾・連続の `-` は不可）。URL と原稿のファイル名に使うため。
-fn is_slug(s: &str) -> bool {
-    !s.is_empty()
-        && s.split('-').all(|part| {
-            !part.is_empty()
-                && part
-                    .bytes()
-                    .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit())
-        })
 }
 
 const SUMMARY_COLUMNS: &str = "id, title, description, mod_targets, mod_channel, verified_at,

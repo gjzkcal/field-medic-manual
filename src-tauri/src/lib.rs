@@ -77,6 +77,8 @@ pub fn run() {
             commands::triage::triage_get,
             commands::triage::triage_upsert,
             commands::triage::triage_delete,
+            commands::quickref::quickref_list,
+            commands::quickref::quickref_replace_all,
             commands::prefs::fav_toggle,
             commands::prefs::fav_list,
             commands::prefs::history_push,

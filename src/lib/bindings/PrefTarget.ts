@@ -2,6 +2,5 @@
 
 /**
  * お気に入り・履歴の対象。節は同期で INTEGER の id が振り直されるので、文書の id とアンカーで指す。
- * クイック表は Step 06 で足す。
  */
-export type PrefTarget = { "kind": "section", documentId: string, anchor: string, } | { "kind": "document", documentId: string, } | { "kind": "flow", flowId: string, };
+export type PrefTarget = { "kind": "section", documentId: string, anchor: string, } | { "kind": "document", documentId: string, } | { "kind": "flow", flowId: string, } | { "kind": "quickref", rowId: string, };

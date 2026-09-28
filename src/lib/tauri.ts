@@ -16,6 +16,8 @@ import type { HotkeyBinding } from "@/lib/bindings/HotkeyBinding";
 import type { OverlayMode } from "@/lib/bindings/OverlayMode";
 import type { PrefItem } from "@/lib/bindings/PrefItem";
 import type { PrefTarget } from "@/lib/bindings/PrefTarget";
+import type { QuickrefReplaceInput } from "@/lib/bindings/QuickrefReplaceInput";
+import type { QuickrefTable } from "@/lib/bindings/QuickrefTable";
 import type { SearchFilter } from "@/lib/bindings/SearchFilter";
 import type { SearchHit } from "@/lib/bindings/SearchHit";
 import type { SynonymGroup } from "@/lib/bindings/SynonymGroup";
@@ -143,6 +145,15 @@ export async function triageUpsert(input: TriageUpsertInput): Promise<void> {
 
 export async function triageDelete(id: string): Promise<void> {
   return invoke<undefined>("triage_delete", { id });
+}
+
+export async function quickrefList(): Promise<QuickrefTable> {
+  return invoke<QuickrefTable>("quickref_list");
+}
+
+/** 全行を置き換える。起動時の同期で、同梱ファイルが変わったときに使う。 */
+export async function quickrefReplaceAll(input: QuickrefReplaceInput): Promise<void> {
+  return invoke<undefined>("quickref_replace_all", { input });
 }
 
 /**

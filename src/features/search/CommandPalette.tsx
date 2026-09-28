@@ -373,7 +373,7 @@ function HitItem({
 function EmptyHint(): JSX.Element {
   return (
     <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-      語を入力すると、マニュアルの節とトリアージのフローを探します。空白で区切ると、すべての語を含むものに絞ります。
+      語を入力すると、マニュアルの節・トリアージのフロー・クイック表を探します。空白で区切ると、すべての語を含むものに絞ります。
     </p>
   );
 }

@@ -7,6 +7,8 @@ import { App } from "@/app/App";
 import { syncBundledManuals } from "@/features/content/sync";
 import { OverlayApp } from "@/features/overlay/OverlayApp";
 import { refreshPrefs } from "@/features/prefs/prefs-store";
+import { loadQuickrefSettings } from "@/features/quickref/quickref-settings";
+import { syncBundledQuickref } from "@/features/quickref/sync";
 import { loadSearchFilter } from "@/features/search/search-filter";
 import { loadModSettings } from "@/features/settings/mod-settings";
 import { loadOverlaySettings } from "@/features/settings/overlay-settings";
@@ -30,12 +32,14 @@ if (isOverlay) {
   // 同期はメインだけで行う（2 つのウィンドウが同時に同じ原稿を書き込まないように）
   void syncBundledManuals();
   void syncBundledFlows();
+  void syncBundledQuickref();
 }
 // 表示設定も描画を待たせずに読む。読み終わるまでの一瞬は既定の文字サイズで表示される
 void loadViewerSettings();
 void loadSearchFilter();
 void loadOverlaySettings();
 void loadModSettings();
+void loadQuickrefSettings();
 void refreshPrefs();
 
 createRoot(rootElement).render(<StrictMode>{isOverlay ? <OverlayApp /> : <App />}</StrictMode>);

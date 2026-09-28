@@ -6,11 +6,11 @@ import type { PrefTarget } from "./PrefTarget";
  */
 export type PrefItem = { target: PrefTarget, 
 /**
- * 節の題名 / 文書の題名 / フローの題名
+ * 節の題名 / 文書の題名 / フローの題名 / クイック表の症状
  */
 title: string, 
 /**
- * どこにあるか（節なら文書の題名）。なければ null
+ * どこにあるか（節なら文書の題名、クイック表の行ならカテゴリ）。なければ null
  */
 context: string | null, 
 /**

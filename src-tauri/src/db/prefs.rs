@@ -126,6 +126,7 @@ pub fn history_list(conn: &Connection, limit: usize) -> Result<Vec<PrefItem>, Ap
 const SECTION: &str = "section";
 const DOCUMENT: &str = "document";
 const FLOW: &str = "flow";
+const QUICKREF: &str = "quickref";
 
 /// DB に保存する (`target_type`, `target_id`)。文書の id は UUID で `#` を含まないので、節は最初の `#` で分けられる。
 fn encode(target: &PrefTarget) -> Result<(&'static str, String), AppError> {
@@ -136,6 +137,7 @@ fn encode(target: &PrefTarget) -> Result<(&'static str, String), AppError> {
         } => (SECTION, vec![document_id, anchor]),
         PrefTarget::Document { document_id } => (DOCUMENT, vec![document_id]),
         PrefTarget::Flow { flow_id } => (FLOW, vec![flow_id]),
+        PrefTarget::Quickref { row_id } => (QUICKREF, vec![row_id]),
     };
     if parts.iter().any(|p| p.trim().is_empty()) {
         return Err(AppError::InvalidInput(format!(
@@ -205,6 +207,19 @@ fn resolve(
                 };
                 (target, title, None)
             }),
+        QUICKREF => conn
+            .query_row(
+                "SELECT symptom, category FROM quickref_rows WHERE id = ?1",
+                [id],
+                |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)),
+            )
+            .optional()?
+            .map(|(symptom, category)| {
+                let target = PrefTarget::Quickref {
+                    row_id: id.to_owned(),
+                };
+                (target, symptom, Some(category))
+            }),
         // 後の版で種類を足した DB を古い版で開いたときなど。知らない種類は出さない
         _ => None,
     };
@@ -222,7 +237,7 @@ mod tests {
     use crate::db::fixtures::{bleeding, cpr};
     use crate::db::test_conn;
     use crate::db::triage::fixtures::flow;
-    use crate::db::{docs, triage};
+    use crate::db::{docs, quickref, triage};
 
     fn seed(conn: &mut Connection) -> (String, String) {
         let bleeding_id = docs::upsert(conn, &bleeding()).expect("保存できる");
@@ -285,6 +300,30 @@ mod tests {
         assert_eq!(oldest.target, section(&bleeding_id, "bleeding-signs"));
         assert_eq!(oldest.title, "出血の見分け方");
         assert_eq!(oldest.context.as_deref(), Some("出血"));
+    }
+
+    #[test]
+    fn quickref_rows_resolve_to_symptom_and_category() {
+        let mut conn = test_conn();
+        quickref::replace_all(&mut conn, &quickref::fixtures::table("hash")).expect("保存できる");
+        let target = PrefTarget::Quickref {
+            row_id: "tension-ptx".to_owned(),
+        };
+        fav_toggle(&conn, &target).expect("入れられる");
+        history_push(&mut conn, &target).expect("入れられる");
+        let items = fav_list(&conn).expect("読める");
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].target, target);
+        assert_eq!(items[0].title, "緊張性気胸");
+        assert_eq!(items[0].context.as_deref(), Some("気道・呼吸"));
+        assert_eq!(history_list(&conn, 8).expect("読める").len(), 1);
+
+        // 行が表から消えたら出さない（行は残す）
+        let mut next = quickref::fixtures::table("hash-2");
+        next.rows.retain(|r| r.id != "tension-ptx");
+        quickref::replace_all(&mut conn, &next).expect("置き換えられる");
+        assert!(fav_list(&conn).expect("読める").is_empty());
+        assert!(history_list(&conn, 8).expect("読める").is_empty());
     }
 
     #[test]

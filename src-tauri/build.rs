@@ -21,6 +21,8 @@ const COMMANDS: &[&str] = &[
     "triage_get",
     "triage_upsert",
     "triage_delete",
+    "quickref_list",
+    "quickref_replace_all",
     "fav_toggle",
     "fav_list",
     "history_push",

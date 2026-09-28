@@ -173,7 +173,7 @@
                 "type": "array",
                 "items": {
                   "type": "string",
-                  "pattern": "^(?:doc:([a-z0-9-]+\\.md)(?:#(.+))?|flow:([a-z0-9]+(?:-[a-z0-9]+)*)|quickref:(\\S+)|https:\\/\\/\\S+)$",
+                  "pattern": "^(?:doc:([a-z0-9-]+\\.md)(?:#(.+))?|flow:([a-z0-9]+(?:-[a-z0-9]+)*)|quickref:([a-z0-9]+(?:-[a-z0-9]+)*)|https:\\/\\/\\S+)$",
                   "description": "doc:<ファイル名>#<アンカー> / flow:<id> / quickref:<id> / https://..."
                 },
                 "description": "関連ページ"
@@ -227,7 +227,7 @@
                 "type": "array",
                 "items": {
                   "type": "string",
-                  "pattern": "^(?:doc:([a-z0-9-]+\\.md)(?:#(.+))?|flow:([a-z0-9]+(?:-[a-z0-9]+)*)|quickref:(\\S+)|https:\\/\\/\\S+)$",
+                  "pattern": "^(?:doc:([a-z0-9-]+\\.md)(?:#(.+))?|flow:([a-z0-9]+(?:-[a-z0-9]+)*)|quickref:([a-z0-9]+(?:-[a-z0-9]+)*)|https:\\/\\/\\S+)$",
                   "description": "doc:<ファイル名>#<アンカー> / flow:<id> / quickref:<id> / https://..."
                 },
                 "description": "関連ページ"

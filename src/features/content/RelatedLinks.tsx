@@ -6,19 +6,25 @@ import { Button } from "@/components/ui/button";
 import { manualSourcePath } from "@/features/content/path";
 import { docHref } from "@/features/library/link";
 import { useOutline } from "@/features/library/viewer/use-doc-data";
-import type { FlowLookup } from "@/features/triage/runner";
+import { quickrefHref } from "@/features/quickref/link";
+import { useQuickrefTable } from "@/features/quickref/use-quickref";
 import { parseFlowLink, type FlowLink } from "@/features/triage/links";
 import type { DocOutline } from "@/lib/bindings/DocOutline";
+import type { QuickrefRow } from "@/lib/bindings/QuickrefRow";
 import { errorMessage, openExternal } from "@/lib/tauri";
 
-interface FlowLinksProps {
+interface RelatedLinksProps {
+  /** `doc:` / `flow:` / `quickref:` / `https://` の書式（triage-format.md §2） */
   links: readonly string[];
-  /** flow: のリンクの名前を引くため。読み込んでいないフローは id で出す */
-  lookup: FlowLookup;
+  /** flow: のリンクの名前を引く。引けなければ id で出す */
+  flowTitle?: (flowId: string) => string | undefined;
 }
 
-/** action / end の関連リンク。マニュアルはビューアへ、フローは実行画面へ、外部は既定のブラウザで開く。 */
-export function FlowLinks({ links, lookup }: FlowLinksProps): JSX.Element | null {
+/**
+ * 原稿（フローの action / end、クイック表の行）の関連リンク。
+ * マニュアルはビューアへ、フローは実行画面へ、クイック表は該当の行へ、外部は既定のブラウザで開く。
+ */
+export function RelatedLinks({ links, flowTitle }: RelatedLinksProps): JSX.Element | null {
   const outline = useOutline();
   const navigate = useNavigate();
   const [notice, setNotice] = useState<string | null>(null);
@@ -26,6 +32,9 @@ export function FlowLinks({ links, lookup }: FlowLinksProps): JSX.Element | null
     const link = parseFlowLink(text);
     return link === null ? [] : [{ text, link }];
   });
+  // クイック表の症状はリンクがあるときだけ読む（フローの多くはクイック表を指さないため）
+  const quickref = useQuickrefTable(parsed.some(({ link }) => link.kind === "quickref"));
+  const quickrefRows = quickref.status === "ready" ? quickref.table.rows : [];
   if (parsed.length === 0) {
     return null;
   }
@@ -45,12 +54,13 @@ export function FlowLinks({ links, lookup }: FlowLinksProps): JSX.Element | null
       case "flow":
         void navigate(`/triage/${encodeURIComponent(link.flowId)}`);
         return;
+      case "quickref":
+        void navigate(quickrefHref(link.rowId));
+        return;
       case "external":
         openExternal(link.url).catch((error: unknown) => {
           setNotice(`リンクを開けませんでした: ${errorMessage(error)}`);
         });
-        return;
-      case "quickref":
         return;
     }
   }
@@ -64,14 +74,12 @@ export function FlowLinks({ links, lookup }: FlowLinksProps): JSX.Element | null
             <Button
               variant="outline"
               className="h-auto min-h-9 w-full justify-start py-1.5 text-left whitespace-normal"
-              // クイック表は Step 06 で作るまで開けない
-              disabled={link.kind === "quickref"}
               onClick={() => {
                 open(link);
               }}
             >
               <LinkIcon link={link} />
-              {linkLabel(link, outline, lookup)}
+              {linkLabel(link, outline, flowTitle, quickrefRows)}
             </Button>
           </li>
         ))}
@@ -89,7 +97,12 @@ function findDoc(outline: readonly DocOutline[], fileName: string): DocOutline |
   return outline.find((d) => d.sourcePath === manualSourcePath(fileName));
 }
 
-function linkLabel(link: FlowLink, outline: readonly DocOutline[], lookup: FlowLookup): string {
+function linkLabel(
+  link: FlowLink,
+  outline: readonly DocOutline[],
+  flowTitle: ((flowId: string) => string | undefined) | undefined,
+  quickrefRows: readonly QuickrefRow[],
+): string {
   switch (link.kind) {
     case "doc": {
       const doc = findDoc(outline, link.fileName);
@@ -102,9 +115,9 @@ function linkLabel(link: FlowLink, outline: readonly DocOutline[], lookup: FlowL
         : `${doc.title} › ${heading.title}`;
     }
     case "flow":
-      return `フロー: ${lookup(link.flowId)?.title ?? link.flowId}`;
+      return `フロー: ${flowTitle?.(link.flowId) ?? link.flowId}`;
     case "quickref":
-      return "クイック表（準備中）";
+      return `クイック表: ${quickrefRows.find((r) => r.id === link.rowId)?.symptom ?? link.rowId}`;
     case "external":
       return link.url;
   }

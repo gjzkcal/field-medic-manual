@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Kbd } from "@/components/ui/kbd";
+import { RelatedLinks } from "@/features/content/RelatedLinks";
 import { daysSinceVerified, isStale } from "@/features/library/stale";
 import { FavoriteButton } from "@/features/prefs/FavoriteButton";
 import { modSummary, useModSettings } from "@/features/settings/mod-settings";
@@ -28,7 +29,6 @@ import {
 import type { Flow, Outcome } from "@/features/triage/schema";
 import { useTriageRunner } from "@/features/triage/use-triage-runner";
 import { CountdownTimer } from "@/features/triage/view/CountdownTimer";
-import { FlowLinks } from "@/features/triage/view/FlowLinks";
 import { OUTCOME_CLASSES, OUTCOME_LABELS, TONE_CLASSES } from "@/features/triage/view/tone";
 import { TrailNav } from "@/features/triage/view/TrailNav";
 import { useNow } from "@/hooks/use-now";
@@ -232,7 +232,9 @@ function NodeView({ state, lookup, headingRef, onChoose, onRestart }: NodeViewPr
           )}
           {node.timerSec !== undefined && <CountdownTimer seconds={node.timerSec} />}
           {node.help !== undefined && <HelpText help={node.help} />}
-          {node.links !== undefined && <FlowLinks links={node.links} lookup={lookup} />}
+          {node.links !== undefined && (
+            <RelatedLinks links={node.links} flowTitle={(id) => lookup(id)?.title} />
+          )}
           <ChoiceButtons options={options} onChoose={onChoose} primary />
         </section>
       );
@@ -252,7 +254,9 @@ function NodeView({ state, lookup, headingRef, onChoose, onRestart }: NodeViewPr
             <div className="text-foreground">{heading}</div>
           </div>
           {node.help !== undefined && <HelpText help={node.help} />}
-          {node.links !== undefined && <FlowLinks links={node.links} lookup={lookup} />}
+          {node.links !== undefined && (
+            <RelatedLinks links={node.links} flowTitle={(id) => lookup(id)?.title} />
+          )}
           {options.length > 0 ? (
             <ChoiceButtons options={options} onChoose={onChoose} primary />
           ) : (

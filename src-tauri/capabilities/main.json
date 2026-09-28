@@ -29,6 +29,8 @@
     "allow-triage-get",
     "allow-triage-upsert",
     "allow-triage-delete",
+    "allow-quickref-list",
+    "allow-quickref-replace-all",
     "allow-fav-toggle",
     "allow-fav-list",
     "allow-history-push",

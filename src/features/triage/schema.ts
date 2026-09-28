@@ -12,16 +12,17 @@ import type { ModTarget } from "@/lib/bindings/ModTarget";
 export const FLOW_SCHEMA_FILE = "triage-flow.v1.schema.json";
 export const FLOW_SCHEMA_ID = `./${FLOW_SCHEMA_FILE}`;
 
-const text = z.string().trim().min(1, "空にできません");
+// text・modTarget・modChannel・isoDate・link はクイック表のスキーマ（quickref/schema.ts）でも使う
+export const text = z.string().trim().min(1, "空にできません");
 
 // 値の一覧は Rust から生成した型を正にするため、列挙を書き写さず meta.ts の判定を使う
-const modTarget = z
+export const modTarget = z
   .custom<ModTarget>(
     (v) => typeof v === "string" && isModTarget(v),
     "対象モジュールは core / hitzones / circulation / breathing / defibrillation / ai / general のどれかです",
   )
   .meta({ type: "string", enum: MOD_TARGET_VALUES });
-const modChannel = z
+export const modChannel = z
   .custom<ModChannel>(
     (v) => typeof v === "string" && isModChannel(v),
     "版は release / dev のどちらかです",
@@ -29,14 +30,14 @@ const modChannel = z
   .meta({ type: "string", enum: ["release", "dev"] });
 
 // YAML の書き方によっては日付が Date になるので、YYYY-MM-DD の文字列に揃える
-const isoDate = z
+export const isoDate = z
   .preprocess(
     (v) => (v instanceof Date ? v.toISOString().slice(0, 10) : v),
     z.string().refine(isIsoDate, "YYYY-MM-DD で書いてください"),
   )
   .meta({ type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}$" });
 
-const link = z
+export const link = z
   .string()
   .refine(
     (v) => parseFlowLink(v) !== null,

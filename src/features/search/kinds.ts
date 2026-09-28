@@ -1,8 +1,11 @@
-// 検索結果の種類ごとの表示と遷移の登録表。Step 06 でクイック表（quickref）を足す。
+// 検索結果の種類ごとの表示と遷移の登録表。
 // SearchHit["kind"] を添字にしたマップ型なので、Rust 側で種類が増えたのに登録を忘れるとコンパイルエラーになる。
-import { FileTextIcon, WorkflowIcon, type LucideIcon } from "lucide-react";
+import { FileTextIcon, TableIcon, WorkflowIcon, type LucideIcon } from "lucide-react";
 
 import { docHref } from "@/features/library/link";
+import { conditionLabel } from "@/features/quickref/conditions";
+import { quickrefHref } from "@/features/quickref/link";
+import { severityName, toSeverity } from "@/features/quickref/severity";
 import type { PrefTarget } from "@/lib/bindings/PrefTarget";
 import type { SearchHit } from "@/lib/bindings/SearchHit";
 
@@ -43,6 +46,15 @@ const SEARCH_KINDS: { [K in HitKind]: SearchKind<HitOf<K>> } = {
     badge: (hit) => (hit.synonymOnly ? "同義語" : null),
     href: (hit) => `/triage/${encodeURIComponent(hit.id)}`,
     favoriteTarget: (hit) => ({ kind: "flow", flowId: hit.id }),
+  },
+  quickref: {
+    label: "クイック表",
+    icon: TableIcon,
+    context: (hit) => `${severityName(toSeverity(hit.severity))} · ${hit.category}`,
+    // 検索は設定の「使っている MOD」で絞らないので、条件付きの行はそれを示す（同義語の印より優先）
+    badge: (hit) => conditionLabel(hit) ?? (hit.synonymOnly ? "同義語" : null),
+    href: (hit) => quickrefHref(hit.id),
+    favoriteTarget: (hit) => ({ kind: "quickref", rowId: hit.id }),
   },
 };
 

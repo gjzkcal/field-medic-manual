@@ -1,0 +1,140 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "const": "./quickref.v1.schema.json"
+    },
+    "modChannel": {
+      "description": "ACE の版。省略 = 版を問わない",
+      "type": "string",
+      "enum": [
+        "release",
+        "dev"
+      ]
+    },
+    "verifiedAt": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "内容を確認した日（YYYY-MM-DD）"
+    },
+    "rows": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "description": "英小文字・数字・ハイフン。お気に入りと quickref:<id> のリンクで使うので変えない"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "出血",
+              "循環",
+              "気道・呼吸",
+              "意識",
+              "薬・物品"
+            ],
+            "description": "カテゴリ（画面のタブ）"
+          },
+          "symptom": {
+            "type": "string",
+            "minLength": 1,
+            "description": "症状（ゲーム内で見える様子）"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "軽度",
+              "中等度",
+              "重度",
+              "致命的"
+            ],
+            "description": "致命的 = 数分で心停止・死亡 / 重度 = 放っておくと心停止に進む / 中等度 / 軽度"
+          },
+          "treatment": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "手順（1 要素 1 動作。番号付きで表示）"
+          },
+          "items": {
+            "description": "使う物品",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "notes": {
+            "description": "備考",
+            "type": "string",
+            "minLength": 1
+          },
+          "links": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(?:doc:([a-z0-9-]+\\.md)(?:#(.+))?|flow:([a-z0-9]+(?:-[a-z0-9]+)*)|quickref:([a-z0-9]+(?:-[a-z0-9]+)*)|https:\\/\\/\\S+)$",
+              "description": "doc:<ファイル名>#<アンカー> / flow:<id> / quickref:<id> / https://..."
+            },
+            "description": "関連ページ。根拠の原稿の節を doc:<ファイル名>#<アンカー> で 1 つ以上"
+          },
+          "mods": {
+            "description": "この MOD をすべて入れているときだけ出す",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "hitzones",
+                "circulation",
+                "breathing",
+                "ai"
+              ],
+              "description": "設定の「使っている MOD」で選べる MOD"
+            }
+          },
+          "withoutMods": {
+            "description": "この MOD をどれも入れていないときだけ出す",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "hitzones",
+                "circulation",
+                "breathing",
+                "ai"
+              ],
+              "description": "設定の「使っている MOD」で選べる MOD"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "symptom",
+          "severity",
+          "treatment",
+          "links"
+        ],
+        "additionalProperties": false
+      },
+      "description": "行（上から順に表示）"
+    }
+  },
+  "required": [
+    "$schema",
+    "verifiedAt",
+    "rows"
+  ],
+  "additionalProperties": false,
+  "title": "症状→処置 クイック表（Field Medic Manual）"
+}

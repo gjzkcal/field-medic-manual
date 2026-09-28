@@ -1,0 +1,615 @@
+# 症状→処置 クイック表。1 行 = 1 つの症状（ゲーム内で見える様子）。書き方は content-guide §8。
+# 各行の事実（数値・条件・表示名）は同梱のマニュアル 12 本に基づく。
+# マニュアルは ACE Medical Dev 1.5.36（ACE-Anvil の dev ブランチ 703d1aa7。医療の挙動は Workshop の Dev 1.5.36 と同じ）で確かめた。
+# 手順の順番と選び方は作者の方針（普段の組み合わせ Core + Circulation + Breathing での遊び方）。
+# MOD で処置が変わる行は mods / withoutMods で出し分け、設定の「使っている MOD」に合う行だけを表示する。
+# 次の行はクイック表の形式（JSON Schema）。VS Code で開くと、キーの補完と書き間違いの表示が効く
+$schema: ./quickref.v1.schema.json
+modChannel: dev
+verifiedAt: "2026-09-28"
+rows:
+  # ---- 出血 ----
+  - id: limb-bleeding
+    category: 出血
+    symptom: 手足から大量に出血している
+    severity: 致命的
+    treatment:
+      - 出血している腕・脚に包帯を巻く
+      - 包帯がなければ、医療キットの包帯を使うか、仲間から受け取る
+      - 診察で、ほかの出血が残っていないか確かめる
+    items: [包帯]
+    notes: >-
+      包帯は 1 本で、巻いた腕（上腕〜手）・脚（太もも〜足）全体の出血を消す。
+      止血帯（Tourniquet。表示は「止血帯を使う」）でも出血はほぼ止まる（0.001 倍）が、包帯を巻くまで血液は回復しない。
+      Circulation ありで 40 ml/s の出血を放置すると、46 秒で意識を失い、58 秒で心停止する
+    links:
+      - doc:hemorrhage.md#包帯を巻く
+      - doc:hemorrhage.md#止血帯を使う
+      - doc:hemorrhage.md#放置したときの時間
+      - flow:casualty-first-contact
+
+  - id: torso-head-bleeding
+    category: 出血
+    symptom: 胴体・首・頭から出血している
+    severity: 致命的
+    treatment:
+      - 出血している部位に包帯を巻く（止血帯は巻けない）
+      - 包帯がなければ、医療キットの包帯を使うか、仲間から受け取る
+      - 診察で、ほかの出血が残っていないか確かめる
+    items: [包帯]
+    notes: >-
+      包帯は 1 本で、部位のグループ（頭と首／胸／腹と腰）全体の出血を消す。
+      首は桁違いに多く出血する（Circulation なしで 162.5〜250 ml/s、ありで 81.25〜125 ml/s）。Circulation なしなら、首の最小の傷でも約 25 秒で意識を失い、37 秒で出血死する
+    links:
+      - doc:hemorrhage.md#包帯を巻く
+      - doc:hemorrhage.md#首と大腿動脈の大出血
+      - flow:casualty-first-contact
+
+  - id: femoral-bleeding
+    category: 出血
+    symptom: 太ももを撃たれて、その場で意識を失い大量に出血している（大腿動脈）
+    severity: 致命的
+    treatment:
+      - 腰（下胴）に包帯を巻く
+      - 包帯がなければ、医療キットの包帯を使うか、仲間から受け取る
+    items: [包帯]
+    notes: >-
+      大腿動脈（Femoral artery）の出血は腰の傷として数えるので、脚に止血帯を巻いても止まらないとみられる。腰に包帯を巻くと、腹と腰の出血がまとめて消える。
+      動脈が壊れると 200 ml/s で、Circulation なしなら約 20 秒で意識喪失の段階、30 秒で出血死する
+    links:
+      - doc:hemorrhage.md#首と大腿動脈の大出血
+      - doc:hemorrhage.md#包帯を巻く
+    mods: [hitzones]
+
+  - id: under-fire
+    category: 出血
+    symptom: 撃たれている中で、仲間が倒れている
+    severity: 重度
+    treatment:
+      - 診察で失血の Class を確かめる（「Class III hemorrhage」など）
+      - Class III 以上なら、フェニレフリン（Phenylephrine）を打ち、生理食塩水を付ける
+      - 遮蔽物の陰へ運ぶ（腰の「引きずって運ぶ（Drag）」か「持ちあげて運ぶ（Carry）」）
+      - 安全になったら、包帯で出血を止める
+    items: [フェニレフリン（Phenylephrine）, 生理食塩水, 包帯]
+    notes: >-
+      フェニレフリンは出血を遅くするだけ（1 本で最大約 0.69 倍、約 3 分）。生理食塩水は 1 袋で血液の 25%（750 ml）を 90 秒かけて入れる。
+      注意: 激痛の患者は、フェニレフリン約 1 本で心停止しうる。
+      意識を失ってから 1 秒以上たった後に致命打を受けると、Second Chance の判定なしで即死する
+    links:
+      - doc:pain-medications.md#フェニレフリン
+      - doc:pain-medications.md#過量投与
+      - doc:hemorrhage.md#生理食塩水を使う
+      - doc:items-and-timing.md#負傷者を運ぶ
+      - doc:death-second-chance.md#倒れた後の追い打ち
+      - flow:casualty-first-contact
+    mods: [circulation]
+
+  - id: under-fire-core
+    category: 出血
+    symptom: 撃たれている中で、仲間が倒れている
+    severity: 重度
+    treatment:
+      - 遮蔽物の陰へ運ぶ（腰の「引きずって運ぶ（Drag）」か「持ちあげて運ぶ（Carry）」）
+      - 安全になったら、包帯で出血を止める
+    items: [包帯]
+    notes: >-
+      意識を失ってから 1 秒以上たった後に致命打を受けると、Second Chance の判定なしで即死する。
+      運んでいる間は移動が半分の速さになる。離すのは Ctrl+X。武器を選ぶと手を離す
+    links:
+      - doc:items-and-timing.md#負傷者を運ぶ
+      - doc:death-second-chance.md#倒れた後の追い打ち
+      - flow:casualty-first-contact
+    withoutMods: [circulation]
+
+  - id: self-bleeding
+    category: 出血
+    symptom: 自分の画面の縁が赤く脈打ち、心音が聞こえる
+    severity: 重度
+    treatment:
+      - 医療ラジアルメニュー（Ctrl+H）の「止血」から包帯を持ち、自分の出血している部位に巻く
+      - 包帯がなければ、医療キットの包帯を使うか、仲間に巻いてもらう
+    items: [包帯]
+    notes: >-
+      自分が出血している合図。全体の出血率が 5 ml/s 未満なら効果は弱く、心音はない。
+      自分に巻く時間は、衛生兵で 5.9〜7.7 秒、衛生兵以外で 9.0〜10.8 秒（アニメーションの長さから算出）。脚に巻く間は動けない
+    links:
+      - doc:hemorrhage.md#出血の見分け方
+      - doc:hemorrhage.md#包帯を巻く
+      - doc:items-and-timing.md#医療ラジアルメニュー
+
+  - id: blood-loss
+    category: 出血
+    symptom: 止血したが、失血が Class II 以上（Class II〜IV hemorrhage）
+    severity: 重度
+    treatment:
+      - 生理食塩水を付ける（1 人に 1 袋ずつ）
+      - 90 秒たったら失血をもう一度確かめ、Class II 以上ならもう 1 袋付ける
+      - 生理食塩水がなければ、医療キットか仲間から受け取る
+    items: [生理食塩水]
+    notes: >-
+      1 袋で血液の 25%（750 ml）が 90 秒で入る（例: 38% → 63%、もう 1 袋で 88%）。
+      Class II 以上（血液 70% 以下）は Unstable で、意識不明なら自然には目覚めず、炭酸アンモニウムも効かない。
+      生理食塩水がなくても、出血が止まっていれば 10 秒後から毎分 4.4% ずつ戻る（40% → 70% に約 7 分）
+    links:
+      - doc:hemorrhage.md#生理食塩水を使う
+      - doc:hemorrhage.md#血液の回復
+      - doc:vitals.md#5-つの状態と閾値
+    mods: [circulation]
+
+  - id: blood-loss-core
+    category: 出血
+    symptom: 止血したが、失血が多い（診察の失血の程度・画面の色が抜ける）
+    severity: 中等度
+    treatment:
+      - 生理食塩水を付ける（1 人に 1 袋ずつ）
+      - 生理食塩水がなければ、医療キットか仲間から受け取る
+    items: [生理食塩水]
+    notes: >-
+      1 袋で 1500 ml（血液の 25%）が 90 秒で入る。血液が 33.3% 以下の間は、意識不明のまま目覚めない（エピネフリンを打っても）。
+      出血が止まっていれば、10 秒後から毎秒 4.44 ml ずつ戻る。医療キットで部位を治しても血液は戻らない
+    links:
+      - doc:hemorrhage.md#生理食塩水を使う
+      - doc:hemorrhage.md#血液の回復
+      - doc:consciousness.md#血液で意識を失う条件
+    withoutMods: [circulation]
+
+  - id: tourniquet-only
+    category: 出血
+    symptom: 止血帯だけで止めてあり、包帯を巻いていない
+    severity: 中等度
+    treatment:
+      - 止血帯を巻いた腕・脚に包帯を巻く
+    items: [包帯]
+    notes: >-
+      止血帯（Tourniquet）で止めた傷も出血の扱いが残るので、包帯を巻くまで血液は回復しない（Circulation なしでは、エピネフリンも使えない）。
+      止血帯を巻いたままにしたことによる悪影響の処理は、ACE にはない
+    links:
+      - doc:hemorrhage.md#止血帯を使う
+      - doc:hemorrhage.md#止血帯を巻いたままにしたとき
+      - doc:hemorrhage.md#血液の回復
+
+  # ---- 循環 ----
+  - id: cardiac-arrest
+    category: 循環
+    symptom: 脈がない（心停止）
+    severity: 致命的
+    treatment:
+      - 出血があれば包帯で止める
+      - 仰向けにして King LT を入れる（Insert King LT）。なければ、Clear vomit が出ていれば嘔吐物を除去し、あご先挙上（Lift chin）をする
+      - 酸素マスク（Oxygen Mask）を持っていれば付ける
+      - Epinephrine を 1 本打つ
+      - 胸に CPR（Perform CPR）を行う。生理食塩水は合間に付ける
+      - 蘇生しないまま約 3 分たったら、Epinephrine をもう 1 本打つ
+    items: [包帯, King LT, 酸素マスク（Oxygen Mask）, Epinephrine, 生理食塩水]
+    notes: >-
+      Check pulse で「You find a heart rate of 0」、血圧は 0/0。CPR をしないと約 5 分（310 秒）で脳が尽きて死亡する（CPR 中は脳が減らない）。
+      SpO2 が 65% 未満の間は蘇生の判定が必ず失敗するので、気道が塞がったままでは蘇生しない
+    links:
+      - doc:cardiac-arrest.md#心停止の見分け方
+      - doc:cardiac-arrest.md#cpr-を行う
+      - doc:cardiac-arrest.md#breathing-を入れているとき
+      - doc:airway.md#king-lt-を使う
+      - flow:casualty-first-contact
+    mods: [circulation, breathing]
+
+  - id: cardiac-arrest-no-breathing
+    category: 循環
+    symptom: 脈がない（心停止）
+    severity: 致命的
+    treatment:
+      - 出血があれば包帯で止める
+      - 仰向けでなければ、仰向けに寝かせる（Put on back）
+      - Epinephrine を 1 本打つ
+      - 胸に CPR（Perform CPR）を行う。生理食塩水は合間に付ける
+      - 蘇生しないまま約 3 分たったら、Epinephrine をもう 1 本打つ
+    items: [包帯, Epinephrine, 生理食塩水]
+    notes: >-
+      Check pulse で「You find a heart rate of 0」、血圧は 0/0。CPR をしないと約 5 分（310 秒）で脳が尽きて死亡する（CPR 中は脳が減らない）。
+      Epinephrine は蘇生の判定の間隔を短くする（22 秒 → 1 本のピークで約 15 秒）。1 回の成功率は変えない
+    links:
+      - doc:cardiac-arrest.md#心停止の見分け方
+      - doc:cardiac-arrest.md#cpr-を行う
+      - doc:cardiac-arrest.md#エピネフリンの役割
+      - flow:casualty-first-contact
+    mods: [circulation]
+    withoutMods: [breathing]
+
+  - id: cpr-no-rosc
+    category: 循環
+    symptom: CPR を続けても蘇生しない
+    severity: 致命的
+    treatment:
+      - 止まっていない出血があれば、包帯で止める
+      - 失血が Class II 以上なら、生理食塩水を付けて CPR に戻る
+      - 前の Epinephrine から約 3 分たっていれば、もう 1 本打つ（同時に 2 本以上は打たない）
+      - CPR を続ける
+    items: [包帯, 生理食塩水, Epinephrine]
+    notes: >-
+      蘇生の判定は CPR をした合計 22 秒ごと（中断しても持ち越す）。1 回の成功率は血液 70% 以上で 40%、20% 以下で 0%。
+      出血を止めて血液 100% なら、平均約 56 秒で蘇生する。止まっていない出血があると、CPR で失血が速くなる。
+      Breathing を入れていれば、気道が塞がったまま（SpO2 65% 未満）では蘇生しない
+    links:
+      - doc:cardiac-arrest.md#蘇生の判定
+      - doc:cardiac-arrest.md#蘇生までの時間
+      - doc:cardiac-arrest.md#breathing-を入れているとき
+    mods: [circulation]
+
+  - id: shock-tachycardia
+    category: 循環
+    symptom: 意識不明で、脈がとても速い（出血性ショック）
+    severity: 致命的
+    treatment:
+      - 止まっていない出血があれば、包帯で止める
+      - 生理食塩水を付ける
+      - 脈が 0 になったら、心停止の処置に移る
+    items: [包帯, 生理食塩水]
+    notes: >-
+      血液 40% 以下（Class III）で Critical になると頻脈が始まる（血液 35% で約 177、30% で約 199）。
+      血液 26.4% 未満で心拍数の目標が 220 を超え、心停止する（実際は 19〜25% 付近）。
+      Unstable までは、出血しても脈は 80 のままで血圧だけが下がる
+    links:
+      - doc:vitals.md#心拍数の決まり方
+      - doc:hemorrhage.md#心停止が-class-iv-より先に起きる理由
+      - quickref:cardiac-arrest
+    mods: [circulation]
+
+  - id: after-rosc
+    category: 循環
+    symptom: CPR で蘇生した（脈が戻った）
+    severity: 重度
+    treatment:
+      - CPR をやめる（蘇生しても自動では止まらない）
+      - 回復体位にする（腰の「左向きに寝かせる」か「右向きに寝かせる」）
+      - バイタルと失血を確かめ、Class II 以上なら生理食塩水を入れる
+      - Stable になったら、炭酸アンモニウム（Ammonium Carbonate）で起こす
+    items: [生理食塩水, 炭酸アンモニウム（Ammonium Carbonate）]
+    notes: >-
+      蘇生した直後は Critical で、意識不明のまま。血液が 70% を超えていれば約 2 秒で Stable になる。
+      蘇生した後は、炭酸アンモニウムの成功率が脳の状態で下がる（脳 75% で 80%）。使わなければ、脳 83% で約 113 秒で自然に目覚める
+    links:
+      - doc:cardiac-arrest.md#蘇生した後
+      - doc:consciousness.md#炭酸アンモニウムで起こす
+      - doc:airway.md#回復体位
+      - flow:casualty-first-contact
+    mods: [circulation]
+
+  # ---- 気道・呼吸 ----
+  - id: tension-pneumothorax
+    category: 気道・呼吸
+    symptom: 診察で「Tension pneumothorax」と出る
+    severity: 致命的
+    treatment:
+      - 胸に NCD キット（NCD Kit）を使う（Perform needle decompression）
+      - もう一度診察し、「Open pneumothorax」が残っていればチェストシール（Chest Seal）を貼る
+      - NCD キットがなければ、持っている仲間から受け取る
+    items: [NCD キット（NCD Kit）, チェストシール（Chest Seal）]
+    notes: >-
+      緊張性気胸は無呼吸（呼吸数 0）にし、気胸 0.18 で約 13〜14 分、0.72 で約 7 分で心停止する。
+      チェストシール・回復体位・King LT・酸素マスクでは解けない。心停止した後に使っても、それだけでは蘇生しない（CPR が要る）。
+      NCD キットは初期装備にも医療キットにも無く、補給（アーセナル）で手に入れる
+    links:
+      - doc:breathing.md#ncd-キットを使う
+      - doc:breathing.md#緊張性気胸から心停止まで
+      - doc:breathing.md#breathing-の物品の入手
+      - flow:airway-breathing
+    mods: [breathing]
+
+  - id: apnea
+    category: 気道・呼吸
+    symptom: 意識不明で、呼吸数が 0・SpO2 が下がっている
+    severity: 重度
+    treatment:
+      - 脈を確かめる（0 なら心停止の処置へ）
+      - 診察に「Tension pneumothorax」が出ていれば、NCD キットを使う
+      - どちらでもなければ、King LT を入れる。なければ、Clear vomit が出ていれば嘔吐物を除去し、あご先挙上（Lift chin）をする
+      - 脈があれば、回復体位にする
+    items: [King LT, NCD キット（NCD Kit）]
+    notes: >-
+      呼吸数 0 の原因は、気道閉塞（舌根沈下・嘔吐）・緊張性気胸・心停止。舌根沈下は見た目では分からない（Lift chin は塞がっていなくても出る）。
+      無呼吸でも画面の効果や音は変わらない。塞がったままだと約 16 秒で Unstable、85 秒で Critical、約 15 分で心停止する。
+      心停止する前に気道を開ければ、25 秒以内に Stable に戻る
+    links:
+      - doc:airway.md#気道閉塞の見分け方
+      - doc:airway.md#放置したときの推移
+      - doc:airway.md#あご先挙上
+      - quickref:tension-pneumothorax
+      - flow:airway-breathing
+    mods: [breathing]
+
+  - id: airway-vomit
+    category: 気道・呼吸
+    symptom: 頭に「Clear vomit」が出ている（嘔吐で気道が塞がっている）
+    severity: 重度
+    treatment:
+      - King LT を入れる（Insert King LT）
+      - King LT がなければ、嘔吐物を除去する（Clear vomit）
+      - 呼吸数がまだ 0 なら、あご先挙上（Lift chin）もする
+      - 脈があれば、回復体位にする（以後の嘔吐を防ぐ）
+    items: [King LT]
+    notes: >-
+      回復体位にしても、すでに嘔吐で塞がっている気道は解けない（解けるのは嘔吐物の除去か King LT だけ）。舌根沈下が重なっていることもある。
+      意識不明の間は、約 60 秒ごとに 10% で再び吐く（吐いた後 6 分は吐かない）。King LT は初期装備に無く、補給で手に入れる
+    links:
+      - doc:airway.md#嘔吐物の除去
+      - doc:airway.md#king-lt-を使う
+      - doc:airway.md#回復体位
+      - flow:airway-breathing
+    mods: [breathing]
+
+  - id: open-pneumothorax
+    category: 気道・呼吸
+    symptom: 診察で「Open pneumothorax」と出る・呼吸数が速い
+    severity: 重度
+    treatment:
+      - 胸にチェストシール（Chest Seal）を貼る（Use chest seal）
+      - チェストシールがなければ、持っている仲間から受け取る
+    items: [チェストシール（Chest Seal）]
+    notes: >-
+      開放性気胸は約 60 秒ごとに 50% で悪化し、5% で緊張性気胸になる。放置すると、心停止までの中央値は約 8 分。
+      状態は Stable のままで SpO2 もあまり下がらないので、呼吸数（17〜40）と診察の表示で気づく。
+      チェストシールは初期装備にも医療キットにも無く、補給（アーセナル）で手に入れる
+    links:
+      - doc:breathing.md#チェストシールを使う
+      - doc:breathing.md#気胸の悪化と放置したときの時間
+      - doc:breathing.md#breathing-の物品の入手
+      - flow:airway-breathing
+    mods: [breathing]
+
+  - id: supine-unconscious
+    category: 気道・呼吸
+    symptom: 意識不明の仲間が仰向けのまま
+    severity: 中等度
+    treatment:
+      - 脈を確かめる（0 なら心停止の処置へ）
+      - 頭に Clear vomit が出ていれば、嘔吐物を除去する
+      - 回復体位にする（腰の「左向きに寝かせる」か「右向きに寝かせる」）
+    notes: >-
+      仰向けで放置すると、気道が塞がる割合は 0 分で 23.5%、5 分で 54.9%、10 分で 73.5%。
+      回復体位にすると舌根沈下はその場で解け、以後の嘔吐も起きない（すでにある嘔吐は残る）。King LT を入れても、体位を問わず塞がらなくなる。
+      CPR のために仰向けに戻すと、そのとき 15% で舌根沈下する
+    links:
+      - doc:airway.md#仰向けで放置したとき
+      - doc:airway.md#回復体位
+      - doc:items-and-timing.md#体位を変える
+    mods: [breathing]
+
+  # ---- 意識 ----
+  - id: unconscious
+    category: 意識
+    symptom: 意識不明で倒れている
+    severity: 重度
+    treatment:
+      - 出血があれば包帯で止める
+      - 脈を確かめる（Check pulse）。0 なら心停止の処置へ
+      - 回復体位にする（腰の「左向きに寝かせる」か「右向きに寝かせる」）
+      - 失血・呼吸数・SpO2 を確かめる
+      - 失血が Class II 以上なら生理食塩水を入れる。呼吸数が 0 か SpO2 が低ければ、気道と気胸を処置する
+      - 炭酸アンモニウム（Ammonium Carbonate）で起こす（頭の「Hold under nose」）
+    items: [包帯, 生理食塩水, 炭酸アンモニウム（Ammonium Carbonate）]
+    notes: >-
+      炭酸アンモニウムは状態が Stable のときだけ効き、それ以外では何も起きないが物品は減る。
+      Stable でなくなる主な条件は、血液 70% 以下（Class II 以上）、SpO2 85% 未満、心拍 40 未満。
+      蘇生していなければ、脳 75% 以上で必ず成功し、約 3 秒で目覚める
+    links:
+      - doc:consciousness.md#炭酸アンモニウムで起こす
+      - doc:vitals.md#5-つの状態と閾値
+      - doc:airway.md#回復体位
+      - flow:casualty-first-contact
+    mods: [circulation, breathing]
+
+  - id: unconscious-no-breathing
+    category: 意識
+    symptom: 意識不明で倒れている
+    severity: 重度
+    treatment:
+      - 出血があれば包帯で止める
+      - 脈を確かめる（Check pulse）。0 なら心停止の処置へ
+      - 失血を確かめ、Class II 以上なら生理食塩水を入れる
+      - 炭酸アンモニウム（Ammonium Carbonate）で起こす（頭の「Hold under nose」）
+    items: [包帯, 生理食塩水, 炭酸アンモニウム（Ammonium Carbonate）]
+    notes: >-
+      炭酸アンモニウムは状態が Stable のときだけ効き、それ以外では何も起きないが物品は減る。
+      Stable でなくなる主な条件は、血液 70% 以下（Class II 以上）と心拍 40 未満。
+      蘇生していなければ、脳 75% 以上で必ず成功し、約 3 秒で目覚める
+    links:
+      - doc:consciousness.md#炭酸アンモニウムで起こす
+      - doc:vitals.md#5-つの状態と閾値
+      - quickref:cardiac-arrest-no-breathing
+      - flow:casualty-first-contact
+    mods: [circulation]
+    withoutMods: [breathing]
+
+  - id: unconscious-core
+    category: 意識
+    symptom: 意識不明で倒れている
+    severity: 重度
+    treatment:
+      - 出血をすべて包帯で止める（止血帯だけで止めた傷にも包帯を巻く）
+      - エピネフリンを打つ（腕・脚の「エピネフリンを注射」）
+      - エピネフリンがなければ、医療キットか仲間から受け取る
+    items: [包帯, エピネフリン]
+    notes: >-
+      使える条件は、意識不明・前のエピネフリンの効果が切れている・出血していない・全体の健康度 0.33 以上（Hitzones を入れていれば、この条件はない）。
+      打ってから約 19 秒で目覚める。血液 33.3% 以下の間は目覚めない。Second Chance の後は、既定ではエピネフリンを打たないと目覚めない
+    links:
+      - doc:consciousness.md#エピネフリンで起こす
+      - doc:death-second-chance.md#second-chance-とは
+      - quickref:epinephrine-refused
+      - flow:casualty-first-contact
+    withoutMods: [circulation]
+
+  - id: ammonium-fails
+    category: 意識
+    symptom: 炭酸アンモニウム（Ammonium Carbonate）を使っても起きない
+    severity: 重度
+    treatment:
+      - 脈・血圧・失血・呼吸数・SpO2 を確かめる
+      - 失血が Class II 以上なら、生理食塩水を入れる
+      - 呼吸数が 0 か SpO2 が 85% 未満なら、気道と気胸を処置する
+      - Stable になってから、もう一度使う
+    items: [生理食塩水, 炭酸アンモニウム（Ammonium Carbonate）]
+    notes: >-
+      炭酸アンモニウムは Stable のときだけ判定し、それ以外では何も起きないが物品は減る。心拍 40 未満でも Unstable になる。
+      CPR で蘇生した後は、脳の状態で成功率が下がる（脳 50% で 60%）。気道が塞がっている間は、Stable でも自然には目覚めない
+    links:
+      - doc:consciousness.md#炭酸アンモニウムで起こす
+      - doc:vitals.md#5-つの状態と閾値
+      - doc:consciousness.md#気道と意識
+      - quickref:apnea
+    mods: [circulation, breathing]
+
+  - id: ammonium-fails-no-breathing
+    category: 意識
+    symptom: 炭酸アンモニウム（Ammonium Carbonate）を使っても起きない
+    severity: 重度
+    treatment:
+      - 脈・血圧・失血を確かめる
+      - 失血が Class II 以上なら、生理食塩水を入れる
+      - Stable になってから、もう一度使う
+    items: [生理食塩水, 炭酸アンモニウム（Ammonium Carbonate）]
+    notes: >-
+      炭酸アンモニウムは Stable のときだけ判定し、それ以外では何も起きないが物品は減る。心拍 40 未満でも Unstable になる。
+      CPR で蘇生した後は、脳の状態で成功率が下がる（脳 50% で 60%）
+    links:
+      - doc:consciousness.md#炭酸アンモニウムで起こす
+      - doc:vitals.md#5-つの状態と閾値
+    mods: [circulation]
+    withoutMods: [breathing]
+
+  - id: ai-casualty
+    category: 意識
+    symptom: AI の仲間が意識不明で倒れている
+    severity: 重度
+    treatment:
+      - 出血をすぐ包帯で止める
+      - 失血が Class II 以上なら、生理食塩水を入れる
+      - 回復体位にする（腰の「左向きに寝かせる」か「右向きに寝かせる」）
+      - Stable になったら、炭酸アンモニウム（Ammonium Carbonate）で起こす
+    items: [包帯, 生理食塩水, 炭酸アンモニウム（Ammonium Carbonate）]
+    notes: >-
+      AI は、心停止に入った瞬間に死亡する（`m_bCardiacArrestForAIEnabled` の既定 false のとき）。CPR では助けられない。
+      出血が止まらなければ、血液 25% 前後で心停止し死亡する（40 ml/s で 58 秒）。
+      Breathing を入れていれば、仰向けのまま気道が塞がると約 15 分で死亡する
+    links:
+      - doc:cardiac-arrest.md#ai-の心停止
+      - doc:ai-medic.md#ai-自身が負傷したとき
+    mods: [circulation]
+
+  - id: ai-medic
+    category: 意識
+    symptom: AI の衛生兵が治療に来ない
+    severity: 中等度
+    treatment:
+      - 負傷者が意識不明か確かめる（AI の衛生兵は、意識のある負傷者を治療しない）
+      - 同じグループの AI が包帯を持っているか確かめる（包帯のない AI は衛生兵にならない）
+      - 心停止・気道・気胸は AI が処置しないので、自分で処置する
+    notes: >-
+      AI の治療には、ACE All in One Dev に含まれない「ACE Medical AI Dev」が要る。
+      Circulation を入れていると、AI の衛生兵が使うのは包帯と生理食塩水だけ（止血帯・モルヒネ・CPR・体位変換はしない）。
+      心停止したプレイヤーには、衛生兵が来ないまま負傷の知らせが繰り返されるとみられる。手の空いた AI がいなければ 5 秒ごとに探し直す
+    links:
+      - doc:ai-medic.md#ai-が治療する相手
+      - doc:ai-medic.md#衛生兵になる-ai
+      - doc:ai-medic.md#使わない物品と処置
+    mods: [ai]
+
+  # ---- 薬・物品 ----
+  - id: morphine-overdose
+    category: 薬・物品
+    symptom: モルヒネ注射器を一度に何本も打った（脈が遅い・血圧が低い）
+    severity: 致命的
+    treatment:
+      - ナロキソン（Naloxone）を打つ（腕・脚の「Inject naloxone」）
+      - 脈と血圧を確かめる
+      - 脈が 0 になったら、心停止の処置に移る
+    items: [ナロキソン（Naloxone）]
+    notes: >-
+      一度に約 3 本（3.1 本）で意識喪失、約 4 本（3.8 本）で心停止する。確率ではなく必ず起きる。
+      モルヒネ 4 本を同時に打った 60 秒後にナロキソン 1 本を打つと、心停止せず Stable に戻る（打たなければ 76 秒で心停止）。ナロキソンは単独では何も起きない
+    links:
+      - doc:pain-medications.md#ナロキソン
+      - doc:pain-medications.md#過量投与
+      - quickref:cardiac-arrest
+    mods: [circulation]
+
+  - id: epinephrine-refused
+    category: 薬・物品
+    symptom: エピネフリンを打てない（「出血」「怪我が酷い」と出る）
+    severity: 重度
+    treatment:
+      - 「出血」と出たら、残っている出血に包帯を巻く（止血帯だけで止めた傷も）
+      - 「怪我が酷い（Too injured）」と出たら、医療キットで部位を治す
+      - もう一度エピネフリンを打つ
+    items: [包帯, 医療キット, エピネフリン]
+    notes: >-
+      医療キットで部位を治すと、全体の健康度も戻る（胸に 1 回で +0.09。胸だけなら 4 回で 0.33 を超える）。Hitzones を入れていれば「怪我が酷い」は出ない。
+      本体の「適用済み」の文言が出たら、前のエピネフリンの効果（30 秒）が切れるまで待つ
+    links:
+      - doc:consciousness.md#エピネフリンで起こす
+      - doc:items-and-timing.md#医療キット
+    withoutMods: [circulation]
+
+  - id: no-items
+    category: 薬・物品
+    symptom: 必要な物品を持っていない
+    severity: 中等度
+    treatment:
+      - 医療キットの中の物品を使う
+      - 医療キットにもなければ、仲間から受け取る
+    items: [医療キット]
+    notes: >-
+      医療キットには、モルヒネ注射器 8・エピネフリン 8・包帯 8・生理食塩水 3 が入っている。
+      Circulation 入りでは、エピネフリンが Epinephrine に替わり、Ammonium Carbonate・Naloxone・Phenylephrine・Metoprolol が 8 ずつ加わる。
+      Breathing の物品（King LT・チェストシール・NCD キット・酸素マスク）は医療キットにも初期装備にも無く、補給（アーセナル）で手に入れる
+    links:
+      - doc:items-and-timing.md#医療キット
+      - doc:breathing.md#breathing-の物品の入手
+
+  - id: pain
+    category: 薬・物品
+    symptom: 意識があって痛みがある（画面が白く点滅する）
+    severity: 軽度
+    treatment:
+      - フェニレフリンを使ったときは、先に止血を済ませる
+      - モルヒネ注射器を 1 本打つ
+      - 痛みが戻ったら、1 本足す
+    items: [モルヒネ注射器]
+    notes: >-
+      約 30 秒で痛みを感じなくなるが、痛み自体は残り、激痛なら約 15 分で戻る。同時に 2 本以上は打たない（一度に約 3 本で意識喪失、約 4 本で心停止）。
+      痛みそのものは命に関わらないが、激痛だと心拍数が約 130 に上がり、フェニレフリン約 1 本で心停止しうる。医療キットでは痛みは減らない
+    links:
+      - doc:pain-medications.md#モルヒネ注射器
+      - doc:pain-medications.md#過量投与
+      - doc:pain-medications.md#痛みの仕組み
+    mods: [circulation]
+
+  - id: pain-core
+    category: 薬・物品
+    symptom: 意識があって痛みがある（画面が白く点滅する）
+    severity: 軽度
+    treatment:
+      - モルヒネ注射器を 1 本打つ
+      - モルヒネ注射器がなければ、医療キットか仲間から受け取る
+    items: [モルヒネ注射器]
+    notes: >-
+      痛みを 60 秒かけて治す（損傷 100 なら、打ってから約 12 秒で痛みが消える）。痛みがないと使えない（「痛みはない（Not in pain）」）。
+      医療キットでは痛みは減らない。放置すると、損傷 100 で約 9 分かかる
+    links:
+      - doc:pain-medications.md#モルヒネ注射器
+      - doc:pain-medications.md#痛みの仕組み
+    withoutMods: [circulation]
+
+  - id: medkit-no-blood
+    category: 薬・物品
+    symptom: 医療キットで治したのに、血液や痛みが戻らない
+    severity: 軽度
+    treatment:
+      - 血液は、出血を包帯で止めてから生理食塩水を入れる
+      - 痛みは、モルヒネ注射器で抑える
+    items: [包帯, 生理食塩水, モルヒネ注射器]
+    notes: >-
+      医療キットは部位の HP を 3 秒ごとに 10 回復するだけで、出血・血液・痛みは戻らない。
+      出血が止まっていれば、血液は 10 秒後から自然に戻る（毎分 4.4%）
+    links:
+      - doc:items-and-timing.md#医療キット
+      - doc:hemorrhage.md#血液の回復

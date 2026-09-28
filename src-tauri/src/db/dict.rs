@@ -150,7 +150,7 @@ mod tests {
             .into_iter()
             .filter_map(|hit| match hit {
                 SearchHit::Section(h) => Some(h.anchor),
-                SearchHit::Flow(_) => None,
+                SearchHit::Flow(_) | SearchHit::Quickref(_) => None,
             })
             .collect()
     }

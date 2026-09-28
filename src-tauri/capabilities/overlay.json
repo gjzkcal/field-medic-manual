@@ -17,6 +17,7 @@
     "allow-asset-get",
     "allow-triage-list",
     "allow-triage-get",
+    "allow-quickref-list",
     "allow-settings-get",
     "allow-settings-set",
     "allow-fav-toggle",

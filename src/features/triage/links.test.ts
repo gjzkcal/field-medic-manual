@@ -26,7 +26,12 @@ describe("parseFlowLink", () => {
       kind: "flow",
       flowId: "airway-breathing",
     });
-    expect(parseFlowLink("quickref:12")).toEqual({ kind: "quickref", rowId: "12" });
+    expect(parseFlowLink("quickref:tension-ptx")).toEqual({
+      kind: "quickref",
+      rowId: "tension-ptx",
+    });
+    // 行の id はスラッグなので、それ以外の書き方は書き間違いとして扱う
+    expect(parseFlowLink("quickref:Tension_PTX")).toBeNull();
     expect(parseFlowLink("https://anvil.acemod.org/dev/")).toEqual({
       kind: "external",
       url: "https://anvil.acemod.org/dev/",
