@@ -4,6 +4,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { relaunch } from "@tauri-apps/plugin-process";
+import { check } from "@tauri-apps/plugin-updater";
 
 import type { AppError } from "@/lib/bindings/AppError";
 import type { DocDetail } from "@/lib/bindings/DocDetail";
@@ -232,6 +234,72 @@ export function currentWindowLabel(): string {
 /** 既定のブラウザ（mailto はメールソフト）で開く。WebView の中では開かない。 */
 export async function openExternal(url: string): Promise<void> {
   return openUrl(url);
+}
+
+/** 更新の確認に掛ける時間の上限。オフラインのときに確認が終わらないまま残らないようにする */
+const UPDATE_CHECK_TIMEOUT_MS = 15_000;
+
+export interface UpdateInfo {
+  version: string;
+  currentVersion: string;
+  /** 公開日（RFC 3339）。latest.json に無ければ null */
+  date: string | null;
+  /** CHANGELOG のその版の節（Markdown のテキスト） */
+  notes: string;
+}
+
+export interface DownloadProgress {
+  downloaded: number;
+  /** サーバーが大きさを返さなければ null */
+  total: number | null;
+}
+
+/** 見つかった更新。プラグインの Update（Rust 側のリソース）を画面に直接触らせないため、操作を 2 つにまとめる */
+export interface PendingUpdate {
+  info: UpdateInfo;
+  /** ダウンロードしてインストールする。Windows ではインストーラの起動と同時にアプリが終了し、更新後に起動し直す */
+  install: (onProgress: (progress: DownloadProgress) => void) => Promise<void>;
+  /** 更新しないときに、Rust 側が持つリソースを放す */
+  dismiss: () => Promise<void>;
+}
+
+/** GitHub Releases の latest.json を見て、今より新しい版があれば返す（署名は Rust 側で確かめる） */
+export async function checkForUpdate(): Promise<PendingUpdate | null> {
+  const update = await check({ timeout: UPDATE_CHECK_TIMEOUT_MS });
+  if (update === null) {
+    return null;
+  }
+  return {
+    info: {
+      version: update.version,
+      currentVersion: update.currentVersion,
+      date: update.date ?? null,
+      notes: update.body ?? "",
+    },
+    install: async (onProgress) => {
+      let downloaded = 0;
+      let total: number | null = null;
+      await update.downloadAndInstall((event) => {
+        switch (event.event) {
+          case "Started":
+            total = event.data.contentLength ?? null;
+            break;
+          case "Progress":
+            downloaded += event.data.chunkLength;
+            break;
+          case "Finished":
+            break;
+        }
+        onProgress({ downloaded, total });
+      });
+    },
+    dismiss: async () => update.close(),
+  };
+}
+
+/** 更新の後にアプリを起動し直す（Windows ではインストーラが起動し直すので、ここまで来ないことが多い） */
+export async function relaunchApp(): Promise<void> {
+  return relaunch();
 }
 
 export async function windowMinimize(): Promise<void> {

@@ -10,6 +10,8 @@
     "core:window:allow-minimize",
     "core:window:allow-toggle-maximize",
     "core:window:allow-close",
+    "updater:default",
+    "process:allow-restart",
     "allow-app-version",
     "allow-doc-upsert",
     "allow-doc-list",

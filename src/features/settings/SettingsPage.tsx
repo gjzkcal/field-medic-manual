@@ -1,6 +1,7 @@
 import type { JSX } from "react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AboutCard } from "@/features/settings/AboutCard";
 import { DebugPanel } from "@/features/settings/debug/DebugPanel";
 import { HotkeySettings } from "@/features/settings/HotkeySettings";
 import { ModSettingsCard } from "@/features/settings/ModSettingsCard";
@@ -31,6 +32,7 @@ export function SettingsPage(): JSX.Element {
       <ModSettingsCard />
       <HotkeySettings />
       <OverlaySettingsCard />
+      <AboutCard />
       {/* 配布版に開発用の操作を出さないため、開発ビルドだけで表示する */}
       {import.meta.env.DEV && <DebugPanel />}
     </section>

@@ -44,8 +44,13 @@ pub fn run() {
                 .build(),
         )
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_process::init())
         .manage(hotkey::HotkeyState::default())
         .setup(|app| {
+            // updater のクレートはデスクトップだけの依存にしてある（Cargo.toml）
+            #[cfg(desktop)]
+            app.handle()
+                .plugin(tauri_plugin_updater::Builder::new().build())?;
             let data_dir = app.path().app_data_dir()?;
             app.manage(db::Db::open(&data_dir)?);
             tray::create(app)?;

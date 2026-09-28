@@ -1,0 +1,27 @@
+# cargo-about の設定。scripts/third-party-licenses.ts が呼び、配布物の THIRD_PARTY_LICENSES.txt の Rust の節を作る。
+# accepted は scripts/lib/licenses.ts の ALLOWED_LICENSES と同じ一覧にする（テストで一致を確かめる）。
+# 一覧に無いライセンスのクレートが入ると生成が失敗する。足す前にユーザーに確認する（dev-docs/reference/licensing.md §1）。
+accepted = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "Unicode-3.0",
+    "MPL-2.0",
+    "OFL-1.1",
+    "CC0-1.0",
+    "Unlicense",
+    "BSL-1.0",
+    "0BSD",
+]
+
+# 配布するのは Windows x64 だけ。ほかの OS 向けの依存は配布物に入らない
+targets = ["x86_64-pc-windows-msvc"]
+# ビルドとテストにだけ使う依存は配布物に入らない
+ignore-build-dependencies = true
+ignore-dev-dependencies = true
+# このアプリ自身（publish = false）は LICENSE で示すので一覧から外す
+private = { ignore = true }

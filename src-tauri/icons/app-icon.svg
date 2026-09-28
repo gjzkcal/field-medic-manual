@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Field Medic Manual のアイコンの原本。`pnpm tauri icon src-tauri/icons/app-icon.svg` で各サイズを生成する。
+       赤十字の標章（白地に赤い十字）はジュネーブ条約で保護されているので使わず、応急手当の緑の十字にした。
+       ゲームや ACE の資産・ロゴは使っていない（自作） -->
+  <rect x="48" y="48" width="928" height="928" rx="200" fill="#111a17"/>
+  <!-- 開いた本 -->
+  <path d="M512 596 C 420 548, 308 532, 196 544 L 196 820 C 308 808, 420 824, 512 872 Z" fill="#e6ebe8"/>
+  <path d="M512 596 C 604 548, 716 532, 828 544 L 828 820 C 716 808, 604 824, 512 872 Z" fill="#c3ccc7"/>
+  <!-- 緑の十字 -->
+  <rect x="436" y="132" width="152" height="400" rx="36" fill="#27b35f"/>
+  <rect x="312" y="256" width="400" height="152" rx="36" fill="#27b35f"/>
+</svg>

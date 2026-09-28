@@ -49,7 +49,7 @@ export default defineConfig(
     },
   },
   {
-    files: ["*.{js,ts}"],
+    files: ["*.{js,ts}", "scripts/**/*.ts"],
     languageOptions: {
       globals: globals.node,
     },

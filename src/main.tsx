@@ -14,6 +14,7 @@ import { loadModSettings } from "@/features/settings/mod-settings";
 import { loadOverlaySettings } from "@/features/settings/overlay-settings";
 import { loadViewerSettings } from "@/features/settings/viewer-settings";
 import { syncBundledFlows } from "@/features/triage/sync";
+import { checkForUpdates } from "@/features/updater/update-store";
 import { currentWindowLabel } from "@/lib/tauri";
 
 const rootElement = document.getElementById("root");
@@ -33,6 +34,11 @@ if (isOverlay) {
   void syncBundledManuals();
   void syncBundledFlows();
   void syncBundledQuickref();
+  // 更新の確認もメインだけで行う（小窓には updater の権限を与えていない）。
+  // 開発ビルドは Releases の版と比べる意味がないので、起動時には確かめない（設定画面のボタンでは確かめられる）
+  if (!import.meta.env.DEV) {
+    void checkForUpdates({ manual: false });
+  }
 }
 // 表示設定も描画を待たせずに読む。読み終わるまでの一瞬は既定の文字サイズで表示される
 void loadViewerSettings();

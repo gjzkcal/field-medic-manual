@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.scripts.tsbuildinfo",
+    "lib": ["ES2023"],
+    "types": ["node"]
+  },
+  // リリースの補助（版の書き換え、リリースノート、ライセンス表記）。Node 24 が型を取り除いてそのまま実行する
+  "include": ["scripts"]
+}

@@ -1,0 +1,82 @@
+# タグ（v0.0.1 など）を push すると、確認・ビルド・署名をして GitHub Releases に公開する。
+# 公開した latest.json を、インストール済みのアプリが起動時に読んで自動で更新する。
+# 手順は README の「リリースの手順」を参照。
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+# 同じタグで二重に走らせない（Releases のアセットを取り合わないように）
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    # Releases の作成とアセットのアップロードに書き込みの権限が要る
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      # 依存のライセンス表記（THIRD_PARTY_LICENSES.txt）の生成に使う
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-about@0.9.2
+
+      - run: pnpm install --frozen-lockfile
+
+      # 版を上げ忘れたタグや、CHANGELOG に節の無い版を配らないよう、最初に確かめる
+      - name: Check the tag and extract release notes
+        id: notes
+        shell: bash
+        run: |
+          {
+            echo "body<<RELEASE_NOTES_EOF"
+            node scripts/release-notes.ts "${GITHUB_REF_NAME}"
+            echo "RELEASE_NOTES_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      # 壊れた版を配らないよう、ローカルと同じ確認を通す
+      - run: pnpm lint
+      - run: pnpm test
+      - name: Rust checks
+        working-directory: src-tauri
+        run: |
+          cargo fmt --check
+          cargo clippy --all-targets -- -D warnings
+          cargo test
+
+      # beforeBuildCommand がライセンス表記の生成と画面のビルドを行う（tauri.conf.json）
+      - uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 更新用の署名鍵。.env では読まれないので環境変数で渡す
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: Field Medic Manual ${{ github.ref_name }}
+          releaseBody: ${{ steps.notes.outputs.body }}
+          releaseDraft: false
+          prerelease: false
+          uploadUpdaterJson: true
+          # README は管理者権限の要らない -setup.exe（NSIS）で案内しているので、自動更新も NSIS にそろえる
+          updaterJsonPreferNsis: true
