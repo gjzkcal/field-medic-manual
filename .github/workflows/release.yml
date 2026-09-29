@@ -16,8 +16,11 @@ jobs:
   # 壊れた版を配らないよう、普段の push・PR と同じ確認を通す
   check:
     uses: ./.github/workflows/ci.yml
+    # 呼び出したワークフローはここで与えた権限までしか持てず、ci.yml の changes ジョブが
+    # 宣言する pull-requests: read が無いと起動に失敗する（タグでは PR の API は使わない）
     permissions:
       contents: read
+      pull-requests: read
 
   release:
     needs: check
@@ -39,10 +42,9 @@ jobs:
           node-version: 24
           cache: pnpm
 
-      # 版をブランチ名で選ぶアクションなので、SHA で固定したら toolchain を明示する
-      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
-        with:
-          toolchain: stable
+      # src-tauri/rust-toolchain.toml の版を入れる。rust-cache がキーに rustc の版を使うので、その前に入れる
+      - run: rustup toolchain install
+        working-directory: src-tauri
 
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
