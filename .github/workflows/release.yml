@@ -29,7 +29,7 @@ jobs:
     permissions:
       contents: write
     # 署名鍵と書き込みの権限を持つジョブなので、付け替えられるタグではなくコミットの SHA で
-    # 外部のアクションを固定し、版はコメントに書く（更新するときは SHA とコメントを両方変える）
+    # 外部のアクションを固定し、版はコメントに書く（Renovate が ci.yml とそろえて SHA とコメントを両方更新する）
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 

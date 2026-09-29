@@ -1,6 +1,7 @@
 # stable を追いかけると、版が上がるたびに CI の rust-cache が丸ごと外れ、clippy（pedantic）の
 # 新しい lint で急に落ちるので、版を固定する。CI とリリースもこのファイルの版を入れる。
-# 上げるときはここだけを変え、手元で clippy と cargo test を通してから push する（CI の最初の 1 回はキャッシュが外れる）。
+# 新しい版は Renovate が PR にし、その CI で clippy と cargo test を確かめる。手で上げるときもここだけを変える
+# （CI の最初の 1 回はキャッシュが外れる）。
 [toolchain]
 channel = "1.98.1"
 profile = "minimal"

@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: ${{ github.ref_type != 'tag' }}
 
 # 付け替えられるタグではなくコミットの SHA で外部のアクションを固定し、版はコメントに書く
-# （更新するときは release.yml とそろえて SHA とコメントを両方変える）
+# （Renovate が release.yml とそろえて SHA とコメントを両方更新する。手で変えるときも同じようにする）
 jobs:
   # 変更したファイルで、画面側と Rust 側のどちらを走らせるかを決める。
   # main では前回の push との差分しか見ないので、古い実行を止めた回の変更は確かめられずに残ることがある。

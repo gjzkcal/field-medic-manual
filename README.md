@@ -91,6 +91,8 @@ pnpm lint && pnpm test                              # 確認
 cd src-tauri && cargo clippy --all-targets -- -D warnings && cargo test
 ```
 
+依存（npm・cargo・GitHub Actions・Rust の版）は [Renovate](https://docs.renovatebot.com/) が毎週月曜の朝（JST）に PR にします。設定は `.github/renovate.json5` にあります。開発用ツールの小さな更新は CI が通れば自動でマージされ、それ以外は PR を見てマージします。
+
 ### リリースの手順
 
 本文（`content/`）だけを直したときも、同じ手順でアプリのリリースとして配ります。

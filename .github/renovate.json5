@@ -1,0 +1,173 @@
+// 依存（npm・cargo・GitHub Actions・Rust の版）を Renovate（GitHub App）で週に 1 度 PR にする。
+// 脆弱性の修正は曜日を待たずに PR にする。
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  // config:best-practices は devDependencies の ^ を外して完全に固定する（:pinDevDependencies）ので使わず、
+  // 要るものだけを足す。ワークフローの外部アクションはコミットの SHA で固定し、版をコメントに書いているので、
+  // pinGitHubActionDigests で SHA と「# v7.0.1」のコメントを一緒に更新させる
+  extends: [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests",
+    ":configMigration",
+    "abandonments:recommended",
+  ],
+  timezone: "Asia/Tokyo",
+  schedule: ["before 9am on monday"],
+  // pnpm 11 は既定で公開から 1 日たっていない版を入れないので、それより若い版を選ぶとロックファイルの更新が失敗する。
+  // 公開直後に乗っ取りが見つかって取り下げられる版も避けたいので、3 日待つ
+  minimumReleaseAge: "3 days",
+  // CI（pnpm/action-setup の version: 11、setup-node の node-version: 24）と同じ版でロックファイルを作らないと、
+  // CI の pnpm install --frozen-lockfile で落ちることがある。メジャー版はワークフローの版と同じ PR で上がる
+  constraints: {
+    pnpm: "11.x",
+    node: "24.x",
+  },
+  // OSV は RustSec も見るので、cargo の脆弱性も拾える
+  osvVulnerabilityAlerts: true,
+  lockFileMaintenance: {
+    enabled: true,
+    // 間接依存だけの更新は差分が大きく急ぐものでもないので、月に 1 度にする
+    schedule: ["before 9am on the first day of the month"],
+    commitMessageAction: "",
+    commitMessageTopic: "ロックファイルの間接依存を更新",
+    commitMessageExtra: "",
+  },
+
+  // PR の表題（マージ後のコミットメッセージ）は、ほかのコミットと同じく日本語 1 行にする。
+  // 例: 「vite を v8.4.0 に更新」「Tauri を更新」「ロックファイルの間接依存を更新」。
+  // Renovate は「action topic extra」の順に空白でつなぐので、action は空にし、topic に「〜を」、extra に「版 に更新」を書く。
+  // グループで版がそろわないと extra が消されるので、グループの topic は extra が無いときだけ「更新」を足す
+  // （commitMessage は何度か展開されるので、topic の中の条件は extra の有無を見て決まる）
+  semanticCommits: "disabled",
+  // グループの表題に「(major)」などを足さず、コミットメッセージと同じにする
+  prTitleStrict: true,
+  dependencyDashboardTitle: "依存の更新ダッシュボード",
+  commitMessageAction: "",
+  commitMessageTopic: "{{depName}} を",
+  commitMessageExtra: "{{#if isPinDigest}}{{{newDigestShort}}}{{else}}{{#if isMajor}}{{prettyNewMajor}}{{else}}{{#if isSingleVersion}}{{prettyNewVersion}}{{else}}{{#if newValue}}{{{newValue}}}{{else}}{{{newDigestShort}}}{{/if}}{{/if}}{{/if}}{{/if}} に更新",
+  group: {
+    commitMessageTopic: "{{{groupName}}} を{{#unless commitMessageExtra}}更新{{/unless}}",
+  },
+  digest: {
+    commitMessageTopic: "{{depName}} を",
+    commitMessageExtra: "{{newDigestShort}} に更新",
+  },
+  pin: {
+    commitMessageAction: "",
+    commitMessageExtra: "{{#if isPinDigest}}{{{newDigestShort}}}{{else}}{{#if isMajor}}{{prettyNewMajor}}{{else}}{{#if isSingleVersion}}{{prettyNewVersion}}{{else}}{{#if newValue}}{{{newValue}}}{{else}}{{{newDigestShort}}}{{/if}}{{/if}}{{/if}}{{/if}} に固定",
+    group: {
+      commitMessageTopic: "依存の版を固定",
+      commitMessageExtra: "",
+    },
+  },
+  replacement: {
+    commitMessageAction: "",
+    commitMessageExtra: "{{newName}} {{#if isMajor}}{{{prettyNewMajor}}}{{else}}{{#if isSingleVersion}}{{{prettyNewVersion}}}{{else}}{{{newValue}}}{{/if}}{{/if}} に置き換える",
+  },
+  rollback: {
+    commitMessageAction: "",
+    commitMessageExtra: "{{#if isSingleVersion}}{{prettyNewVersion}}{{else}}{{{newValue}}}{{/if}} に戻す",
+  },
+  vulnerabilityAlerts: {
+    // 既定の「[SECURITY]」の代わりに、表題の文で脆弱性の修正だと分かるようにする
+    commitMessageSuffix: "",
+    commitMessageExtra: "{{#if isMajor}}{{prettyNewMajor}}{{else}}{{#if isSingleVersion}}{{prettyNewVersion}}{{else}}{{{newValue}}}{{/if}}{{/if}} に更新して脆弱性を直す",
+  },
+
+  customManagers: [
+    {
+      // release.yml で taiki-e/install-action に渡す cargo-about の版は、どのマネージャーも拾わないので正規表現で追う
+      customType: "regex",
+      managerFilePatterns: ["/^\\.github/workflows/[^/]+\\.ya?ml$/"],
+      matchStrings: ["tool:\\s*(?<depName>cargo-about)@(?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      datasourceTemplate: "crate",
+    },
+  ],
+
+  // 後に書いた規則ほど優先される
+  packageRules: [
+    {
+      // 既定の「… action」「… tool constraint」を付けず、ほかと同じ形にする。
+      // renovate-config は上の constraints の版で、ワークフローの Node・pnpm の版と同じ PR で上がる
+      matchManagers: ["github-actions", "renovate-config"],
+      commitMessageTopic: "{{depName}} を",
+    },
+    {
+      matchManagers: ["npm"],
+      matchUpdateTypes: ["minor", "patch"],
+      groupName: "npm の依存",
+      // 日本語の名前からはブランチ名を作れないので、英字で与える
+      groupSlug: "npm-deps",
+      group: { commitMessageTopic: "npm の依存を{{#unless commitMessageExtra}}更新{{/unless}}" },
+    },
+    {
+      matchManagers: ["cargo"],
+      matchUpdateTypes: ["minor", "patch"],
+      groupName: "Rust の依存",
+      groupSlug: "rust-deps",
+      group: { commitMessageTopic: "Rust の依存を{{#unless commitMessageExtra}}更新{{/unless}}" },
+    },
+    {
+      // ci.yml と release.yml で同じアクションを同じ版にそろえるため、ワークフローの中の更新（外部アクションの SHA、
+      // Node・pnpm・cargo-about の版）は 1 つの PR にまとめる
+      matchFileNames: [".github/workflows/**"],
+      matchUpdateTypes: ["minor", "patch", "digest"],
+      groupName: "GitHub Actions",
+      groupSlug: "github-actions",
+      // 前の規則（npm・Rust の依存）で決まったグループの表題が残らないよう、どのグループでも表題を書く
+      group: {
+        commitMessageTopic: "GitHub Actions を{{#unless commitMessageExtra}}更新{{/unless}}",
+      },
+    },
+    {
+      // npm 側（@tauri-apps/*）と Rust 側（tauri・プラグインのクレート）の major.minor がずれると tauri build が
+      // 失敗するので、両方を 1 つの PR で上げる。CI は tauri build を回さないので自動マージはしない
+      matchPackageNames: ["@tauri-apps/**", "tauri", "tauri-build", "tauri-plugin-*"],
+      groupName: "Tauri",
+      groupSlug: "tauri",
+      group: { commitMessageTopic: "Tauri を{{#unless commitMessageExtra}}更新{{/unless}}" },
+    },
+    {
+      // lint と test で壊れたと分かる開発用ツールの小さな更新だけ、CI が通れば自動でマージする。
+      // vite・tailwind・@vitejs/plugin-react は配布物に効くのに CI がビルドまでは確かめないので、ここに入れない
+      matchManagers: ["npm"],
+      matchDepTypes: ["devDependencies"],
+      matchUpdateTypes: ["minor", "patch"],
+      matchPackageNames: [
+        "eslint",
+        "eslint-*",
+        "@eslint/**",
+        "@eslint-react/**",
+        "typescript-eslint",
+        "prettier",
+        "prettier-plugin-*",
+        "vitest",
+        "@testing-library/**",
+        "jsdom",
+        "@types/**",
+        "globals",
+        "ajv",
+        "shadcn",
+      ],
+      groupName: "開発用ツール",
+      // monorepo のプリセット（vitest など）の groupSlug が残らないよう、ブランチ名も上書きする
+      groupSlug: "dev-tools",
+      group: { commitMessageTopic: "開発用ツールを{{#unless commitMessageExtra}}更新{{/unless}}" },
+      automerge: true,
+      // ブランチ保護で CI を必須にしていないので、GitHub の自動マージではなく Renovate が CI の成功を確かめてからマージする
+      platformAutomerge: false,
+    },
+    {
+      // typescript-eslint が対応する範囲に合わせて 6.0 系に留めている（package.json の ~）。
+      // 上げられるか確かめてから、ダッシュボードで承認して PR にする
+      matchPackageNames: ["typescript"],
+      matchUpdateTypes: ["major", "minor"],
+      dependencyDashboardApproval: true,
+    },
+    {
+      // CI とリリースで使う Node（setup-node の node-version）の型に合わせる。Node を上げるときに一緒に外す
+      matchPackageNames: ["@types/node"],
+      allowedVersions: "<25",
+    },
+  ],
+}
