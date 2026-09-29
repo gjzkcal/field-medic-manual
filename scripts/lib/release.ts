@@ -85,6 +85,12 @@ export function readRepoVersions(root: string): RepoVersions {
   };
 }
 
+export const REPO_URL = "https://github.com/gjzkcal/field-medic-manual";
+
+const SECTION_HEADING = /^## \[([^\]]+)\]/;
+// CHANGELOG の末尾に置く比較リンクの定義（`[0.0.1]: https://…`）
+const LINK_DEFINITION = /^\[([^\]]+)\]:\s+(\S+)\s*$/;
+
 /**
  * CHANGELOG.md からその版の節（`## [0.0.1] - 2026-09-29` の次の行から、次の `## ` の前まで）を取り出す。
  * Releases の本文と latest.json の notes になり、アプリの更新のダイアログに「変更点」として出る。
@@ -96,7 +102,46 @@ export function extractReleaseNotes(changelog: string, version: string): string 
     return null;
   }
   const rest = lines.slice(start + 1);
-  const end = rest.findIndex((line) => line.startsWith("## "));
+  // 最も古い版の節の後ろは末尾のリンクの定義なので、そこで止める（変更点に URL の行が混ざらないように）
+  const end = rest.findIndex((line) => line.startsWith("## ") || LINK_DEFINITION.test(line));
   const notes = (end === -1 ? rest : rest.slice(0, end)).join("\n").trim();
   return notes === "" ? null : notes;
+}
+
+/** 節の見出しの名前（`Unreleased`・`0.0.1` など）を上から順に返す */
+export function changelogSections(changelog: string): string[] {
+  return changelog.split(/\r?\n/).flatMap((line) => {
+    const name = SECTION_HEADING.exec(line)?.[1];
+    return name === undefined ? [] : [name];
+  });
+}
+
+/** 末尾のリンクの定義を、名前 → URL で返す */
+export function changelogLinks(changelog: string): Map<string, string> {
+  const links = new Map<string, string>();
+  for (const line of changelog.split(/\r?\n/)) {
+    const match = LINK_DEFINITION.exec(line);
+    if (match?.[1] !== undefined && match[2] !== undefined) {
+      links.set(match[1], match[2]);
+    }
+  }
+  return links;
+}
+
+/**
+ * Keep a Changelog の形で、各節に張るべきリンクを返す。節は新しい順に並んでいる前提。
+ * Unreleased は最新の版から HEAD まで、各版は 1 つ前の版からの比較、最も古い版はそのタグのリリース。
+ */
+export function expectedChangelogLinks(sections: readonly string[]): Map<string, string> {
+  const links = new Map<string, string>();
+  sections.forEach((name, i) => {
+    const older = sections[i + 1];
+    const head = name === "Unreleased" ? "HEAD" : `v${name}`;
+    if (older !== undefined) {
+      links.set(name, `${REPO_URL}/compare/v${older}...${head}`);
+    } else if (name !== "Unreleased") {
+      links.set(name, `${REPO_URL}/releases/tag/v${name}`);
+    }
+  });
+  return links;
 }

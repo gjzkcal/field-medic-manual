@@ -4,6 +4,9 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
+  changelogLinks,
+  changelogSections,
+  expectedChangelogLinks,
   extractReleaseNotes,
   isSemver,
   readCargoLockVersion,
@@ -14,6 +17,7 @@ import {
   replaceCargoLockVersion,
   replaceCargoTomlVersion,
   replacePackageJsonVersion,
+  REPO_URL,
   versionFromTag,
 } from "./release.ts";
 
@@ -82,26 +86,42 @@ describe("版の書き換え", () => {
 
 describe("リリースノート", () => {
   const changelog = [
-    "# 変更履歴",
+    "# Changelog",
+    "",
+    "## [Unreleased]",
     "",
     "## [0.0.2] - 2026-09-30",
     "",
-    "### 変更",
+    "### Fixed",
+    "",
     "- B",
     "",
     "## [0.0.1] - 2026-09-29",
     "",
+    "### Added",
+    "",
     "- A",
+    "",
+    `[Unreleased]: ${REPO_URL}/compare/v0.0.2...HEAD`,
+    `[0.0.2]: ${REPO_URL}/compare/v0.0.1...v0.0.2`,
+    `[0.0.1]: ${REPO_URL}/releases/tag/v0.0.1`,
     "",
   ].join("\n");
 
-  it("その版の節だけを取り出す", () => {
-    expect(extractReleaseNotes(changelog, "0.0.2")).toBe("### 変更\n- B");
-    expect(extractReleaseNotes(changelog, "0.0.1")).toBe("- A");
+  it("その版の節だけを取り出し、最も古い版に末尾のリンクを混ぜない", () => {
+    expect(extractReleaseNotes(changelog, "0.0.2")).toBe("### Fixed\n\n- B");
+    expect(extractReleaseNotes(changelog, "0.0.1")).toBe("### Added\n\n- A");
   });
 
-  it("節が無ければ null", () => {
+  it("節が無い、または中身が無ければ null", () => {
     expect(extractReleaseNotes(changelog, "0.0.3")).toBeNull();
+    expect(extractReleaseNotes(changelog, "Unreleased")).toBeNull();
+  });
+
+  it("節ごとの比較リンクを組み立て、書かれたリンクと比べられる", () => {
+    const sections = changelogSections(changelog);
+    expect(sections).toEqual(["Unreleased", "0.0.2", "0.0.1"]);
+    expect(changelogLinks(changelog)).toEqual(expectedChangelogLinks(sections));
   });
 });
 
@@ -125,5 +145,13 @@ describe("リポジトリの版", () => {
     const { packageJson } = readRepoVersions(ROOT);
     const changelog = readFileSync(join(ROOT, REPO_FILES.changelog), "utf8");
     expect(extractReleaseNotes(changelog, packageJson ?? "")).not.toBeNull();
+  });
+
+  // Keep a Changelog の形。リリースで見出しを書き換えたときに、末尾のリンクの直し忘れを見つける
+  it("CHANGELOG.md は Unreleased から始まり、節ごとの比較リンクがそろっている", () => {
+    const changelog = readFileSync(join(ROOT, REPO_FILES.changelog), "utf8");
+    const sections = changelogSections(changelog);
+    expect(sections[0]).toBe("Unreleased");
+    expect(changelogLinks(changelog)).toEqual(expectedChangelogLinks(sections));
   });
 });

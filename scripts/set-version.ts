@@ -34,5 +34,5 @@ for (const [file, replace] of edits) {
 }
 
 process.stdout.write(
-  `版を ${before.packageJson ?? "?"} から ${version} に変えました。CHANGELOG.md の ## [Unreleased] の見出しを ## [${version}] - 日付 に書き換えてください。\n`,
+  `版を ${before.packageJson ?? "?"} から ${version} に変えました。CHANGELOG.md の ## [Unreleased] の見出しを ## [${version}] - 日付 に書き換え、末尾のリンクも直してください。\n`,
 );

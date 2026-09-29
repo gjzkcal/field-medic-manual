@@ -15,6 +15,7 @@ import { Progress } from "@/components/ui/progress";
 import type { DownloadProgress } from "@/lib/tauri";
 
 import { formatReleaseDate } from "./release-date";
+import { formatReleaseNotes } from "./release-notes";
 import { installUpdate, postponeUpdate, useUpdateStore } from "./update-store";
 
 const MB = 1024 * 1024;
@@ -58,7 +59,7 @@ export function UpdateDialog(): JSX.Element | null {
             <h3 className="text-sm font-medium">変更点</h3>
             {/* 変更点は CHANGELOG の Markdown。HTML にせずテキストのまま出す（無害化が要らない） */}
             <p className="max-h-64 overflow-y-auto rounded-lg bg-muted px-3 py-2 text-sm whitespace-pre-wrap">
-              {info.notes}
+              {formatReleaseNotes(info.notes)}
             </p>
           </div>
         )}
