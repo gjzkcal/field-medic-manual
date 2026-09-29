@@ -1,7 +1,7 @@
 import type { JSX } from "react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import type { SyncIssue } from "@/features/content/sync";
+import type { SyncIssue } from "@/features/sync/result";
 
 interface IssueCardProps {
   title: string;

@@ -53,7 +53,11 @@ export function isAppError(value: unknown): value is AppError {
 
 /** 画面に出すためのエラーの文言。コマンドの失敗は AppError、それ以外（通信の失敗など）は文字列にする。 */
 export function errorMessage(error: unknown): string {
-  return isAppError(error) ? error.message : String(error);
+  // Error は String() だと「Error: 」が付くので、message だけを出す
+  if (isAppError(error) || error instanceof Error) {
+    return error.message;
+  }
+  return String(error);
 }
 
 export async function appVersion(): Promise<string> {

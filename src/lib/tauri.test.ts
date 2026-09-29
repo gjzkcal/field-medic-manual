@@ -136,10 +136,11 @@ describe("データ層のラッパ", () => {
 });
 
 describe("errorMessage", () => {
-  it("AppError なら message、それ以外は文字列にする", () => {
+  it("AppError と Error なら message、それ以外は文字列にする", () => {
     expect(errorMessage({ kind: "invalid_input", message: "入力が不正です: x" })).toBe(
       "入力が不正です: x",
     );
+    expect(errorMessage(new Error("壊れた"))).toBe("壊れた");
     expect(errorMessage("boom")).toBe("boom");
   });
 });

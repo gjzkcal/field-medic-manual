@@ -1,8 +1,8 @@
 // 起動時に、同梱したフローを DB に入れる。
 // マニュアルと同じく DB は同梱物の写しにする。ただし検証エラーのフローは入れず、前回の内容を残す。
-import { create } from "zustand";
-
-import type { SyncIssue } from "@/features/content/sync";
+import { mirrorBundled } from "@/features/sync/mirror";
+import { emptySyncResult, issuesOf, type SyncResult } from "@/features/sync/result";
+import { createBundledSync } from "@/features/sync/store";
 import {
   bundledFlows,
   flowIdOfFileName,
@@ -14,18 +14,7 @@ import type { Flow } from "@/features/triage/schema";
 import { hasErrors, subflowIds, validateFlows } from "@/features/triage/validate";
 import type { TriageSummary } from "@/lib/bindings/TriageSummary";
 import type { TriageUpsertInput } from "@/lib/bindings/TriageUpsertInput";
-import { errorMessage, triageDelete, triageList, triageUpsert } from "@/lib/tauri";
-
-export interface FlowSyncResult {
-  added: number;
-  updated: number;
-  unchanged: number;
-  removed: number;
-  /** DB に入れなかったフロー（形の誤り、V1〜V8 のエラーなど）。前回の内容が DB に残る */
-  failed: SyncIssue[];
-  /** 入れたが、直したほうがよい点（V4 / V6 の警告） */
-  warnings: SyncIssue[];
-}
+import { triageDelete, triageList, triageUpsert } from "@/lib/tauri";
 
 /** 同期が DB とやり取りする処理。テストでは差し替える。 */
 export interface FlowSyncDeps {
@@ -42,15 +31,8 @@ interface Parsed {
 export async function syncFlows(
   sources: readonly FlowSource[],
   deps: FlowSyncDeps,
-): Promise<FlowSyncResult> {
-  const result: FlowSyncResult = {
-    added: 0,
-    updated: 0,
-    unchanged: 0,
-    removed: 0,
-    failed: [],
-    warnings: [],
-  };
+): Promise<SyncResult> {
+  const result = emptySyncResult();
   // 読めなかったファイルも、ファイル名の id は「同梱にある」として扱う（前回の内容を消さないため）
   const bundledIds = new Set<string>();
   const parsed: Parsed[] = [];
@@ -64,9 +46,7 @@ export async function syncFlows(
       bundledIds.add(read.flow.id);
       parsed.push({ source, flow: read.flow });
     } else {
-      result.failed.push(
-        ...read.messages.map((message) => ({ fileName: source.fileName, message })),
-      );
+      result.failed.push(...issuesOf(source.fileName, read.messages));
     }
   }
 
@@ -107,39 +87,28 @@ export async function syncFlows(
     }
   }
 
-  const existing = new Map((await deps.listFlows()).map((f) => [f.id, f]));
-  for (const { source, flow } of parsed) {
-    if (rejected.has(flow.id)) {
-      continue;
-    }
-    const current = existing.get(flow.id);
-    if (current?.sourceHash === source.hash) {
-      result.unchanged++;
-      continue;
-    }
-    try {
-      await deps.saveFlow(toUpsertInput(flow, source.hash));
-      if (current === undefined) {
-        result.added++;
-      } else {
-        result.updated++;
-      }
-    } catch (error: unknown) {
-      // 1 つのフローの誤りで他のフローの更新を止めない
-      result.failed.push({ fileName: source.fileName, message: describeError(error) });
-    }
-  }
-
-  for (const id of existing.keys()) {
-    if (!bundledIds.has(id)) {
-      try {
-        await deps.deleteFlow(id);
-        result.removed++;
-      } catch (error: unknown) {
-        result.failed.push({ fileName: id, message: describeError(error) });
-      }
-    }
-  }
+  await mirrorBundled(
+    result,
+    parsed
+      .filter(({ flow }) => !rejected.has(flow.id))
+      .map(({ source, flow }) => ({
+        key: flow.id,
+        fileName: source.fileName,
+        hash: source.hash,
+        save: async () => {
+          await deps.saveFlow(toUpsertInput(flow, source.hash));
+          return [];
+        },
+      })),
+    (await deps.listFlows()).map((f) => ({
+      key: f.id,
+      sourceHash: f.sourceHash,
+      label: f.id,
+      remove: () => deps.deleteFlow(f.id),
+    })),
+    // 入れなかったフローも同梱にはあるので、前回の内容を消さない
+    bundledIds,
+  );
   return result;
 }
 
@@ -159,33 +128,11 @@ export function toUpsertInput(flow: Flow, sourceHash: string): TriageUpsertInput
   };
 }
 
-type FlowSyncState =
-  | { status: "idle" }
-  | { status: "syncing" }
-  | { status: "done"; result: FlowSyncResult }
-  | { status: "error"; message: string };
-
-export const useFlowSync = create<{ state: FlowSyncState }>()(() => ({
-  state: { status: "idle" },
-}));
-
 /** 同梱したフローを DB に入れる。起動時に 1 回呼ぶ。結果は useFlowSync で見る。 */
-export async function syncBundledFlows(): Promise<FlowSyncResult | null> {
-  useFlowSync.setState({ state: { status: "syncing" } });
-  try {
-    const result = await syncFlows(await bundledFlows(), {
-      listFlows: triageList,
-      saveFlow: triageUpsert,
-      deleteFlow: triageDelete,
-    });
-    useFlowSync.setState({ state: { status: "done", result } });
-    return result;
-  } catch (error: unknown) {
-    useFlowSync.setState({ state: { status: "error", message: errorMessage(error) } });
-    return null;
-  }
-}
-
-function describeError(error: unknown): string {
-  return error instanceof Error ? error.message : errorMessage(error);
-}
+export const { useSync: useFlowSync, sync: syncBundledFlows } = createBundledSync(async () =>
+  syncFlows(await bundledFlows(), {
+    listFlows: triageList,
+    saveFlow: triageUpsert,
+    deleteFlow: triageDelete,
+  }),
+);

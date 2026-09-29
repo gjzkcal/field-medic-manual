@@ -28,11 +28,6 @@ export const useUpdateStore = create<UpdateState>()(() => ({
   dialogOpen: false,
 }));
 
-// プラグインのエラーは文字列で届くが、Error で届いたときに「Error: 」を付けて出さないため
-function reason(error: unknown): string {
-  return error instanceof Error ? error.message : errorMessage(error);
-}
-
 /**
  * 新しい版を確かめる。見つかればダイアログを開く。
  * 起動時の確認（manual: false）は、最新のときも失敗したとき（オフラインなど）も画面に何も出さない。
@@ -56,7 +51,7 @@ export async function checkForUpdates({ manual }: { manual: boolean }): Promise<
     });
   } catch (error: unknown) {
     useUpdateStore.setState({
-      status: manual ? { kind: "error", message: reason(error) } : { kind: "idle" },
+      status: manual ? { kind: "error", message: errorMessage(error) } : { kind: "idle" },
     });
   }
 }
@@ -87,7 +82,7 @@ export async function installUpdate(): Promise<void> {
     await relaunchApp();
   } catch (error: unknown) {
     useUpdateStore.setState({
-      status: { kind: "available", update, installError: reason(error) },
+      status: { kind: "available", update, installError: errorMessage(error) },
     });
   }
 }

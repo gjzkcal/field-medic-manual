@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { syncManuals, type SyncDeps } from "@/features/content/sync";
+import { syncManuals, type ManualSyncDeps } from "@/features/content/sync";
 import type { ManualSource, NormalizedDoc } from "@/features/content/types";
 import type { DocSummary } from "@/lib/bindings/DocSummary";
 import { CONVERT_TIMEOUT_MS, noImages } from "@/test/samples";
@@ -24,7 +24,7 @@ function summary(id: string, sourcePath: string | null, sourceHash: string): Doc
 }
 
 /** DB の代わり。保存と削除を記録する。 */
-function fakeDb(docs: DocSummary[]): SyncDeps & { saved: NormalizedDoc[]; deleted: string[] } {
+function fakeDb(docs: DocSummary[]): ManualSyncDeps & { saved: NormalizedDoc[]; deleted: string[] } {
   const saved: NormalizedDoc[] = [];
   const deleted: string[] = [];
   return {
@@ -76,7 +76,7 @@ describe("syncManuals", { timeout: CONVERT_TIMEOUT_MS }, () => {
 
   it("保存に失敗した原稿があっても他の原稿は続け、警告は原稿ごとに返す", async () => {
     const db = fakeDb([]);
-    const failing: SyncDeps = {
+    const failing: ManualSyncDeps = {
       ...db,
       saveDoc: (doc) =>
         doc.sourcePath.endsWith("bad.md") ? Promise.reject(new Error("壊れた")) : db.saveDoc(doc),
