@@ -1,4 +1,4 @@
-# タグ（v0.0.1 など）を push すると、確認・ビルド・署名をして GitHub Releases に公開する。
+# タグ（v0.0.1 など）を push すると、確認（ci.yml）を通してから、ビルド・署名をして GitHub Releases に公開する。
 # 公開した latest.json を、インストール済みのアプリが起動時に読んで自動で更新する。
 # 手順は README の「リリースの手順」を参照。
 name: Release
@@ -13,7 +13,14 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # 壊れた版を配らないよう、普段の push・PR と同じ確認を通す
+  check:
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
   release:
+    needs: check
     runs-on: windows-latest
     # Releases の作成とアセットのアップロードに書き込みの権限が要る
     permissions:
@@ -48,7 +55,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # 版を上げ忘れたタグや、CHANGELOG に節の無い版を配らないよう、最初に確かめる
+      # 版を上げ忘れたタグや、CHANGELOG に節の無い版を配らないよう、ビルドの前に確かめる
       - name: Check the tag and extract release notes
         id: notes
         shell: bash
@@ -58,16 +65,6 @@ jobs:
             node scripts/release-notes.ts "${GITHUB_REF_NAME}"
             echo "RELEASE_NOTES_EOF"
           } >> "$GITHUB_OUTPUT"
-
-      # 壊れた版を配らないよう、ローカルと同じ確認を通す
-      - run: pnpm lint
-      - run: pnpm test
-      - name: Rust checks
-        working-directory: src-tauri
-        run: |
-          cargo fmt --check
-          cargo clippy --all-targets -- -D warnings
-          cargo test
 
       # beforeBuildCommand がライセンス表記の生成と画面のビルドを行う（tauri.conf.json）
       - uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # action-v1.0.0
