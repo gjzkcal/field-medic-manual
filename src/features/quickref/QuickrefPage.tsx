@@ -31,6 +31,7 @@ import { SEVERITIES, SEVERITY_BADGE_CLASSES, severityName } from "@/features/qui
 import { useQuickrefSync } from "@/features/quickref/sync";
 import { useQuickrefTable } from "@/features/quickref/use-quickref";
 import { activeMods, modSummary, useModSettings } from "@/features/settings/mod-settings";
+import { SyncStatusCard } from "@/features/sync/SyncStatusCard";
 import { useNow } from "@/hooks/use-now";
 import type { QuickrefTable } from "@/lib/bindings/QuickrefTable";
 
@@ -56,7 +57,12 @@ export function QuickrefPage({ compact = false }: QuickrefPageProps): JSX.Elemen
           </p>
         </div>
       )}
-      <QuickrefSyncStatus />
+      <SyncStatusCard
+        store={useQuickrefSync}
+        errorTitle="クイック表を準備できませんでした"
+        failedTitle="クイック表を更新できませんでした"
+        failedDetail="前に入れた内容のまま表示しています。"
+      />
       {load.status === "loading" && <Skeleton className="h-40 w-full" />}
       {load.status === "error" && (
         <IssueCard title="クイック表を読み込めませんでした" detail={load.message} issues={[]} />
@@ -234,24 +240,4 @@ function QuickrefBody({ table, compact }: { table: QuickrefTable; compact: boole
       )}
     </>
   );
-}
-
-/** 起動時の同期で問題があったときだけ出す（トリアージの一覧と同じ考え方）。 */
-function QuickrefSyncStatus(): JSX.Element | null {
-  const state = useQuickrefSync((s) => s.state);
-  if (state.status === "error") {
-    return (
-      <IssueCard title="クイック表を準備できませんでした" detail={state.message} issues={[]} />
-    );
-  }
-  if (state.status === "done" && state.result.failed.length > 0) {
-    return (
-      <IssueCard
-        title="クイック表を更新できませんでした"
-        detail="前に入れた内容のまま表示しています。"
-        issues={state.result.failed}
-      />
-    );
-  }
-  return null;
 }

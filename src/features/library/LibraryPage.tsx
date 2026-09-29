@@ -28,6 +28,8 @@ import {
   type LibraryFilter,
   type LibrarySort,
 } from "@/features/library/library-filter";
+import { SyncStatusCard } from "@/features/sync/SyncStatusCard";
+import { useSyncedLoad } from "@/features/sync/use-synced-load";
 import { useNow } from "@/hooks/use-now";
 import type { DocSummary } from "@/lib/bindings/DocSummary";
 import type { ModChannel } from "@/lib/bindings/ModChannel";
@@ -37,6 +39,8 @@ type ViewMode = "card" | "list";
 const MOD_CHANNELS: readonly ModChannel[] = ["release", "dev"];
 const SORT_LABELS: Record<LibrarySort, string> = { updated: "更新日", title: "タイトル" };
 const SORTS: readonly LibrarySort[] = ["updated", "title"];
+// 読めないあいだに毎回新しい配列を作らず、並べ替えのメモ化を効かせるため
+const NO_DOCS: DocSummary[] = [];
 
 type LoadState =
   | { status: "loading" }
@@ -44,28 +48,15 @@ type LoadState =
   | { status: "error"; message: string };
 
 function useDocList(): LoadState {
-  const syncStatus = useContentSync((s) => s.state.status);
-  const [state, setState] = useState<LoadState>({ status: "loading" });
-  // 起動直後は同期の途中なので、同期が終わったら読み直して最新の一覧にする
-  useEffect(() => {
-    let cancelled = false;
-    docList().then(
-      (docs) => {
-        if (!cancelled) {
-          setState({ status: "ready", docs });
-        }
-      },
-      (error: unknown) => {
-        if (!cancelled) {
-          setState({ status: "error", message: errorMessage(error) });
-        }
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [syncStatus]);
-  return state;
+  const load = useSyncedLoad(useContentSync, "list", docList);
+  switch (load.status) {
+    case "loading":
+      return load;
+    case "ready":
+      return { status: "ready", docs: load.value };
+    case "error":
+      return { status: "error", message: errorMessage(load.error) };
+  }
 }
 
 export function LibraryPage(): JSX.Element {
@@ -83,7 +74,7 @@ export function LibraryPage(): JSX.Element {
     }
   }, [loaded]);
 
-  const docs = useMemo(() => (state.status === "ready" ? state.docs : []), [state]);
+  const docs = state.status === "ready" ? state.docs : NO_DOCS;
   const shown = useMemo(
     () => sortDocs(filterDocs(docs, filter, now), sort),
     [docs, filter, now, sort],
@@ -114,7 +105,14 @@ export function LibraryPage(): JSX.Element {
           </ToggleGroupItem>
         </ToggleGroup>
       </div>
-      <SyncStatus />
+      <SyncStatusCard
+        store={useContentSync}
+        syncingText="マニュアルを準備しています…"
+        errorTitle="マニュアルを準備できませんでした"
+        failedTitle="一部のマニュアルを更新できませんでした"
+        failedDetail="前回の内容を表示しています。"
+        warningsTitle="原稿の警告（開発ビルドのみ）"
+      />
       {state.status === "loading" && <Skeleton className="h-32 w-full" />}
       {state.status === "error" && (
         <IssueCard title="一覧を読み込めませんでした" detail={state.message} issues={[]} />
@@ -338,35 +336,4 @@ function DocRows({ docs, now }: { docs: readonly DocSummary[]; now: Date }): JSX
       ))}
     </ul>
   );
-}
-
-/** 起動時の同期で問題があったときだけ出す。うまくいったときは何も出さない（毎回の起動で目障りにならないように）。 */
-function SyncStatus(): JSX.Element | null {
-  const state = useContentSync((s) => s.state);
-  if (state.status === "syncing") {
-    return <p className="text-sm text-muted-foreground">マニュアルを準備しています…</p>;
-  }
-  if (state.status === "error") {
-    return (
-      <IssueCard title="マニュアルを準備できませんでした" issues={[]} detail={state.message} />
-    );
-  }
-  if (state.status !== "done") {
-    return null;
-  }
-  const { failed, warnings } = state.result;
-  if (failed.length > 0) {
-    return (
-      <IssueCard
-        title="一部のマニュアルを更新できませんでした"
-        detail="前回の内容を表示しています。"
-        issues={failed}
-      />
-    );
-  }
-  // 原稿の書き間違いは作者が直すものなので、開発ビルドでだけ見せる（pnpm test の原稿の検査でも見つかる）
-  if (import.meta.env.DEV && warnings.length > 0) {
-    return <IssueCard title="原稿の警告（開発ビルドのみ）" detail="" issues={warnings} />;
-  }
-  return null;
 }

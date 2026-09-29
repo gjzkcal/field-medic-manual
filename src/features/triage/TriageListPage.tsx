@@ -9,6 +9,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/u
 import { Skeleton } from "@/components/ui/skeleton";
 import { MOD_CHANNEL_LABELS, MOD_TARGET_LABELS } from "@/features/content/meta";
 import { isStale } from "@/features/library/stale";
+import { SyncStatusCard } from "@/features/sync/SyncStatusCard";
 import { useFlowSync } from "@/features/triage/sync";
 import { useFlowList } from "@/features/triage/use-flows";
 import { useNow } from "@/hooks/use-now";
@@ -26,7 +27,13 @@ export function TriageListPage(): JSX.Element {
           で最初からやり直せます。
         </p>
       </div>
-      <FlowSyncStatus />
+      <SyncStatusCard
+        store={useFlowSync}
+        errorTitle="フローを準備できませんでした"
+        failedTitle="一部のフローを更新できませんでした"
+        failedDetail="該当するフローは入れていません（前に入れたものがあれば、その内容のままです）。"
+        warningsTitle="フローの警告（開発ビルドのみ）"
+      />
       {state.status === "loading" && <Skeleton className="h-32 w-full" />}
       {state.status === "error" && (
         <IssueCard title="一覧を読み込めませんでした" detail={state.message} issues={[]} />
@@ -78,30 +85,4 @@ function FlowCard({ flow, now }: { flow: TriageSummary; now: Date }): JSX.Elemen
       </Card>
     </Link>
   );
-}
-
-/** 起動時の同期で問題があったときだけ出す（ライブラリ画面と同じ考え方）。 */
-function FlowSyncStatus(): JSX.Element | null {
-  const state = useFlowSync((s) => s.state);
-  if (state.status === "error") {
-    return <IssueCard title="フローを準備できませんでした" detail={state.message} issues={[]} />;
-  }
-  if (state.status !== "done") {
-    return null;
-  }
-  const { failed, warnings } = state.result;
-  if (failed.length > 0) {
-    return (
-      <IssueCard
-        title="一部のフローを更新できませんでした"
-        detail="該当するフローは入れていません（前に入れたものがあれば、その内容のままです）。"
-        issues={failed}
-      />
-    );
-  }
-  // フローの書き間違いは作者が直すものなので、開発ビルドでだけ見せる（pnpm test の原稿の検査でも見つかる）
-  if (import.meta.env.DEV && warnings.length > 0) {
-    return <IssueCard title="フローの警告（開発ビルドのみ）" detail="" issues={warnings} />;
-  }
-  return null;
 }
