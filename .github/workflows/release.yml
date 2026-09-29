@@ -18,26 +18,31 @@ jobs:
     # Releases の作成とアセットのアップロードに書き込みの権限が要る
     permissions:
       contents: write
+    # 署名鍵と書き込みの権限を持つジョブなので、付け替えられるタグではなくコミットの SHA で
+    # 外部のアクションを固定し、版はコメントに書く（更新するときは SHA とコメントを両方変える）
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
         with:
           version: 11
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
           cache: pnpm
 
-      - uses: dtolnay/rust-toolchain@stable
+      # 版をブランチ名で選ぶアクションなので、SHA で固定したら toolchain を明示する
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          toolchain: stable
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: "./src-tauri -> target"
 
       # 依存のライセンス表記（THIRD_PARTY_LICENSES.txt）の生成に使う
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/install-action@4cef1412cce204788f482e778a0b9187f9626a29 # v2.87.21
         with:
           tool: cargo-about@0.9.2
 
@@ -65,7 +70,7 @@ jobs:
           cargo test
 
       # beforeBuildCommand がライセンス表記の生成と画面のビルドを行う（tauri.conf.json）
-      - uses: tauri-apps/tauri-action@v1
+      - uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # action-v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # 更新用の署名鍵。.env では読まれないので環境変数で渡す
