@@ -58,6 +58,8 @@ jobs:
               # バンドルの resources として tauri-build がビルドのときに読む
               - 'LICENSE'
               - 'THIRD_PARTY_LICENSES.txt'
+              # 手で直した bindings も、Rust から作り直したものと一致するか確かめる
+              - 'src/lib/bindings/**'
               - '.github/workflows/ci.yml'
 
   frontend:
@@ -108,4 +110,20 @@ jobs:
 
       - run: cargo fmt --check
       - run: cargo clippy --all-targets -- -D warnings
+
+      # ts-rs は消した型のファイルを残すので、空にしてから作り直し、消し忘れも差分に出す
+      - run: rm -rf ../src/lib/bindings
+        shell: bash
+
       - run: cargo test
+
+      # Rust の型を変えて bindings のコミットを忘れると、画面側が古い型のまま lint・test を通ってしまう。
+      # git diff は未追跡のファイル（新しい型）を見ないので、追加・変更・削除をすべて index に載せてからコミットと比べる
+      - name: Check that bindings are up to date
+        shell: bash
+        run: |
+          git add -- ../src/lib/bindings
+          git diff --cached --exit-code -- ../src/lib/bindings || {
+            echo "::error::src/lib/bindings が Rust の型と一致しません。cd src-tauri && cargo test で作り直してコミットしてください"
+            exit 1
+          }
