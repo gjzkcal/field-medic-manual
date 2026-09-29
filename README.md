@@ -97,7 +97,7 @@ cd src-tauri && cargo clippy --all-targets -- -D warnings && cargo test
 
 1. `pnpm test` で原稿の検査を含むテストを通す。
 2. `pnpm version:set 0.0.2` で版を上げる（`package.json`・`Cargo.toml`・`Cargo.lock` をそろえる。`tauri.conf.json` は `package.json` の版を使う）。
-3. `CHANGELOG.md` に `## [0.0.2] - 日付` の節を書く。この節が Releases の本文と、アプリの更新のダイアログの「変更点」になる。
+3. `CHANGELOG.md` の `## [Unreleased]` の見出しを `## [0.0.2] - 日付` に書き換え、その上に空の `## [Unreleased]` を足す。この節が Releases の本文と、アプリの更新のダイアログの「変更点」になる。
 4. `pnpm lint` と `pnpm test` を通してコミットし、`git tag v0.0.2` → `git push origin main v0.0.2`。
 5. GitHub Actions（`.github/workflows/release.yml`）が確認・ビルド・署名をして Releases に公開し、`latest.json` を置く。
 
