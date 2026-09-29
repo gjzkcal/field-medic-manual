@@ -1,4 +1,4 @@
-// 起動時に、同梱したフローを DB に入れる（dev-docs/reference/bundled-content.md §3）。
+// 起動時に、同梱したフローを DB に入れる。
 // マニュアルと同じく DB は同梱物の写しにする。ただし検証エラーのフローは入れず、前回の内容を残す。
 import { create } from "zustand";
 

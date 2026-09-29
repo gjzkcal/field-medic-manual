@@ -14,7 +14,11 @@ const LICENSE_URL = `${REPOSITORY_URL}/blob/main/LICENSE`;
 const ACE_REPOSITORY_URL = "https://github.com/acemod/ACE-Anvil";
 const ACE_DOCS_URL = "https://anvil.acemod.org/dev/components/medical/";
 
-/** 設定画面の末尾に置く About。版と更新、ライセンス、原稿の出典、免責（dev-docs/reference/licensing.md §3・§4） */
+/**
+ * 設定画面の末尾に置く About。版と更新、ライセンス、原稿の出典、免責。
+ * 原稿は ACE-Anvil（GPL-2.0-or-later）のソースとドキュメントを要約したもので ACE チームの承認は受けていないこと、
+ * Bohemia が指定する免責文を、配布物に載せる必要があるため。
+ */
 export function AboutCard(): JSX.Element {
   const [linkError, setLinkError] = useState<string | null>(null);
 

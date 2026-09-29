@@ -16,7 +16,7 @@ pub const OVERLAY_MODE_EVENT: &str = "overlay-mode";
 /// Rust → メイン。開く画面の URL（例: `/doc/…#…`）
 pub const OPEN_HREF_EVENT: &str = "open-href";
 
-/// メインを一度でも出したか。メインは非表示で起動し、最初の画面を描き終えてから出す（architecture.md §4）。
+/// メインを一度でも出したか。メインは非表示で起動し、最初の画面を描き終えてから出す。
 #[derive(Default)]
 pub struct MainRevealed(AtomicBool);
 

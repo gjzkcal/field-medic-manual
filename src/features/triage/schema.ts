@@ -1,4 +1,4 @@
-// トリアージフローの形（dev-docs/reference/triage-format.md §2）。
+// トリアージフローの形。ノードは question / action / end / subflow / branch の 5 種類。
 // ここでは形だけを確かめ、つながり（next の行き先、到達可能性など）は validate.ts の V1〜V9 で確かめる。
 // .meta() の説明と値の一覧は、ここから生成する JSON Schema（json-schema.ts）に載り、エディタの補完とホバーに出る。
 import { z } from "zod";
@@ -112,7 +112,7 @@ const subflowSchema = z.strictObject({
   next: text.meta({ description: "サブフローが end に着いたら戻る先のノードの id" }),
 });
 
-// 使っている MOD は設定で決めるので、フローの中で利用者に尋ねず、この分岐で自動に進む（triage-format.md §2）
+// 使っている MOD は設定で決めるので、フローの中で利用者に尋ねず、この分岐で自動に進む
 const branchSchema = z.strictObject({
   type: z.literal("branch"),
   cases: z

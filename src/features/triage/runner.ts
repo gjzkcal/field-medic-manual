@@ -1,5 +1,5 @@
 // トリアージの実行の状態機械。状態は「ルートのフローの start から、どの選択肢を選んだか」の番号の列だけで表し、
-// 毎回それを再生して作る（URL の ?path= に載せて小窓とメイン画面で引き継ぐため。dev-docs/reference/triage-format.md §4）。
+// 毎回それを再生して作る（URL の ?path= に載せて小窓とメイン画面で引き継ぐため）。
 import type {
   ActionNode,
   BranchNode,

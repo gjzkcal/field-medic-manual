@@ -1,4 +1,4 @@
-// 同梱する原稿を DB に入れるときの型。仕様は dev-docs/reference/bundled-content.md §4。
+// 同梱する原稿を DB に入れるときの型。
 // DocMeta / SourceType は Rust から生成した bindings を使う（手で同期しないため）。
 import type { DocMeta } from "@/lib/bindings/DocMeta";
 import type { SourceType } from "@/lib/bindings/SourceType";

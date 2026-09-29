@@ -1,4 +1,4 @@
-// クイック表の重症度。原稿には言葉で書き、DB には 1〜4 で入れる（content-guide.md §8）。
+// クイック表の重症度。原稿には言葉で書き、DB には 1〜4 で入れる。
 // 色だけで伝えないよう、画面では色と言葉を並べて出す。
 
 /** 1 = 軽度 … 4 = 致命的 の順 */
@@ -35,7 +35,7 @@ export function severityName(severity: Severity): SeverityName {
   return SEVERITY_NAMES[severity - 1] ?? "致命的";
 }
 
-/** バッジ・カードの縁の色（1 = 緑、2 = 黄、3 = 橙、4 = 赤。Step 06 の資料） */
+/** バッジ・カードの縁の色（1 = 緑、2 = 黄、3 = 橙、4 = 赤） */
 export const SEVERITY_BADGE_CLASSES: Record<Severity, string> = {
   1: "border-emerald-500 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
   2: "border-yellow-500 bg-yellow-500/15 text-yellow-700 dark:text-yellow-300",

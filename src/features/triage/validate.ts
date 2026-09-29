@@ -1,6 +1,19 @@
-// フローのつながりの検証 V1〜V9（dev-docs/reference/triage-format.md §3）。形は schema.ts で確かめ済みの前提。
+// フローのつながりの検証 V1〜V9。形は schema.ts で確かめ済みの前提。
 import type { Flow, FlowNode } from "@/features/triage/schema";
 
+/**
+ * 検証の種類。V4・V6 だけが警告で、ほかはエラー。
+ * - V1: start が nodes にある
+ * - V2: すべての行き先（next・choices[].next・ifMissing.next・branch の cases[].next と else）が nodes にある
+ * - V3: question の選択肢は 2〜4 個
+ * - V4: start からたどり着けないノードがない
+ * - V5: どのノードからでも、いずれかの end にたどり着ける（行き止まりがない）
+ * - V6: end を通らない循環がある（再評価のループは正常な形なので警告にとどめる）
+ * - V7: subflow の flowId が存在し、呼び出しが再帰していない
+ * - V8: フローの id がスラッグ（英小文字・数字をハイフンでつないだ形）
+ * - V9: branch どうしだけの循環がない
+ * - duplicate: 同じ id のフローが複数ある
+ */
 export type IssueCode = "V1" | "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8" | "V9" | "duplicate";
 
 export interface FlowIssue {
@@ -77,7 +90,7 @@ export function validateFlow(flow: Flow, flows: ReadonlyMap<string, Flow>): Flow
         });
       }
     }
-    // V3: 1 画面で迷わず押せる数にするため（triage-format.md §1）
+    // V3: 1 画面で迷わず押せる数にするため
     if (
       node.type === "question" &&
       (node.choices.length < MIN_CHOICES || node.choices.length > MAX_CHOICES)

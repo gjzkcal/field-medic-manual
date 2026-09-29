@@ -1,4 +1,4 @@
-//! `SQLite` への保存と全文検索。設計は dev-docs/reference/data-model.md。
+//! `SQLite` への保存と全文検索。本文・クイック表・フローは同梱の原稿の写しで、起動時に TS が入れ直す。
 
 pub mod assets;
 pub mod dict;

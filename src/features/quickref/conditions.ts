@@ -1,4 +1,4 @@
-// クイック表の行の表示条件（content-guide.md §8）。設定の「使っている MOD」に合う行だけを出す。
+// クイック表の行の表示条件。設定の「使っている MOD」に合う行だけを出す。
 import { MOD_TARGET_LABELS } from "@/features/content/meta";
 import { modsActive, type ActiveMods } from "@/features/triage/runner";
 import type { ModTarget } from "@/lib/bindings/ModTarget";

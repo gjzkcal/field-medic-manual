@@ -1,4 +1,4 @@
-// クイック表の原稿の検査。content/quickref.yaml を直したら `pnpm test` で確かめる（dev-docs/reference/bundled-content.md §6）。
+// クイック表の原稿の検査。content/quickref.yaml を直したら `pnpm test` で確かめる。
 // アプリと同じ bundle.ts（import.meta.glob）から読むので、同梱のされ方も一緒に確かめられる。
 import { describe, expect, it } from "vitest";
 
@@ -61,7 +61,7 @@ describe("同梱したクイック表", () => {
     }
     expect(
       [...new Set(clashes)],
-      "mods / withoutMods で出し分けてください（content-guide §8）",
+      "同じ MOD の組み合わせで同じ症状の行が 2 つ出ます。mods（すべて入れているとき）と withoutMods（どれも入れていないとき）で出し分けてください",
     ).toEqual([]);
   });
 });

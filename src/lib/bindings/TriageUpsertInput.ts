@@ -16,7 +16,7 @@ id: string, title: string, description: string | null, modTargets: Array<ModTarg
  */
 verifiedAt: string | null, version: number, 
 /**
- * フロー全体の JSON（triage-format.md）
+ * フロー全体の JSON（形は TS の `src/features/triage/schema.ts`）
  */
 json: string, 
 /**

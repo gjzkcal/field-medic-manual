@@ -41,7 +41,7 @@ type ResultState =
 
 export interface CommandPaletteProps {
   /**
-   * inline: 入力欄の下に一覧を常に出す（Step 08 の小窓）。
+   * inline: 入力欄の下に一覧を常に出す（小窓で使う）。
    * dropdown: 入力欄だけを置き、フォーカスしている間だけ一覧を下に重ねて出す（メインウィンドウの上部の検索欄）
    */
   variant?: "inline" | "dropdown";

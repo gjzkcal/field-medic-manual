@@ -1,4 +1,4 @@
-// 起動時に、同梱したクイック表を DB に入れる（dev-docs/reference/bundled-content.md §3）。
+// 起動時に、同梱したクイック表を DB に入れる。
 // ファイル 1 つなので、変わっていれば全行を置き換える。読めなければ置き換えず、前回の内容を残す。
 import { create } from "zustand";
 

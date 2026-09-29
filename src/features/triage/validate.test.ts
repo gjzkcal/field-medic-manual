@@ -1,4 +1,4 @@
-// V1〜V9（dev-docs/reference/triage-format.md §3）の正常系と異常系。
+// V1〜V9（意味は validate.ts の IssueCode）の正常系と異常系。
 import { describe, expect, it } from "vitest";
 
 import { parseFlow } from "@/features/triage/schema";

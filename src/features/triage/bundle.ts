@@ -1,4 +1,4 @@
-// content/flows/ のフローをアプリに同梱し、読む（dev-docs/reference/bundled-content.md §3）。
+// content/flows/ のフローをアプリに同梱し、読む。
 // import.meta.glob はビルド時に展開されるので、フローを足すだけでここを直さずに同梱される。
 import { sha256HexOfText } from "@/features/content/hash";
 import { fileName } from "@/features/content/path";
@@ -46,7 +46,7 @@ export async function readFlowSource(
     if (source.fileName.endsWith(".json")) {
       value = JSON.parse(source.text);
     } else {
-      // 起動時の JS を小さくするため、YAML の読み取りは使うときに読み込む（00-overview.md §5）
+      // 起動時の JS を小さくするため、YAML の読み取りは使うときに読み込む
       const { parse } = await import("yaml");
       value = parse(source.text);
     }

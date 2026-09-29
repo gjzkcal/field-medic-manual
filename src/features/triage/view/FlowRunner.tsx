@@ -33,7 +33,7 @@ import { OUTCOME_CLASSES, OUTCOME_LABELS, TONE_CLASSES } from "@/features/triage
 import { TrailNav } from "@/features/triage/view/TrailNav";
 import { useNow } from "@/hooks/use-now";
 
-/** キーで選べる選択肢の数（triage-format.md §3 の V3 の上限と同じ） */
+/** キーで選べる選択肢の数（選択肢の上限 validate.ts の MAX_CHOICES と同じ） */
 const MAX_KEY_CHOICES = 4;
 
 interface FlowRunnerProps {
@@ -42,7 +42,7 @@ interface FlowRunnerProps {
 }
 
 /**
- * フローの実行画面の本体。ページの枠に依存しないので、Step 08 の小窓（幅 420px）にもそのまま置ける。
+ * フローの実行画面の本体。ページの枠に依存しないので、小窓（幅 420px）にもそのまま置ける。
  * 1 列に並べ、幅が狭くても崩れないようにしている。
  */
 export function FlowRunner({ root, lookup }: FlowRunnerProps): JSX.Element {

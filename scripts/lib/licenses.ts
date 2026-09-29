@@ -1,5 +1,5 @@
 // 依存ライブラリのライセンス表記（THIRD_PARTY_LICENSES.txt）を組み立てる部分。
-// MIT・Apache-2.0・BSD・ISC・OFL などは、配布物に著作権表示とライセンス文を入れることが条件（dev-docs/reference/licensing.md §1）。
+// MIT・Apache-2.0・BSD・ISC・OFL などは、配布物に著作権表示とライセンス文を入れることが条件。
 
 import { z } from "zod";
 

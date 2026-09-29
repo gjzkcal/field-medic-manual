@@ -1,4 +1,4 @@
--- トリアージフロー。定義の根拠は dev-docs/reference/data-model.md §2、フローの形は triage-format.md。
+-- トリアージフロー。フローの形は TS の src/features/triage/schema.ts で決める。
 -- 一覧と絞り込みに使う値は JSON から写して列に持つ（Rust がフローの形を解釈せずに済むようにするため）。
 CREATE TABLE triage_flows (
   id          TEXT PRIMARY KEY,              -- スラッグ

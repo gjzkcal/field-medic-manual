@@ -1,4 +1,4 @@
--- 症状→処置 クイック表。定義の根拠は dev-docs/reference/data-model.md §2、書き方は content-guide.md §8。
+-- 症状→処置 クイック表。行の形は TS の src/features/quickref/schema.ts で決める。
 -- 同梱の content/quickref.yaml の写しで、ファイルが変われば全行を置き換える。
 -- id は作者が書くスラッグ（自動採番だと全置き換えのたびに変わり、お気に入り・履歴・quickref: のリンクが切れるため）。
 -- 行は数十なので、検索はフローと同じく LIKE にし、FTS の表は作らない。

@@ -17,7 +17,7 @@ interface DebugData {
   synonyms: SynonymGroup[];
 }
 
-/** 開発ビルドだけで出す、データ層の動作確認用の画面。ライブラリの一覧（Step 04）ができるまでの代わりも兼ねる。 */
+/** 開発ビルドだけで出す、データ層の動作確認用の画面。 */
 export function DebugPanel(): JSX.Element {
   const [data, setData] = useState<DebugData>({ docs: [], tags: [], synonyms: [] });
   const [message, setMessage] = useState<string | null>(null);

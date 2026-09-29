@@ -58,7 +58,8 @@ text_enum!(SourceType {
     Url => "url",
 });
 
-/// 原稿が前提にしている ACE Medical のモジュール（dev-docs/reference/ace-medical-notes.md）。
+/// 原稿が前提にしている ACE Medical のモジュール。
+/// Release と Dev で公開されているモジュールが違うが、この値で両方の版を過不足なく表せる。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "snake_case")]
 #[ts(export)]
@@ -279,7 +280,7 @@ pub enum SearchHit {
     Quickref(QuickrefHit),
 }
 
-/// クイック表の 1 行（content-guide.md §8）。形の検査は TS の zod で行い、Rust は DB に入れてよい最低限を確かめる。
+/// クイック表の 1 行。形の検査は TS の zod で行い、Rust は DB に入れてよい最低限を確かめる。
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
@@ -342,7 +343,7 @@ pub struct TriageUpsertInput {
     /// YYYY-MM-DD
     pub verified_at: Option<String>,
     pub version: u32,
-    /// フロー全体の JSON（triage-format.md）
+    /// フロー全体の JSON（形は TS の `src/features/triage/schema.ts`）
     pub json: String,
     /// ノードの文などを改行でつないだもの（検索用）
     pub search_text: String,

@@ -1,4 +1,4 @@
-//! トリアージフローの保存。フローの形（triage-format.md）の検査は TS の zod と validate.ts で行い、
+//! トリアージフローの保存。フローの形の検査は TS の zod と validate.ts で行い、
 //! ここでは DB に入れてよい最低限（id・タイトル・JSON として読めること）だけを確かめる。
 
 use rusqlite::{Connection, OptionalExtension, Row, params};

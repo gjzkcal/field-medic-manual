@@ -9,12 +9,12 @@ use crate::model::{
 };
 
 const MAX_LEVEL: u8 = 6;
-/// 原稿は h1〜h3 で節に分けるので、ツリーもそこまでにする（bundled-content.md §5）
+/// 原稿は h1〜h3 で節に分けるので、ツリーもそこまでにする
 const OUTLINE_MAX_LEVEL: u8 = 3;
 
 /// ドキュメントを保存する。同じ `source_path` のドキュメントがあれば置き換える。
 ///
-/// 置き換えるときは id と `created_at` を引き継ぐ。後のステップのお気に入り・履歴が document id を参照するため、
+/// 置き換えるときは id と `created_at` を引き継ぐ。お気に入り・履歴が document id を参照するため、
 /// 取り込み直すたびに id が変わるとリンクが切れる。
 ///
 /// # Errors

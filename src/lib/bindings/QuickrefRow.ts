@@ -2,7 +2,7 @@
 import type { ModTarget } from "./ModTarget";
 
 /**
- * クイック表の 1 行（content-guide.md §8）。形の検査は TS の zod で行い、Rust は DB に入れてよい最低限を確かめる。
+ * クイック表の 1 行。形の検査は TS の zod で行い、Rust は DB に入れてよい最低限を確かめる。
  */
 export type QuickrefRow = { 
 /**

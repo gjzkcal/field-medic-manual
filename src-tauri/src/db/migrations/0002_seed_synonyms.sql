@@ -1,6 +1,6 @@
 -- 同義語辞書の初期値。用語の言い換え（表記ゆれ・英語名）だけを入れ、処置の内容には触れない。
 -- マイグレーションで 1 回だけ入れるのは、ユーザーが消したり直したりした語を起動のたびに復活させないため。
--- 出典: dev-docs/reference/content-guide.md §4（用語の統一）と ace-medical-notes.md（物品・状態の英語名）
+-- 入れる語: 原稿で使わない表記ゆれ（ターニケット・TQ → 止血帯 など）と、物品・状態のゲーム内の英語名
 
 INSERT INTO synonym_groups (id, note, updated_at) VALUES
   (1,  '止血帯',           strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),

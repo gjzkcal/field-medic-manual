@@ -1,4 +1,4 @@
--- お気に入り・履歴。定義の根拠は dev-docs/reference/data-model.md §2。
+-- お気に入り・履歴。
 -- target_id は section なら "<documentId>#<anchor>"、document は documentId、flow は flowId。
 -- 対象が消えても行は残し、一覧に出さないだけにする（同じ原稿が戻れば復活させるため）。
 CREATE TABLE favorites (

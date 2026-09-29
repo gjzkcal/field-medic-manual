@@ -42,7 +42,7 @@ interface QuickrefPageProps {
   compact?: boolean;
 }
 
-/** 症状→処置のクイック表（Step 06）。絞り込みは URL のクエリに持つ（filter.ts）。 */
+/** 症状→処置のクイック表。絞り込みは URL のクエリに持つ（filter.ts）。 */
 export function QuickrefPage({ compact = false }: QuickrefPageProps): JSX.Element {
   const load = useQuickrefTable();
   return (

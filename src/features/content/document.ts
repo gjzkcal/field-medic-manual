@@ -126,7 +126,7 @@ function splitByHeadings(nodes: Node[]): Chunk[] {
 
 /**
  * 見出しの直後に書かれたセクションのタグを取り出し、本文から除く。
- * 書き方は `<!-- tags: a, b -->`（md / html）か `タグ: a, b` の段落（txt / docx）。dev-docs/reference/content-guide.md。
+ * 書き方は `<!-- tags: a, b -->`（md / html）か `タグ: a, b` の段落（txt / docx）。
  */
 function takeSectionTags(nodes: Node[]): string[] {
   const index = nodes.findIndex((n) => !(n.nodeType === Node.TEXT_NODE && isBlank(n)));

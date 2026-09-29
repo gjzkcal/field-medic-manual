@@ -1,4 +1,4 @@
-// 原稿の検査。content/manuals/ の原稿を直したら `pnpm test` で確かめる（dev-docs/reference/bundled-content.md §6）。
+// 原稿の検査。content/manuals/ の原稿を直したら `pnpm test` で確かめる。
 // アプリと同じ bundle.ts（import.meta.glob）から読むので、同梱のされ方も一緒に確かめられる。
 import { describe, expect, it } from "vitest";
 
@@ -53,7 +53,7 @@ describe("同梱した原稿", () => {
       }
       expect(
         broken,
-        "リンク切れです。書き方は dev-docs/reference/content-guide.md §4（例: hemorrhage.md#止血帯を使う）",
+        "リンク切れです。他の原稿へは content/manuals/ のファイル名と見出しのアンカー（例: hemorrhage.md#止血帯を使う）、同じ原稿の中は #アンカー で書きます",
       ).toEqual([]);
     },
   );

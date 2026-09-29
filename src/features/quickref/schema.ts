@@ -1,4 +1,4 @@
-// クイック表の原稿（content/quickref.yaml）の形。書き方は dev-docs/reference/content-guide.md §8。
+// クイック表の原稿（content/quickref.yaml）の形。書き方の決まりは content/quickref.yaml の先頭のコメント。
 // .meta() の説明と値の一覧は、ここから生成する JSON Schema（json-schema.test.ts）に載り、エディタの補完とホバーに出る。
 import { z } from "zod";
 
@@ -10,7 +10,7 @@ import type { QuickrefRow } from "@/lib/bindings/QuickrefRow";
 export const QUICKREF_SCHEMA_FILE = "quickref.v1.schema.json";
 export const QUICKREF_SCHEMA_ID = `./${QUICKREF_SCHEMA_FILE}`;
 
-/** content-guide §7.7 の分類語。タブはファイルに出てきた順に並べる */
+/** マニュアルの原稿のタグ（front matter の tags）と同じ分類語から「管理者向け」を除いたもの。タブはファイルに出てきた順に並べる */
 export const QUICKREF_CATEGORIES = ["出血", "循環", "気道・呼吸", "意識", "薬・物品"] as const;
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;

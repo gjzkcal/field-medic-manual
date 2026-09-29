@@ -1,6 +1,6 @@
 # cargo-about の設定。scripts/third-party-licenses.ts が呼び、配布物の THIRD_PARTY_LICENSES.txt の Rust の節を作る。
 # accepted は scripts/lib/licenses.ts の ALLOWED_LICENSES と同じ一覧にする（テストで一致を確かめる）。
-# 一覧に無いライセンスのクレートが入ると生成が失敗する。足す前にユーザーに確認する（dev-docs/reference/licensing.md §1）。
+# 一覧に無いライセンスのクレートが入ると生成が失敗する。足す前に、GPL-3.0-or-later と両立するかをユーザーに確認する。
 accepted = [
     "MIT",
     "Apache-2.0",

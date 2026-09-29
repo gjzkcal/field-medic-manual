@@ -1,5 +1,6 @@
-//! テスト用のドキュメント。対象は dev-docs/reference/ace-medical-notes.md §4 に合わせる
-//! （「出血」= core、「CPR」= circulation・dev、「止血帯」= general）。本文は骨子だけで処置を確定させない。
+//! テスト用のドキュメント。対象のモジュールは ACE Medical の実際の区分に合わせる（「出血」= core、
+//! 「CPR」は Circulation の機能なので circulation・dev、「止血帯」は ACE ではなくゲーム本体の物品なので general）。
+//! 本文は骨子だけで処置を確定させない。
 
 use crate::model::{DocMeta, DocUpsertInput, ModChannel, ModTarget, SectionInput, SourceType};
 

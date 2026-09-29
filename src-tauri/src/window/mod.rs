@@ -1,4 +1,4 @@
-//! 小窓・ホットキー・トレイ・閉じるボタンの扱い。設計は dev-docs/reference/architecture.md §4。
+//! 小窓・ホットキー・トレイ・閉じるボタンの扱い。
 
 pub mod hotkey;
 pub mod overlay;

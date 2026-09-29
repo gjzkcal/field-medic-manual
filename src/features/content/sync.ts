@@ -1,4 +1,4 @@
-// 起動時に、同梱した原稿を DB に入れる（dev-docs/reference/bundled-content.md §3）。
+// 起動時に、同梱した原稿を DB に入れる。
 // DB の本文は同梱物の写しなので、変わった原稿だけ入れ直し、同梱にないドキュメントは消す。
 import { create } from "zustand";
 

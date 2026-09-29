@@ -1,4 +1,4 @@
-//! 症状→処置 クイック表の保存。行の形（content-guide.md §8）の検査は TS の zod で行い、
+//! 症状→処置 クイック表の保存。行の形の検査は TS の zod で行い、
 //! ここでは DB に入れてよい最低限（id・必須の文字列・重症度・id の重複）だけを確かめる。
 
 use std::collections::HashSet;

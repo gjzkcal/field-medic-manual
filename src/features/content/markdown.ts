@@ -1,4 +1,5 @@
-// 同梱する Markdown の原稿を、DB に入れる形（NormalizedDoc）に変換する。ルールは dev-docs/reference/bundled-content.md §5。
+// 同梱する Markdown の原稿を、DB に入れる形（NormalizedDoc）に変換する。
+// front matter と GFM を読み、h1〜h3 で節に分け、相対パスの画像はアセットとして取り込む。
 import { sectionsFromBody } from "@/features/content/document";
 import { sha256Hex } from "@/features/content/hash";
 import { emptyMeta, toDocMeta } from "@/features/content/meta";
@@ -121,7 +122,7 @@ async function splitFrontMatter(
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
     return { frontMatter: null, body };
   }
-  // 原稿では snake_case（mod_version / verified_at）で書く。content-guide.md の書式に合わせる
+  // 原稿では snake_case（mod_version / verified_at）で書く決まりなので、DocMeta の camelCase に読み替える
   const record = Object.fromEntries(Object.entries(parsed));
   return {
     frontMatter: {

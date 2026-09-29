@@ -1,4 +1,4 @@
-// content/manuals/ の原稿と画像をアプリに同梱する（dev-docs/reference/bundled-content.md §3）。
+// content/manuals/ の原稿と画像をアプリに同梱する。
 // import.meta.glob はビルド時に展開されるので、原稿を足すだけでここを直さずに同梱される。
 import { sha256HexOfText } from "@/features/content/hash";
 import { fileName } from "@/features/content/path";

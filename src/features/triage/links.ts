@@ -1,4 +1,5 @@
-// フローの関連リンク（action / end の links）の解釈。書式は dev-docs/reference/triage-format.md §2。
+// フローの関連リンク（action / end の links）の解釈。
+// 書式は doc:<ファイル名>#<アンカー>（アンカーは省略可） / flow:<フローの id> / quickref:<行の id> / https://…。
 import { decodeAnchor } from "@/features/library/link";
 
 export type FlowLink =
@@ -10,7 +11,7 @@ export type FlowLink =
 // doc: はマニュアルの本文の内部リンクと同じく content/manuals/ 直下の md だけを指す（DB の UUID は作者に分からないため）
 const DOC_LINK = /^doc:([a-z0-9-]+\.md)(?:#(.+))?$/;
 const FLOW_LINK = /^flow:([a-z0-9]+(?:-[a-z0-9]+)*)$/;
-// クイック表の行の id は作者が書くスラッグ（dev-docs/reference/content-guide.md §8）
+// クイック表の行の id は作者が書くスラッグ（DB の自動採番にすると、原稿を入れ直すたびに変わってリンクが切れるため）
 const QUICKREF_LINK = /^quickref:([a-z0-9]+(?:-[a-z0-9]+)*)$/;
 const EXTERNAL_LINK = /^https:\/\/\S+$/;
 

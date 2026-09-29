@@ -14,7 +14,7 @@ import type { QuickrefRow } from "@/lib/bindings/QuickrefRow";
 import { errorMessage, openExternal } from "@/lib/tauri";
 
 interface RelatedLinksProps {
-  /** `doc:` / `flow:` / `quickref:` / `https://` の書式（triage-format.md §2） */
+  /** `doc:` / `flow:` / `quickref:` / `https://` の書式（解釈は triage/links.ts） */
   links: readonly string[];
   /** flow: のリンクの名前を引く。引けなければ id で出す */
   flowTitle?: (flowId: string) => string | undefined;

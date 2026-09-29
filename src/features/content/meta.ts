@@ -1,4 +1,5 @@
-// front matter や <meta> に書かれたメタデータを DocMeta に直す。書き方は dev-docs/reference/content-guide.md。
+// front matter や <meta> に書かれたメタデータを DocMeta に直す。
+// 原稿に書く項目は mod（対象モジュール）・channel（release / dev）・mod_version・verified_at（確認日）・tags。
 import type { DocMeta } from "@/lib/bindings/DocMeta";
 import type { ModChannel } from "@/lib/bindings/ModChannel";
 import type { ModTarget } from "@/lib/bindings/ModTarget";

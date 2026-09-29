@@ -1,4 +1,4 @@
-// ランナーの状態を URL の ?path= に持たせる。小窓（Step 08）とメインの画面で同じ URL を開けば続きから進められるようにするため。
+// ランナーの状態を URL の ?path= に持たせる。小窓とメインの画面で同じ URL を開けば続きから進められるようにするため。
 import { useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router";
 

@@ -1,4 +1,4 @@
-// content/quickref.yaml をアプリに同梱し、読む（dev-docs/reference/bundled-content.md §3）。
+// content/quickref.yaml をアプリに同梱し、読む。
 import { sha256HexOfText } from "@/features/content/hash";
 import { fileName } from "@/features/content/path";
 import { parseQuickref, type QuickrefParseResult } from "@/features/quickref/schema";
@@ -37,7 +37,7 @@ export async function readQuickrefSource(
   }
   let value: unknown;
   try {
-    // 起動時の JS を小さくするため、YAML の読み取りは使うときに読み込む（00-overview.md §5）
+    // 起動時の JS を小さくするため、YAML の読み取りは使うときに読み込む
     const { parse } = await import("yaml");
     value = parse(source.text);
   } catch (error: unknown) {

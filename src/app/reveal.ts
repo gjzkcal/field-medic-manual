@@ -1,4 +1,4 @@
-// メインは非表示で起動し、最初の画面を描き終えてから出す（dev-docs/reference/architecture.md §4）。
+// メインは非表示で起動し、最初の画面を描き終えてから出す。
 // 描きかけの画面や、欧文があとからフォントを差し替えて動く様子を見せないため。
 import { mainWindowReady } from "@/lib/tauri";
 

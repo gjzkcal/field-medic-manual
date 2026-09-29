@@ -1,4 +1,4 @@
-// 使っている ACE Medical の MOD。トリアージのフローは、これを見て branch ノードで自動に分岐する（triage-format.md §4）。
+// 使っている ACE Medical の MOD。トリアージのフローは、これを見て branch ノードで自動に分岐する。
 // settings のキー `mods` に保存する。
 import { create } from "zustand";
 
@@ -20,7 +20,7 @@ export interface ModSettings {
   enabled: SelectableMod[];
 }
 
-// 作者の普段の組み合わせ（2026-09-28 のユーザーの選択）。同じサーバーで遊ぶ友人は設定しなくてよい
+// 作者の普段の組み合わせ。同じサーバーで遊ぶ友人は設定しなくてよい
 export const DEFAULT_MOD_SETTINGS: ModSettings = { enabled: ["circulation", "breathing"] };
 
 const MODS_KEY = "mods";

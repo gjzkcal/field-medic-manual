@@ -1,4 +1,4 @@
-// フローの原稿の検査。content/flows/ のフローを直したら `pnpm test` で確かめる（dev-docs/reference/bundled-content.md §6）。
+// フローの原稿の検査。content/flows/ のフローを直したら `pnpm test` で確かめる。
 // アプリと同じ bundle.ts（import.meta.glob）から読むので、同梱のされ方も一緒に確かめられる。
 import { describe, expect, it } from "vitest";
 

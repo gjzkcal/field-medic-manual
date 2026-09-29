@@ -1,4 +1,5 @@
-// 本文の画像（`<img data-asset-id>`）を Blob URL にする。asset プロトコルを開かずに済ませるため（00-overview.md §5）。
+// 本文の画像（`<img data-asset-id>`）を Blob URL にする。
+// asset プロトコルは WebView からファイルを直接読めるスコープを開くので、使わずに済ませるため。
 
 export type LoadAsset = (id: string) => Promise<ArrayBuffer>;
 

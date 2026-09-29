@@ -1,4 +1,5 @@
-// 本文のリンクの行き先を分類する。原稿での書き方は dev-docs/reference/content-guide.md §4。
+// 本文のリンクの行き先を分類する。
+// 原稿では、他のマニュアルへは相対パスの md（hemorrhage.md#止血帯を使う）、同じ文書の中は #アンカー で書く。
 
 export type ResolvedLink =
   | { kind: "external"; url: string }
