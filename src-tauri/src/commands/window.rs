@@ -62,6 +62,20 @@ pub fn overlay_activate(app: AppHandle) -> Result<(), AppError> {
     overlay::activate(&app).map_err(|e| window_error(&e))
 }
 
+/// メインの最初の画面を描き終えたことを知らせ、非表示で起動したメインを出す。
+///
+/// # Errors
+///
+/// ウィンドウの操作に失敗した場合は `Internal`。
+#[tauri::command]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri のコマンド引数は値で受け取る（&AppHandle は CommandArg を実装していない）"
+)]
+pub fn main_window_ready(app: AppHandle) -> Result<(), AppError> {
+    overlay::reveal_main(&app).map_err(|e| window_error(&e))
+}
+
 fn window_error(error: &tauri::Error) -> AppError {
     AppError::Internal(format!("ウィンドウを操作できませんでした: {error}"))
 }

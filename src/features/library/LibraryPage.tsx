@@ -2,6 +2,7 @@ import { LayoutGridIcon, ListIcon } from "lucide-react";
 import { useEffect, useMemo, useState, type JSX } from "react";
 import { Link } from "react-router";
 
+import { revealMainWindow } from "@/app/reveal";
 import { IssueCard } from "@/components/IssueCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -73,6 +74,14 @@ export function LibraryPage(): JSX.Element {
   const [filter, setFilter] = useState<LibraryFilter>(EMPTY_FILTER);
   const [sort, setSort] = useState<LibrarySort>("title");
   const [view, setView] = useState<ViewMode>("card");
+
+  const loaded = state.status !== "loading";
+  // 起動時はこの一覧が最初の画面なので、描き終えてからメインを出す
+  useEffect(() => {
+    if (loaded) {
+      void revealMainWindow();
+    }
+  }, [loaded]);
 
   const docs = useMemo(() => (state.status === "ready" ? state.docs : []), [state]);
   const shown = useMemo(

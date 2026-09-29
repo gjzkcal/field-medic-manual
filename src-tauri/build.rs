@@ -31,6 +31,7 @@ const COMMANDS: &[&str] = &[
     "hotkey_set",
     "window_open_in_main",
     "overlay_activate",
+    "main_window_ready",
 ];
 
 fn main() {

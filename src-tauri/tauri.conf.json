@@ -18,7 +18,9 @@
         "height": 800,
         "minWidth": 800,
         "minHeight": 500,
-        "decorations": false
+        "decorations": false,
+        "visible": false,
+        "backgroundColor": "#030303"
       },
       {
         "label": "overlay",

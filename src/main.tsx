@@ -4,6 +4,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { App } from "@/app/App";
+import { waitForFirstScreen } from "@/app/reveal";
 import { syncBundledManuals } from "@/features/content/sync";
 import { OverlayApp } from "@/features/overlay/OverlayApp";
 import { refreshPrefs } from "@/features/prefs/prefs-store";
@@ -29,6 +30,7 @@ if (isOverlay) {
   // ウィンドウは透明にしてあり、背景は小窓の画面が不透明度を付けて塗る
   document.documentElement.classList.add("overlay-window");
 } else {
+  waitForFirstScreen();
   // 画面の表示を待たせないよう、同梱した原稿の同期は描画と並行して行う。結果は useContentSync で画面に出す。
   // 同期はメインだけで行う（2 つのウィンドウが同時に同じ原稿を書き込まないように）
   void syncBundledManuals();

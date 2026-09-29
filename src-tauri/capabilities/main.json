@@ -38,6 +38,7 @@
     "allow-history-push",
     "allow-history-list",
     "allow-hotkey-list",
-    "allow-hotkey-set"
+    "allow-hotkey-set",
+    "allow-main-window-ready"
   ]
 }

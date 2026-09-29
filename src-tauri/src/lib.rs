@@ -4,11 +4,15 @@ pub mod error;
 pub mod model;
 pub mod window;
 
+use std::time::Duration;
+
 use tauri::Manager;
 use tauri_plugin_global_shortcut::ShortcutState;
 use tauri_plugin_window_state::StateFlags;
 
 use crate::window::{hotkey, overlay, tray};
+
+const MAIN_REVEAL_TIMEOUT: Duration = Duration::from_secs(5);
 
 /// # Panics
 ///
@@ -46,6 +50,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_process::init())
         .manage(hotkey::HotkeyState::default())
+        .manage(overlay::MainRevealed::default())
         .setup(|app| {
             // updater のクレートはデスクトップだけの依存にしてある（Cargo.toml）
             #[cfg(desktop)]
@@ -54,6 +59,13 @@ pub fn run() {
             let data_dir = app.path().app_data_dir()?;
             app.manage(db::Db::open(&data_dir)?);
             tray::create(app)?;
+            // メインは画面を描き終えてから JS が出す。JS が動かないときにウィンドウが見えないままにならないよう、
+            // 待ちきれなかったら描きかけでも出す
+            let handle = app.handle().clone();
+            std::thread::spawn(move || {
+                std::thread::sleep(MAIN_REVEAL_TIMEOUT);
+                let _ = overlay::reveal_main(&handle);
+            });
             let handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
                 // 登録の失敗は設定画面に出すので、ここでは起動を止めない
@@ -92,6 +104,7 @@ pub fn run() {
             commands::window::hotkey_set,
             commands::window::window_open_in_main,
             commands::window::overlay_activate,
+            commands::window::main_window_ready,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

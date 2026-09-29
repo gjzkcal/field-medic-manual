@@ -83,7 +83,11 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-/* プレイ中に一瞬で読めるよう、shadcn 既定のダークより背景を暗く、補助テキストと枠線を明るくしている */
+/*
+ * プレイ中に一瞬で読めるよう、shadcn 既定のダークより背景を暗く、補助テキストと枠線を明るくしている。
+ * --background を変えるときは tauri.conf.json の main の backgroundColor（sRGB に直した値）も揃える。
+ * 揃っていないと、起動して画面を描くまでの一瞬にその色が見える。
+ */
 .dark {
   --background: oklch(0.1 0 0);
   --foreground: oklch(0.99 0 0);

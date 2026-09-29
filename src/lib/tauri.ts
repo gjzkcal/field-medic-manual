@@ -208,6 +208,11 @@ export async function overlayActivate(): Promise<void> {
   return invoke<undefined>("overlay_activate");
 }
 
+/** メインの最初の画面を描き終えたことを知らせ、非表示で起動したメインを出してもらう。2 回目以降は何もしない。 */
+export async function mainWindowReady(): Promise<void> {
+  return invoke<undefined>("main_window_ready");
+}
+
 /** Rust と取り決めたイベント名（src-tauri/src/window/overlay.rs）。 */
 const OVERLAY_MODE_EVENT = "overlay-mode";
 const OPEN_HREF_EVENT = "open-href";
