@@ -318,6 +318,8 @@ Breathing を入れていない組み合わせ（Core だけ、Core + Circulatio
 
 健康な人に付けたとき:
 
+<!-- chart: x=付けてからの時間; y=SpO2; y2=肺の酸素; data=data/oxygen-mask.csv -->
+
 | 付けてからの時間 | SpO2 | 肺の酸素 |
 |---|---|---|
 | 0 秒 | 97.15% | 13.30 kPa |

@@ -271,7 +271,8 @@ export function chartFromTable(table: HTMLTableElement, spec: ChartSpec): TableC
 
 /**
  * CSV から表と同じ線の細かい点を作り、表の各行の値と突き合わせる。
- * CSV の列の名前は表の線の名前（`a/b` の列は `列名（上）` / `列名（下）`）。値は数値だけで、単位は表から取る。
+ * CSV の 1 列目が横軸（秒）。ほかの列の名前は表の線の名前（`a/b` の列は `列名（上）` / `列名（下）`）。
+ * 値は数値だけで、単位は表から取る。横軸を名前で探さないのは、同じ計算を横軸の列名の違う表（「経過」と「塞がってからの時間」など）で使い回すため。
  */
 export function chartFromCsv(
   text: string,
@@ -292,7 +293,10 @@ export function chartFromCsv(
     }
     return index;
   };
-  const xIndex = columnIndex(data.xLabel);
+  const xIndex = headers.length > 1 ? 0 : null;
+  if (xIndex === null) {
+    warnings.push("CSV に横軸（1 列目）と線の列がありません");
+  }
   const columns = data.series.map((s) => ({ key: s.key, index: columnIndex(s.label) }));
   if (xIndex === null || columns.some((c) => c.index === null)) {
     return { data: { ...data, points: [] }, warnings };

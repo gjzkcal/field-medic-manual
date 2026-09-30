@@ -187,10 +187,14 @@ describe("chartFromCsv", () => {
       "表と CSV が食い違っています: 「経過」0 の「SpO2」が表は 97.1、CSV は 97.2",
       "CSV に「経過」が 60 の行がありません（表の行と突き合わせるため）",
     ]);
-    expect(chartFromCsv("経過,SpO2\n0,97.1\n60,80", fromTable()).warnings).toEqual([
-      "CSV に列「血圧（上）」がありません（CSV の列: 経過, SpO2）",
-      "CSV に列「血圧（下）」がありません（CSV の列: 経過, SpO2）",
+    // 横軸は名前ではなく 1 列目で読む（同じ CSV を、横軸の列名の違う表で使い回すため）
+    expect(chartFromCsv("時間,SpO2\n0,97.1\n60,80", fromTable()).warnings).toEqual([
+      "CSV に列「血圧（上）」がありません（CSV の列: 時間, SpO2）",
+      "CSV に列「血圧（下）」がありません（CSV の列: 時間, SpO2）",
     ]);
+    expect(chartFromCsv("経過\n0\n60", fromTable()).warnings).toContain(
+      "CSV に横軸（1 列目）と線の列がありません",
+    );
   });
 });
 

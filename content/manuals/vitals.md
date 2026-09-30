@@ -290,7 +290,7 @@ Circulation を入れると、生存しているキャラクターは次の 5 �
 
 血液が満タンで、気道が塞がったまま放置した場合:
 
-<!-- chart: x=経過; y=SpO2; ref=85, 75, 65; data=data/vitals-apnea-spo2.csv -->
+<!-- chart: x=経過; y=SpO2; ref=85, 75, 65; data=data/apnea-spo2.csv -->
 
 | 経過 | SpO2 | 状態 |
 |---|---|---|

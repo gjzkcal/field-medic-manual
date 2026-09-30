@@ -111,6 +111,8 @@ Breathing を入れていない組み合わせ（Core だけ、Core + Circulatio
 
 計算の推移（血液は満タン、痛みなし、薬なし）:
 
+<!-- chart: x=塞がってからの時間; y=SpO2; ref=85, 75, 65; data=data/apnea-spo2.csv -->
+
 | 塞がってからの時間 | SpO2 | 状態 |
 |---|---|---|
 | 0 秒 | 97.1% | Stable |
