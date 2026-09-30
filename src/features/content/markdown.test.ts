@@ -100,6 +100,40 @@ describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
     expect(warnings[0]).toContain("images/missing.png");
   });
 
+  it("グラフの印を読み、直後の表に data-chart を付けて印を消す", async () => {
+    const { doc, warnings } = await convertManual(
+      manual(
+        "# A\n\n<!-- chart: x=経過; y=SpO2; ref=85 -->\n\n| 経過 | SpO2 |\n|---|---|\n| 0 s | 97.1% |\n| 5 s | 92.0% |\n",
+      ),
+      noImages,
+    );
+    expect(warnings).toEqual([]);
+    const html = doc.sections[0]?.html ?? "";
+    const container = document.createElement("div");
+    container.innerHTML = html;
+    expect(JSON.parse(container.querySelector("table")?.getAttribute("data-chart") ?? "")).toEqual(
+      { x: "経過", y: ["SpO2"], y2: [], ref: [85], title: null },
+    );
+    expect(html).not.toContain("chart:");
+    expect(doc.sections[0]?.plainText).not.toContain("chart");
+  });
+
+  it.each([
+    ["表でない", "<!-- chart: x=経過; y=SpO2 -->\n\n本文", "印のすぐ後に表がありません"],
+    [
+      "列が無い",
+      "<!-- chart: x=経過; y=脈 -->\n| 経過 | SpO2 |\n|---|---|\n| 0 s | 97% |\n| 5 s | 92% |",
+      "列「脈」が表にありません",
+    ],
+    ["キーの誤り", "<!-- chart: x=経過; z=SpO2 -->\n| 経過 |\n|---|\n| 0 s |", "知らないキー"],
+  ])("グラフの印の誤り（%s）は警告にし、表には印を付けない", async (_, body, message) => {
+    const { doc, warnings } = await convertManual(manual(`# A\n\n${body}\n`), noImages);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("グラフの印「chart:");
+    expect(warnings[0]).toContain(message);
+    expect(doc.sections[0]?.html).not.toContain("data-chart");
+  });
+
   it("生の HTML の script は取り除く", async () => {
     const { doc } = await convertManual(
       manual('# A\n<script>alert(1)</script>\n\n<b onclick="x()">太字</b>'),

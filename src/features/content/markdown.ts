@@ -1,5 +1,6 @@
 // 同梱する Markdown の原稿を、DB に入れる形（NormalizedDoc）に変換する。
 // front matter と GFM を読み、h1〜h3 で節に分け、相対パスの画像はアセットとして取り込む。
+import { chartFromTable, chartMarkerBody, parseChartSpec } from "@/features/content/chart";
 import { sectionsFromBody } from "@/features/content/document";
 import { sha256Hex } from "@/features/content/hash";
 import { emptyMeta, toDocMeta } from "@/features/content/meta";
@@ -55,6 +56,7 @@ export async function convertManual(
   const html = await markdownToHtml(body);
   const doc = new DOMParser().parseFromString(html, "text/html");
   markAlerts(doc.body);
+  markCharts(doc.body, warnings);
   const result = await sectionsFromBody(doc.body, {
     resolveImage: (src) => readRelativeImage(manual.path, src, readImage),
   });
@@ -170,4 +172,57 @@ function markAlerts(body: HTMLElement): void {
     title.textContent = ALERT_TITLES[kind] ?? kind;
     quote.prepend(title);
   }
+}
+
+/**
+ * 表の直前の `<!-- chart: x=…; y=… -->` を読み、表に `data-chart`（印を正規化した JSON）を付ける。
+ * 印は消す。書き間違いは警告にする（同梱の原稿は警告 0 を検査しているので、誤りに気づける）。
+ */
+function markCharts(body: HTMLElement, warnings: string[]): void {
+  const walker = body.ownerDocument.createTreeWalker(body, NodeFilter.SHOW_COMMENT);
+  const comments: Comment[] = [];
+  for (let node = walker.nextNode(); node !== null; node = walker.nextNode()) {
+    if (node instanceof Comment) {
+      comments.push(node);
+    }
+  }
+  for (const comment of comments) {
+    const marker = chartMarkerBody(comment.data);
+    if (marker === null) {
+      continue;
+    }
+    const warn = (reason: string): void => {
+      warnings.push(`グラフの印「${comment.data.trim()}」: ${reason}`);
+    };
+    const table = nextElement(comment);
+    comment.remove();
+    const parsed = parseChartSpec(marker);
+    if ("error" in parsed) {
+      warn(parsed.error);
+      continue;
+    }
+    if (!(table instanceof HTMLTableElement)) {
+      warn("印のすぐ後に表がありません");
+      continue;
+    }
+    const { warnings: tableWarnings } = chartFromTable(table, parsed.spec);
+    if (tableWarnings.length > 0) {
+      tableWarnings.forEach(warn);
+      continue;
+    }
+    table.setAttribute("data-chart", JSON.stringify(parsed.spec));
+  }
+}
+
+/** 空白だけのテキストを飛ばした、次の兄弟の要素。 */
+function nextElement(node: Node): Element | null {
+  for (let next = node.nextSibling; next !== null; next = next.nextSibling) {
+    if (next instanceof Element) {
+      return next;
+    }
+    if (next.nodeType !== Node.TEXT_NODE || (next.textContent ?? "").trim() !== "") {
+      return null;
+    }
+  }
+  return null;
 }
