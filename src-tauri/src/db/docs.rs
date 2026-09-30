@@ -48,8 +48,8 @@ pub fn upsert(conn: &mut Connection, input: &DocUpsertInput) -> Result<String, A
 
     tx.execute(
         "INSERT INTO documents (id, title, source_type, source_path, source_hash, original_asset_id,
-           mod_target, mod_channel, mod_version, verified_at, sort_order, created_at, updated_at)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
+           mod_target, mod_channel, mod_version, verified_at, sort_order, category, created_at, updated_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
         params![
             id,
             input.title,
@@ -62,6 +62,7 @@ pub fn upsert(conn: &mut Connection, input: &DocUpsertInput) -> Result<String, A
             input.meta.mod_version,
             input.meta.verified_at,
             input.meta.order,
+            input.meta.category,
             created_at,
             now,
         ],
@@ -160,6 +161,7 @@ fn validate(input: &DocUpsertInput) -> Result<DocUpsertInput, AppError> {
     input.source_path = non_empty(input.source_path.as_deref());
     input.meta.mod_version = non_empty(input.meta.mod_version.as_deref());
     input.meta.verified_at = non_empty(input.meta.verified_at.as_deref());
+    input.meta.category = non_empty(input.meta.category.as_deref());
     if let Some(date) = &input.meta.verified_at
         && !is_iso_date(date)
     {
@@ -255,7 +257,7 @@ fn delete_unused_tags(conn: &Connection) -> Result<(), AppError> {
 const SUMMARY_COLUMNS: &str =
     "d.id, d.title, d.source_type, d.source_path, d.mod_target, d.mod_channel,
        d.mod_version, d.verified_at, d.created_at, d.updated_at,
-       (SELECT COUNT(*) FROM sections s WHERE s.document_id = d.id), d.source_hash, d.sort_order";
+       (SELECT COUNT(*) FROM sections s WHERE s.document_id = d.id), d.source_hash, d.sort_order, d.category";
 
 fn read_summary(row: &Row<'_>) -> rusqlite::Result<DocSummary> {
     Ok(DocSummary {
@@ -271,6 +273,7 @@ fn read_summary(row: &Row<'_>) -> rusqlite::Result<DocSummary> {
             verified_at: row.get(7)?,
             tags: Vec::new(),
             order: row.get(12)?,
+            category: row.get(13)?,
         },
         created_at: row.get(8)?,
         updated_at: row.get(9)?,
@@ -608,6 +611,44 @@ mod tests {
         assert_eq!(bleeding.section_count, 2);
         assert_eq!(bleeding.meta.tags, ["出血"]);
         assert_eq!(bleeding.source_hash, fixtures::bleeding().source_hash);
+    }
+
+    #[test]
+    fn list_and_outline_return_category() {
+        let mut conn = test_conn();
+        let mut bleeding = fixtures::bleeding();
+        bleeding.meta.category = Some(" 症状/処置 ".to_owned());
+        let mut cpr = fixtures::cpr();
+        cpr.meta.category = Some("  ".to_owned());
+        upsert(&mut conn, &bleeding).expect("保存できる");
+        upsert(&mut conn, &cpr).expect("保存できる");
+
+        let category_of = |docs: Vec<(String, Option<String>)>, title: &str| {
+            docs.into_iter()
+                .find(|(t, _)| t == title)
+                .expect("文書がある")
+                .1
+        };
+        let listed: Vec<_> = list(&conn)
+            .expect("一覧を取れる")
+            .into_iter()
+            .map(|d| (d.title, d.meta.category))
+            .collect();
+        assert_eq!(
+            category_of(listed.clone(), "出血").as_deref(),
+            Some("症状/処置")
+        );
+        assert_eq!(
+            category_of(listed, "心停止と CPR"),
+            None,
+            "空白だけの分類は無しにする"
+        );
+        let outlined: Vec<_> = outline(&conn)
+            .expect("見出しを取れる")
+            .into_iter()
+            .map(|d| (d.title, d.meta.category))
+            .collect();
+        assert_eq!(category_of(outlined, "出血").as_deref(), Some("症状/処置"));
     }
 
     #[test]

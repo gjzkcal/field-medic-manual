@@ -11,6 +11,9 @@ const manuals = await bundledManuals();
 const converted = await Promise.all(
   manuals.map(async (manual) => ({ manual, ...(await convertManual(manual, readRepoFile, readBundledData)) })),
 );
+function byOrder(): typeof converted {
+  return [...converted].sort((a, b) => (a.doc.meta.order ?? Infinity) - (b.doc.meta.order ?? Infinity));
+}
 const anchorsByFile = new Map(
   converted.map(({ manual, doc }) => [manual.fileName, new Set(doc.sections.map((s) => s.anchor))]),
 );
@@ -65,20 +68,40 @@ describe("同梱した原稿", () => {
     expect(new Set(orders).size, "order が重複しています").toBe(orders.length);
   });
 
-  it("「この原稿の読み方」の「原稿の一覧」の表は order の順に並んでいる", () => {
+  it("すべてに category があり、同じ分類は order の上で続けて並ぶ（ライブラリと見出しツリーの分類）", () => {
+    const missing = converted.filter((c) => c.doc.meta.category === null).map((c) => c.manual.fileName);
+    expect(missing, "front matter の category を書いてください").toEqual([]);
+    // 途切れると、後ろの原稿が前の分類の見出しの下へ移り、order の順と画面の並びが食い違う
+    const runs = byOrder().map((c) => c.doc.meta.category).filter((c, i, all) => i === 0 || c !== all[i - 1]);
+    expect(new Set(runs).size, `同じ分類の原稿の間に別の分類の原稿があります: ${runs.join(" → ")}`).toBe(runs.length);
+  });
+
+  it("「この原稿の読み方」の「原稿の一覧」の表は order の順に並び、分類が front matter と合う", () => {
     const about = converted.find((c) => c.manual.fileName === "about-this-manual.md");
     const section = about?.doc.sections.find((s) => s.title === "原稿の一覧");
     expect(section, "about-this-manual.md に「原稿の一覧」の節がありません").toBeDefined();
     const container = document.createElement("div");
     container.innerHTML = section?.html ?? "";
-    const listed = Array.from(container.querySelectorAll("table a[href]")).map((a) => {
-      const link = resolveLink(a.getAttribute("href") ?? "");
-      return link.kind === "doc" ? link.fileName : a.getAttribute("href");
+    const headers = Array.from(container.querySelectorAll("table thead th")).map((th) => th.textContent.trim());
+    const categoryColumn = headers.indexOf("分類");
+    expect(categoryColumn, "表に「分類」の列がありません").toBeGreaterThanOrEqual(0);
+    const rows = Array.from(container.querySelectorAll("table tbody tr")).map((tr) => {
+      const a = tr.querySelector("a[href]");
+      const link = resolveLink(a?.getAttribute("href") ?? "");
+      return {
+        fileName: link.kind === "doc" ? link.fileName : a?.getAttribute("href"),
+        category: tr.children[categoryColumn]?.textContent.trim(),
+      };
     });
-    const byOrder = [...converted]
-      .sort((a, b) => (a.doc.meta.order ?? Infinity) - (b.doc.meta.order ?? Infinity))
-      .map((c) => c.manual.fileName);
-    expect(listed, "表の並びと order の順を合わせてください").toEqual(byOrder);
+    const expected = byOrder();
+    expect(
+      rows.map((r) => r.fileName),
+      "表の並びと order の順を合わせてください",
+    ).toEqual(expected.map((c) => c.manual.fileName));
+    expect(
+      rows.map((r) => [r.fileName, r.category]),
+      "表の「分類」の列と front matter の category を合わせてください",
+    ).toEqual(expected.map((c) => [c.manual.fileName, c.doc.meta.category]));
   });
 
   it("ファイル名は英小文字・数字・ハイフンだけ（sourcePath とリンクに使うため）", () => {

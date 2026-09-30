@@ -5,7 +5,8 @@ channel: dev
 mod_version: "1.5.36"
 verified_at: 2026-09-27
 tags: [薬・物品]
-order: 50
+order: 90
+category: 薬学/物品
 ---
 
 # 痛みと薬

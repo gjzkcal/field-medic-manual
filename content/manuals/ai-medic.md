@@ -6,6 +6,7 @@ mod_version: "1.5.36"
 verified_at: 2026-09-27
 tags: [管理者向け]
 order: 110
+category: 管理者向け
 ---
 
 # AI の治療

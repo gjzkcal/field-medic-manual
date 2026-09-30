@@ -38,6 +38,7 @@ pub fn doc(
             verified_at: None,
             tags: tags.iter().map(|&t| t.to_owned()).collect(),
             order: None,
+            category: None,
         },
         sections,
         asset_ids: Vec::new(),

@@ -5,7 +5,8 @@ channel: dev
 mod_version: "1.5.36"
 verified_at: 2026-09-27
 tags: [気道・呼吸]
-order: 80
+order: 60
+category: 症状/処置
 ---
 
 # 気道管理

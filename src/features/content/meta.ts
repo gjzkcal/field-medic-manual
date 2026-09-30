@@ -1,5 +1,5 @@
 // front matter や <meta> に書かれたメタデータを DocMeta に直す。
-// 原稿に書く項目は mod（対象モジュール）・channel（release / dev）・mod_version・verified_at（確認日）・tags・order（並び順）。
+// 原稿に書く項目は mod（対象モジュール）・channel（release / dev）・mod_version・verified_at（確認日）・tags・order（並び順）・category（分類）。
 import type { DocMeta } from "@/lib/bindings/DocMeta";
 import type { ModChannel } from "@/lib/bindings/ModChannel";
 import type { ModTarget } from "@/lib/bindings/ModTarget";
@@ -34,6 +34,7 @@ export function emptyMeta(): DocMeta {
     verifiedAt: null,
     tags: [],
     order: null,
+    category: null,
   };
 }
 
@@ -45,6 +46,7 @@ export interface RawMeta {
   verifiedAt?: unknown;
   tags?: unknown;
   order?: unknown;
+  category?: unknown;
 }
 
 /** 値を検証して DocMeta にする。不正な値は捨てて warnings に積む（取り込みは止めない）。 */
@@ -90,6 +92,15 @@ export function toDocMeta(raw: RawMeta, warnings: string[]): DocMeta {
       meta.order = raw.order;
     } else {
       warnings.push(`order は 0 以上の整数で書いてください: ${JSON.stringify(raw.order)}`);
+    }
+  }
+
+  if (raw.category !== undefined && raw.category !== null) {
+    // 数値を受けると、YAML で `category: 2026` と書いた打ち間違いに気づけないので文字列だけにする
+    if (typeof raw.category === "string") {
+      meta.category = raw.category.trim() === "" ? null : raw.category.trim();
+    } else {
+      warnings.push(`category は文字列で書いてください: ${JSON.stringify(raw.category)}`);
     }
   }
   return meta;

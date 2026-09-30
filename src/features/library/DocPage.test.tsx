@@ -33,6 +33,7 @@ const META = {
   verifiedAt: "2026-09-25",
   tags: [],
   order: null,
+  category: null,
 } as const;
 
 const HEMORRHAGE: DocDetail = {

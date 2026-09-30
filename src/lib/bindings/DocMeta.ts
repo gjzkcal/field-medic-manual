@@ -14,4 +14,8 @@ verifiedAt: string | null, tags: Array<string>,
 /**
  * ライブラリと見出しツリーでの順番（小さいほど前）。ないものはタイトル順で後ろに並ぶ
  */
-order: number | null, };
+order: number | null, 
+/**
+ * 分類。ライブラリと見出しツリーで同じ分類の原稿をまとめる。ないものは末尾の「その他」に並ぶ
+ */
+category: string | null, };

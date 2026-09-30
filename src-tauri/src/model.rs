@@ -108,6 +108,8 @@ pub struct DocMeta {
     pub tags: Vec<String>,
     /// ライブラリと見出しツリーでの順番（小さいほど前）。ないものはタイトル順で後ろに並ぶ
     pub order: Option<u32>,
+    /// 分類。ライブラリと見出しツリーで同じ分類の原稿をまとめる。ないものは末尾の「その他」に並ぶ
+    pub category: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, TS)]

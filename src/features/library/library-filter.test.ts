@@ -18,6 +18,7 @@ function doc(id: string, title: string, updatedAt: string, meta: Partial<DocMeta
       verifiedAt: "2026-09-25",
       tags: [],
       order: null,
+      category: null,
       ...meta,
     },
     sectionCount: 1,

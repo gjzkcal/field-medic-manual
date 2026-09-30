@@ -5,7 +5,8 @@ channel: dev
 mod_version: "1.5.36"
 verified_at: 2026-09-27
 tags: [意識]
-order: 30
+order: 40
+category: 症状/処置
 ---
 
 # 意識喪失と回復

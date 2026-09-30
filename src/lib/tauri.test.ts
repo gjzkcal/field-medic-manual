@@ -70,6 +70,7 @@ describe("データ層のラッパ", () => {
         verifiedAt: null,
         tags: [],
         order: null,
+        category: null,
       },
       sections: [],
       assetIds: [],

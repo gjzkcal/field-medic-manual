@@ -25,6 +25,7 @@ function doc(id: string, title: string, meta: Partial<DocSummary["meta"]>): DocS
       verifiedAt: "2099-01-01",
       tags: [],
       order: null,
+      category: null,
       ...meta,
     },
     sectionCount: 2,
@@ -87,5 +88,43 @@ describe("LibraryPage", () => {
       .filter((href) => href?.startsWith("/doc/") === true);
     expect(hrefs).toEqual(["/doc/about", "/doc/hemorrhage", "/doc/cardiac"]);
     expect(screen.getByRole("button", { name: "標準" }).getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("標準の並び順では分類の見出しで区切り、ほかの並び順では区切らない", async () => {
+    mockIPC((cmd) =>
+      cmd === "doc_list"
+        ? [
+            doc("about", "この原稿の読み方", { order: 10, category: "はじめに" }),
+            doc("hemorrhage", "止血", { order: 20, category: "症状/処置", modTarget: "core" }),
+            doc("cardiac", "心停止と CPR", {
+              order: 30,
+              category: "症状/処置",
+              modTarget: "circulation",
+            }),
+            doc("extra", "付録", { order: 40 }),
+          ]
+        : null,
+    );
+    const router = createMemoryRouter([{ path: "/library", element: <LibraryPage /> }], {
+      initialEntries: ["/library"],
+    });
+    render(<RouterProvider router={router} />);
+
+    await screen.findByText("止血");
+    const headings = (): (string | null)[] =>
+      screen.queryAllByRole("heading", { level: 2 }).map((h) => h.textContent);
+    expect(headings()).toEqual(["はじめに", "症状/処置", "その他"]);
+    const group = screen.getByRole("region", { name: "症状/処置" });
+    expect(group.textContent).toContain("止血");
+    expect(group.textContent).toContain("心停止と CPR");
+
+    // 絞り込みで原稿がなくなった分類は見出しごと出さない
+    fireEvent.click(screen.getByRole("button", { name: "Circulation" }));
+    expect(headings()).toEqual(["症状/処置"]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Circulation" }));
+    fireEvent.click(screen.getByRole("button", { name: "タイトル" }));
+    expect(headings()).toEqual([]);
+    expect(screen.getByText("止血")).toBeDefined();
   });
 });

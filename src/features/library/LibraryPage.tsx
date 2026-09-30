@@ -1,5 +1,5 @@
 import { LayoutGridIcon, ListIcon } from "lucide-react";
-import { useEffect, useMemo, useState, type JSX } from "react";
+import { useEffect, useId, useMemo, useState, type JSX } from "react";
 import { Link } from "react-router";
 
 import { revealMainWindow } from "@/app/reveal";
@@ -18,6 +18,7 @@ import { Toggle } from "@/components/ui/toggle";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { MOD_CHANNEL_LABELS, MOD_TARGET_LABELS, MOD_TARGET_VALUES } from "@/features/content/meta";
 import { useContentSync } from "@/features/content/sync";
+import { categoryLabel, groupByCategory } from "@/features/library/doc-category";
 import { DocMetaBadges } from "@/features/library/DocMetaBadges";
 import { DocTags } from "@/features/library/DocTags";
 import {
@@ -160,10 +161,17 @@ export function LibraryPage(): JSX.Element {
                 </EmptyContent>
               )}
             </Empty>
-          ) : view === "card" ? (
-            <DocCards docs={shown} now={now} />
+          ) : sort === "order" ? (
+            // 分類で区切るのは作者の決めた順のときだけ。タイトル順・更新日順は分類をまたいで並べ替えるのが目的のため
+            <div className="flex flex-col gap-8">
+              {groupByCategory(shown).map((group) => (
+                <CategorySection key={group.category ?? ""} category={group.category}>
+                  <DocList docs={group.items} now={now} view={view} />
+                </CategorySection>
+              ))}
+            </div>
           ) : (
-            <DocRows docs={shown} now={now} />
+            <DocList docs={shown} now={now} view={view} />
           )}
         </>
       )}
@@ -295,6 +303,36 @@ function FilterRow({ label, children }: { label: string; children: React.ReactNo
       {children}
     </div>
   );
+}
+
+function CategorySection({
+  category,
+  children,
+}: {
+  category: string | null;
+  children: React.ReactNode;
+}): JSX.Element {
+  const headingId = useId();
+  return (
+    <section aria-labelledby={headingId} className="flex flex-col gap-3">
+      <h2 id={headingId} className="border-b pb-1 text-lg font-semibold">
+        {categoryLabel(category)}
+      </h2>
+      {children}
+    </section>
+  );
+}
+
+function DocList({
+  docs,
+  now,
+  view,
+}: {
+  docs: readonly DocSummary[];
+  now: Date;
+  view: ViewMode;
+}): JSX.Element {
+  return view === "card" ? <DocCards docs={docs} now={now} /> : <DocRows docs={docs} now={now} />;
 }
 
 function DocCards({ docs, now }: { docs: readonly DocSummary[]; now: Date }): JSX.Element {

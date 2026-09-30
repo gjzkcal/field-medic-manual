@@ -21,6 +21,7 @@ mod: core
 verified_at: 2026-09-25
 tags: [出血, 止血帯]
 order: 20
+category: " 症状/処置 "
 ---
 
 # 止血
@@ -61,6 +62,7 @@ describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
       verifiedAt: "2026-09-25",
       tags: ["出血", "止血帯"],
       order: 20,
+      category: "症状/処置",
     });
     expect(doc.sections.map((s) => [s.level, s.title])).toEqual([
       [1, "止血"],
@@ -92,7 +94,7 @@ describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
   it("不正なメタデータと読めない画像は警告にして変換を続ける", async () => {
     const { doc, warnings } = await convertManual(
       manual(
-        "---\nmod: medic\nchannel: beta\nverified_at: 2026/09/25\nmod_version: 1.5\norder: 1.5\n---\n# A\n![x](images/missing.png)",
+        "---\nmod: medic\nchannel: beta\nverified_at: 2026/09/25\nmod_version: 1.5\norder: 1.5\ncategory: [a]\n---\n# A\n![x](images/missing.png)",
       ),
       noImages,
       noData,
@@ -100,7 +102,8 @@ describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
     expect(doc.meta.modTarget).toBeNull();
     expect(doc.meta.modVersion).toBe("1.5");
     expect(doc.meta.order).toBeNull();
-    expect(warnings).toHaveLength(5);
+    expect(doc.meta.category).toBeNull();
+    expect(warnings).toHaveLength(6);
     expect(warnings[0]).toContain("images/missing.png");
   });
 
