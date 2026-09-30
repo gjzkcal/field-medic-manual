@@ -73,6 +73,7 @@ export function makeDummyDocs(): DocUpsertInput[] {
       modVersion: null,
       verifiedAt: null,
       tags: ["ダミー"],
+      order: null,
     },
     sections: Array.from({ length: SECTIONS_PER_DOC }, (_, s) => dummySection(d, s)),
     assetIds: [],

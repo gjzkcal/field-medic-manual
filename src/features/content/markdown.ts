@@ -110,6 +110,7 @@ interface FrontMatter extends Record<string, unknown> {
   modVersion?: unknown;
   verifiedAt?: unknown;
   tags?: unknown;
+  order?: unknown;
 }
 
 async function splitFrontMatter(

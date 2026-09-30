@@ -1,5 +1,5 @@
 // front matter や <meta> に書かれたメタデータを DocMeta に直す。
-// 原稿に書く項目は mod（対象モジュール）・channel（release / dev）・mod_version・verified_at（確認日）・tags。
+// 原稿に書く項目は mod（対象モジュール）・channel（release / dev）・mod_version・verified_at（確認日）・tags・order（並び順）。
 import type { DocMeta } from "@/lib/bindings/DocMeta";
 import type { ModChannel } from "@/lib/bindings/ModChannel";
 import type { ModTarget } from "@/lib/bindings/ModTarget";
@@ -27,7 +27,14 @@ export function isModChannel(value: string): value is ModChannel {
 }
 
 export function emptyMeta(): DocMeta {
-  return { modTarget: null, modChannel: null, modVersion: null, verifiedAt: null, tags: [] };
+  return {
+    modTarget: null,
+    modChannel: null,
+    modVersion: null,
+    verifiedAt: null,
+    tags: [],
+    order: null,
+  };
 }
 
 /** 原稿に書かれた値（型は未確定）。 */
@@ -37,6 +44,7 @@ export interface RawMeta {
   modVersion?: unknown;
   verifiedAt?: unknown;
   tags?: unknown;
+  order?: unknown;
 }
 
 /** 値を検証して DocMeta にする。不正な値は捨てて warnings に積む（取り込みは止めない）。 */
@@ -76,6 +84,14 @@ export function toDocMeta(raw: RawMeta, warnings: string[]): DocMeta {
   }
 
   meta.tags = parseTags(raw.tags);
+
+  if (raw.order !== undefined && raw.order !== null) {
+    if (typeof raw.order === "number" && Number.isInteger(raw.order) && raw.order >= 0) {
+      meta.order = raw.order;
+    } else {
+      warnings.push(`order は 0 以上の整数で書いてください: ${JSON.stringify(raw.order)}`);
+    }
+  }
   return meta;
 }
 

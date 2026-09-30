@@ -58,6 +58,29 @@ describe("同梱した原稿", () => {
     },
   );
 
+  it("すべてに order があり、重複しない（ライブラリと見出しツリーの並び順）", () => {
+    const missing = converted.filter((c) => c.doc.meta.order === null).map((c) => c.manual.fileName);
+    expect(missing, "front matter の order を書いてください").toEqual([]);
+    const orders = converted.map((c) => c.doc.meta.order);
+    expect(new Set(orders).size, "order が重複しています").toBe(orders.length);
+  });
+
+  it("「この原稿の読み方」の「原稿の一覧」の表は order の順に並んでいる", () => {
+    const about = converted.find((c) => c.manual.fileName === "about-this-manual.md");
+    const section = about?.doc.sections.find((s) => s.title === "原稿の一覧");
+    expect(section, "about-this-manual.md に「原稿の一覧」の節がありません").toBeDefined();
+    const container = document.createElement("div");
+    container.innerHTML = section?.html ?? "";
+    const listed = Array.from(container.querySelectorAll("table a[href]")).map((a) => {
+      const link = resolveLink(a.getAttribute("href") ?? "");
+      return link.kind === "doc" ? link.fileName : a.getAttribute("href");
+    });
+    const byOrder = [...converted]
+      .sort((a, b) => (a.doc.meta.order ?? Infinity) - (b.doc.meta.order ?? Infinity))
+      .map((c) => c.manual.fileName);
+    expect(listed, "表の並びと order の順を合わせてください").toEqual(byOrder);
+  });
+
   it("ファイル名は英小文字・数字・ハイフンだけ（sourcePath とリンクに使うため）", () => {
     for (const m of manuals) {
       expect(m.fileName).toMatch(/^[a-z0-9-]+\.md$/);

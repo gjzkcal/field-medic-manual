@@ -17,6 +17,7 @@ function doc(id: string, title: string, updatedAt: string, meta: Partial<DocMeta
       modVersion: null,
       verifiedAt: "2026-09-25",
       tags: [],
+      order: null,
       ...meta,
     },
     sectionCount: 1,
@@ -68,6 +69,17 @@ describe("filterDocs", () => {
 });
 
 describe("sortDocs", () => {
+  it("標準は order の順で、order のないものはタイトル順で後ろ", () => {
+    const docs = [
+      doc("x", "出血と止血", "2026-09-20T00:00:00.000Z", {}),
+      doc("y", "気道管理", "2026-09-20T00:00:00.000Z", { order: 20 }),
+      doc("z", "この原稿の読み方", "2026-09-20T00:00:00.000Z", { order: 10 }),
+      doc("w", "AI の治療", "2026-09-20T00:00:00.000Z", {}),
+    ];
+    // 英字は漢字より前に並ぶ
+    expect(ids(sortDocs(docs, "order"))).toEqual(["z", "y", "w", "x"]);
+  });
+
   it("更新日は新しい順", () => {
     expect(ids(sortDocs(DOCS, "updated"))).toEqual(["b", "c", "a"]);
   });

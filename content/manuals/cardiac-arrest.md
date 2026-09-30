@@ -5,6 +5,7 @@ channel: dev
 mod_version: "1.5.36"
 verified_at: 2026-09-27
 tags: [循環]
+order: 70
 ---
 
 # 心停止と CPR

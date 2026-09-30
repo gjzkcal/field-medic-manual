@@ -5,6 +5,7 @@ channel: dev
 mod_version: "1.5.36"
 verified_at: 2026-09-27
 tags: [薬・物品]
+order: 100
 ---
 
 # 物品・操作と所要時間

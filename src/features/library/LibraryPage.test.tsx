@@ -24,6 +24,7 @@ function doc(id: string, title: string, meta: Partial<DocSummary["meta"]>): DocS
       modVersion: null,
       verifiedAt: "2099-01-01",
       tags: [],
+      order: null,
       ...meta,
     },
     sectionCount: 2,
@@ -62,5 +63,29 @@ describe("LibraryPage", () => {
 
     expect(screen.queryByText("止血")).toBeNull();
     expect(screen.getByText("1 件（全 2 件）")).toBeDefined();
+  });
+
+  it("既定では原稿の order の順に並べる", async () => {
+    mockIPC((cmd) =>
+      cmd === "doc_list"
+        ? [
+            doc("hemorrhage", "止血", { order: 20 }),
+            doc("cardiac", "心停止と CPR", { order: 30 }),
+            doc("about", "この原稿の読み方", { order: 10 }),
+          ]
+        : null,
+    );
+    const router = createMemoryRouter([{ path: "/library", element: <LibraryPage /> }], {
+      initialEntries: ["/library"],
+    });
+    render(<RouterProvider router={router} />);
+
+    await screen.findByText("止血");
+    const hrefs = screen
+      .getAllByRole("link")
+      .map((a) => a.getAttribute("href"))
+      .filter((href) => href?.startsWith("/doc/") === true);
+    expect(hrefs).toEqual(["/doc/about", "/doc/hemorrhage", "/doc/cardiac"]);
+    expect(screen.getByRole("button", { name: "標準" }).getAttribute("aria-pressed")).toBe("true");
   });
 });

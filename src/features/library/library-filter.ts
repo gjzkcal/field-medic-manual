@@ -21,7 +21,8 @@ export const EMPTY_FILTER: LibraryFilter = {
   staleOnly: false,
 };
 
-export type LibrarySort = "updated" | "title";
+/** order は原稿の front matter の order の順（作者が決めた読む順） */
+export type LibrarySort = "order" | "title" | "updated";
 
 export function isFiltering(filter: LibraryFilter): boolean {
   return (
@@ -60,6 +61,11 @@ const collator = new Intl.Collator("ja");
 export function sortDocs(docs: readonly DocSummary[], sort: LibrarySort): DocSummary[] {
   const sorted = [...docs];
   switch (sort) {
+    case "order":
+      return sorted.sort((a, b) => {
+        const byOrder = compareOrder(a.meta.order, b.meta.order);
+        return byOrder === 0 ? collator.compare(a.title, b.title) : byOrder;
+      });
     case "updated":
       // ISO 8601 の UTC なので文字列の比較で新しい順にできる
       return sorted.sort((a, b) => {
@@ -69,4 +75,12 @@ export function sortDocs(docs: readonly DocSummary[], sort: LibrarySort): DocSum
     case "title":
       return sorted.sort((a, b) => collator.compare(a.title, b.title));
   }
+}
+
+/** 番号のないものは後ろにする（見出しツリーを並べる doc_list と同じ規則）。 */
+function compareOrder(a: number | null, b: number | null): number {
+  if (a === null || b === null) {
+    return Number(a === null) - Number(b === null);
+  }
+  return a - b;
 }

@@ -5,6 +5,7 @@ channel: dev
 mod_version: "1.5.36"
 verified_at: 2026-09-27
 tags: [意識]
+order: 40
 ---
 
 # 致命傷と Second Chance

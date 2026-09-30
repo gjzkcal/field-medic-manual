@@ -32,6 +32,7 @@ const META = {
   modVersion: null,
   verifiedAt: "2026-09-25",
   tags: [],
+  order: null,
 } as const;
 
 const HEMORRHAGE: DocDetail = {

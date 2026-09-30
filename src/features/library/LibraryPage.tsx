@@ -37,8 +37,12 @@ import { docList, errorMessage } from "@/lib/tauri";
 
 type ViewMode = "card" | "list";
 const MOD_CHANNELS: readonly ModChannel[] = ["release", "dev"];
-const SORT_LABELS: Record<LibrarySort, string> = { updated: "更新日", title: "タイトル" };
-const SORTS: readonly LibrarySort[] = ["updated", "title"];
+const SORT_LABELS: Record<LibrarySort, string> = {
+  order: "標準",
+  title: "タイトル",
+  updated: "更新日",
+};
+const SORTS: readonly LibrarySort[] = ["order", "title", "updated"];
 // 読めないあいだに毎回新しい配列を作らず、並べ替えのメモ化を効かせるため
 const NO_DOCS: DocSummary[] = [];
 
@@ -63,7 +67,7 @@ export function LibraryPage(): JSX.Element {
   const state = useDocList();
   const now = useNow();
   const [filter, setFilter] = useState<LibraryFilter>(EMPTY_FILTER);
-  const [sort, setSort] = useState<LibrarySort>("title");
+  const [sort, setSort] = useState<LibrarySort>("order");
   const [view, setView] = useState<ViewMode>("card");
 
   const loaded = state.status !== "loading";

@@ -58,7 +58,14 @@ const OUTLINE: DocOutline[] = [
     id: "d1",
     title: "止血",
     sourcePath: "bundle://manuals/hemorrhage.md",
-    meta: { modTarget: "core", modChannel: null, modVersion: null, verifiedAt: null, tags: [] },
+    meta: {
+      modTarget: "core",
+      modChannel: null,
+      modVersion: null,
+      verifiedAt: null,
+      tags: [],
+      order: null,
+    },
     headings: [{ level: 2, title: "止血帯を使う", anchor: "止血帯を使う" }],
   },
 ];

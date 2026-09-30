@@ -16,7 +16,7 @@ function summary(id: string, sourcePath: string | null, sourceHash: string): Doc
     sourceType: "markdown",
     sourcePath,
     sourceHash,
-    meta: { modTarget: null, modChannel: null, modVersion: null, verifiedAt: null, tags: [] },
+    meta: { modTarget: null, modChannel: null, modVersion: null, verifiedAt: null, tags: [], order: null },
     sectionCount: 1,
     createdAt: "",
     updatedAt: "",

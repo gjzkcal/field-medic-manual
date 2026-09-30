@@ -106,6 +106,8 @@ pub struct DocMeta {
     /// YYYY-MM-DD
     pub verified_at: Option<String>,
     pub tags: Vec<String>,
+    /// ライブラリと見出しツリーでの順番（小さいほど前）。ないものはタイトル順で後ろに並ぶ
+    pub order: Option<u32>,
 }
 
 #[derive(Debug, Clone, Deserialize, TS)]

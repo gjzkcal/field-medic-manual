@@ -4,6 +4,7 @@ mod: general
 channel: dev
 mod_version: "1.5.36"
 verified_at: 2026-09-27
+order: 10
 ---
 
 # この原稿の読み方

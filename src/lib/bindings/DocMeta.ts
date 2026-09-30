@@ -10,4 +10,8 @@ modVersion: string | null,
 /**
  * YYYY-MM-DD
  */
-verifiedAt: string | null, tags: Array<string>, };
+verifiedAt: string | null, tags: Array<string>, 
+/**
+ * ライブラリと見出しツリーでの順番（小さいほど前）。ないものはタイトル順で後ろに並ぶ
+ */
+order: number | null, };

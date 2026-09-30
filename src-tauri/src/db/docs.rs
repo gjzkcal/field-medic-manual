@@ -48,8 +48,8 @@ pub fn upsert(conn: &mut Connection, input: &DocUpsertInput) -> Result<String, A
 
     tx.execute(
         "INSERT INTO documents (id, title, source_type, source_path, source_hash, original_asset_id,
-           mod_target, mod_channel, mod_version, verified_at, created_at, updated_at)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
+           mod_target, mod_channel, mod_version, verified_at, sort_order, created_at, updated_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
         params![
             id,
             input.title,
@@ -61,6 +61,7 @@ pub fn upsert(conn: &mut Connection, input: &DocUpsertInput) -> Result<String, A
             input.meta.mod_channel,
             input.meta.mod_version,
             input.meta.verified_at,
+            input.meta.order,
             created_at,
             now,
         ],
@@ -254,7 +255,7 @@ fn delete_unused_tags(conn: &Connection) -> Result<(), AppError> {
 const SUMMARY_COLUMNS: &str =
     "d.id, d.title, d.source_type, d.source_path, d.mod_target, d.mod_channel,
        d.mod_version, d.verified_at, d.created_at, d.updated_at,
-       (SELECT COUNT(*) FROM sections s WHERE s.document_id = d.id), d.source_hash";
+       (SELECT COUNT(*) FROM sections s WHERE s.document_id = d.id), d.source_hash, d.sort_order";
 
 fn read_summary(row: &Row<'_>) -> rusqlite::Result<DocSummary> {
     Ok(DocSummary {
@@ -269,6 +270,7 @@ fn read_summary(row: &Row<'_>) -> rusqlite::Result<DocSummary> {
             mod_version: row.get(6)?,
             verified_at: row.get(7)?,
             tags: Vec::new(),
+            order: row.get(12)?,
         },
         created_at: row.get(8)?,
         updated_at: row.get(9)?,
@@ -276,7 +278,7 @@ fn read_summary(row: &Row<'_>) -> rusqlite::Result<DocSummary> {
     })
 }
 
-/// ドキュメントの一覧（タイトル順）。
+/// ドキュメントの一覧（`order` 順。`order` のないものはタイトル順で後ろ）。
 ///
 /// # Errors
 ///
@@ -284,7 +286,8 @@ fn read_summary(row: &Row<'_>) -> rusqlite::Result<DocSummary> {
 pub fn list(conn: &Connection) -> Result<Vec<DocSummary>, AppError> {
     let mut docs = conn
         .prepare(&format!(
-            "SELECT {SUMMARY_COLUMNS} FROM documents d ORDER BY d.title COLLATE NOCASE, d.id"
+            "SELECT {SUMMARY_COLUMNS} FROM documents d
+             ORDER BY d.sort_order IS NULL, d.sort_order, d.title COLLATE NOCASE, d.id"
         ))?
         .query_map([], read_summary)?
         .collect::<rusqlite::Result<Vec<_>>>()?;
@@ -305,7 +308,7 @@ pub fn list(conn: &Connection) -> Result<Vec<DocSummary>, AppError> {
     Ok(docs)
 }
 
-/// 全ドキュメントの h1〜h3 の見出し（タイトル順、見出しは本文の順）。導入部（level 0）は見出しがないので含めない。
+/// 全ドキュメントの h1〜h3 の見出し（ドキュメントは `list` と同じ順、見出しは本文の順）。導入部（level 0）は見出しがないので含めない。
 ///
 /// # Errors
 ///
@@ -355,7 +358,7 @@ pub fn get(conn: &Connection, id: &str) -> Result<DocDetail, AppError> {
                  FROM documents d WHERE d.id = ?1"
             ),
             [id],
-            |r| Ok((read_summary(r)?, r.get(12)?)),
+            |r| Ok((read_summary(r)?, r.get(13)?)),
         )
         .optional()?
         .ok_or_else(|| AppError::NotFound(format!("ドキュメント {id}")))?;
@@ -605,6 +608,35 @@ mod tests {
         assert_eq!(bleeding.section_count, 2);
         assert_eq!(bleeding.meta.tags, ["出血"]);
         assert_eq!(bleeding.source_hash, fixtures::bleeding().source_hash);
+    }
+
+    #[test]
+    fn list_and_outline_sort_by_order_then_title() {
+        let mut conn = test_conn();
+        let unordered = fixtures::tourniquet();
+        let mut second = fixtures::bleeding();
+        second.meta.order = Some(20);
+        let mut first = fixtures::cpr();
+        first.meta.order = Some(10);
+        for input in [&unordered, &second, &first] {
+            upsert(&mut conn, input).expect("保存できる");
+        }
+
+        let titles: Vec<String> = list(&conn)
+            .expect("一覧を取れる")
+            .into_iter()
+            .map(|d| d.title)
+            .collect();
+        assert_eq!(titles, [first.title, second.title, unordered.title]);
+        let outline_titles: Vec<String> = outline(&conn)
+            .expect("見出しを取れる")
+            .into_iter()
+            .map(|d| d.title)
+            .collect();
+        assert_eq!(outline_titles, titles);
+        let doc = list(&conn).expect("一覧を取れる");
+        assert_eq!(doc[0].meta.order, Some(10));
+        assert_eq!(doc[2].meta.order, None);
     }
 
     #[test]
