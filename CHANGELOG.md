@@ -13,6 +13,8 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-30
+
 ### Added
 
 - マニュアルの時間の推移の表に、折れ線グラフが付きます。表はグラフの下にそのまま残ります。
@@ -65,7 +67,8 @@
 - 設定の「使っている MOD」に合わせて、フローとクイック表の内容が切り替わります。
 - 起動時に新しい版を確かめ、自動で更新できます。
 
-[Unreleased]: https://github.com/gjzkcal/field-medic-manual/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/gjzkcal/field-medic-manual/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/gjzkcal/field-medic-manual/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/gjzkcal/field-medic-manual/compare/v0.0.2...v0.1.0
 [0.0.2]: https://github.com/gjzkcal/field-medic-manual/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/gjzkcal/field-medic-manual/releases/tag/v0.0.1
