@@ -1,6 +1,12 @@
 // 同梱する Markdown の原稿を、DB に入れる形（NormalizedDoc）に変換する。
 // front matter と GFM を読み、h1〜h3 で節に分け、相対パスの画像はアセットとして取り込む。
-import { chartFromTable, chartMarkerBody, parseChartSpec } from "@/features/content/chart";
+import {
+  chartFromCsv,
+  chartFromTable,
+  chartMarkerBody,
+  parseChartSpec,
+  type ChartPayload,
+} from "@/features/content/chart";
 import { sectionsFromBody } from "@/features/content/document";
 import { sha256Hex } from "@/features/content/hash";
 import { emptyMeta, toDocMeta } from "@/features/content/meta";
@@ -15,6 +21,7 @@ import type {
   ConvertedManual,
   ManualSource,
   NormalizedAsset,
+  ReadData,
   ReadImage,
 } from "@/features/content/types";
 
@@ -49,6 +56,7 @@ async function markdownToHtml(markdown: string): Promise<string> {
 export async function convertManual(
   manual: ManualSource,
   readImage: ReadImage,
+  readData: ReadData,
 ): Promise<ConvertedManual> {
   const warnings: string[] = [];
   const { frontMatter, body } = await splitFrontMatter(manual.text, warnings);
@@ -56,7 +64,7 @@ export async function convertManual(
   const html = await markdownToHtml(body);
   const doc = new DOMParser().parseFromString(html, "text/html");
   markAlerts(doc.body);
-  markCharts(doc.body, warnings);
+  await markCharts(doc.body, manual.path, readData, warnings);
   const result = await sectionsFromBody(doc.body, {
     resolveImage: (src) => readRelativeImage(manual.path, src, readImage),
   });
@@ -175,10 +183,16 @@ function markAlerts(body: HTMLElement): void {
 }
 
 /**
- * 表の直前の `<!-- chart: x=…; y=… -->` を読み、表に `data-chart`（印を正規化した JSON）を付ける。
- * 印は消す。書き間違いは警告にする（同梱の原稿は警告 0 を検査しているので、誤りに気づける）。
+ * 表の直前の `<!-- chart: x=…; y=… -->` を読み、表に `data-chart`（印と点の JSON）を付ける。
+ * `data=` の CSV があれば点は CSV から取り、表の値と突き合わせる。
+ * 印は消す。書き間違いや食い違いは警告にする（同梱の原稿は警告 0 を検査しているので、誤りに気づける）。
  */
-function markCharts(body: HTMLElement, warnings: string[]): void {
+async function markCharts(
+  body: HTMLElement,
+  manualPath: string,
+  readData: ReadData,
+  warnings: string[],
+): Promise<void> {
   const walker = body.ownerDocument.createTreeWalker(body, NodeFilter.SHOW_COMMENT);
   const comments: Comment[] = [];
   for (let node = walker.nextNode(); node !== null; node = walker.nextNode()) {
@@ -205,12 +219,33 @@ function markCharts(body: HTMLElement, warnings: string[]): void {
       warn("印のすぐ後に表がありません");
       continue;
     }
-    const { warnings: tableWarnings } = chartFromTable(table, parsed.spec);
-    if (tableWarnings.length > 0) {
-      tableWarnings.forEach(warn);
+    const fromTable = chartFromTable(table, parsed.spec);
+    if (fromTable.warnings.length > 0) {
+      fromTable.warnings.forEach(warn);
       continue;
     }
-    table.setAttribute("data-chart", JSON.stringify(parsed.spec));
+    let data = fromTable.data;
+    if (parsed.spec.data !== null) {
+      const path = resolveRelative(manualPath, parsed.spec.data);
+      let text: string;
+      try {
+        if (path === null) {
+          throw new Error("原稿からの相対パスで書いてください");
+        }
+        text = await readData(path);
+      } catch (error: unknown) {
+        warn(`CSV「${parsed.spec.data}」を読めませんでした: ${String(error)}`);
+        continue;
+      }
+      const fromCsv = chartFromCsv(text, fromTable);
+      if (fromCsv.warnings.length > 0) {
+        fromCsv.warnings.forEach(warn);
+        continue;
+      }
+      data = fromCsv.data;
+    }
+    const payload: ChartPayload = { spec: parsed.spec, data };
+    table.setAttribute("data-chart", JSON.stringify(payload));
   }
 }
 

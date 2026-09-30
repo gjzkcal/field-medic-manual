@@ -1,8 +1,8 @@
-// content/manuals/ の原稿と画像をアプリに同梱する。
+// content/manuals/ の原稿と画像とグラフの CSV をアプリに同梱する。
 // import.meta.glob はビルド時に展開されるので、原稿を足すだけでここを直さずに同梱される。
 import { sha256HexOfText } from "@/features/content/hash";
 import { fileName } from "@/features/content/path";
-import type { ManualSource, ReadImage } from "@/features/content/types";
+import type { ManualSource, ReadData, ReadImage } from "@/features/content/types";
 
 const MANUAL_TEXTS = import.meta.glob<string>("/content/manuals/*.md", {
   query: "?raw",
@@ -23,6 +23,13 @@ const IMAGE_URLS = import.meta.glob<string>("/content/manuals/images/*", {
   eager: true,
 });
 
+// グラフの CSV は小さいので中身ごと同梱する
+const DATA_TEXTS = import.meta.glob<string>("/content/manuals/data/*.csv", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+});
+
 /** 同梱した原稿の一覧（ファイル名順）。 */
 export async function bundledManuals(): Promise<ManualSource[]> {
   // 本番ビルドの URL には中身のハッシュが入るので、画像だけを差し替えても原稿の変更として検出できる
@@ -30,13 +37,18 @@ export async function bundledManuals(): Promise<ManualSource[]> {
     .map(([path, url]) => `${path}=${url}`)
     .sort()
     .join("\n");
+  // どの原稿がどの CSV を使うかは変換するまで分からないので、CSV の中身をすべての原稿のハッシュに混ぜる
+  const dataFingerprint = Object.entries(DATA_TEXTS)
+    .map(([path, text]) => `${path}\n${text}`)
+    .sort()
+    .join("\0");
   const manuals = await Promise.all(
     Object.entries(MANUAL_TEXTS).map(async ([path, text]) => ({
       fileName: fileName(path),
       path,
       text,
       hash: await sha256HexOfText(
-        `${text}\n\0${imageFingerprint}\n\0${String(CONVERTER_VERSION)}`,
+        `${text}\n\0${imageFingerprint}\n\0${dataFingerprint}\n\0${String(CONVERTER_VERSION)}`,
       ),
     })),
   );
@@ -54,4 +66,14 @@ export const readBundledImage: ReadImage = async (path) => {
     throw new Error(`画像を読めません（${String(response.status)}）: ${path}`);
   }
   return new Uint8Array(await response.arrayBuffer());
+};
+
+/** 同梱したグラフの CSV を読む。パスはリポジトリのルートから（例: /content/manuals/data/a.csv）。 */
+export const readBundledData: ReadData = (path) => {
+  const text = DATA_TEXTS[path];
+  return text === undefined
+    ? Promise.reject(
+        new Error(`同梱されていない CSV です（content/manuals/data/ に置いてください）: ${path}`),
+      )
+    : Promise.resolve(text);
 };

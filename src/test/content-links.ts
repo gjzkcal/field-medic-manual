@@ -1,5 +1,5 @@
 // 原稿の検査（フロー・クイック表）で、リンクの行き先が同梱物にあるかを確かめる共通部品。
-import { bundledManuals } from "@/features/content/bundle";
+import { bundledManuals, readBundledData } from "@/features/content/bundle";
 import { convertManual } from "@/features/content/markdown";
 import { bundledQuickref, readQuickrefSource } from "@/features/quickref/bundle";
 import { bundledFlows, readFlowSource } from "@/features/triage/bundle";
@@ -16,7 +16,9 @@ export interface LinkTargets {
 /** 同梱のマニュアル・フロー・クイック表を読み、リンクの行き先の一覧を作る。 */
 export async function loadLinkTargets(): Promise<LinkTargets> {
   const manuals = await Promise.all(
-    (await bundledManuals()).map(async (manual) => convertManual(manual, readRepoFile)),
+    (await bundledManuals()).map(async (manual) =>
+      convertManual(manual, readRepoFile, readBundledData),
+    ),
   );
   const flows = await Promise.all((await bundledFlows()).map(readFlowSource));
   const quickrefSource = await bundledQuickref();

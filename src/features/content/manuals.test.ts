@@ -2,14 +2,14 @@
 // アプリと同じ bundle.ts（import.meta.glob）から読むので、同梱のされ方も一緒に確かめられる。
 import { describe, expect, it } from "vitest";
 
-import { bundledManuals } from "@/features/content/bundle";
+import { bundledManuals, readBundledData } from "@/features/content/bundle";
 import { convertManual } from "@/features/content/markdown";
 import { resolveLink } from "@/features/library/link";
 import { readRepoFile } from "@/test/samples";
 
 const manuals = await bundledManuals();
 const converted = await Promise.all(
-  manuals.map(async (manual) => ({ manual, ...(await convertManual(manual, readRepoFile)) })),
+  manuals.map(async (manual) => ({ manual, ...(await convertManual(manual, readRepoFile, readBundledData)) })),
 );
 const anchorsByFile = new Map(
   converted.map(({ manual, doc }) => [manual.fileName, new Set(doc.sections.map((s) => s.anchor))]),

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { syncManuals, type ManualSyncDeps } from "@/features/content/sync";
 import type { ManualSource, NormalizedDoc } from "@/features/content/types";
 import type { DocSummary } from "@/lib/bindings/DocSummary";
-import { CONVERT_TIMEOUT_MS, noImages } from "@/test/samples";
+import { CONVERT_TIMEOUT_MS, noData, noImages } from "@/test/samples";
 
 function manual(fileName: string, hash: string, text = "# 見出し\n本文"): ManualSource {
   return { fileName, path: `/content/manuals/${fileName}`, text, hash };
@@ -40,6 +40,7 @@ function fakeDb(docs: DocSummary[]): ManualSyncDeps & { saved: NormalizedDoc[]; 
       return Promise.resolve();
     },
     readImage: noImages,
+    readData: noData,
   };
 }
 

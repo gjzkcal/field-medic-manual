@@ -5,7 +5,8 @@ import {
   chartMarkerBody,
   parseChartCell,
   parseChartSpec,
-  readChartSpec,
+  chartFromCsv,
+  readChartPayload,
   type ChartSpec,
 } from "@/features/content/chart";
 
@@ -36,13 +37,16 @@ describe("chartMarkerBody", () => {
 });
 
 describe("parseChartSpec", () => {
-  it("x・y・y2・ref・title を読み、列は , と 、 で分ける", () => {
-    expect(spec(" x=経過; y=血液、 SpO2; y2=心拍数; ref=85, 75,−5; title=推移 ")).toEqual({
+  it("x・y・y2・ref・title・data を読み、列は , と 、 で分ける", () => {
+    expect(
+      spec(" x=経過; y=血液、 SpO2; y2=心拍数; ref=85, 75,−5; title=推移; data=data/a.csv "),
+    ).toEqual({
       x: "経過",
       y: ["血液", "SpO2"],
       y2: ["心拍数"],
       ref: [85, 75, -5],
       title: "推移",
+      data: "data/a.csv",
     });
     expect(spec("x=経過;y=SpO2;")).toEqual({
       x: "経過",
@@ -50,6 +54,7 @@ describe("parseChartSpec", () => {
       y2: [],
       ref: [],
       title: null,
+      data: null,
     });
   });
 
@@ -109,10 +114,12 @@ describe("chartFromTable", () => {
     const { data, warnings } = chartFromTable(table(html), spec("x=経過; y=SpO2; y2=血圧"));
     expect(warnings).toEqual([]);
     expect(data.xLabel).toBe("経過");
+    // 時間は秒にそろえるので、s と 分 が混ざっても単位は s
+    expect(data.xUnit).toBe("s");
     expect(data.series).toEqual([
-      { key: "s0", label: "SpO2", axis: "left" },
-      { key: "s1", label: "血圧（上）", axis: "right" },
-      { key: "s2", label: "血圧（下）", axis: "right" },
+      { key: "s0", label: "SpO2", panel: "y", unit: "%" },
+      { key: "s1", label: "血圧（上）", panel: "y2", unit: null },
+      { key: "s2", label: "血圧（下）", panel: "y2", unit: null },
     ]);
     // 横軸が「—」の行は捨て、「85% 未満」は点にしない
     expect(data.points).toEqual([
@@ -134,12 +141,77 @@ describe("chartFromTable", () => {
   });
 });
 
-describe("readChartSpec", () => {
-  it("形の合う JSON だけを読む", () => {
-    const valid = spec("x=経過; y=SpO2");
-    expect(readChartSpec(JSON.stringify(valid))).toEqual(valid);
-    expect(readChartSpec("{")).toBeNull();
-    expect(readChartSpec(JSON.stringify({ ...valid, y: [] }))).toBeNull();
-    expect(readChartSpec(JSON.stringify({ ...valid, extra: 1 }))).toBeNull();
+describe("chartFromCsv", () => {
+  const html = `<table>
+    <thead><tr><th>経過</th><th>SpO2</th><th>血圧</th></tr></thead>
+    <tbody>
+      <tr><td>0 s</td><td>97.1%</td><td>119/79</td></tr>
+      <tr><td>1 分</td><td>80%</td><td>90/60</td></tr>
+    </tbody>
+  </table>`;
+  const fromTable = (): ReturnType<typeof chartFromTable> =>
+    chartFromTable(table(html), spec("x=経過; y=SpO2; y2=血圧; data=a.csv"));
+
+  it("CSV の細かい点を使い、線の名前と単位は表から取る", () => {
+    const csv = [
+      "# 注記の行は読まない",
+      "経過,SpO2,血圧（上）,血圧（下）",
+      "30,88.4,100,66",
+      "0,97.08,119,79",
+      "",
+      "60,80.2,90,60",
+      "90,,85,57",
+    ].join("\r\n");
+    const { data, warnings } = chartFromCsv(csv, fromTable());
+    expect(warnings).toEqual([]);
+    expect(data.series.map((s) => [s.label, s.unit])).toEqual([
+      ["SpO2", "%"],
+      ["血圧（上）", null],
+      ["血圧（下）", null],
+    ]);
+    expect(data.points).toEqual([
+      { x: 0, values: { s0: 97.08, s1: 119, s2: 79 } },
+      { x: 30, values: { s0: 88.4, s1: 100, s2: 66 } },
+      { x: 60, values: { s0: 80.2, s1: 90, s2: 60 } },
+      { x: 90, values: { s1: 85, s2: 57 } },
+    ]);
+  });
+
+  it("表の桁の半分を超える差、表の時刻の行がない、列がない、数値でないセルは警告にする", () => {
+    expect(
+      chartFromCsv("経過,SpO2,血圧（上）,血圧（下）\n0,97.2,119,79\n30,x,1,1", fromTable())
+        .warnings,
+    ).toEqual([
+      "CSV の 3 行目の「x」は数値ではありません",
+      "CSV の「SpO2」の点が 2 つ未満です",
+      "表と CSV が食い違っています: 「経過」0 の「SpO2」が表は 97.1、CSV は 97.2",
+      "CSV に「経過」が 60 の行がありません（表の行と突き合わせるため）",
+    ]);
+    expect(chartFromCsv("経過,SpO2\n0,97.1\n60,80", fromTable()).warnings).toEqual([
+      "CSV に列「血圧（上）」がありません（CSV の列: 経過, SpO2）",
+      "CSV に列「血圧（下）」がありません（CSV の列: 経過, SpO2）",
+    ]);
   });
 });
+
+describe("readChartPayload", () => {
+  it("形の合う JSON だけを読む", () => {
+    const valid = { spec: spec("x=経過; y=SpO2"), data: fromTableData() };
+    expect(readChartPayload(JSON.stringify(valid))).toEqual(valid);
+    expect(readChartPayload("{")).toBeNull();
+    expect(readChartPayload(JSON.stringify({ ...valid, spec: { ...valid.spec, y: [] } }))).toBeNull();
+    expect(readChartPayload(JSON.stringify({ ...valid, extra: 1 }))).toBeNull();
+    expect(
+      readChartPayload(JSON.stringify({ ...valid, data: { ...valid.data, points: [{ x: "0" }] } })),
+    ).toBeNull();
+  });
+});
+
+function fromTableData(): ReturnType<typeof chartFromTable>["data"] {
+  return chartFromTable(
+    table(
+      "<table><thead><tr><th>経過</th><th>SpO2</th></tr></thead><tbody><tr><td>0 s</td><td>97%</td></tr><tr><td>5 s</td><td>92%</td></tr></tbody></table>",
+    ),
+    spec("x=経過; y=SpO2"),
+  ).data;
+}

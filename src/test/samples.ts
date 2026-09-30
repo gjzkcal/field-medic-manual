@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-import type { ReadImage } from "@/features/content/types";
+import type { ReadData, ReadImage } from "@/features/content/types";
 
 export const REPO_ROOT = resolve(import.meta.dirname, "../..");
 
@@ -13,6 +13,9 @@ export const readRepoFile: ReadImage = (path) =>
 /** 呼ばれたら失敗させる ReadImage（画像を読まないはずのテスト用）。 */
 export const noImages: ReadImage = (path) =>
   Promise.reject(new Error(`読むはずのない画像: ${path}`));
+
+/** 呼ばれたら失敗させる ReadData（グラフの CSV を読まないはずのテスト用）。 */
+export const noData: ReadData = (path) => Promise.reject(new Error(`読むはずのない CSV: ${path}`));
 
 /**
  * 原稿の変換を行うテストの制限時間。変換のライブラリ（unified 系）は最初の 1 回に読み込むので、

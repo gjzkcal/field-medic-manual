@@ -1,10 +1,10 @@
 // 起動時に、同梱した原稿を DB に入れる。
 // DB の本文は同梱物の写しなので、変わった原稿だけ入れ直し、同梱にないドキュメントは消す。
-import { bundledManuals, readBundledImage } from "@/features/content/bundle";
+import { bundledManuals, readBundledData, readBundledImage } from "@/features/content/bundle";
 import { convertManual } from "@/features/content/markdown";
 import { manualSourcePath } from "@/features/content/path";
 import { saveDocument } from "@/features/content/save";
-import type { ManualSource, NormalizedDoc, ReadImage } from "@/features/content/types";
+import type { ManualSource, NormalizedDoc, ReadData, ReadImage } from "@/features/content/types";
 import { mirrorBundled } from "@/features/sync/mirror";
 import { emptySyncResult, type SyncResult } from "@/features/sync/result";
 import { createBundledSync } from "@/features/sync/store";
@@ -17,6 +17,7 @@ export interface ManualSyncDeps {
   saveDoc: (doc: NormalizedDoc) => Promise<string>;
   deleteDoc: (id: string) => Promise<void>;
   readImage: ReadImage;
+  readData: ReadData;
 }
 
 const RETRY_SUFFIX = ":retry";
@@ -33,7 +34,7 @@ export async function syncManuals(
       fileName: manual.fileName,
       hash: manual.hash,
       save: async () => {
-        const { doc, warnings } = await convertManual(manual, deps.readImage);
+        const { doc, warnings } = await convertManual(manual, deps.readImage, deps.readData);
         // 警告のある原稿（画像を読めなかったなど）は一部を欠いたまま保存される。ハッシュを変えて保存し、
         // 次の起動で入れ直させる（原稿が同じだと「変更なし」になり、欠けたままになるため）
         await deps.saveDoc(
@@ -61,5 +62,6 @@ export const { useSync: useContentSync, sync: syncBundledManuals } = createBundl
       saveDoc: saveDocument,
       deleteDoc: docDelete,
       readImage: readBundledImage,
+      readData: readBundledData,
     }),
 );

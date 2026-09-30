@@ -17,6 +17,9 @@ export interface ManualSource {
 /** 画像を読む。パスは ManualSource.path と同じくリポジトリのルートから。テストではファイルから読む。 */
 export type ReadImage = (path: string) => Promise<Uint8Array>;
 
+/** グラフの CSV を読む。パスは ReadImage と同じくリポジトリのルートから。 */
+export type ReadData = (path: string) => Promise<string>;
+
 export interface NormalizedSection {
   /** 0 = 導入部、1〜6 */
   level: number;
