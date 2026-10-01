@@ -5,8 +5,8 @@ channel: dev
 mod_version: "1.5.36"
 verified_at: 2026-09-27
 tags: [意識]
-order: 80
-category: 症状/処置
+order: 450
+category: システム
 ---
 
 # 致命傷と Second Chance
@@ -191,7 +191,7 @@ Hitzones を入れると全体 HP が無くなり、頭・胸・腹（急所）�
 
 ### 大腿動脈と首
 
-- 大腿動脈と首の大出血は [首と大腿動脈の大出血](hemorrhage.md#首と大腿動脈の大出血)。
+- 大腿動脈と首の大出血は [首と大腿動脈の大出血](bleeding-system.md#首と大腿動脈の大出血)。
 
 ### 設定
 

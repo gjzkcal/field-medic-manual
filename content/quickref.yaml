@@ -31,9 +31,9 @@ rows:
       止血帯（Tourniquet。表示は「止血帯を使う」）でも出血はほぼ止まる（0.001 倍）が、包帯を巻くまで血液は回復しない。
       Circulation ありで 40 ml/s の出血を放置すると、46 秒で意識を失い、58 秒で心停止する
     links:
-      - doc:hemorrhage.md#包帯を巻く
-      - doc:hemorrhage.md#止血帯を使う
-      - doc:hemorrhage.md#放置したときの時間
+      - doc:bandage.md
+      - doc:tourniquet.md
+      - doc:bleeding-system.md#放置したときの時間
       - flow:casualty-first-contact
 
   - id: torso-head-bleeding
@@ -49,7 +49,7 @@ rows:
       包帯は 1 本で、部位のグループ（頭と首／胸／腹と腰）全体の出血を消す。
       首は桁違いに多く出血する（Circulation なしで 162.5〜250 ml/s、ありで 81.25〜125 ml/s）。Circulation なしなら、首の最小の傷でも約 25 秒で意識を失い、37 秒で出血死する
     links:
-      - doc:hemorrhage.md#包帯を巻く
+      - doc:bandage.md
       - doc:hemorrhage.md#首と大腿動脈の大出血
       - flow:casualty-first-contact
 
@@ -66,7 +66,7 @@ rows:
       動脈が壊れると 200 ml/s で、Circulation なしなら約 20 秒で意識喪失の段階、30 秒で出血死する
     links:
       - doc:hemorrhage.md#首と大腿動脈の大出血
-      - doc:hemorrhage.md#包帯を巻く
+      - doc:bandage.md
     mods: [hitzones]
 
   - id: under-fire
@@ -86,7 +86,7 @@ rows:
     links:
       - doc:pain-medications.md#フェニレフリン
       - doc:pain-medications.md#過量投与
-      - doc:hemorrhage.md#生理食塩水を使う
+      - doc:saline.md
       - doc:items-and-timing.md#負傷者を運ぶ
       - doc:death-second-chance.md#倒れた後の追い打ち
       - flow:casualty-first-contact
@@ -122,7 +122,7 @@ rows:
       自分に巻く時間は、衛生兵で 5.9〜7.7 秒、衛生兵以外で 9.0〜10.8 秒（アニメーションの長さから算出）。脚に巻く間は動けない
     links:
       - doc:hemorrhage.md#出血の見分け方
-      - doc:hemorrhage.md#包帯を巻く
+      - doc:bandage.md
       - doc:items-and-timing.md#医療ラジアルメニュー
 
   - id: blood-loss
@@ -139,8 +139,8 @@ rows:
       Class II 以上（血液 70% 以下）は Unstable で、意識不明なら自然には目覚めず、炭酸アンモニウムも効かない。
       生理食塩水がなくても、出血が止まっていれば 10 秒後から毎分 4.4% ずつ戻る（40% → 70% に約 7 分）
     links:
-      - doc:hemorrhage.md#生理食塩水を使う
-      - doc:hemorrhage.md#血液の回復
+      - doc:saline.md
+      - doc:bleeding-system.md#血液の回復
       - doc:vitals.md#5-つの状態と閾値
     mods: [circulation]
 
@@ -156,8 +156,8 @@ rows:
       1 袋で 1500 ml（血液の 25%）が 90 秒で入る。血液が 33.3% 以下の間は、意識不明のまま目覚めない（エピネフリンを打っても）。
       出血が止まっていれば、10 秒後から毎秒 4.44 ml ずつ戻る。医療キットで部位を治しても血液は戻らない
     links:
-      - doc:hemorrhage.md#生理食塩水を使う
-      - doc:hemorrhage.md#血液の回復
+      - doc:saline.md
+      - doc:bleeding-system.md#血液の回復
       - doc:consciousness.md#血液で意識を失う条件
     withoutMods: [circulation]
 
@@ -172,9 +172,9 @@ rows:
       止血帯（Tourniquet）で止めた傷も出血の扱いが残るので、包帯を巻くまで血液は回復しない（Circulation なしでは、エピネフリンも使えない）。
       止血帯を巻いたままにしたことによる悪影響の処理は、ACE にはない
     links:
-      - doc:hemorrhage.md#止血帯を使う
-      - doc:hemorrhage.md#止血帯を巻いたままにしたとき
-      - doc:hemorrhage.md#血液の回復
+      - doc:tourniquet.md
+      - doc:tourniquet.md#止血帯を巻いたままにしたとき
+      - doc:bleeding-system.md#血液の回復
 
   # ---- 循環 ----
   - id: cardiac-arrest
@@ -257,7 +257,7 @@ rows:
       Unstable までは、出血しても脈は 80 のままで血圧だけが下がる
     links:
       - doc:vitals.md#心拍数の決まり方
-      - doc:hemorrhage.md#心停止が-class-iv-より先に起きる理由
+      - doc:bleeding-system.md#心停止が-class-iv-より先に起きる理由
       - quickref:cardiac-arrest
     mods: [circulation]
 
@@ -620,4 +620,4 @@ rows:
       出血が止まっていれば、血液は 10 秒後から自然に戻る（毎分 4.4%）
     links:
       - doc:items-and-timing.md#医療キット
-      - doc:hemorrhage.md#血液の回復
+      - doc:bleeding-system.md#血液の回復

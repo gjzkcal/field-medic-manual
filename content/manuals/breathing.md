@@ -6,7 +6,7 @@ mod_version: "1.5.36"
 verified_at: 2026-09-27
 tags: [気道・呼吸]
 order: 70
-category: 症状/処置
+category: 処置
 ---
 
 # 呼吸と気胸

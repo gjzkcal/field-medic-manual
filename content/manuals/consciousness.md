@@ -6,7 +6,7 @@ mod_version: "1.5.36"
 verified_at: 2026-09-27
 tags: [意識]
 order: 40
-category: 症状/処置
+category: 処置
 ---
 
 # 意識喪失と回復
@@ -57,7 +57,7 @@ category: 症状/処置
 
 - Circulation あり: 血液 40% 以下で Critical になり、意識の値が 0 になって意識を失う。本体の「血液が少ないと意識不明」の条件は Class IV（20% 以下）に当たり、心停止の閾値と重なるので、単独では効かない。
 - Circulation なし: 血液 33.3%（1998 ml）以下の間は、意識の値に関係なく意識不明になる。33.3% を超えるまで目覚めない。
-- 詳しくは [血液量と出血の段階](hemorrhage.md#血液量と出血の段階)。
+- 詳しくは [血液量と出血の段階](bleeding-system.md#血液量と出血の段階)。
 
 > [!NOTE]
 > 公式ドキュメントとの違い: ドキュメントは意識を失う値を Core の節で「33」、Circulation の節で「34」と書いている。本体の値は 33.3 以下（閾値 0.333）。
@@ -127,7 +127,7 @@ category: 症状/処置
 
 ### Circulation なし（Core だけ）の場合
 
-- 血液が 33.3% 以下の間は、意識の値が 100 になっても目覚めない。血液を 33.3% より上に戻す必要がある（[生理食塩水を使う](hemorrhage.md#生理食塩水を使う)）。
+- 血液が 33.3% 以下の間は、意識の値が 100 になっても目覚めない。血液を 33.3% より上に戻す必要がある（[生理食塩水を使う](saline.md)）。
 - Second Chance で意識を失った後は、既定では自然に目覚めない（エピネフリンが要る）。
 
 | `m_fDefaultResilienceRegenScale` | 通常 | Second Chance の後（`m_fSecondChanceResilienceRegenScale` = 0.1） | 同（= 0.3） |
@@ -268,7 +268,7 @@ ACE を入れると、意識喪失を禁止しているゲームモード（本�
 - ゲームマスターや Scenario Framework で、個人ごとに意識喪失を禁止した場合も効かない。
 - コードで確認した。Capture & Hold での実機の確認はまだない。
 - 致命打での即死は Second Chance で決まる（[Second Chance とは](death-second-chance.md#second-chance-とは)）。
-- 出血と回復の倍率の上書きは [ゲームモードの出血倍率](hemorrhage.md#ゲームモードの出血倍率)。
+- 出血と回復の倍率の上書きは [ゲームモードの出血倍率](server-settings.md#ゲームモードの出血倍率)。
 
 > [!NOTE]
 > 公式ドキュメントとの違い: ドキュメントには、ゲームモードの意識喪失の禁止が ACE を入れると効かなくなることが書かれていない。

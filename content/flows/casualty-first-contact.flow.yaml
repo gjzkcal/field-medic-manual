@@ -50,7 +50,7 @@ nodes:
     links:
       - doc:pain-medications.md#フェニレフリン
       - doc:pain-medications.md#過量投与
-      - doc:hemorrhage.md#生理食塩水を使う
+      - doc:saline.md
     next: a-move-cover
 
   a-move-cover:
@@ -84,8 +84,8 @@ nodes:
     items: [包帯]
     ifMissing: { next: a-bleeding-no-kit }
     links:
-      - doc:hemorrhage.md#包帯を巻く
-      - doc:hemorrhage.md#止血帯を使う
+      - doc:bandage.md
+      - doc:tourniquet.md
     next: q-bleeding
 
   a-bleeding-no-kit:
@@ -190,7 +190,7 @@ nodes:
     ifMissing: { next: a-no-saline }
     timerSec: 90
     links:
-      - doc:hemorrhage.md#生理食塩水を使う
+      - doc:saline.md
     next: a-vitals
 
   a-no-saline:
@@ -200,7 +200,7 @@ nodes:
       医療キットには生理食塩水が 3 袋入っている。
       なければ、出血が止まっていれば 10 秒後から毎分 4.4% ずつ血液が戻る（40% → 70% に約 7 分）
     links:
-      - doc:hemorrhage.md#血液の回復
+      - doc:bleeding-system.md#血液の回復
     next: a-vitals
 
   sf-airway-breathing:
