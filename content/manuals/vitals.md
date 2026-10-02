@@ -18,7 +18,7 @@ category: 処置
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [状態と閾値](states.md) ／ [バイタル](vitals-system.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [痛みと薬](pain-medications.md) ／ [出血と止血](hemorrhage.md) ／ [呼吸と気胸](breathing.md) ／ [気道管理](airway.md) ／ [意識喪失と回復](consciousness.md)
+関連: [状態と閾値](states.md) ／ [バイタル](vitals-system.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [痛みと薬](pain-medications.md) ／ [出血と止血](hemorrhage.md) ／ [呼吸と気胸](breathing.md) ／ [気道管理](airway.md) ／ [意識不明への対応](consciousness.md)
 
 ## バイタルを確かめる操作
 

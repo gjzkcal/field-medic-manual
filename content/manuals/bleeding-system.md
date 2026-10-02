@@ -70,7 +70,7 @@ Critical（血液 ≤ 40%）の間は、出血性ショックで心拍数の目�
 
 - 血液が 0 になると出血死の判定をする。AI は常に死亡する。
 - プレイヤーは `m_bBleedOutForPlayersEnabled`（既定 true）が true なら死亡する。false なら死なずに意識不明のまま残る。
-- `m_bPlayerCannotDie`（既定 false）を true にすると、プレイヤーは出血死しない。詳しくは [死亡の条件と死亡を防ぐ設定](death-second-chance.md#死亡の条件と死亡を防ぐ設定)。
+- `m_bPlayerCannotDie`（既定 false）を true にすると、プレイヤーは出血死しない。詳しくは [死亡を防ぐ設定](server-settings.md#死亡を防ぐ設定)。
 - Circulation 入りでは、多くの場合その前に心停止する。心停止に入った AI は既定で即死する（[AI の心停止](ai-medic.md#ai-の心停止)）。
 
 ## 傷の出血率

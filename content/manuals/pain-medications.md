@@ -18,7 +18,7 @@ category: 物品
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [診察とバイタルの確かめ方](vitals.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [意識喪失と回復](consciousness.md) ／ [物品・操作と所要時間](items-and-timing.md) ／ [サーバー設定の注意点](server-settings.md)
+関連: [診察とバイタルの確かめ方](vitals.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [意識不明への対応](consciousness.md) ／ [物品・操作と所要時間](items-and-timing.md) ／ [サーバー設定の注意点](server-settings.md)
 
 ## 痛みの仕組み
 

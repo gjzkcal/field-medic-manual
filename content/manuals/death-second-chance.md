@@ -11,14 +11,14 @@ category: システム
 
 # 致命傷と Second Chance
 
-致命打を受けたときに即死するか意識不明で済むか（Second Chance）の判定の流れと部位ごとの確率、倒れた後の追い打ち、Circulation・Hitzones での違い、死亡の条件と死亡を防ぐ設定をまとめる。
+致命打を受けたときに即死するか意識不明で済むか（Second Chance）の判定の流れと部位ごとの確率、倒れた後の追い打ち、Circulation・Hitzones での違い、死亡の条件をまとめる。死亡を防ぐ設定は [サーバー設定の注意点](server-settings.md#死亡を防ぐ設定) にある。
 
 > [!NOTE]
 > ACE Medical **Dev 1.5.36** のソースコード（[acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) の dev ブランチ `703d1aa7`）とゲーム本体 1.8.0.13 の処理を読んで書いた（2026-09-27 確認）。Release 版（1.4.3）では違う場合がある。
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [意識喪失と回復](consciousness.md) ／ [出血と止血](hemorrhage.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [サーバー設定の注意点](server-settings.md)
+関連: [意識不明への対応](consciousness.md) ／ [出血と止血](hemorrhage.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [サーバー設定の注意点](server-settings.md)
 
 ## Second Chance とは
 
@@ -111,7 +111,7 @@ Second Chance は、致命打で即死する代わりに意識不明にする仕
 | 5000 ms | 即死 |
 | 60000 ms | 即死 |
 
-- これを避ける設定はない（`m_bPlayerCannotDie` で死亡そのものを無効にする以外。[死亡の条件と死亡を防ぐ設定](#死亡の条件と死亡を防ぐ設定)）。
+- これを避ける設定はない（`m_bPlayerCannotDie` で死亡そのものを無効にする以外。[死亡を防ぐ設定](server-settings.md#死亡を防ぐ設定)）。
 - Hitzones なし: 全体 HP が 0 のままだと状態が変わらないので、判定自体が起きない。1 秒後の判定で助かった部位が 1% 回復すると、その分だけ全体 HP も戻り（例: 胸なら +0.9）、0 から抜ける。その後に全体 HP が再び 0 になる損傷を受けると即死する。
 - Hitzones あり: 意識不明の人の頭・胸・腹・心臓が破壊されると即死する。首・腰・腕・脚の破壊では即死しない（出血は付く）。
 - 意識を失ってからの 1 秒以内に 2 回目の致命打を受け、確率で助かった場合、Circulation 入りでも心停止は 2 回目には起こさない（最初の 1 回だけ）。
@@ -204,7 +204,7 @@ Hitzones を入れると全体 HP が無くなり、頭・胸・腹（急所）�
 > [!NOTE]
 > 公式ドキュメントとの違い: ドキュメントは心臓を「Second Chance を評価する」、確率を設定値としている。実際は 2 回判定するので、助かる確率は設定値の 2 乗になる。
 
-## 死亡の条件と死亡を防ぐ設定
+## 死亡の条件
 
 ACE が死亡させるのは、Second Chance で外れたとき、意識を失って 1 秒以上後の致命打、出血死、Circulation の脳の破壊（心停止の放置）などで、どれも同じ死亡処理を通る。`m_bPlayerCannotDie` を true にすると、この処理による死亡がプレイヤーだけ無効になる（AI は死ぬ）。
 
@@ -218,15 +218,4 @@ ACE が死亡させるのは、Second Chance で外れたとき、意識を失�
 | 脳の破壊 | Circulation あり | 心停止のまま約 310 s |
 | 心停止した AI | Circulation あり | `m_bCardiacArrestForAIEnabled` が false（既定）なら心停止の瞬間 |
 
-| 設定 | 意味 | 既定値 |
-|---|---|---|
-| `m_bPlayerCannotDie` | true にすると、プレイヤーは上の経路で死なない | false |
-| `m_bBleedOutForPlayersEnabled` | プレイヤーが出血死するか（AI は常に出血死する） | true |
-| `m_bCardiacArrestForAIEnabled` | AI が心停止に入れるか（false なら心停止で即死） | false |
-
-### 死亡を無効にしたとき
-
-- 出血死しない設定では、血液が 0 になっても意識不明のまま残る。血液を 33.3% より上に戻せば目覚めうる（Circulation なし）。
-- `m_bPlayerCannotDie` が true でも、次の死亡は防げない（本体の「無敵を無視して殺す」処理を使うため）: リスポーン画面からの自殺、Capture & Hold のスポーン地帯、Clean Sweep、ハブの範囲など。そのため、プレイヤーはリスポーン画面の自殺でやり直せる。
-- ゲームマスターの「破壊」（Neutralize）と溺水は同じ死亡処理を通るので、`m_bPlayerCannotDie` が true なら防がれる。
-- 設定の書き方の注意は [書き漏らすと危険な設定](server-settings.md#書き漏らすと危険な設定)、既定値の一覧は [主な設定の既定値](server-settings.md#主な設定の既定値)。
+死亡を防ぐ設定の既定値と、無効にしたときに防げない死亡は [死亡を防ぐ設定](server-settings.md#死亡を防ぐ設定)。

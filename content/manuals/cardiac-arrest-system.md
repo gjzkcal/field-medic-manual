@@ -229,7 +229,7 @@ CPR を 60 s 続けて 30 s 休む、を繰り返した場合（蘇生しない�
 | 50% | 60% |
 | 25% | 40% |
 
-詳しくは [炭酸アンモニウム](pain-medications.md#炭酸アンモニウム)、[意識が戻る条件と時間](consciousness.md#意識が戻る条件と時間)。
+詳しくは [炭酸アンモニウム](pain-medications.md#炭酸アンモニウム)、[意識が戻る条件と時間](consciousness-system.md#意識が戻る条件と時間)。
 
 ### Breathing を入れている場合
 

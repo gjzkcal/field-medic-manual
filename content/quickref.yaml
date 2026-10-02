@@ -158,7 +158,7 @@ rows:
     links:
       - doc:saline.md
       - doc:bleeding-system.md#血液の回復
-      - doc:consciousness.md#血液で意識を失う条件
+      - doc:consciousness-system.md#血液で意識を失う条件
     withoutMods: [circulation]
 
   - id: tourniquet-only

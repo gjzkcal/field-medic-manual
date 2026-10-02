@@ -18,7 +18,7 @@ Circulation の 5 つの状態（Stable / Unstable / Critical / 心停止 / 蘇�
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [診察とバイタルの確かめ方](vitals.md) ／ [バイタル](vitals-system.md) ／ [出血](bleeding-system.md) ／ [心停止と蘇生](cardiac-arrest-system.md) ／ [意識喪失と回復](consciousness.md) ／ [痛みと薬](pain-medications.md) ／ [サーバー設定の注意点](server-settings.md)
+関連: [診察とバイタルの確かめ方](vitals.md) ／ [バイタル](vitals-system.md) ／ [出血](bleeding-system.md) ／ [心停止と蘇生](cardiac-arrest-system.md) ／ [意識不明への対応](consciousness.md) ／ [痛みと薬](pain-medications.md) ／ [サーバー設定の注意点](server-settings.md)
 
 ## 5 つの状態
 
@@ -91,4 +91,4 @@ Circulation を入れると、生存しているキャラクターは次の 5 �
 
 ### Circulation なし（Core だけ）の場合
 
-- 5 つの状態はなく、生存・意識不明・死亡だけ。血液の分類（Class）もない。意識は抵抗値と血液量で決まる（[意識を失う条件](consciousness.md#意識を失う条件)、[血液量と出血の段階](bleeding-system.md#血液量と出血の段階)）。
+- 5 つの状態はなく、生存・意識不明・死亡だけ。血液の分類（Class）もない。意識は抵抗値と血液量で決まる（[意識を失う条件](consciousness-system.md#意識を失う条件)、[血液量と出血の段階](bleeding-system.md#血液量と出血の段階)）。
