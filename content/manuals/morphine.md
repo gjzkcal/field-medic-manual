@@ -18,8 +18,6 @@ category: 物品
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [痛みと抑え方](pain.md) ／ [痛み](pain-system.md) ／ [ナロキソン](naloxone.md) ／ [薬の効き方](drug-effects.md) ／ [痛みと抑え方](pain.md) ／ [診察とバイタルの確かめ方](vitals.md) ／ [物品の一覧](items.md)
-
 ## 効果
 
 - **Circulation あり**: 痛みの HP は治さず、鎮痛量を足して痛みを感じなくする。効きは遅くて長い（1 本で最大になるのは約 2 分後、半分に減るのは約 15 分後）。心拍数を最大 13 bpm 下げる。同時に 3.1 本で意識喪失、3.8 本で心停止する（血液 100% のとき）。
@@ -101,3 +99,12 @@ category: 物品
 ## 入手
 
 医療キットに 8 本入っている（Core だけでも Circulation 入りでも。[医療キット](medical-kit.md)）。
+
+## 関連ページ
+
+- [痛みと抑え方](pain.md)
+- [痛み](pain-system.md)
+- [ナロキソン](naloxone.md)
+- [薬の効き方](drug-effects.md)
+- [診察とバイタルの確かめ方](vitals.md)
+- [物品の一覧](items.md)

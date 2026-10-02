@@ -18,8 +18,6 @@ category: 処置
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [止血帯](tourniquet.md) ／ [包帯](bandage.md) ／ [生理食塩水](saline.md) ／ [出血](bleeding-system.md) ／ [意識不明への対応](consciousness.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [診察とバイタルの確かめ方](vitals.md) ／ [物品の一覧](items.md)
-
 ## 出血の見分け方
 
 出血している間は、自分の画面の縁が赤く脈打ち、心音が聞こえる。傷のある部位からは血が噴く。診察（負傷者を診察）では出血の程度と失血の程度が出る。
@@ -67,3 +65,14 @@ category: 処置
 
 - Circulation 入りで 40 ml/s の出血を放置すると、23 s で Unstable、46 s で Critical になって意識を失い、58 s で心停止、91 s で出血死する。Circulation なしで同じ傷（80 ml/s・6000 ml）なら、50 s で意識を失い、75 s で出血死する。詳しくは [放置したときの時間](bleeding-system.md#放置したときの時間)。
 - 血液量と状態の段階は [血液量と出血の段階](bleeding-system.md#血液量と出血の段階)、傷ごとの出血の速さは [傷の出血率](bleeding-system.md#傷の出血率)、血液が戻る速さは [血液の回復](bleeding-system.md#血液の回復) を見る。
+
+## 関連ページ
+
+- [止血帯](tourniquet.md)
+- [包帯](bandage.md)
+- [生理食塩水](saline.md)
+- [出血](bleeding-system.md)
+- [意識不明への対応](consciousness.md)
+- [心停止と CPR](cardiac-arrest.md)
+- [診察とバイタルの確かめ方](vitals.md)
+- [物品の一覧](items.md)

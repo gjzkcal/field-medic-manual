@@ -18,8 +18,6 @@ category: システム
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [気道閉塞と気道の確保](airway.md) ／ [気胸と処置](breathing.md) ／ [状態と閾値](states.md) ／ [バイタル](vitals-system.md) ／ [心停止と蘇生](cardiac-arrest-system.md) ／ [酸素マスク](oxygen-mask.md) ／ [サーバー設定の注意点](server-settings.md)
-
 ## 呼吸数と SpO2
 
 - Breathing を入れたときだけある。
@@ -357,3 +355,13 @@ Breathing を入れていない組み合わせ（Core だけ、Core + Circulatio
 - 1 回目の判定が 0〜60 秒後の場合（ほかにも気胸の患者がいる）は、平均 9.2 分、中央値 8.2 分、10% 点 4.5 分、90% 点 14.9 分。
 
 計算例: 仰向けで舌根沈下した気胸の患者は、気道が塞がっている間は気胸が進まない。代わりに無呼吸になり、肺が小さい分だけ気道閉塞だけのときより早く、気胸 0.18 なら約 13〜14 分で心停止する。
+
+## 関連ページ
+
+- [気道閉塞と気道の確保](airway.md)
+- [気胸と処置](breathing.md)
+- [状態と閾値](states.md)
+- [バイタル](vitals-system.md)
+- [心停止と蘇生](cardiac-arrest-system.md)
+- [酸素マスク](oxygen-mask.md)
+- [サーバー設定の注意点](server-settings.md)

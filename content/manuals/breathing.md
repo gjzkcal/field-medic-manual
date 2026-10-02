@@ -18,8 +18,6 @@ category: 処置
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [呼吸と SpO2](respiration-system.md) ／ [チェストシール](chest-seal.md) ／ [NCD キット](ncd-kit.md) ／ [酸素マスク](oxygen-mask.md) ／ [気道閉塞と気道の確保](airway.md) ／ [診察とバイタルの確かめ方](vitals.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [物品の一覧](items.md) ／ [サーバー設定の注意点](server-settings.md)
-
 ## 開放性気胸と緊張性気胸
 
 **開放性気胸**は呼吸数と心拍が上がり、SpO2 が少し下がるが、状態は Stable のまま。**緊張性気胸**は無呼吸（呼吸数 0）になり、気道閉塞と同じように SpO2 が下がって心停止に向かう。緊張性気胸でも血圧は下がらない。
@@ -75,3 +73,15 @@ Breathing の 4 物品（King LT・チェストシール・NCD キット・酸�
 - 呼吸数・SpO2 の確かめ方は [バイタルを確かめる操作](vitals.md#バイタルを確かめる操作)。正常は 14 回/分・97%。
 - 呼吸数は気胸の大きさだけで決まり、SpO2 が 85% / 75% / 65% を割ると Unstable / Critical / 心停止になる（[呼吸数と SpO2](respiration-system.md#呼吸数と-spo2)）。
 - 胸に銃弾か近接攻撃の強い打撃を受けると 51% で開放性気胸になり、気胸があるところにもう一度受けると 15% で緊張性気胸になる（[気胸の起き方](respiration-system.md#気胸の起き方)）。
+
+## 関連ページ
+
+- [呼吸と SpO2](respiration-system.md)
+- [チェストシール](chest-seal.md)
+- [NCD キット](ncd-kit.md)
+- [酸素マスク](oxygen-mask.md)
+- [気道閉塞と気道の確保](airway.md)
+- [診察とバイタルの確かめ方](vitals.md)
+- [心停止と CPR](cardiac-arrest.md)
+- [物品の一覧](items.md)
+- [サーバー設定の注意点](server-settings.md)

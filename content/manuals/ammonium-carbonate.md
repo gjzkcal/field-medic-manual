@@ -18,8 +18,6 @@ category: 物品
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [意識不明への対応](consciousness.md) ／ [意識](consciousness-system.md) ／ [状態と閾値](states.md) ／ [薬の効き方](drug-effects.md) ／ [物品の一覧](items.md)
-
 ## 効果
 
 炭酸アンモニウム（Ammonium Carbonate）は Circulation の物品で、状態が Stable の意識不明の人を確率で起こす。成功すると約 3.1 s で目覚める。失敗しても、Stable でなくても、物品は減る。
@@ -73,3 +71,11 @@ category: 物品
 ## 入手
 
 - Circulation 入りの医療キットに 8 個入っている。Circulation なしでは存在しない。
+
+## 関連ページ
+
+- [意識不明への対応](consciousness.md)
+- [意識](consciousness-system.md)
+- [状態と閾値](states.md)
+- [薬の効き方](drug-effects.md)
+- [物品の一覧](items.md)

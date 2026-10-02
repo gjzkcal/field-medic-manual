@@ -18,8 +18,6 @@ category: システム
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [意識不明への対応](consciousness.md) ／ [状態と閾値](states.md) ／ [出血](bleeding-system.md) ／ [心停止と蘇生](cardiac-arrest-system.md) ／ [致命傷と Second Chance](death-second-chance.md) ／ [サーバー設定の注意点](server-settings.md)
-
 ## 意識を失う条件
 
 意識の値（resilience、0〜100。プレイヤーには見えない）が 33.3 以下になると意識を失う。意識の値は被弾で減る。Circulation を入れていると、状態が Critical 以上に悪化したときにも意識の値が 0 になり、その場で意識を失う。
@@ -141,3 +139,12 @@ category: システム
 
 > [!NOTE]
 > 公式ドキュメントとの違い: ドキュメントは自然回復を 5 HP/s としているが、本体の基本倍率 0.8 が掛かるので実際は 4 HP/s × 回復倍率（既定 1.2 HP/s）。また、血液が意識喪失の段階にある間は回復が 0 になること、Circulation 入りでは `m_fSecondChanceResilienceRegenScale` が効かないことは書かれていない。
+
+## 関連ページ
+
+- [意識不明への対応](consciousness.md)
+- [状態と閾値](states.md)
+- [出血](bleeding-system.md)
+- [心停止と蘇生](cardiac-arrest-system.md)
+- [致命傷と Second Chance](death-second-chance.md)
+- [サーバー設定の注意点](server-settings.md)

@@ -18,8 +18,6 @@ ACE Medical AI を入れたときに、AI の衛生兵が誰をどの物品で�
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [出血と止血](hemorrhage.md) ／ [気道閉塞と気道の確保](airway.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [致命傷と Second Chance](death-second-chance.md) ／ [サーバー設定の注意点](server-settings.md)
-
 ## AI が治療する相手
 
 AI の衛生兵が ACE の治療をする相手は、**意識不明（心停止を含む）の味方だけ**。意識のある負傷者には、ACE の治療をしない。
@@ -189,3 +187,11 @@ Breathing には AI とプレイヤーの区別がない。意識不明の AI �
 - Breathing 入りで、意識不明のまま仰向けで放置したときに死亡する割合と時間は [Breathing を入れている場合](#breathing-を入れている場合)。回復体位か King LT なら気道は塞がらない。
 
 AI の衛生兵が使わない物品と処置は [使わない物品と処置](#使わない物品と処置)、Circulation 入りのエピネフリンと心停止したプレイヤーへの扱いは [使う物品と順番](#使う物品と順番)、設定の変え方は [AI の設定](server-settings.md#ai-の設定)。
+
+## 関連ページ
+
+- [出血と止血](hemorrhage.md)
+- [気道閉塞と気道の確保](airway.md)
+- [心停止と CPR](cardiac-arrest.md)
+- [致命傷と Second Chance](death-second-chance.md)
+- [サーバー設定の注意点](server-settings.md)

@@ -18,8 +18,6 @@ ACE Medical の設定をどこで変えるか、ミッションヘッダーで�
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [この原稿の読み方](about-this-manual.md) ／ [物品の一覧](items.md) ／ [致命傷と Second Chance](death-second-chance.md) ／ [AI の治療](ai-medic.md)
-
 ## 設定の入口
 
 - 設定を持つのは**サーバーだけ**。クライアントには、必要な値だけが送られる（エピネフリンの最小健康度、医療キットの 2 つの値、痛みの画面効果の種類など）。
@@ -312,3 +310,10 @@ AI の MOD について:
 - 例: `"m_ACE_Medical_Breathing": {"m_fVomitChancePerMinute": 0}` だけを書くと、嘔吐は起きず、ほかは既定値のままとみられる（Breathing の項目はすべて既定値があるので安全）。
 - `m_fPneumothoraxArrestEnabled` を false にすると、気胸が上限に達しても心停止しない。ただし悪化の判定もそこで止まる。
 - SpO2 の閾値 `m_fSpO2`（85 / 75 / 65）は Breathing の設定ではなく、Circulation の閾値の中にある（[書き漏らすと危険な設定](#書き漏らすと危険な設定)）。
+
+## 関連ページ
+
+- [この原稿の読み方](about-this-manual.md)
+- [物品の一覧](items.md)
+- [致命傷と Second Chance](death-second-chance.md)
+- [AI の治療](ai-medic.md)

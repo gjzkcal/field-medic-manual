@@ -18,8 +18,6 @@ category: システム
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [診察とバイタルの確かめ方](vitals.md) ／ [状態と閾値](states.md) ／ [出血](bleeding-system.md) ／ [心停止と蘇生](cardiac-arrest-system.md) ／ [痛み](pain-system.md) ／ [薬の効き方](drug-effects.md) ／ [気胸と処置](breathing.md) ／ [サーバー設定の注意点](server-settings.md)
-
 ## 心拍数の決まり方
 
 - 心拍数は「目標の心拍数」に向かって、毎秒、残りの差の半分ずつ近づく。
@@ -121,3 +119,14 @@ category: システム
 > [!NOTE]
 > 公式ドキュメントとの違い:
 > ドキュメントでは緊張性気胸で血圧が下がるとあるが、ソースには血圧を下げる処理がない。緊張性気胸は呼吸を止める（無呼吸にする）だけ。
+
+## 関連ページ
+
+- [診察とバイタルの確かめ方](vitals.md)
+- [状態と閾値](states.md)
+- [出血](bleeding-system.md)
+- [心停止と蘇生](cardiac-arrest-system.md)
+- [痛み](pain-system.md)
+- [薬の効き方](drug-effects.md)
+- [気胸と処置](breathing.md)
+- [サーバー設定の注意点](server-settings.md)

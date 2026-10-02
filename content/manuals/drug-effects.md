@@ -18,8 +18,6 @@ Circulation の有無で変わる薬の扱い、過量投与の閾値、薬の�
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [モルヒネ注射器](morphine.md) ／ [エピネフリン](epinephrine.md) ／ [メトプロロール](metoprolol.md) ／ [ナロキソン](naloxone.md) ／ [フェニレフリン](phenylephrine.md) ／ [炭酸アンモニウム](ammonium-carbonate.md) ／ [状態と閾値](states.md) ／ [サーバー設定の注意点](server-settings.md)
-
 ## Circulation の有無で変わる薬の扱い
 
 Circulation を入れると、エピネフリンとモルヒネは別の仕組み（体内の濃度で効く薬のモデル）に置き換わり、**使用条件がなくなる**（いつでも・何本でも打てる）。その代わり過量投与がある。
@@ -153,3 +151,14 @@ Circulation を入れると、エピネフリンとモルヒネは別の仕組�
 - 薬の設定はミッションヘッダーの `m_ACE_Medical_Medication` で丸ごと差し替えられる（ドキュメントに説明がない）。書き漏らすと危険なので [書き漏らすと危険な設定](server-settings.md#書き漏らすと危険な設定) を見る。
 - 経過時間はゲームの起動からの実時間で測る。
 - ゲームマスターの全回復では、体内の薬がすべて消える。
+
+## 関連ページ
+
+- [モルヒネ注射器](morphine.md)
+- [エピネフリン](epinephrine.md)
+- [メトプロロール](metoprolol.md)
+- [ナロキソン](naloxone.md)
+- [フェニレフリン](phenylephrine.md)
+- [炭酸アンモニウム](ammonium-carbonate.md)
+- [状態と閾値](states.md)
+- [サーバー設定の注意点](server-settings.md)

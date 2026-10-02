@@ -18,8 +18,6 @@ category: システム
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [痛みと抑え方](pain.md) ／ [モルヒネ注射器](morphine.md) ／ [薬の効き方](drug-effects.md) ／ [バイタル](vitals-system.md) ／ [サーバー設定の注意点](server-settings.md)
-
 ## 痛みの仕組み
 
 - 体の部位（頭・胸・腕・脚など）が受けた損傷の**半分**が、見えない「痛み」の HP（最大 100）から引かれる。
@@ -112,3 +110,11 @@ category: システム
 > [!NOTE]
 > 公式ドキュメントとの違い:
 > ドキュメントでは 0〜4 の 5 種類を選べるとあるが、ACE の設定の割り当てがずれている。3 を選ぶと放射ブラーになり、4 を選ぶと何も出ない。色収差は選べない。
+
+## 関連ページ
+
+- [痛みと抑え方](pain.md)
+- [モルヒネ注射器](morphine.md)
+- [薬の効き方](drug-effects.md)
+- [バイタル](vitals-system.md)
+- [サーバー設定の注意点](server-settings.md)

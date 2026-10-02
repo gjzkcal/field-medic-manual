@@ -18,8 +18,6 @@ category: 物品
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [医療キット](medical-kit.md) ／ [医療の操作](medical-actions.md) ／ [処置の所要時間](treatment-times.md) ／ [薬の効き方](drug-effects.md) ／ [この原稿の読み方](about-this-manual.md)
-
 ## 物品の一覧
 
 - 本体と Core の物品（止血帯・包帯・生理食塩水・モルヒネ注射器・エピネフリン・医療キット）は、どの組み合わせにもある。
@@ -89,3 +87,11 @@ Breathing の 4 物品（King LT・チェストシール・NCD キット・酸�
 - 所要時間の一覧は [処置の所要時間](treatment-times.md)。
 - Circulation 入りの医療キットの中身（モルヒネ注射器・Epinephrine・包帯・生理食塩水・Ammonium Carbonate・Naloxone・Phenylephrine・Metoprolol）に、Breathing の物品は含まれない（[医療キット](medical-kit.md)）。
 - AI の衛生兵は、これらの物品を使わない（[使わない物品と処置](ai-medic.md#使わない物品と処置)）。
+
+## 関連ページ
+
+- [医療キット](medical-kit.md)
+- [医療の操作](medical-actions.md)
+- [処置の所要時間](treatment-times.md)
+- [薬の効き方](drug-effects.md)
+- [この原稿の読み方](about-this-manual.md)

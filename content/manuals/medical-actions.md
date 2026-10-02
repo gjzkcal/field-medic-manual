@@ -18,8 +18,6 @@ category: 操作
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [処置の所要時間](treatment-times.md) ／ [物品の一覧](items.md) ／ [医療キット](medical-kit.md) ／ [診察とバイタルの確かめ方](vitals.md) ／ [気道閉塞と気道の確保](airway.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [AI の治療](ai-medic.md)
-
 ## 医療ラジアルメニュー
 
 - **左 Ctrl + H** で開く。キーはキー設定の「医療」の区分の「医療ラジアルメニューを開く（Open medical radial menu）」で変えられる。
@@ -147,3 +145,13 @@ category: 操作
 - Circulation の注射（メトプロロール・ナロキソン・フェニレフリン）のゴミは調べていない。
 - 置き場所: 患者の足元を中心に、半径 1〜2 m の輪の中の無作為の位置（向きも無作為）。途中に壁があれば壁の手前に置き、地面（建物の床を含む）の高さに合わせる。
 - `m_fLitterCleanUpTime` を負の値にすると、ACE はゴミを片付けの対象に登録しない。
+
+## 関連ページ
+
+- [処置の所要時間](treatment-times.md)
+- [物品の一覧](items.md)
+- [医療キット](medical-kit.md)
+- [診察とバイタルの確かめ方](vitals.md)
+- [気道閉塞と気道の確保](airway.md)
+- [心停止と CPR](cardiac-arrest.md)
+- [AI の治療](ai-medic.md)

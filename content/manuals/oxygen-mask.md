@@ -18,8 +18,6 @@ category: 物品
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [気胸と処置](breathing.md) ／ [気道閉塞と気道の確保](airway.md) ／ [呼吸と SpO2](respiration-system.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [物品の一覧](items.md)
-
 ## 効果
 
 患者の頭の操作「Put oxygen mask on」で酸素マスク（Oxygen Mask）を付けると、**気道が開いている間、肺の酸素を増やし、最低限の換気を保つ**。心停止中・CPR 中にも効く。公式ドキュメントに載っていない物品。
@@ -83,3 +81,11 @@ category: 物品
 ## 入手
 
 初期装備にも医療キットにも入っていない（ゲーム内で確認）。補給（アーセナル）で手に入れる。補給コスト 5。
+
+## 関連ページ
+
+- [気胸と処置](breathing.md)
+- [気道閉塞と気道の確保](airway.md)
+- [呼吸と SpO2](respiration-system.md)
+- [心停止と CPR](cardiac-arrest.md)
+- [物品の一覧](items.md)

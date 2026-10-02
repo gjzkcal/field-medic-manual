@@ -18,8 +18,6 @@ category: 物品
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [心停止と CPR](cardiac-arrest.md) ／ [意識不明への対応](consciousness.md) ／ [心停止と蘇生](cardiac-arrest-system.md) ／ [薬の効き方](drug-effects.md) ／ [痛みと抑え方](pain.md) ／ [診察とバイタルの確かめ方](vitals.md) ／ [物品の一覧](items.md)
-
 ## 効果
 
 - **Circulation あり**（表示「Epinephrine」）: 意識は戻さない。心拍数を最大 25 bpm 上げ、CPR の蘇生判定の頻度を最大 1.43 倍にする。いつでも何本でも打てる。健康な人に同時に 4.36 本で心停止する（激痛なら 2.37 本）。
@@ -151,3 +149,13 @@ category: 物品
 ## 入手
 
 医療キットに 8 本入っている。Circulation 入りでは「Epinephrine」の 8 本になる（[医療キット](medical-kit.md)）。Core のエピネフリンは補給（アーセナル）でも手に入る（補給コスト 3）。
+
+## 関連ページ
+
+- [心停止と CPR](cardiac-arrest.md)
+- [意識不明への対応](consciousness.md)
+- [心停止と蘇生](cardiac-arrest-system.md)
+- [薬の効き方](drug-effects.md)
+- [痛みと抑え方](pain.md)
+- [診察とバイタルの確かめ方](vitals.md)
+- [物品の一覧](items.md)

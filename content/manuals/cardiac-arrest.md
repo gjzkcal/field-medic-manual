@@ -18,8 +18,6 @@ category: 処置
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [心停止と蘇生](cardiac-arrest-system.md) ／ [診察とバイタルの確かめ方](vitals.md) ／ [エピネフリン](epinephrine.md) ／ [致命傷と Second Chance](death-second-chance.md) ／ [出血と止血](hemorrhage.md) ／ [気道閉塞と気道の確保](airway.md) ／ [気胸と処置](breathing.md) ／ [AI の治療](ai-medic.md)
-
 ## 心停止の見分け方
 
 - 心停止の患者は意識不明で、**脈を測ると 0**（「You find a heart rate of 0」）、**血圧は 0/0**。
@@ -127,3 +125,14 @@ category: 処置
 - 心停止に入るのは、最初の致命傷（Second Chance）、出血（多くは血液 25% 前後の頻脈）、心拍数・血圧の閾値（薬の過量投与）、CPR をやめたとき、Breathing の SpO2 65% 未満と気胸の最大進行（[心停止に入る経路](cardiac-arrest-system.md#心停止に入る経路)）。
 - 蘇生の判定の式、血液ごとの成功率、蘇生までの時間の分布は [蘇生の判定](cardiac-arrest-system.md#蘇生の判定) と [蘇生までの時間](cardiac-arrest-system.md#蘇生までの時間)。
 - AI は既定で心停止に入った瞬間に死ぬ（[AI の心停止](ai-medic.md#ai-の心停止)）。
+
+## 関連ページ
+
+- [心停止と蘇生](cardiac-arrest-system.md)
+- [診察とバイタルの確かめ方](vitals.md)
+- [エピネフリン](epinephrine.md)
+- [致命傷と Second Chance](death-second-chance.md)
+- [出血と止血](hemorrhage.md)
+- [気道閉塞と気道の確保](airway.md)
+- [気胸と処置](breathing.md)
+- [AI の治療](ai-medic.md)

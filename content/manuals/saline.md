@@ -18,8 +18,6 @@ category: 物品
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [出血と止血](hemorrhage.md) ／ [出血](bleeding-system.md) ／ [物品の一覧](items.md)
-
 ## 効果
 
 生理食塩水（Saline）は、血液量の 25% を 90 s かけて入れる。Circulation ありでは 750 ml（8.33 ml/s）、Circulation なしでは 1500 ml（16.7 ml/s）。出血は止めない。
@@ -55,3 +53,9 @@ category: 物品
 ### Circulation なし（Core だけ）の場合
 
 - 例: 胸の 42.25 ml/s の傷に、60 s の時点で包帯と生理食塩水を同時に使う → 3465 ml から増え始め、10 s 後からは自然回復と合わせて 21.1 ml/s で増え、120 s で 4687 ml。
+
+## 関連ページ
+
+- [出血と止血](hemorrhage.md)
+- [出血](bleeding-system.md)
+- [物品の一覧](items.md)

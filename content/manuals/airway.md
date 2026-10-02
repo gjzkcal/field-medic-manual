@@ -18,8 +18,6 @@ category: 処置
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [呼吸と SpO2](respiration-system.md) ／ [King LT](king-lt.md) ／ [気胸と処置](breathing.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [意識不明への対応](consciousness.md) ／ [診察とバイタルの確かめ方](vitals.md) ／ [物品の一覧](items.md) ／ [AI の治療](ai-medic.md)
-
 ## 気道閉塞の種類
 
 気道が塞がる原因は**舌根沈下**と**嘔吐**の 2 つ。どちらも意識不明の間だけ起き、塞がると無呼吸（呼吸数 0）になる。緊張性気胸も同じ無呼吸になる（[開放性気胸と緊張性気胸](breathing.md#開放性気胸と緊張性気胸)）。
@@ -189,3 +187,14 @@ Core だけなら体位は見た目だけ。Core + Circulation では、CPR に�
 
 - 意識不明のまま仰向けで放置すると、気道が塞がる割合は 5 分で 54.9%、10 分で 73.5%。塞がってから約 15 分で心停止するので、心停止に至る割合は 20 分で 49.8%。回復体位と King LT では 0% のまま（[仰向けで放置したとき](respiration-system.md#仰向けで放置したとき)）。
 - 無呼吸の間に SpO2 がゆっくり下がる理由と、血液量による違いは [ゆっくり下がる理由](respiration-system.md#ゆっくり下がる理由)。
+
+## 関連ページ
+
+- [呼吸と SpO2](respiration-system.md)
+- [King LT](king-lt.md)
+- [気胸と処置](breathing.md)
+- [心停止と CPR](cardiac-arrest.md)
+- [意識不明への対応](consciousness.md)
+- [診察とバイタルの確かめ方](vitals.md)
+- [物品の一覧](items.md)
+- [AI の治療](ai-medic.md)

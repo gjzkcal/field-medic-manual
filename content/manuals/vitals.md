@@ -18,8 +18,6 @@ category: 処置
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [状態と閾値](states.md) ／ [バイタル](vitals-system.md) ／ [呼吸と SpO2](respiration-system.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [痛みと抑え方](pain.md) ／ [出血と止血](hemorrhage.md) ／ [気胸と処置](breathing.md) ／ [気道閉塞と気道の確保](airway.md) ／ [意識不明への対応](consciousness.md)
-
 ## バイタルを確かめる操作
 
 確かめる方法は 2 つある。結果はどちらも画面の通知（英語）で出る。
@@ -143,3 +141,15 @@ Circulation を入れると、生存しているキャラクターは 5 つの�
 - 心拍数は「目標の心拍数」（通常 80、痛みで最大 130）に向かって、毎秒、残りの差の半分ずつ近づく。出血で血液が 40% を切り Critical になると頻脈が始まり、約 26% を切ると心停止する（[心拍数の決まり方](vitals-system.md#心拍数の決まり方)）。
 - 薬と痛みがなければ、平均血圧は血液の割合に比例する（血液 50% で 47 mmHg）。通知の上下の値は平均血圧から決まった比で作る（[血圧の決まり方](vitals-system.md#血圧の決まり方)）。
 - 呼吸数は気胸の大きさだけで決まり、気道が塞がると 0 になる。無呼吸になると SpO2 は 16 s で 85% 未満（Unstable）、85 s で 75% 未満（Critical）、約 15 分で 65% 未満（心停止）になる（[呼吸数と SpO2](respiration-system.md#呼吸数と-spo2)）。
+
+## 関連ページ
+
+- [状態と閾値](states.md)
+- [バイタル](vitals-system.md)
+- [呼吸と SpO2](respiration-system.md)
+- [心停止と CPR](cardiac-arrest.md)
+- [痛みと抑え方](pain.md)
+- [出血と止血](hemorrhage.md)
+- [気胸と処置](breathing.md)
+- [気道閉塞と気道の確保](airway.md)
+- [意識不明への対応](consciousness.md)

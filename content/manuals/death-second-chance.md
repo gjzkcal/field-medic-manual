@@ -18,8 +18,6 @@ category: システム
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [意識不明への対応](consciousness.md) ／ [出血と止血](hemorrhage.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [サーバー設定の注意点](server-settings.md)
-
 ## Second Chance とは
 
 Second Chance は、致命打で即死する代わりに意識不明にする仕組み。既定では、頭への致命打は即死し、胸・腹・手足などへの致命打は必ず助かる。助かった後は、Circulation 入りでは心停止になり、Circulation なしでは自然には目覚めない意識不明になる。
@@ -219,3 +217,10 @@ ACE が死亡させるのは、Second Chance で外れたとき、意識を失�
 | 心停止した AI | Circulation あり | `m_bCardiacArrestForAIEnabled` が false（既定）なら心停止の瞬間 |
 
 死亡を防ぐ設定の既定値と、無効にしたときに防げない死亡は [死亡を防ぐ設定](server-settings.md#死亡を防ぐ設定)。
+
+## 関連ページ
+
+- [意識不明への対応](consciousness.md)
+- [出血と止血](hemorrhage.md)
+- [心停止と CPR](cardiac-arrest.md)
+- [サーバー設定の注意点](server-settings.md)

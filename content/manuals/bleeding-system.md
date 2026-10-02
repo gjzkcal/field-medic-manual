@@ -18,8 +18,6 @@ category: システム
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [出血と止血](hemorrhage.md) ／ [止血帯](tourniquet.md) ／ [包帯](bandage.md) ／ [生理食塩水](saline.md) ／ [診察とバイタルの確かめ方](vitals.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [致命傷と Second Chance](death-second-chance.md)
-
 ## 血液量と出血の段階
 
 Circulation を入れると血液は 3000 ml になり、Class I〜IV の分類で状態が変わる。血液 40% を切ると強制的に意識を失い、25% 前後で心停止する。Circulation なしでは血液は 6000 ml で、33.3% を切ると意識を失う。どちらも血液 0 で出血死の判定になる。
@@ -294,3 +292,13 @@ Circulation 入りで 40 ml/s の出血を放置すると、23 s で Unstable、
 - Circulation 入り（Hitzones + Circulation）では、動脈の出血は半分にならず最大 200 ml/s のままだが、全体が `max(20, 心拍出量 ÷ 60)`（無傷で 126.7 ml/s）で頭打ちになる。
 
 `m_bOrganHitZonesEnabled`（既定 true）を false にすると、大腿動脈と心臓は損傷を受けなくなる。首の大出血はこの設定では変わらない。
+
+## 関連ページ
+
+- [出血と止血](hemorrhage.md)
+- [止血帯](tourniquet.md)
+- [包帯](bandage.md)
+- [生理食塩水](saline.md)
+- [診察とバイタルの確かめ方](vitals.md)
+- [心停止と CPR](cardiac-arrest.md)
+- [致命傷と Second Chance](death-second-chance.md)

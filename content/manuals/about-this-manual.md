@@ -17,8 +17,6 @@ category: はじめに
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [物品の一覧](items.md) ／ [サーバー設定の注意点](server-settings.md)
-
 ## 対象の版と MOD
 
 - 対象は ACE Medical の **Dev 版 1.5.36**（Workshop の公開は 2026-08-14 00:35 JST ／ 原文 2026-08-13 15:35:56 GMT）。
@@ -185,3 +183,8 @@ category: はじめに
 | [薬の効き方](drug-effects.md) | システム | Circulation | Circulation の有無で変わる薬の扱い、表示名と操作、過量投与、薬の効き方の計算 |
 | [AI の治療](ai-medic.md) | 管理者向け | AI | AI が治療する相手、使う物品と使わない物品、衛生兵になる AI、AI 自身が負傷したとき、AI の心停止 |
 | [サーバー設定の注意点](server-settings.md) | 管理者向け | 一般 | 設定の入口、ミッションヘッダーの差し替え、危険な設定と効かない設定、ゲームモードの設定（出血倍率・意識喪失の禁止）、死亡を防ぐ設定、AI の設定、主な既定値 |
+
+## 関連ページ
+
+- [物品の一覧](items.md)
+- [サーバー設定の注意点](server-settings.md)

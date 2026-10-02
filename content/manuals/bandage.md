@@ -18,8 +18,6 @@ category: 物品
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [出血と止血](hemorrhage.md) ／ [出血](bleeding-system.md) ／ [物品の一覧](items.md)
-
 ## 効果
 
 包帯は 1 本で、巻いた部位の**グループ全体**の出血をすべて消す。出血率の大きさは関係ない。部位の HP は戻らない。出血が 1 つもなくなると、10 s 後から血液が回復し始める。
@@ -51,3 +49,9 @@ category: 物品
 
 - ガーゼ（本体の Gauze）は 1.7〜4.5 s と大幅に短い。ただし標準の装備・アーセナルには無い。
 - 詳しくは [処置の所要時間](treatment-times.md)。
+
+## 関連ページ
+
+- [出血と止血](hemorrhage.md)
+- [出血](bleeding-system.md)
+- [物品の一覧](items.md)

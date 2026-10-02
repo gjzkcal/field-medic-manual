@@ -18,8 +18,6 @@ category: 処置
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [意識](consciousness-system.md) ／ [炭酸アンモニウム](ammonium-carbonate.md) ／ [出血と止血](hemorrhage.md) ／ [致命傷と Second Chance](death-second-chance.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [エピネフリン](epinephrine.md) ／ [気道閉塞と気道の確保](airway.md) ／ [診察とバイタルの確かめ方](vitals.md)
-
 ## 意識が戻る条件と時間
 
 意識不明の人は、意識の値が 75 を超えると目覚める（意識を失った 33.3 よりずっと上まで戻る必要がある）。既定では意識の値は 1.2 HP/s で戻り、0 から目覚めるまで約 72.5 s かかる。Circulation 入りでは状態が Stable のときだけ戻る。
@@ -102,3 +100,14 @@ Breathing を入れていると、気道が塞がった（舌根沈下・嘔吐�
 
 - 意識の値（0〜100）が 33.3 以下になると意識を失う。意識の値は被弾で減り、Circulation では状態が Critical 以上に悪化したときにも 0 になる（血液 40% 以下、SpO2 75% 未満など）。詳しくは [意識を失う条件](consciousness-system.md#意識を失う条件)。
 - 意識喪失を禁止したゲームモードでも、ACE を入れると意識を失う（[意識喪失を禁止したゲームモード](server-settings.md#意識喪失を禁止したゲームモード)）。
+
+## 関連ページ
+
+- [意識](consciousness-system.md)
+- [炭酸アンモニウム](ammonium-carbonate.md)
+- [出血と止血](hemorrhage.md)
+- [致命傷と Second Chance](death-second-chance.md)
+- [心停止と CPR](cardiac-arrest.md)
+- [エピネフリン](epinephrine.md)
+- [気道閉塞と気道の確保](airway.md)
+- [診察とバイタルの確かめ方](vitals.md)

@@ -19,8 +19,6 @@ category: 操作
 > 処置の所要時間は、ゲーム本体（1.8.0.13）のアニメーションの長さから算出した値で、実測ではない。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [医療の操作](medical-actions.md) ／ [物品の一覧](items.md) ／ [止血帯](tourniquet.md) ／ [包帯](bandage.md) ／ [医療キット](medical-kit.md)
-
 ## 代表値
 
 処置の時間は、物品・自分か他人か・相手の意識の有無・姿勢・部位・衛生兵かどうかで変わる。代表値は次のとおり（アニメーションの長さから算出。実測ではない）。
@@ -177,3 +175,11 @@ category: 操作
 | 止血帯を自分に | —（効かない） | — | — | 0 s |
 
 - 計算例: 同じ「立って自分の腕に包帯」でも、衛生兵は 6.2 s、それ以外は 9.3 s。
+
+## 関連ページ
+
+- [医療の操作](medical-actions.md)
+- [物品の一覧](items.md)
+- [止血帯](tourniquet.md)
+- [包帯](bandage.md)
+- [医療キット](medical-kit.md)

@@ -18,8 +18,6 @@ category: 物品
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [状態と閾値](states.md) ／ [バイタル](vitals-system.md) ／ [薬の効き方](drug-effects.md) ／ [痛みと抑え方](pain.md) ／ [診察とバイタルの確かめ方](vitals.md) ／ [物品の一覧](items.md)
-
 ## 効果
 
 - Circulation だけの薬（表示「Metoprolol」）。心拍数を下げる（1 本のピークで −16.5 bpm、約 26 s 後）。血圧は心拍数を通じて下がる。
@@ -67,3 +65,12 @@ category: 物品
 ## 入手
 
 Circulation 入りの医療キットに 8 本入っている（[医療キット](medical-kit.md)）。Circulation なしでは存在しない。
+
+## 関連ページ
+
+- [状態と閾値](states.md)
+- [バイタル](vitals-system.md)
+- [薬の効き方](drug-effects.md)
+- [痛みと抑え方](pain.md)
+- [診察とバイタルの確かめ方](vitals.md)
+- [物品の一覧](items.md)

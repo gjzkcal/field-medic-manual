@@ -18,8 +18,6 @@ category: 物品
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [物品の一覧](items.md) ／ [医療の操作](medical-actions.md) ／ [処置の所要時間](treatment-times.md) ／ [エピネフリン](epinephrine.md)
-
 ## 効果
 
 - 医療キットを部位に使い続けると、最初は開始から約 3 s、以後 3 s ごとに部位の HP を 10 回復する（`m_fMedicalKitHealingPerExecution` の既定 10 のとき）。速さは約 3.33 HP/s。
@@ -75,3 +73,10 @@ category: 物品
 Core の枠に Circulation の枠が足される。実機（2026-09-27、日本語表示）では次の 8 種類が入っていた: モルヒネ注射器 8・Epinephrine 8・包帯 8・生理食塩水 3・Ammonium Carbonate 8・Naloxone 8・Phenylephrine 8・Metoprolol 8。エピネフリンは Circulation の「Epinephrine」の 8 本だけになる。
 
 - 入れ物の大きさ: 最大容積 2999、1 つの物品の最大の大きさ 10 × 10 × 10、最大重量 10。
+
+## 関連ページ
+
+- [物品の一覧](items.md)
+- [医療の操作](medical-actions.md)
+- [処置の所要時間](treatment-times.md)
+- [エピネフリン](epinephrine.md)
