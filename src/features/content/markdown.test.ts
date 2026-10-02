@@ -121,7 +121,15 @@ describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
     container.innerHTML = html;
     expect(JSON.parse(container.querySelector("table")?.getAttribute("data-chart") ?? "")).toEqual(
       {
-        spec: { x: "経過", y: ["SpO2"], y2: [], ref: [85], title: null, data: null },
+        spec: {
+          x: "経過",
+          y: ["SpO2"],
+          y2: [],
+          ref: [85],
+          title: null,
+          data: null,
+          unit: null,
+        },
         data: {
           xLabel: "経過",
           xUnit: "s",
@@ -162,6 +170,32 @@ describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
     });
   });
 
+  it("印の次が表でなく data= があれば、印のあった場所に表なしのグラフの figure を置く", async () => {
+    const { doc, warnings } = await convertManual(
+      manual(
+        "# A\n\n濃度の推移:\n\n<!-- chart: x=経過; y=濃度; unit=nM; data=data/c.csv -->\n\n次の段落\n",
+      ),
+      noImages,
+      () => Promise.resolve("経過,濃度\n0,0\n1,30.5\n2,58\n"),
+    );
+    expect(warnings).toEqual([]);
+    const container = document.createElement("div");
+    container.innerHTML = doc.sections[0]?.html ?? "";
+    const figure = container.querySelector("figure");
+    expect(figure?.previousElementSibling?.textContent).toBe("濃度の推移:");
+    expect(figure?.nextElementSibling?.textContent).toBe("次の段落");
+    expect(figure?.textContent).toBe("");
+    const payload: unknown = JSON.parse(figure?.getAttribute("data-chart") ?? "");
+    expect(payload).toMatchObject({
+      spec: { unit: "nM" },
+      data: {
+        xUnit: "s",
+        series: [{ label: "濃度", unit: "nM" }],
+        points: [{ x: 0 }, { x: 1 }, { x: 2 }],
+      },
+    });
+  });
+
   it("表と CSV が食い違えば警告にし、表には印を付けない", async () => {
     const { doc, warnings } = await convertManual(
       manual(`# A\n\n<!-- chart: x=経過; y=SpO2; data=data/spo2.csv -->\n\n${CSV_TABLE}`),
@@ -177,6 +211,11 @@ describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
 
   it.each([
     ["表でない", "<!-- chart: x=経過; y=SpO2 -->\n\n本文", "印のすぐ後に表がありません"],
+    [
+      "表なしで y2",
+      "<!-- chart: x=経過; y=濃度; y2=心拍数; data=data/c.csv -->\n\n本文",
+      "y2 を使えません",
+    ],
     [
       "列が無い",
       "<!-- chart: x=経過; y=脈 -->\n| 経過 | SpO2 |\n|---|---|\n| 0 s | 97% |\n| 5 s | 92% |",

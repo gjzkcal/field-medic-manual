@@ -24,24 +24,34 @@ interface ChartMount {
 /**
  * 節の本文。表示の直前にもう一度無害化し、innerHTML を使わずに DOM として差し込む。
  * 画像は `data-asset-id` だけで保存しているので、ここで Blob URL を付ける。
- * `data-chart` の付いた表は、表の直前にグラフを描く（表は残す）。
+ * `data-chart` の付いた表は、表の直前にグラフを描く（表は残す）。表なしのグラフは `data-chart` の付いた figure に描く。
  */
 export function SectionBody({ html, resolveAsset }: SectionBodyProps): JSX.Element {
   const ref = useRef<HTMLDivElement>(null);
 
-  // グラフの置き場所（表の直前の figure）は、描画の前に本文の DOM の中に作っておき、React からはポータルで描く。
+  // グラフの置き場所（表の直前の figure か、表なしのグラフの figure）は、描画の前に本文の DOM の中に作っておき、React からはポータルで描く。
   // 差し込む前に作るのは、差し込んだ後に state を更新するともう一度描画が要り、アンカーへのスクロールがずれるため
   const { nodes, charts } = useMemo(() => {
     const fragment = sanitizeToFragment(html);
     const mounts: ChartMount[] = [];
-    for (const table of Array.from(fragment.querySelectorAll("table[data-chart]"))) {
-      const payload = readChartPayload(table.getAttribute("data-chart") ?? "");
+    for (const marked of Array.from(
+      fragment.querySelectorAll<HTMLElement>("table[data-chart], figure[data-chart]"),
+    )) {
+      const isTable = marked instanceof HTMLTableElement;
+      const payload = readChartPayload(marked.getAttribute("data-chart") ?? "");
       if (payload === null || payload.data.points.length < 2) {
+        // 表なしのグラフの figure は中身が無く、描けなければ空の余白になるだけなので消す
+        if (!isTable) {
+          marked.remove();
+        }
         continue;
       }
-      const host = table.ownerDocument.createElement("figure");
+      let host = marked;
+      if (isTable) {
+        host = marked.ownerDocument.createElement("figure");
+        marked.before(host);
+      }
       host.className = "manual-chart";
-      table.before(host);
       mounts.push({ host, ...payload });
     }
     // 開発時の StrictMode では effect が 2 回走るので、fragment ではなく節の子の一覧を持ち、何度でも差し込めるようにする

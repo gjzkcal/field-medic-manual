@@ -55,6 +55,10 @@ category: 物品
 | 最大の半分に下がる時刻 | 78.8 s |
 | 体内から消える時刻 | 188 s（体内から消える約 186〜188 s に、出血の倍率が 0.97 から 1.00 に跳ぶ） |
 
+1 本打ったときの体内の濃度（体内から消える時刻に 0 になる）:
+
+<!-- chart: x=経過; y=濃度; unit=nM; data=data/phenylephrine-concentration.csv -->
+
 健康な人に 1 本打ったときの推移:
 
 <!-- chart: x=経過; y=出血の倍率; y2=平均血圧; data=data/phenylephrine.csv -->

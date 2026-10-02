@@ -4,6 +4,7 @@ import {
   chartFromCsv,
   chartFromTable,
   chartMarkerBody,
+  chartWithoutTable,
   parseChartSpec,
   type ChartPayload,
 } from "@/features/content/chart";
@@ -187,6 +188,7 @@ function markAlerts(body: HTMLElement): void {
 /**
  * 表の直前の `<!-- chart: x=…; y=… -->` を読み、表に `data-chart`（印と点の JSON）を付ける。
  * `data=` の CSV があれば点は CSV から取り、表の値と突き合わせる。
+ * 印の次が表でなければ表なしのグラフとし、印のあった場所に `data-chart` 付きの空の figure を置く。
  * 印は消す。書き間違いや食い違いは警告にする（同梱の原稿は警告 0 を検査しているので、誤りに気づける）。
  */
 async function markCharts(
@@ -210,45 +212,61 @@ async function markCharts(
     const warn = (reason: string): void => {
       warnings.push(`グラフの印「${comment.data.trim()}」: ${reason}`);
     };
-    const table = nextElement(comment);
-    comment.remove();
-    const parsed = parseChartSpec(marker);
-    if ("error" in parsed) {
-      warn(parsed.error);
-      continue;
+    const next = nextElement(comment);
+    const table = next instanceof HTMLTableElement ? next : null;
+    const payload = await chartPayload(marker, table, manualPath, readData, warn);
+    if (payload === null) {
+      comment.remove();
+    } else if (table === null) {
+      const figure = body.ownerDocument.createElement("figure");
+      figure.setAttribute("data-chart", JSON.stringify(payload));
+      comment.replaceWith(figure);
+    } else {
+      table.setAttribute("data-chart", JSON.stringify(payload));
+      comment.remove();
     }
-    if (!(table instanceof HTMLTableElement)) {
-      warn("印のすぐ後に表がありません");
-      continue;
-    }
-    const fromTable = chartFromTable(table, parsed.spec);
-    if (fromTable.warnings.length > 0) {
-      fromTable.warnings.forEach(warn);
-      continue;
-    }
-    let data = fromTable.data;
-    if (parsed.spec.data !== null) {
-      const path = resolveRelative(manualPath, parsed.spec.data);
-      let text: string;
-      try {
-        if (path === null) {
-          throw new Error("原稿からの相対パスで書いてください");
-        }
-        text = await readData(path);
-      } catch (error: unknown) {
-        warn(`CSV「${parsed.spec.data}」を読めませんでした: ${String(error)}`);
-        continue;
-      }
-      const fromCsv = chartFromCsv(text, fromTable);
-      if (fromCsv.warnings.length > 0) {
-        fromCsv.warnings.forEach(warn);
-        continue;
-      }
-      data = fromCsv.data;
-    }
-    const payload: ChartPayload = { spec: parsed.spec, data };
-    table.setAttribute("data-chart", JSON.stringify(payload));
   }
+}
+
+/** 印 1 つ分の点を作る。警告があれば null（表は残し、グラフだけ出さない）。 */
+async function chartPayload(
+  marker: string,
+  table: HTMLTableElement | null,
+  manualPath: string,
+  readData: ReadData,
+  warn: (reason: string) => void,
+): Promise<ChartPayload | null> {
+  const parsed = parseChartSpec(marker);
+  if ("error" in parsed) {
+    warn(parsed.error);
+    return null;
+  }
+  const fromTable =
+    table === null ? chartWithoutTable(parsed.spec) : chartFromTable(table, parsed.spec);
+  if (fromTable.warnings.length > 0) {
+    fromTable.warnings.forEach(warn);
+    return null;
+  }
+  if (parsed.spec.data === null) {
+    return { spec: parsed.spec, data: fromTable.data };
+  }
+  const path = resolveRelative(manualPath, parsed.spec.data);
+  let text: string;
+  try {
+    if (path === null) {
+      throw new Error("原稿からの相対パスで書いてください");
+    }
+    text = await readData(path);
+  } catch (error: unknown) {
+    warn(`CSV「${parsed.spec.data}」を読めませんでした: ${String(error)}`);
+    return null;
+  }
+  const fromCsv = chartFromCsv(text, fromTable);
+  if (fromCsv.warnings.length > 0) {
+    fromCsv.warnings.forEach(warn);
+    return null;
+  }
+  return { spec: parsed.spec, data: fromCsv.data };
 }
 
 /** 空白だけのテキストを飛ばした、次の兄弟の要素。 */

@@ -47,6 +47,10 @@ category: 物品
 | 最大の半分に下がる時刻 | 69.2 s |
 | 体内から消える時刻 | 168 s（約 2 分 48 秒） |
 
+1 本打ったときの体内の濃度（体内から消える時刻に 0 になる）:
+
+<!-- chart: x=経過; y=濃度; unit=nM; data=data/metoprolol-concentration.csv -->
+
 健康な人に 1 本打ったときの推移:
 
 <!-- chart: x=経過; y=心拍数, 平均血圧; data=data/metoprolol.csv -->

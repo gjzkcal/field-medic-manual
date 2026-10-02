@@ -16,7 +16,7 @@ vi.mock("@/features/library/viewer/ManualChart", () => ({
 afterEach(cleanup);
 
 const PAYLOAD: ChartPayload = {
-  spec: { x: "経過", y: ["SpO2"], y2: [], ref: [85], title: null, data: null },
+  spec: { x: "経過", y: ["SpO2"], y2: [], ref: [85], title: null, data: null, unit: null },
   data: {
     xLabel: "経過",
     xUnit: "s",
@@ -52,6 +52,34 @@ describe("SectionBody", () => {
     const figure = container.querySelector("figure.manual-chart");
     expect(figure?.nextElementSibling?.tagName).toBe("TABLE");
     expect(figure?.previousElementSibling?.textContent).toBe("前の段落");
+  });
+
+  it("表なしのグラフは data-chart の付いた figure の中に描く", async () => {
+    const json = JSON.stringify(PAYLOAD).replaceAll('"', "&quot;");
+    const { container } = render(
+      <SectionBody
+        html={`<p>前の段落</p><figure data-chart="${json}"></figure><p>次の段落</p>`}
+        resolveAsset={resolveAsset}
+      />,
+    );
+
+    expect((await screen.findByTestId("chart")).textContent).toBe("経過: SpO2 / 3 点");
+    const figure = container.querySelector("figure.manual-chart");
+    expect(figure?.previousElementSibling?.textContent).toBe("前の段落");
+    expect(figure?.nextElementSibling?.textContent).toBe("次の段落");
+    expect(container.querySelectorAll("figure")).toHaveLength(1);
+  });
+
+  it("表なしのグラフの形が合わないときは、空の figure を残さない", () => {
+    const { container } = render(
+      <SectionBody
+        html={`<figure data-chart="{"></figure><p>本文</p>`}
+        resolveAsset={resolveAsset}
+      />,
+    );
+
+    expect(container.querySelector("figure")).toBeNull();
+    expect(container.textContent).toBe("本文");
   });
 
   it("data-chart の形が合わないときは、グラフを描かず表だけを出す", () => {

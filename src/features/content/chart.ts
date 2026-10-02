@@ -1,6 +1,7 @@
 // 原稿の表のグラフ。表の直前の `<!-- chart: x=経過; y=SpO2 -->` を読み、表の中身から折れ線の系列を作る。
 // 表より細かい点で描くときは、印の `data=` で原稿の横の CSV を指す。表は md に手で書いたまま残すので、
 // 表と CSV が食い違わないよう、表の各行の値を CSV の同じ時刻の値と突き合わせる。
+// 表を作らずに推移の形だけを見せたいとき（薬の濃度など）は、表のない場所に印を置き、CSV の点だけで描く。
 // 変換（印の検査と data-chart の付与）とビューア（data-chart の検証）の両方がここを使う。
 import { z } from "zod";
 
@@ -11,6 +12,8 @@ export const chartSpecSchema = z.strictObject({
   ref: z.array(z.number()),
   title: z.string().nullable(),
   data: z.string().nullable(),
+  // 表なしのグラフの y の線の単位。表があるときは表のセルから取る
+  unit: z.string().nullable(),
 });
 
 export type ChartSpec = z.infer<typeof chartSpecSchema>;
@@ -53,7 +56,7 @@ const chartPayloadSchema = z.strictObject({ spec: chartSpecSchema, data: chartDa
 export type ChartPayload = z.infer<typeof chartPayloadSchema>;
 
 const CHART_COMMENT = /^\s*chart\s*[:：](.*)$/is;
-const SPEC_KEYS = new Set(["x", "y", "y2", "ref", "title", "data"]);
+const SPEC_KEYS = new Set(["x", "y", "y2", "ref", "title", "data", "unit"]);
 
 /** コメントの中身がグラフの印なら、印の本文（`chart:` の後ろ）を返す。 */
 export function chartMarkerBody(comment: string): string | null {
@@ -74,7 +77,7 @@ export function parseChartSpec(body: string): { spec: ChartSpec } | { error: str
       return { error: `「${part.trim()}」は「キー=値」の形ではありません` };
     }
     if (!SPEC_KEYS.has(key)) {
-      return { error: `知らないキー「${key}」です（x / y / y2 / ref / title / data）` };
+      return { error: `知らないキー「${key}」です（x / y / y2 / ref / title / data / unit）` };
     }
     if (entries.has(key)) {
       return { error: `キー「${key}」が 2 回あります` };
@@ -105,7 +108,15 @@ export function parseChartSpec(body: string): { spec: ChartSpec } | { error: str
     ref.push(value);
   }
   return {
-    spec: { x, y, y2, ref, title: entries.get("title") ?? null, data: entries.get("data") ?? null },
+    spec: {
+      x,
+      y,
+      y2,
+      ref,
+      title: entries.get("title") ?? null,
+      data: entries.get("data") ?? null,
+      unit: entries.get("unit") ?? null,
+    },
   };
 }
 
@@ -195,6 +206,9 @@ export function chartFromTable(table: HTMLTableElement, spec: ChartSpec): TableC
     return index;
   };
 
+  if (spec.unit !== null) {
+    warnings.push("表のグラフでは unit を書けません（単位は表のセルから取ります）");
+  }
   const xIndex = columnIndex(spec.x);
   // 横軸が点にならない行（`—` や説明の文）は、ほかの列の値も置き場がないので点にしない
   const xCells = rows.map((cells) => {
@@ -265,6 +279,36 @@ export function chartFromTable(table: HTMLTableElement, spec: ChartSpec): TableC
       points: rowsWithX.map(({ x, values }) => ({ x, values })),
     },
     tolerances: rowsWithX.map((r) => r.tolerance),
+    warnings,
+  };
+}
+
+/**
+ * 表なしのグラフの骨組み（点は空）。点は chartFromCsv で CSV から入れる。
+ * 突き合わせる表の行が無いので、CSV の点をそのまま描く。横軸は CSV の約束どおり秒。
+ */
+export function chartWithoutTable(spec: ChartSpec): TableChart {
+  const warnings: string[] = [];
+  if (spec.data === null) {
+    warnings.push("印のすぐ後に表がありません（表なしで描くときは data= で CSV を指してください）");
+  }
+  // 2 つ目のグラフの単位を書く場所がないので、表なしでは 1 つのグラフだけにする
+  if (spec.y2.length > 0) {
+    warnings.push("表なしのグラフでは y2 を使えません");
+  }
+  return {
+    data: {
+      xLabel: spec.x,
+      xUnit: "s",
+      series: spec.y.map((label, i) => ({
+        key: `s${String(i)}`,
+        label,
+        panel: "y",
+        unit: spec.unit,
+      })),
+      points: [],
+    },
+    tolerances: [],
     warnings,
   };
 }

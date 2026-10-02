@@ -57,6 +57,10 @@ category: 物品
 | 濃度が最大になる時刻 | 96.0 s |
 | 最大の濃度 | 485.8 nM |
 
+1 本打ったときの体内の濃度（体内から消える時刻に 0 になる）:
+
+<!-- chart: x=経過; y=濃度; unit=nM; data=data/naloxone-concentration.csv -->
+
 ## 入手
 
 Circulation 入りの医療キットに 8 本入っている（[医療キット](medical-kit.md)）。Circulation なしでは存在しない。

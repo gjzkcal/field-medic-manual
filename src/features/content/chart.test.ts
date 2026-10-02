@@ -6,6 +6,7 @@ import {
   parseChartCell,
   parseChartSpec,
   chartFromCsv,
+  chartWithoutTable,
   readChartPayload,
   type ChartSpec,
 } from "@/features/content/chart";
@@ -37,9 +38,11 @@ describe("chartMarkerBody", () => {
 });
 
 describe("parseChartSpec", () => {
-  it("x・y・y2・ref・title・data を読み、列は , と 、 で分ける", () => {
+  it("x・y・y2・ref・title・data・unit を読み、列は , と 、 で分ける", () => {
     expect(
-      spec(" x=経過; y=血液、 SpO2; y2=心拍数; ref=85, 75,−5; title=推移; data=data/a.csv "),
+      spec(
+        " x=経過; y=血液、 SpO2; y2=心拍数; ref=85, 75,−5; title=推移; data=data/a.csv; unit=nM ",
+      ),
     ).toEqual({
       x: "経過",
       y: ["血液", "SpO2"],
@@ -47,6 +50,7 @@ describe("parseChartSpec", () => {
       ref: [85, 75, -5],
       title: "推移",
       data: "data/a.csv",
+      unit: "nM",
     });
     expect(spec("x=経過;y=SpO2;")).toEqual({
       x: "経過",
@@ -55,6 +59,7 @@ describe("parseChartSpec", () => {
       ref: [],
       title: null,
       data: null,
+      unit: null,
     });
   });
 
@@ -138,6 +143,44 @@ describe("chartFromTable", () => {
     ]);
     // 横軸の列が無ければ、線ごとの「点が足りない」は重ねて出さない
     expect(chartFromTable(table(html), spec("x=時間; y=SpO2")).warnings).toHaveLength(1);
+  });
+
+  it("表があるのに unit を書いたら警告にする（単位は表のセルから取るため）", () => {
+    const html = `<table>
+      <thead><tr><th>経過</th><th>SpO2</th></tr></thead>
+      <tbody><tr><td>0 s</td><td>97%</td></tr><tr><td>5 s</td><td>92%</td></tr></tbody>
+    </table>`;
+    expect(chartFromTable(table(html), spec("x=経過; y=SpO2; unit=%")).warnings).toEqual([
+      "表のグラフでは unit を書けません（単位は表のセルから取ります）",
+    ]);
+  });
+});
+
+describe("chartWithoutTable", () => {
+  it("線の名前は印の y、単位は unit、横軸は秒にし、点は CSV からそのまま取る", () => {
+    const skeleton = chartWithoutTable(spec("x=経過; y=濃度; unit=nM; data=a.csv"));
+    expect(skeleton.warnings).toEqual([]);
+    const { data, warnings } = chartFromCsv("経過,濃度\n0,0\n1,30.5\n2,58\n", skeleton);
+    expect(warnings).toEqual([]);
+    expect(data).toEqual({
+      xLabel: "経過",
+      xUnit: "s",
+      series: [{ key: "s0", label: "濃度", panel: "y", unit: "nM" }],
+      points: [
+        { x: 0, values: { s0: 0 } },
+        { x: 1, values: { s0: 30.5 } },
+        { x: 2, values: { s0: 58 } },
+      ],
+    });
+  });
+
+  it("data が無い、y2 がある印は警告にする", () => {
+    expect(chartWithoutTable(spec("x=経過; y=濃度")).warnings).toEqual([
+      "印のすぐ後に表がありません（表なしで描くときは data= で CSV を指してください）",
+    ]);
+    expect(chartWithoutTable(spec("x=経過; y=濃度; y2=心拍数; data=a.csv")).warnings).toEqual([
+      "表なしのグラフでは y2 を使えません",
+    ]);
   });
 });
 

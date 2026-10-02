@@ -53,6 +53,10 @@ category: 物品
 | 最大の半分に下がる時刻 | 63.7 s |
 | 体内から消える時刻 | 164 s（約 2 分 44 秒） |
 
+1 本打ったときの体内の濃度（体内から消える時刻に 0 になる）:
+
+<!-- chart: x=経過; y=濃度; unit=nM; data=data/epinephrine-concentration.csv -->
+
 健康な人に 1 本打ったときの推移:
 
 <!-- chart: x=経過; y=心拍数, 平均血圧; y2=蘇生判定の頻度の倍率; data=data/epinephrine.csv -->
