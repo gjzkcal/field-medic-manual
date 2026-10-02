@@ -18,7 +18,7 @@ category: 物品
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [意識不明への対応](consciousness.md) ／ [意識](consciousness-system.md) ／ [状態と閾値](states.md) ／ [痛みと薬](pain-medications.md) ／ [物品・操作と所要時間](items-and-timing.md)
+関連: [意識不明への対応](consciousness.md) ／ [意識](consciousness-system.md) ／ [状態と閾値](states.md) ／ [薬の効き方](drug-effects.md) ／ [物品・操作と所要時間](items-and-timing.md)
 
 ## 効果
 
@@ -26,7 +26,7 @@ category: 物品
 
 - Stable 以外（Unstable・Critical・心停止）では何も起きない。
 - 成功すると意識の値を 24 HP/s（30 × 本体の基本倍率 0.8）で 5 s 回復する（最大 120）。回復倍率の影響は受けない。
-- 成功したときだけ投薬記録に残る（[投薬記録](pain-medications.md#投薬記録)）。
+- 成功したときだけ投薬記録に残る（[投薬記録](vitals.md#投薬記録)）。
 
 ## 使い方
 
@@ -59,6 +59,7 @@ category: 物品
 | していない | 50 | 0.15 | 0.8 | 1.25 | 125 s |
 | していない | 25 | 0.075 | 0.5 | 2 | 250 s |
 | した | 100 | 0.2 | 1.0 | 1 | 93.8 s |
+| した | 90 | 0.18 | 0.92 | 1.09 | 104.2 s |
 | した | 75 | 0.15 | 0.8 | 1.25 | 125 s |
 | した | 50 | 0.1 | 0.6 | 1.67 | 187.5 s |
 | した | 25 | 0.05 | 0.4 | 2.5 | 375 s |

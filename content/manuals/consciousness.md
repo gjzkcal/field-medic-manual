@@ -18,7 +18,7 @@ category: 処置
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [意識](consciousness-system.md) ／ [炭酸アンモニウム](ammonium-carbonate.md) ／ [出血と止血](hemorrhage.md) ／ [致命傷と Second Chance](death-second-chance.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [痛みと薬](pain-medications.md) ／ [気道閉塞と気道の確保](airway.md) ／ [診察とバイタルの確かめ方](vitals.md)
+関連: [意識](consciousness-system.md) ／ [炭酸アンモニウム](ammonium-carbonate.md) ／ [出血と止血](hemorrhage.md) ／ [致命傷と Second Chance](death-second-chance.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [エピネフリン](epinephrine.md) ／ [気道閉塞と気道の確保](airway.md) ／ [診察とバイタルの確かめ方](vitals.md)
 
 ## 意識が戻る条件と時間
 
@@ -35,7 +35,7 @@ category: 処置
 - エピネフリン（Epinephrine と表示される）は意識を戻さない。心拍数を上げ（1 本でピーク +25 bpm）、CPR の蘇生の判定の頻度を上げる（最大 1.43 倍）。
 - 使える条件はなく、意識のある人にも何本でも打てる（過量投与がある）。
 - 意識を戻すのは炭酸アンモニウム（[炭酸アンモニウムで起こす](#炭酸アンモニウムで起こす)）。
-- 薬としての効き方は [エピネフリン](pain-medications.md#エピネフリン)、心停止での役割は [エピネフリンの役割](cardiac-arrest.md#エピネフリンの役割)。
+- 薬としての効き方は [エピネフリン](epinephrine.md)、心停止での役割は [エピネフリンの役割](cardiac-arrest.md#エピネフリンの役割)。
 
 ### Circulation なし（Core だけ）の場合
 

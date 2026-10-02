@@ -48,8 +48,8 @@ nodes:
     items: [フェニレフリン（Phenylephrine）, 生理食塩水]
     ifMissing: { label: どちらも持っていない, next: a-move-cover }
     links:
-      - doc:pain-medications.md#フェニレフリン
-      - doc:pain-medications.md#過量投与
+      - doc:phenylephrine.md
+      - doc:drug-effects.md#過量投与
       - doc:saline.md
     next: a-move-cover
 
@@ -279,7 +279,7 @@ nodes:
     ifMissing: { next: a-cpr }
     links:
       - doc:cardiac-arrest.md#エピネフリンの役割
-      - doc:pain-medications.md#過量投与
+      - doc:drug-effects.md#過量投与
     next: a-cpr
 
   a-cpr:
@@ -359,8 +359,8 @@ nodes:
     items: [モルヒネ注射器]
     ifMissing: { next: a-pain-no-morphine }
     links:
-      - doc:pain-medications.md#モルヒネ注射器
-      - doc:pain-medications.md#過量投与
+      - doc:morphine.md
+      - doc:drug-effects.md#過量投与
     next: end-stable
 
   a-pain-no-morphine:
@@ -368,7 +368,7 @@ nodes:
     text: 医療キットか仲間からモルヒネ注射器を受け取る
     help: 医療キットにはモルヒネ注射器が 8 本入っている。なければ後回しでよい（痛みの自然回復はとても遅い）
     links:
-      - doc:pain-medications.md#痛みの仕組み
+      - doc:pain.md#痛みの仕組み
     next: end-stable
 
   end-stable:

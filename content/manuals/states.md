@@ -18,7 +18,7 @@ Circulation の 5 つの状態（Stable / Unstable / Critical / 心停止 / 蘇�
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [診察とバイタルの確かめ方](vitals.md) ／ [バイタル](vitals-system.md) ／ [出血](bleeding-system.md) ／ [心停止と蘇生](cardiac-arrest-system.md) ／ [意識不明への対応](consciousness.md) ／ [痛みと薬](pain-medications.md) ／ [サーバー設定の注意点](server-settings.md)
+関連: [診察とバイタルの確かめ方](vitals.md) ／ [バイタル](vitals-system.md) ／ [出血](bleeding-system.md) ／ [心停止と蘇生](cardiac-arrest-system.md) ／ [意識不明への対応](consciousness.md) ／ [薬の効き方](drug-effects.md) ／ [サーバー設定の注意点](server-settings.md)
 
 ## 5 つの状態
 
@@ -47,7 +47,7 @@ Circulation を入れると、生存しているキャラクターは次の 5 �
 
 - 式: `当たる ⇔ (心拍数 < 下限) または (心拍数 > 上限) または (平均血圧 < 下限 かつ 心拍数 ≤ 条件の値) または (平均血圧 > 上限) または (血液の割合 ≤ 分類の閾値) または (SpO2 < 閾値)`
 - 戻るとき（Unstable → Stable、Critical → Unstable）は、その状態の条件に**どれも当たらなくなった**時点で戻る。戻りの余裕（ヒステリシス）はない。
-- 心拍数と平均血圧の上限は 3 つとも同じなので、**高すぎる心拍数・血圧では Stable からいきなり心停止**する（エピネフリン・フェニレフリンの過量投与。[過量投与](pain-medications.md#過量投与)）。
+- 心拍数と平均血圧の上限は 3 つとも同じなので、**高すぎる心拍数・血圧では Stable からいきなり心停止**する（エピネフリン・フェニレフリンの過量投与。[過量投与](drug-effects.md#過量投与)）。
 
 計算例:
 

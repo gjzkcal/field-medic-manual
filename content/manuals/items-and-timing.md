@@ -19,7 +19,7 @@ category: 物品
 > 処置の所要時間は、ゲーム本体（1.8.0.13）のアニメーションの長さから算出した値で、実測ではない。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [出血と止血](hemorrhage.md) ／ [痛みと薬](pain-medications.md) ／ [気道閉塞と気道の確保](airway.md) ／ [気胸と処置](breathing.md) ／ [サーバー設定の注意点](server-settings.md) ／ [この原稿の読み方](about-this-manual.md)
+関連: [出血と止血](hemorrhage.md) ／ [痛みと抑え方](pain.md) ／ [気道閉塞と気道の確保](airway.md) ／ [気胸と処置](breathing.md) ／ [サーバー設定の注意点](server-settings.md) ／ [この原稿の読み方](about-this-manual.md)
 
 ## 物品の一覧
 
@@ -49,7 +49,7 @@ category: 物品
 | モルヒネ注射器 | 鎮痛量を足す（痛みそのものは残る）。心拍数と血管抵抗を下げる。使う条件はなく、何本でも打てる（過量で意識喪失・心停止する） | 痛みだけを実効 2.5 HP/s × 60 s 治す（体の傷は治さない）。痛みがあり、前のモルヒネの効果が切れているときだけ使える |
 | エピネフリン | 意識は戻さない。心拍数を最大 +25 bpm 上げ、CPR の蘇生判定の頻度を最大 1.43 倍にする。使う条件はない | 意識（resilience）を実効 4 HP/s × 30 s 戻す。意識不明・前のエピネフリンの効果が切れている・出血していない・全体の健康度 0.33 以上（`m_fMinHealthScaledForEpinephrine` の既定 0.33 のとき）のときだけ使える |
 
-- 薬の効き方の詳細は [痛みと薬](pain-medications.md#circulation-の有無で変わる薬の扱い)、エピネフリンで起こす条件は [エピネフリンで起こす](consciousness.md#エピネフリンで起こす) を見る。
+- 薬の効き方の詳細は [薬の効き方](drug-effects.md#circulation-の有無で変わる薬の扱い)、エピネフリンで起こす条件は [エピネフリンで起こす](consciousness.md#エピネフリンで起こす) を見る。
 
 ### Hitzones を入れている場合
 
@@ -79,7 +79,7 @@ Circulation の物品は英語で表示される。医療キットに 8 本ず�
 | 回復倍率 | そのときの意識の回復倍率。Stable なら 0.3 × 脳の残りの割合、蘇生した後は 0.2 × 脳の残りの割合 | — |
 
 - 計算例: 蘇生していない Stable の患者で脳が 75% なら、回復倍率 = 0.3 × 0.75 = 0.225。成功率 = 0.2 + 0.8 × 0.225 ÷ 0.2 = 1.1 → 1（必ず成功）。脳が 75% 以上なら必ず成功する。
-- 詳しくは [炭酸アンモニウムで起こす](consciousness.md#炭酸アンモニウムで起こす) と [痛みと薬](pain-medications.md#炭酸アンモニウム) を見る。
+- 詳しくは [炭酸アンモニウムで起こす](consciousness.md#炭酸アンモニウムで起こす) と [炭酸アンモニウム](ammonium-carbonate.md) を見る。
 
 > [!NOTE]
 > 公式ドキュメントとの違い: フェニレフリンのヒントには「出血と輸液を遅くする（slows down bleeding and transfusion）」とあるが、ソースでは出血だけが遅くなり、生理食塩水は遅くならない。

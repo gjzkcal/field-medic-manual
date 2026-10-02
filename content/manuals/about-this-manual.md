@@ -66,7 +66,7 @@ category: はじめに
 | 出血の上限 | `max(20, 心拍出量 ÷ 60)` ml/s | 同左 | 設定 `m_fMaxTotalBleedingRate`（既定は上限なし） | 大腿動脈の出血は腰の傷として数える |
 | AI の治療（AI の MOD） | 包帯・生理食塩水・医療キットだけ。Breathing の物品は使わない | 包帯・生理食塩水・医療キット（エピネフリンは使えない） | 包帯・生理食塩水・エピネフリン・医療キット | 同じ |
 
-- 表の詳細: [血液量と出血の段階](bleeding-system.md#血液量と出血の段階) ／ [Circulation の有無で変わる薬の扱い](pain-medications.md#circulation-の有無で変わる薬の扱い) ／ [Circulation を入れているときの結果](death-second-chance.md#circulation-を入れているときの結果) ／ [心停止に入る経路](cardiac-arrest-system.md#心停止に入る経路) ／ [AI が治療する相手](ai-medic.md#ai-が治療する相手)
+- 表の詳細: [血液量と出血の段階](bleeding-system.md#血液量と出血の段階) ／ [Circulation の有無で変わる薬の扱い](drug-effects.md#circulation-の有無で変わる薬の扱い) ／ [Circulation を入れているときの結果](death-second-chance.md#circulation-を入れているときの結果) ／ [心停止に入る経路](cardiac-arrest-system.md#心停止に入る経路) ／ [AI が治療する相手](ai-medic.md#ai-が治療する相手)
 - AI（ACE Medical AI）は治療する側の追加なので、組み合わせとは別に、AI が関わる話題だけで書き分けた。
 
 ## 時間と数値の読み方
@@ -150,22 +150,27 @@ category: はじめに
 | 原稿 | 分類 | 対象 | 内容 |
 |---|---|---|---|
 | [この原稿の読み方](about-this-manual.md) | はじめに | 一般 | 対象の版と MOD、組み合わせの書き分け、時間と数値の読み方、表示名の言語 |
-| [診察とバイタルの確かめ方](vitals.md) | 処置 | Circulation | バイタルを確かめる操作、正常値、5 つの状態のあらまし、診察画面の表示、画面の効果 |
+| [診察とバイタルの確かめ方](vitals.md) | 処置 | Circulation | バイタルを確かめる操作、正常値、5 つの状態のあらまし、診察画面の表示、投薬記録、画面の効果 |
 | [出血と止血](hemorrhage.md) | 処置 | Core | 出血の見分け方、止血に使う物品、首と大腿動脈の大出血の処置の要点 |
 | [意識不明への対応](consciousness.md) | 処置 | Core | 意識が戻る条件と時間の目安、エピネフリン・炭酸アンモニウムで起こす、気道と意識 |
 | [心停止と CPR](cardiac-arrest.md) | 処置 | Circulation | 心停止の見分け方、脳が尽きるまでの時間、CPR の条件と時間の流れ、エピネフリンの役割、蘇生した後、Breathing を入れているとき |
 | [気道閉塞と気道の確保](airway.md) | 処置 | Breathing | 気道閉塞の種類と見分け方、放置したときの推移の要点、あご先挙上・嘔吐物の除去・回復体位・King LT |
 | [気胸と処置](breathing.md) | 処置 | Breathing | 開放性気胸と緊張性気胸の見分け方、悪化の要点、チェストシール・NCD キット・酸素マスク、物品の入手 |
+| [痛みと抑え方](pain.md) | 処置 | Core | 痛みの画面効果（見分け方）、痛みの仕組みとモルヒネで抑える要点 |
 | [止血帯](tourniquet.md) | 物品 | Core | 効果、使い方、巻いたままにしたとき、所要時間 |
 | [包帯](bandage.md) | 物品 | Core | 効果、使い方、所要時間 |
 | [生理食塩水](saline.md) | 物品 | Core | 効果、使い方、所要時間、Circulation の有無による違い |
+| [モルヒネ注射器](morphine.md) | 物品 | Core | 効果、使い方、所要時間、Circulation の有無で変わる効き方、入手 |
+| [エピネフリン](epinephrine.md) | 物品 | Core | 効果、使い方、所要時間、Circulation の有無で変わる効き方、CPR での役割、入手 |
+| [メトプロロール](metoprolol.md) | 物品 | Circulation | 効果、使い方、所要時間、効き方、入手 |
+| [ナロキソン](naloxone.md) | 物品 | Circulation | 効果、使い方、所要時間、効き方（モルヒネを弱める）、入手 |
+| [フェニレフリン](phenylephrine.md) | 物品 | Circulation | 効果、使い方、所要時間、効き方（血圧と出血）、入手 |
 | [炭酸アンモニウム](ammonium-carbonate.md) | 物品 | Circulation | 効果、使い方、所要時間、成功率の式、入手 |
 | [King LT](king-lt.md) | 物品 | Breathing | 効果、使い方、所要時間、入手 |
 | [チェストシール](chest-seal.md) | 物品 | Breathing | 効果、使い方、所要時間、貼るまでの時間と気胸の進み方、入手 |
 | [NCD キット](ncd-kit.md) | 物品 | Breathing | 効果、使い方、所要時間、使うまでの時間と結果、入手 |
 | [酸素マスク](oxygen-mask.md) | 物品 | Breathing | 効果、使い方、所要時間、付けたときの SpO2 の推移、入手 |
 | [物品・操作と所要時間](items-and-timing.md) | 物品 | Core | 物品の一覧、医療キット、医療ラジアルメニュー、体位を変える、処置の所要時間、衛生兵かどうかの違い、ゴミ |
-| [痛みと薬](pain-medications.md) | 物品 | Core | 痛みの仕組みと画面効果、各薬（モルヒネ注射器・エピネフリン・メトプロロール・ナロキソン・フェニレフリン・炭酸アンモニウム）、過量投与、薬の効き方の計算、投薬記録 |
 | [出血](bleeding-system.md) | システム | Core | 血液量と出血の段階、傷の出血率、放置したときの時間、血液の回復、首と大腿動脈の大出血の数値 |
 | [状態と閾値](states.md) | システム | Circulation | 5 つの状態で起きること、状態の閾値と設定、血液の分類 |
 | [バイタル](vitals-system.md) | システム | Circulation | 心拍数の決まり方、血圧の決まり方と出血したときの推移 |
@@ -173,5 +178,7 @@ category: はじめに
 | [意識](consciousness-system.md) | システム | Core | 意識を失う条件（被弾・血液）、意識が戻る条件と時間の式、回復倍率の決まり方と組み合わせごとの違い |
 | [心停止と蘇生](cardiac-arrest-system.md) | システム | Circulation | 心停止に入る経路、脳の損傷の式、CPR 中のバイタル、蘇生の判定と蘇生までの時間、蘇生した後の状態の移り方、心停止中の SpO2 |
 | [致命傷と Second Chance](death-second-chance.md) | システム | Core | 致命打で即死するか倒れるかの判定、部位ごとの確率、倒れた後の追い打ち、死亡の条件 |
+| [痛み](pain-system.md) | システム | Core | 痛みの仕組み（式・損傷の合計と痛み・放置したとき）、痛みの画面効果の式と設定 |
+| [薬の効き方](drug-effects.md) | システム | Circulation | Circulation の有無で変わる薬の扱い、表示名と操作、過量投与、薬の効き方の計算 |
 | [AI の治療](ai-medic.md) | 管理者向け | AI | AI が治療する相手、使う物品と使わない物品、衛生兵になる AI、AI 自身が負傷したとき、AI の心停止 |
 | [サーバー設定の注意点](server-settings.md) | 管理者向け | 一般 | 設定の入口、ミッションヘッダーの差し替え、危険な設定と効かない設定、ゲームモードの設定（出血倍率・意識喪失の禁止）、死亡を防ぐ設定、AI の設定、主な既定値 |

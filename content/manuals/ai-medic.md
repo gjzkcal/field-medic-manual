@@ -63,7 +63,7 @@ AI の衛生兵は、意識不明の患者に次の順で**1 つだけ**物品�
 | Core + Circulation + Breathing ／ Core + Circulation | 40% | 3000 ml の 40% = 1200 ml 未満 |
 | Core だけ | 50% | 6000 ml の 50% = 3000 ml 未満 |
 
-Core のエピネフリンが使える条件（Core だけのとき）: 患者が意識不明、エピネフリンの効果が残っていない、出血していない、全体の健康度が 0.33 以上（`m_fMinHealthScaledForEpinephrine` の既定 0.33 のとき）。詳しくは [エピネフリン](pain-medications.md#エピネフリン)。
+Core のエピネフリンが使える条件（Core だけのとき）: 患者が意識不明、エピネフリンの効果が残っていない、出血していない、全体の健康度が 0.33 以上（`m_fMinHealthScaledForEpinephrine` の既定 0.33 のとき）。詳しくは [エピネフリン](epinephrine.md)。
 
 治療の動き:
 

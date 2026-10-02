@@ -84,8 +84,8 @@ rows:
       注意: 激痛の患者は、フェニレフリン約 1 本で心停止しうる。
       意識を失ってから 1 秒以上たった後に致命打を受けると、Second Chance の判定なしで即死する
     links:
-      - doc:pain-medications.md#フェニレフリン
-      - doc:pain-medications.md#過量投与
+      - doc:phenylephrine.md
+      - doc:drug-effects.md#過量投与
       - doc:saline.md
       - doc:items-and-timing.md#負傷者を運ぶ
       - doc:death-second-chance.md#倒れた後の追い打ち
@@ -535,8 +535,8 @@ rows:
       一度に約 3 本（3.1 本）で意識喪失、約 4 本（3.8 本）で心停止する。確率ではなく必ず起きる。
       モルヒネ 4 本を同時に打った 60 秒後にナロキソン 1 本を打つと、心停止せず Stable に戻る（打たなければ 76 秒で心停止）。ナロキソンは単独では何も起きない
     links:
-      - doc:pain-medications.md#ナロキソン
-      - doc:pain-medications.md#過量投与
+      - doc:naloxone.md
+      - doc:drug-effects.md#過量投与
       - quickref:cardiac-arrest
     mods: [circulation]
 
@@ -586,9 +586,9 @@ rows:
       約 30 秒で痛みを感じなくなるが、痛み自体は残り、激痛なら約 15 分で戻る。同時に 2 本以上は打たない（一度に約 3 本で意識喪失、約 4 本で心停止）。
       痛みそのものは命に関わらないが、激痛だと心拍数が約 130 に上がり、フェニレフリン約 1 本で心停止しうる。医療キットでは痛みは減らない
     links:
-      - doc:pain-medications.md#モルヒネ注射器
-      - doc:pain-medications.md#過量投与
-      - doc:pain-medications.md#痛みの仕組み
+      - doc:morphine.md
+      - doc:drug-effects.md#過量投与
+      - doc:pain.md#痛みの仕組み
     mods: [circulation]
 
   - id: pain-core
@@ -603,8 +603,8 @@ rows:
       痛みを 60 秒かけて治す（損傷 100 なら、打ってから約 12 秒で痛みが消える）。痛みがないと使えない（「痛みはない（Not in pain）」）。
       医療キットでは痛みは減らない。放置すると、損傷 100 で約 9 分かかる
     links:
-      - doc:pain-medications.md#モルヒネ注射器
-      - doc:pain-medications.md#痛みの仕組み
+      - doc:morphine.md
+      - doc:pain.md#痛みの仕組み
     withoutMods: [circulation]
 
   - id: medkit-no-blood
