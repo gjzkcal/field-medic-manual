@@ -107,6 +107,20 @@ describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
     expect(warnings[0]).toContain("images/missing.png");
   });
 
+  it("20 字以上のセルにだけ長文のクラスを付ける", async () => {
+    const { doc } = await convertManual(
+      manual(
+        "| 項目 | 意味 |\n|---|---|\n| 心拍数 | 心拍数がこれ未満で移る。Critical の値は蘇生直後にも使う |",
+      ),
+      noImages,
+      noData,
+    );
+    const html = doc.sections[0]?.html ?? "";
+    expect(html).toContain("<td>心拍数</td>");
+    expect(html).toContain('<td class="manual-cell-long">心拍数がこれ未満で移る。');
+    expect(html).toContain("<th>意味</th>");
+  });
+
   it("グラフの印を読み、直後の表に data-chart を付けて印を消す", async () => {
     const { doc, warnings } = await convertManual(
       manual(

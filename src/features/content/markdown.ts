@@ -65,6 +65,7 @@ export async function convertManual(
   const html = await markdownToHtml(body);
   const doc = new DOMParser().parseFromString(html, "text/html");
   markAlerts(doc.body);
+  markLongCells(doc.body);
   await markCharts(doc.body, manual.path, readData, warnings);
   const result = await sectionsFromBody(doc.body, {
     resolveImage: (src) => readRelativeImage(manual.path, src, readImage),
@@ -182,6 +183,22 @@ function markAlerts(body: HTMLElement): void {
     title.className = "markdown-alert-title";
     title.textContent = ALERT_TITLES[kind] ?? kind;
     quote.prepend(title);
+  }
+}
+
+/** これ以上の文字数のセルを長文とみなす。この長さを超えると、最小幅の列では 4 行以上に折れて行が縦に伸びる */
+const LONG_CELL_CHARS = 20;
+
+/**
+ * 長文のセルにクラスを付け、ビューアでその列だけ最小幅を広げる。
+ * 狭い幅で表がはみ出すと、どの列も最小幅まで縮むため、文章の列が数文字幅になって行が縦に伸びる。
+ * どのセルが長文かは CSS では見分けられないので、変換のときに決める。
+ */
+function markLongCells(body: HTMLElement): void {
+  for (const cell of Array.from(body.querySelectorAll("th, td"))) {
+    if (cell.textContent.trim().length >= LONG_CELL_CHARS) {
+      cell.classList.add("manual-cell-long");
+    }
   }
 }
 

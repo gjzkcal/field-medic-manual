@@ -147,6 +147,7 @@
  */
 @layer components {
   .manual-body {
+    container: manual-body / inline-size;
     overflow-wrap: anywhere;
     color: var(--foreground);
   }
@@ -223,22 +224,96 @@
     background: none;
     padding: 0;
   }
-  /* 表は幅が足りないときに本文ごと横に広がらないよう、表だけを横にスクロールさせる */
+  /*
+   * 表は幅が足りないときに本文ごと横に広がらないよう、表だけを横にスクロールさせる。
+   * 罫線を separate で引くのは、collapse だと先頭の列を固定したときに罫線がスクロールで消えるため。
+   */
   .manual-body table {
     display: block;
+    width: max-content;
     max-width: 100%;
     overflow-x: auto;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-top: 1px solid var(--border);
+    border-left: 1px solid var(--border);
+    /*
+     * 右に続きがあるときだけ右端に影を出す。中身と一緒に動く覆い（local）が、右端までスクロールすると影（scroll）を隠す。
+     * 影の色は前景色から作り、ダークテーマでも見えるようにする
+     */
+    background:
+      linear-gradient(to left, var(--background) 40%, transparent) right / 2.5em 100% no-repeat
+        local,
+      radial-gradient(
+          farthest-side at 100% 50%,
+          color-mix(in oklch, var(--foreground) 35%, transparent),
+          transparent
+        )
+        right / 0.9em 100% no-repeat scroll;
   }
+  /*
+   * 表の横スクロールバーを、本文の縦スクロール（src/components/ui/scroll-area.tsx）と同じ見た目にする。
+   * 太さ 10px・溝は透明・つまみは --border の丸。つまみの周りの 1px の隙間は、透明な枠と background-clip で作る。
+   * scrollbar-width / scrollbar-color を指定すると Chromium はこの擬似要素を無視するので、それらは使わない
+   */
+  .manual-body table::-webkit-scrollbar {
+    height: 10px;
+    background: transparent;
+  }
+  .manual-body table::-webkit-scrollbar-thumb {
+    border: 1px solid transparent;
+    border-radius: 9999px;
+    background: var(--border) padding-box;
+  }
+  .manual-body table::-webkit-scrollbar-button {
+    display: none;
+  }
+  /*
+   * 本文の overflow-wrap: anywhere はセルの最小幅を 1 文字まで縮めるので、狭い幅では横スクロールにならずに列が潰れ、数値が途中で折れる。
+   * セルでは折らずに最小幅を持たせ、足りない分は表の横スクロールに回す
+   */
   .manual-body :where(th, td) {
-    border: 1px solid var(--border);
+    min-width: 6em;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
     padding: 0.4em 0.75em;
+    overflow-wrap: normal;
+    font-variant-numeric: tabular-nums;
     text-align: left;
     vertical-align: top;
+  }
+  /* 文章のセル（変換のときに印を付けている）は、最小幅だと何行にも折れて行が縦に伸びるので広めにする */
+  .manual-body .manual-cell-long {
+    min-width: 12em;
+  }
+  /*
+   * 設定名は 40 字を超えるものがあり、折らないと 1 列で画面を埋めるので、セルを少し広めにしたうえで途中で折る。
+   * 先頭の列は固定すると画面を覆うので、文章でも広げすぎない
+   */
+  .manual-body :where(th, td):has(code),
+  .manual-body tr > .manual-cell-long:first-child {
+    min-width: 8em;
+  }
+  .manual-body :where(th, td) code {
+    overflow-wrap: anywhere;
   }
   .manual-body th {
     background: var(--muted);
     font-weight: 700;
+  }
+  /*
+   * 横にスクロールしても行の名前が見えるよう、先頭の列を固定する。
+   * 本文が狭いと固定した列が画面の大半を覆うので、本文の幅が 20em（文字の大きさに比例）以上のときだけにする
+   */
+  @container manual-body (min-width: 20em) {
+    .manual-body tr > :first-child {
+      position: sticky;
+      left: 0;
+      border-right-width: 2px;
+    }
+    .manual-body td:first-child {
+      background: var(--background);
+    }
   }
   .manual-body img {
     display: block;
