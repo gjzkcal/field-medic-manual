@@ -88,6 +88,40 @@ describe("同梱した原稿", () => {
     },
   );
 
+  // 組み合わせごとの列の見出しの形
+  const COMBINATION_COLUMN = /Circulation (?:あり|なし|を入れている)|Core だけ|Core \+ Circulation|Hitzones を足し/;
+  // 列を切り替えない表（ファイル名か「ファイル名#節のアンカー」）
+  const UNSWITCHED_TABLES = new Set([
+    // 組み合わせを見比べるための表
+    "about-this-manual.md",
+    // 「（Circulation なし）」は列の値の前提の注記で、組み合わせごとの列ではない
+    "bleeding-system.md#出血が始まる条件",
+  ]);
+
+  it.each(converted.map((c) => [c.manual.fileName, c] as const))(
+    "%s: 組み合わせごとの列がある表には列の印がある",
+    (fileName, { doc }) => {
+      if (UNSWITCHED_TABLES.has(fileName)) {
+        return;
+      }
+      const missing: string[] = [];
+      for (const section of doc.sections.filter((s) => !UNSWITCHED_TABLES.has(`${fileName}#${s.anchor}`))) {
+        const container = document.createElement("div");
+        container.innerHTML = section.html;
+        for (const table of Array.from(container.querySelectorAll("table"))) {
+          const header = Array.from(table.rows[0]?.cells ?? [], (cell) => cell.textContent);
+          if (header.some((text) => COMBINATION_COLUMN.test(text)) && !table.hasAttribute("data-mod-columns")) {
+            missing.push(`${section.title}: ${header.join(" | ")}`);
+          }
+        }
+      }
+      expect(
+        missing,
+        "表の直前に <!-- columns: - | circulation | !circulation --> のように列ごとの条件を書いてください（条件のない列は -）",
+      ).toEqual([]);
+    },
+  );
+
   it("「MOD による違い」の見出しは本文を持たない（配下の組み合わせの節がすべて隠れたら一緒に隠すため）", () => {
     const wrappers = converted.flatMap(({ manual, doc }) =>
       doc.sections.filter((s) => s.title === "MOD による違い").map((s) => ({ file: manual.fileName, html: s.html })),

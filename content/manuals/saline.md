@@ -20,9 +20,11 @@ category: 物品
 
 ## 効果
 
-生理食塩水（Saline）は、血液量の 25% を 90 s かけて入れる。Circulation ありでは 750 ml（8.33 ml/s）、Circulation なしでは 1500 ml（16.7 ml/s）。出血は止めない。
+生理食塩水（Saline）は、血液量の 25% を 90 s かけて入れる。出血は止めない。
 
 `入る速さ = 総量 ÷ 90 s`
+
+<!-- columns: - | circulation | !circulation -->
 
 | 項目 | Circulation あり | Circulation なし |
 |---|---|---|

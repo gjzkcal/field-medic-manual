@@ -38,6 +38,8 @@ category: 物品
 
 ### Circulation の有無で効き方が変わる物品
 
+<!-- columns: - | circulation | !circulation -->
+
 | 物品 | Circulation を入れている場合 | Circulation なし（Core だけ）の場合 |
 |---|---|---|
 | [生理食塩水](saline.md) | 750 ml を 90 s（8.33 ml/s） | 1500 ml を 90 s（16.7 ml/s） |

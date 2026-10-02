@@ -98,6 +98,8 @@ Hitzones を入れると、エピネフリンの健康度の条件（0.33 以上
 
 AI の衛生兵は、**包帯・生理食塩水・Core のエピネフリン・医療キット以外は使わない**。止血帯・モルヒネ・CPR・体位変換はしない。Circulation の薬と Breathing の物品・処置は一切使わない。
 
+<!-- columns: - | circulation, breathing | circulation, !breathing | !circulation -->
+
 | 物品・処置 | Core + Circulation + Breathing | Core + Circulation | Core だけ |
 |---|---|---|---|
 | 包帯 | 使う | 使う | 使う |

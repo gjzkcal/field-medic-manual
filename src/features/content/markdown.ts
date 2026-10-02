@@ -11,6 +11,7 @@ import {
 import { sectionsFromBody } from "@/features/content/document";
 import { sha256Hex } from "@/features/content/hash";
 import { emptyMeta, toDocMeta } from "@/features/content/meta";
+import { markModColumns } from "@/features/content/mod-marker";
 import {
   fileName,
   fileStem,
@@ -67,6 +68,7 @@ export async function convertManual(
   markAlerts(doc.body);
   markLongCells(doc.body);
   await markCharts(doc.body, manual.path, readData, warnings);
+  markModColumns(doc.body, warnings);
   const result = await sectionsFromBody(doc.body, {
     resolveImage: (src) => readRelativeImage(manual.path, src, readImage),
   });

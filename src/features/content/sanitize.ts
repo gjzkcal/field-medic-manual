@@ -24,7 +24,7 @@ const CONFIG: Config = {
   FORBID_ATTR: ["style", "src", "srcset"],
   ALLOW_DATA_ATTR: false,
   // data-chart はグラフにする表の印（JSON）。ビューアは形を確かめてから使い、HTML としては扱わない
-  ADD_ATTR: ["data-asset-id", "data-chart"],
+  ADD_ATTR: ["data-asset-id", "data-chart", "data-mod-columns"],
 };
 
 export interface SanitizedHtml {

@@ -3,12 +3,11 @@
 import { AnchorAllocator } from "@/features/content/anchor";
 import { sha256Hex } from "@/features/content/hash";
 import { parseTags } from "@/features/content/meta";
+import { parseModConditions } from "@/features/content/mod-marker";
 import { extensionForMime, fileName } from "@/features/content/path";
 import { cleanInlineText, sanitizeHtml } from "@/features/content/sanitize";
 import type { NormalizedAsset, NormalizedSection } from "@/features/content/types";
 import type { ModConditions } from "@/features/settings/mod-conditions";
-import { isSelectableMod, SELECTABLE_MODS } from "@/features/settings/mod-settings";
-import type { ModTarget } from "@/lib/bindings/ModTarget";
 
 export interface SectionsOptions {
   /**
@@ -180,28 +179,6 @@ function takeSectionMarkers(nodes: Node[], where: string, warnings: string[]): S
     nodes.splice(index, 1);
   }
   return markers;
-}
-
-function parseModConditions(raw: string, where: string, warnings: string[]): ModConditions {
-  const mods: ModTarget[] = [];
-  const withoutMods: ModTarget[] = [];
-  for (const token of raw.split(/[,、\s]+/).filter((t) => t !== "")) {
-    // 日本語入力のまま書いた全角の ! も受ける
-    const without = /^[!！]/.test(token);
-    const name = token.replace(/^[!！]/, "").toLowerCase();
-    // core と general は常に有効なので条件にならず、ここで不明として扱う
-    if (!isSelectableMod(name)) {
-      warnings.push(
-        `mods の値が不明です: ${token}（${where}。${SELECTABLE_MODS.join(" / ")} のどれか。! を付けると入れていないとき）`,
-      );
-      continue;
-    }
-    const list = without ? withoutMods : mods;
-    if (!list.includes(name)) {
-      list.push(name);
-    }
-  }
-  return { mods, withoutMods };
 }
 
 /** 親の見出しの条件に自分の条件を足す。「あり」と「なし」が重なると、どの設定でも出ない節になるので警告する */

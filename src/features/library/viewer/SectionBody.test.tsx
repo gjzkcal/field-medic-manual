@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { ChartData, ChartPayload, ChartSpec } from "@/features/content/chart";
 import { SectionBody } from "@/features/library/viewer/SectionBody";
+import { activeMods } from "@/features/settings/mod-settings";
 
 // jsdom には描画の大きさがなく Recharts はグラフを描けないので、受け取った系列を文字で出す部品に差し替える
 vi.mock("@/features/library/viewer/ManualChart", () => ({
@@ -44,7 +45,11 @@ const resolveAsset = (): Promise<string> => Promise.reject(new Error("画像は�
 describe("SectionBody", () => {
   it("data-chart の付いた表の直前に、埋め込まれた点でグラフを描き、表は残す", async () => {
     const { container } = render(
-      <SectionBody html={tableHtml(JSON.stringify(PAYLOAD))} resolveAsset={resolveAsset} />,
+      <SectionBody
+        html={tableHtml(JSON.stringify(PAYLOAD))}
+        resolveAsset={resolveAsset}
+        active={null}
+      />,
     );
 
     // 表は 2 行だが、グラフは data-chart に埋め込まれた 3 点で描く
@@ -60,6 +65,7 @@ describe("SectionBody", () => {
       <SectionBody
         html={`<p>前の段落</p><figure data-chart="${json}"></figure><p>次の段落</p>`}
         resolveAsset={resolveAsset}
+        active={null}
       />,
     );
 
@@ -75,6 +81,7 @@ describe("SectionBody", () => {
       <SectionBody
         html={`<figure data-chart="{"></figure><p>本文</p>`}
         resolveAsset={resolveAsset}
+        active={null}
       />,
     );
 
@@ -87,10 +94,40 @@ describe("SectionBody", () => {
       <SectionBody
         html={tableHtml(JSON.stringify({ spec: PAYLOAD.spec }))}
         resolveAsset={resolveAsset}
+        active={null}
       />,
     );
 
     expect(container.querySelector("figure")).toBeNull();
     expect(container.querySelector("table")).not.toBeNull();
+  });
+
+  it("data-mod-columns の付いた表は、設定の MOD に合わない組み合わせの列を消す", () => {
+    const columns = [
+      { mods: [], withoutMods: [] },
+      { mods: ["circulation"], withoutMods: [] },
+      { mods: [], withoutMods: ["circulation"] },
+    ];
+    const html = [
+      `<table data-mod-columns="${JSON.stringify(columns).replaceAll('"', "&quot;")}">`,
+      "<thead><tr><th>項目</th><th>Circulation あり</th><th>Circulation なし</th></tr></thead>",
+      "<tbody><tr><td>総量</td><td>750 ml</td><td>1500 ml</td></tr></tbody>",
+      "</table>",
+    ].join("");
+    const cells = (container: HTMLElement): string[] =>
+      Array.from(container.querySelectorAll("th, td")).map((c) => c.textContent);
+
+    const filtered = render(
+      <SectionBody
+        html={html}
+        resolveAsset={resolveAsset}
+        active={activeMods({ enabled: ["circulation"] })}
+      />,
+    );
+    expect(cells(filtered.container)).toEqual(["項目", "Circulation あり", "総量", "750 ml"]);
+    cleanup();
+
+    const all = render(<SectionBody html={html} resolveAsset={resolveAsset} active={null} />);
+    expect(cells(all.container)).toHaveLength(6);
   });
 });

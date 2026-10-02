@@ -121,6 +121,8 @@ Second Chance は、致命打で即死する代わりに意識不明にする仕
 
 Circulation を入れていると、Second Chance で助かった人は心停止になる（最初の 1 回だけ）。心停止のまま約 310 s（約 5 分）たつと脳の損傷で死亡する。心停止から戻る手段は CPR による蘇生だけ（[心停止と CPR](cardiac-arrest.md)）。
 
+<!-- columns: - | circulation | !circulation -->
+
 | 項目 | Circulation あり | Circulation なし |
 |---|---|---|
 | 助かった直後 | 心停止（状態の次の更新、最大約 1 s 後） | 意識不明（意識の値 0） |

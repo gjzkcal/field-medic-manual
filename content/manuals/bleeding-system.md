@@ -22,6 +22,8 @@ category: システム
 
 Circulation を入れると血液は 3000 ml になり、Class I〜IV の分類で状態が変わる。血液 40% を切ると強制的に意識を失い、25% 前後で心停止する。Circulation なしでは血液は 6000 ml で、33.3% を切ると意識を失う。どちらも血液 0 で出血死の判定になる。
 
+<!-- columns: - | circulation | !circulation -->
+
 | 血液の残り | Circulation あり（3000 ml） | Circulation なし（6000 ml） |
 |---|---|---|
 | 100% | Normal | 無傷 |
@@ -92,6 +94,8 @@ Critical（血液 ≤ 40%）の間は、出血性ショックで心拍数の目�
 - 胸が 30% まで減った傷: Circulation なし `0.7 × 65 = 45.5 ml/s`（血液 6000 ml から意識を失うまで約 88 s）。
 
 ### 部位ごとの最大出血率
+
+<!-- columns: - | - | !circulation | circulation -->
 
 | 部位 | 最大 HP | 最大出血率 Circulation なし | 最大出血率 Circulation あり |
 |---|---|---|---|
@@ -226,6 +230,8 @@ Circulation 入りで 40 ml/s の出血を放置すると、23 s で Unstable、
 | 1350 s | 本体の全回復時間 | 1350 s |
 | `m_fBloodRegenScale` | ACE の自然回復の倍率（サーバー設定）。ゲームモードの回復倍率を上書きする | 1 |
 | 待ち | 最後の出血が消えてから回復が始まるまで（ゲームモードの設定） | 10 s |
+
+<!-- columns: - | circulation | !circulation -->
 
 | 項目 | Circulation あり | Circulation なし |
 |---|---|---|

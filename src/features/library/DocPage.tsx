@@ -373,7 +373,11 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
                   <HiddenSectionNotice conditions={section} />
                 )}
                 {section.html !== "" && (
-                  <SectionBody html={section.html} resolveAsset={resolveAsset} />
+                  <SectionBody
+                    html={section.html}
+                    resolveAsset={resolveAsset}
+                    active={showAll ? null : active}
+                  />
                 )}
               </section>
             ))}

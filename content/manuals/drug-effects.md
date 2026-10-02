@@ -22,6 +22,8 @@ Circulation の有無で変わる薬の扱い、過量投与の閾値、薬の�
 
 Circulation を入れると、エピネフリンとモルヒネは別の仕組み（体内の濃度で効く薬のモデル）に置き換わり、**使用条件がなくなる**（いつでも・何本でも打てる）。その代わり過量投与がある。
 
+<!-- columns: - | circulation | !circulation -->
+
 | 物品 | Core + Circulation（+ Breathing） | Circulation なし（Core だけ） |
 |---|---|---|
 | エピネフリン（Epinephrine） | 意識は戻さない。心拍数を上げ、CPR の判定を速める | 意識不明の患者を起こす |

@@ -22,6 +22,8 @@ category: システム
 
 意識の値（resilience、0〜100。プレイヤーには見えない）が 33.3 以下になると意識を失う。意識の値は被弾で減る。Circulation を入れていると、状態が Critical 以上に悪化したときにも意識の値が 0 になり、その場で意識を失う。
 
+<!-- columns: - | circulation, breathing | circulation, !breathing | !circulation | hitzones -->
+
 | きっかけ | Core + Circulation + Breathing（普段） | Circulation だけ追加 | Core だけ | Hitzones を足したとき |
 |---|---|---|---|---|
 | 被弾で意識の値が 33.3 以下 | 意識を失う | 同左 | 同左 | 変わらない |
@@ -91,6 +93,8 @@ category: システム
 エピネフリン・炭酸アンモニウムの回復は待ちをやり直さない。被弾すると待ちは最初からになる。
 
 ### 回復倍率の決まり方
+
+<!-- columns: - | circulation, breathing | circulation, !breathing | !circulation -->
 
 | 状況 | Core + Circulation + Breathing（普段） | Circulation だけ追加 | Core だけ |
 |---|---|---|---|
