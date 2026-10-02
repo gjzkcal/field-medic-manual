@@ -146,7 +146,7 @@ Breathing を入れていない組み合わせ（Core だけ、Core + Circulatio
 | Critical | `m_CriticalThresholds` の `m_fSpO2` | 75 |
 | 心停止 | `m_CardiacArrestThresholds` の `m_fSpO2` | 65 |
 
-閾値の詳しい扱いは [状態の閾値](vitals-system.md#状態の閾値)。サーバーのミッションヘッダーで Circulation の設定を書くと、この 3 つが 0 になることがある（[ミッションヘッダーの設定は丸ごと差し替わる](server-settings.md#ミッションヘッダーの設定は丸ごと差し替わる)）。
+閾値の詳しい扱いは [状態の閾値](states.md#状態の閾値)。サーバーのミッションヘッダーで Circulation の設定を書くと、この 3 つが 0 になることがある（[ミッションヘッダーの設定は丸ごと差し替わる](server-settings.md#ミッションヘッダーの設定は丸ごと差し替わる)）。
 
 ### ゆっくり下がる理由
 

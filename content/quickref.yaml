@@ -141,7 +141,7 @@ rows:
     links:
       - doc:saline.md
       - doc:bleeding-system.md#血液の回復
-      - doc:vitals-system.md#状態の閾値
+      - doc:states.md#状態の閾値
     mods: [circulation]
 
   - id: blood-loss-core
@@ -400,7 +400,7 @@ rows:
       蘇生していなければ、脳 75% 以上で必ず成功し、約 3 秒で目覚める
     links:
       - doc:consciousness.md#炭酸アンモニウムで起こす
-      - doc:vitals-system.md#状態の閾値
+      - doc:states.md#状態の閾値
       - doc:airway.md#回復体位
       - flow:casualty-first-contact
     mods: [circulation, breathing]
@@ -421,7 +421,7 @@ rows:
       蘇生していなければ、脳 75% 以上で必ず成功し、約 3 秒で目覚める
     links:
       - doc:consciousness.md#炭酸アンモニウムで起こす
-      - doc:vitals-system.md#状態の閾値
+      - doc:states.md#状態の閾値
       - quickref:cardiac-arrest-no-breathing
       - flow:casualty-first-contact
     mods: [circulation]
@@ -461,7 +461,7 @@ rows:
       CPR で蘇生した後は、脳の状態で成功率が下がる（脳 50% で 60%）。気道が塞がっている間は、Stable でも自然には目覚めない
     links:
       - doc:consciousness.md#炭酸アンモニウムで起こす
-      - doc:vitals-system.md#状態の閾値
+      - doc:states.md#状態の閾値
       - doc:consciousness.md#気道と意識
       - quickref:apnea
     mods: [circulation, breathing]
@@ -480,7 +480,7 @@ rows:
       CPR で蘇生した後は、脳の状態で成功率が下がる（脳 50% で 60%）
     links:
       - doc:consciousness.md#炭酸アンモニウムで起こす
-      - doc:vitals-system.md#状態の閾値
+      - doc:states.md#状態の閾値
     mods: [circulation]
     withoutMods: [breathing]
 

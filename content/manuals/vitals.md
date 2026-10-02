@@ -18,7 +18,7 @@ category: 処置
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [バイタル](vitals-system.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [痛みと薬](pain-medications.md) ／ [出血と止血](hemorrhage.md) ／ [呼吸と気胸](breathing.md) ／ [気道管理](airway.md) ／ [意識喪失と回復](consciousness.md)
+関連: [状態と閾値](states.md) ／ [バイタル](vitals-system.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [痛みと薬](pain-medications.md) ／ [出血と止血](hemorrhage.md) ／ [呼吸と気胸](breathing.md) ／ [気道管理](airway.md) ／ [意識喪失と回復](consciousness.md)
 
 ## バイタルを確かめる操作
 
@@ -76,17 +76,9 @@ category: 処置
 
 ## 5 つの状態
 
-Circulation を入れると、生存しているキャラクターは次の 5 つの状態のどれかになる。サーバーが約 1 s ごとに判定する。
+Circulation を入れると、生存しているキャラクターは 5 つの状態（Stable / Unstable / Critical / 心停止 / 蘇生中）のどれかになる。Critical に入ると意識を失い、Unstable 以下では意識不明のまま自然には目覚めない。出血では血液 70% 以下で Unstable、40% 以下で Critical になる。
 
-| 状態 | 起きること |
-|---|---|
-| Stable（安定） | 意識不明なら自然に目覚める（抵抗値が 1.2 HP/s × 脳の割合で回復。CPR で蘇生した後は 0.8 HP/s × 脳の割合）。炭酸アンモニウムが効く |
-| Unstable（不安定） | これだけでは意識を失わない。ただし意識不明なら自然には目覚めない（回復が 0）。炭酸アンモニウムは効かない |
-| Critical（重篤） | **入った瞬間に意識を失う**。血液 40% 未満なら頻脈が始まる |
-| 心停止（Cardiac arrest） | 心拍数・血圧が 0。意識不明。10 s 後から脳が減り、約 5 分で死亡（[心停止と CPR](cardiac-arrest.md)） |
-| 蘇生中（Resuscitation） | CPR を受けている間。脳は減らない |
-
-状態は心拍数・平均血圧・血液の残り・SpO2 の閾値で決まる。出血では血液 70% 以下で Unstable、40% 以下で Critical になる。閾値の表と設定は [状態の閾値](vitals-system.md#状態の閾値)。
+状態ごとに起きること、閾値と設定は [状態と閾値](states.md) にまとめた。
 
 ## 呼吸数と SpO2
 
@@ -207,6 +199,6 @@ Circulation を入れると、生存しているキャラクターは次の 5 �
 
 ## 詳しい仕組み
 
-- 状態が変わる閾値（心拍数・平均血圧・血液・SpO2）と設定、血液の分類（Class I〜IV）は [状態の閾値](vitals-system.md#状態の閾値)。
+- 状態が変わる閾値（心拍数・平均血圧・血液・SpO2）と設定、血液の分類（Class I〜IV）は [状態の閾値](states.md#状態の閾値)。
 - 心拍数は「目標の心拍数」（通常 80、痛みで最大 130）に向かって、毎秒、残りの差の半分ずつ近づく。出血で血液が 40% を切り Critical になると頻脈が始まり、約 26% を切ると心停止する（[心拍数の決まり方](vitals-system.md#心拍数の決まり方)）。
 - 薬と痛みがなければ、平均血圧は血液の割合に比例する（血液 50% で 47 mmHg）。通知の上下の値は平均血圧から決まった比で作る（[血圧の決まり方](vitals-system.md#血圧の決まり方)）。

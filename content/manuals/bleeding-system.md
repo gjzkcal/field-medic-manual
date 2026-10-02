@@ -38,7 +38,7 @@ Circulation を入れると血液は 3000 ml になり、Class I〜IV の分類�
 
 - Circulation の分類の境目は「残りの割合 ≤ 閾値」でその分類に入る（Class II ≤ 70%、Class III ≤ 40%、Class IV ≤ 20%）。
 - Class I の上の境目は満タン。満タンから少しでも減ると Class I になるとみられる（本体の処理からの推定）。
-- 状態（Stable / Unstable / Critical / 心停止）の詳しい条件は [状態の閾値](vitals-system.md#状態の閾値)。
+- 状態（Stable / Unstable / Critical / 心停止）の詳しい条件は [状態の閾値](states.md#状態の閾値)。
 
 ### 心停止が Class IV より先に起きる理由
 

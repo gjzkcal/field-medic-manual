@@ -112,7 +112,7 @@ Circulation の閾値の値（Settings.conf の値。ミッションヘッダー
 | `m_eBloodState` | Class II | Class III | Class IV | 血液がこの段階以下で移る |
 | `m_fSpO2`（Breathing） | 85 | 75 | 65 | SpO2（%）がこれ未満で移る |
 
-- 閾値の意味は [状態の閾値](vitals-system.md#状態の閾値) を見る。
+- 閾値の意味は [状態の閾値](states.md#状態の閾値) を見る。
 - 段階（`m_eBloodState`）などの列挙の値や、入れ子のオブジェクトを JSON でどう書くかは未確認（[ミッションヘッダーの設定は丸ごと差し替わる](#ミッションヘッダーの設定は丸ごと差し替わる) の注記）。
 
 ## 効かない設定
