@@ -54,6 +54,7 @@ category: 物品
 - 計算例 3: 上限を 0.5 にすると、施設の外では 50% 前後までしか戻らない。
 
 ### Hitzones なしの場合の全体の体力
+<!-- mods: !hitzones -->
 
 - Hitzones を入れていないと、部位を治したとき、部位ごとの倍率で全体の体力（Health）も回復する。倍率は胸 0.9、腹 0.7、腰・太もも 0.65、上腕・前腕・すね 0.5、手 0.7、足 0.425、頭 3.4、首 3。
 - 計算例: 医療キット 1 回（10）を胸に使うと、全体の体力は +9。Circulation なしのエピネフリンに要る「全体の健康度 0.33 以上」まで、全体の体力が 0（Second Chance で倒れた直後など）から胸だけに使うなら 4 回（9 × 4 = 36）。
@@ -69,6 +70,7 @@ category: 物品
 | 生理食塩水 | 生理食塩水（同上） | 3 |
 
 ### Circulation を入れている場合
+<!-- mods: circulation -->
 
 Core の枠に Circulation の枠が足される。実機（2026-09-27、日本語表示）では次の 8 種類が入っていた: モルヒネ注射器 8・Epinephrine 8・包帯 8・生理食塩水 3・Ammonium Carbonate 8・Naloxone 8・Phenylephrine 8・Metoprolol 8。エピネフリンは Circulation の「Epinephrine」の 8 本だけになる。
 

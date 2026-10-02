@@ -1,5 +1,5 @@
 import { ChevronRightIcon } from "lucide-react";
-import { useId, useState, type JSX } from "react";
+import { useId, useMemo, useState, type JSX } from "react";
 import { Link } from "react-router";
 
 import { Button } from "@/components/ui/button";
@@ -7,18 +7,31 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { categoryLabel, groupByCategory } from "@/features/library/doc-category";
 import { docHref } from "@/features/library/link";
 import { headingIndent } from "@/features/library/viewer/heading-indent";
+import { conditionRoots } from "@/features/library/viewer/section-visibility";
+import { meetsModConditions } from "@/features/settings/mod-conditions";
+import type { ActiveMods } from "@/features/triage/runner";
 import type { DocOutline } from "@/lib/bindings/DocOutline";
+import type { OutlineHeading } from "@/lib/bindings/OutlineHeading";
 import { cn } from "@/lib/utils";
 
 interface DocTreeProps {
   outline: readonly DocOutline[];
   currentId: string;
+  /** 設定の「使っている MOD」。合わない見出しは出さない */
+  active: ActiveMods;
+  /** 今の文書で目次に出している見出し。「すべての組み合わせを表示」や直接開いた節も本文とそろえるため */
+  currentVisible: ReadonlySet<string>;
 }
 
 /** 全ドキュメントの見出しのツリー。別の文書の節へもここから直接移れるようにする。 */
-export function DocTree({ outline, currentId }: DocTreeProps): JSX.Element {
+export function DocTree({ outline, currentId, active, currentVisible }: DocTreeProps): JSX.Element {
   // 開閉を触っていない文書は「今の文書だけ開く」。別の文書へ移ったときに、その文書が自動で開くようにするため
   const [expanded, setExpanded] = useState<Partial<Record<string, boolean>>>({});
+  // 他の文書でも、本文でラベルになる「〜を入れている場合」の見出しはツリーに出さない（今の文書の目次とそろえる）
+  const roots = useMemo(
+    () => new Map(outline.map((doc) => [doc.id, conditionRoots(doc.headings)])),
+    [outline],
+  );
 
   return (
     <nav aria-label="マニュアルの見出し" className="flex flex-col gap-3 p-2">
@@ -29,6 +42,11 @@ export function DocTree({ outline, currentId }: DocTreeProps): JSX.Element {
               key={doc.id}
               doc={doc}
               current={doc.id === currentId}
+              isVisible={(h) =>
+                doc.id === currentId
+                  ? currentVisible.has(h.anchor)
+                  : meetsModConditions(h, active) && roots.get(doc.id)?.has(h.anchor) !== true
+              }
               open={expanded[doc.id] ?? doc.id === currentId}
               onOpenChange={(next) => {
                 setExpanded((prev) => ({ ...prev, [doc.id]: next }));
@@ -62,13 +80,22 @@ function CategoryGroup({
 interface DocTreeItemProps {
   doc: DocOutline;
   current: boolean;
+  isVisible: (heading: OutlineHeading) => boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-function DocTreeItem({ doc, current, open, onOpenChange }: DocTreeItemProps): JSX.Element {
+function DocTreeItem({
+  doc,
+  current,
+  isVisible,
+  open,
+  onOpenChange,
+}: DocTreeItemProps): JSX.Element {
   // h1 は文書のタイトルと同じことが多いので、同じならツリーでは繰り返さない
-  const headings = doc.headings.filter((h) => !(h.level === 1 && h.title === doc.title));
+  const headings = doc.headings.filter(
+    (h) => !(h.level === 1 && h.title === doc.title) && isVisible(h),
+  );
   return (
     <Collapsible open={open} onOpenChange={onOpenChange}>
       <div className="flex items-start gap-0.5">

@@ -41,12 +41,14 @@ category: 操作
 - 診察画面は 5 s で自動的に閉じる。Circulation を入れると 10 s になる。
 
 ### Circulation を入れている場合
+<!-- mods: circulation -->
 
 - 「診察する」に「Check pulse」（脈）と「Check blood pressure」（血圧）が加わる。
 - ラジアルメニューからの確認は、照準の先がキャラクターなら誰にでも使え（意識のある相手にも使える）、待ち時間なしで結果が通知される。
 - 体へのインタラクションの確認（押し続け 3 s）は、意識不明の相手にだけ出る。詳しくは [バイタルを確かめる操作](vitals.md#バイタルを確かめる操作) を見る。
 
 ### Breathing を入れている場合
+<!-- mods: breathing -->
 
 - 「診察する」に、呼吸数の確認（「Check respiratory rate」）と「Check SpO2」が加わる。使い方は Circulation の確認と同じ（照準の先の誰にでも、待ち時間なし）。
 - 分類「Airway/Thorax management」（気道・胸部の管理）が加わり、King LT・チェストシール・NCD キット・酸素マスクの 4 物品がここに出る。この 4 物品は「止血」「投薬」の分類には出ない。
@@ -70,10 +72,12 @@ category: 操作
 - 自分が乗り物の中・泳ぎ中・落下中でない。相手が乗り物の中でない。
 
 ### Circulation を入れている場合
+<!-- mods: circulation -->
 
 - CPR（Perform CPR）は、患者が仰向けでないと実行できない（「Not on back」と表示される）。横向きの患者は「仰向けに寝かせる」で仰向けにすると CPR ができる（[CPR を行う](cardiac-arrest.md#cpr-を行う)）。
 
 ### Breathing を入れている場合
+<!-- mods: breathing -->
 
 - 仰向けになるたびに、15% で舌根沈下（気道閉塞）の抽選がある（`m_fAirwayObstructionChance` の既定 0.15 のとき）。仰向けから横向きにして仰向けに戻すと、抽選し直す。
 - 左右の横向き（回復体位）では、舌根沈下は解除され、以後の嘔吐も起きない。すでに嘔吐で塞がっている気道は解除されない（嘔吐物の除去が要る）。
@@ -81,6 +85,7 @@ category: 操作
 - 詳しくは [回復体位](airway.md#回復体位) と [仰向けで放置したとき](respiration-system.md#仰向けで放置したとき) を見る。
 
 ### Circulation なし（Core だけ）の場合
+<!-- mods: !circulation -->
 
 - 体位は見た目だけで、容体には影響しない。
 

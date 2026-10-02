@@ -58,6 +58,8 @@ function dummySection(docIndex: number, sectionIndex: number): SectionInput {
     plainText,
     page: null,
     tags: sectionIndex % 5 === 0 ? ["ダミー"] : [],
+    mods: [],
+    withoutMods: [],
   };
 }
 

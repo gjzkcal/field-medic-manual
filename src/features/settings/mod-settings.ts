@@ -25,7 +25,7 @@ export const DEFAULT_MOD_SETTINGS: ModSettings = { enabled: ["circulation", "bre
 
 const MODS_KEY = "mods";
 
-function isSelectableMod(value: unknown): value is SelectableMod {
+export function isSelectableMod(value: unknown): value is SelectableMod {
   return SELECTABLE_MODS.some((mod) => mod === value);
 }
 

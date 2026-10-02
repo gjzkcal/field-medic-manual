@@ -29,11 +29,18 @@ import { DocTitleMeta } from "@/features/library/viewer/DocTitleMeta";
 import { DocToc } from "@/features/library/viewer/DocToc";
 import { DocTree } from "@/features/library/viewer/DocTree";
 import { MetaBar } from "@/features/library/viewer/MetaBar";
+import {
+  HiddenSectionNotice,
+  ModSectionsBar,
+  SectionLabel,
+} from "@/features/library/viewer/ModSections";
 import { SectionBody } from "@/features/library/viewer/SectionBody";
+import { sectionVisibility } from "@/features/library/viewer/section-visibility";
 import { useActiveAnchor } from "@/features/library/viewer/use-active-anchor";
 import { useDoc, useOutline } from "@/features/library/viewer/use-doc-data";
 import { recordHistory } from "@/features/prefs/prefs-store";
 import { findTextRanges, paintSearchHighlight } from "@/features/search/highlight";
+import { activeMods, modSummary, useModSettings } from "@/features/settings/mod-settings";
 import {
   FONT_SIZE_PX,
   LINE_HEIGHT_VALUE,
@@ -128,16 +135,52 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
     };
   }, []);
 
+  // URL のアンカー（ツリー・目次・内部リンクで変わる）の見出しへ移る。同じアンカーを 2 回押しても移るよう location.key も見る
+  const hashAnchor = decodeAnchor(location.hash.replace(/^#/, ""));
+
+  const modSettings = useModSettings((s) => s.settings);
+  const active = useMemo(() => activeMods(modSettings), [modSettings]);
+  // 保存しない。普段は設定の組み合わせだけを読み、ほかの組み合わせは見比べたいときだけ出すため
+  const [showAll, setShowAll] = useState(false);
+  const visibility = useMemo(
+    () => sectionVisibility(doc.sections, active, showAll, hashAnchor === "" ? null : hashAnchor),
+    [doc.sections, active, showAll, hashAnchor],
+  );
+  const shownSections = useMemo(
+    () => doc.sections.filter((s) => visibility.visible.has(s.anchor)),
+    [doc.sections, visibility],
+  );
+
   const tocHeadings = useMemo<OutlineHeading[]>(
     () =>
-      doc.sections
-        .filter((s) => s.level >= 1 && s.level <= 3)
-        .map((s) => ({ level: s.level, title: s.title, anchor: s.anchor })),
-    [doc.sections],
+      shownSections
+        .filter((s) => s.level >= 1 && s.level <= 3 && !visibility.labeled.has(s.anchor))
+        .map((s) => ({
+          level: s.level,
+          title: s.title,
+          anchor: s.anchor,
+          mods: s.mods,
+          withoutMods: s.withoutMods,
+        })),
+    [shownSections, visibility],
   );
   // モジュール・タグ・古い内容の警告は、原稿の最初の h1（文書のタイトル）の直下に出す。h1 がなければ本文の先頭
   const titleSectionId = doc.sections.find((s) => s.level === 1)?.id ?? null;
   const anchors = useMemo(() => tocHeadings.map((h) => h.anchor), [tocHeadings]);
+  const tocAnchors = useMemo(() => new Set(anchors), [anchors]);
+  const titleBlock = (
+    <>
+      <DocTitleMeta meta={doc.meta} now={now} />
+      {visibility.hasConditions && (
+        <ModSectionsBar
+          summary={modSummary(modSettings)}
+          hiddenCount={visibility.hiddenCount}
+          showAll={showAll}
+          onShowAllChange={setShowAll}
+        />
+      )}
+    </>
+  );
 
   const assetCache = useMemo(() => {
     const mimes = new Map(doc.assets.map((a) => [a.id, a.mime]));
@@ -152,8 +195,6 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
   );
   const resolveAsset = useCallback((assetId: string) => assetCache.get(assetId), [assetCache]);
 
-  // URL のアンカー（ツリー・目次・内部リンクで変わる）の見出しへ移る。同じアンカーを 2 回押しても移るよう location.key も見る
-  const hashAnchor = decodeAnchor(location.hash.replace(/^#/, ""));
   // 開いたものを履歴に積む。目次などで同じ文書の中を移るたびには積まない（最近見たものが同じ文書で埋まるため）。
   // 検索やリンクでアンカー付きで開いたときは節として積む
   const recordOpen = useEffectEvent(() => {
@@ -274,7 +315,12 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
     <div className="@container flex h-full min-h-0">
       <aside className="hidden w-60 shrink-0 border-r @5xl:block">
         <ScrollArea className="h-full">
-          <DocTree outline={outline} currentId={doc.id} />
+          <DocTree
+            outline={outline}
+            currentId={doc.id}
+            active={active}
+            currentVisible={tocAnchors}
+          />
         </ScrollArea>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
@@ -297,10 +343,17 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
             onClick={handleBodyClick}
             onAuxClick={handleBodyAuxClick}
           >
-            {titleSectionId === null && <DocTitleMeta meta={doc.meta} now={now} />}
-            {doc.sections.map((section) => (
+            {titleSectionId === null && titleBlock}
+            {shownSections.map((section) => (
               <section key={section.id}>
-                {section.level > 0 && (
+                {section.level > 0 && visibility.labeled.has(section.anchor) && (
+                  <SectionLabel
+                    anchor={section.anchor}
+                    conditions={section}
+                    register={registerHeading}
+                  />
+                )}
+                {section.level > 0 && !visibility.labeled.has(section.anchor) && (
                   <SectionHeading
                     level={section.level}
                     anchor={section.anchor}
@@ -308,7 +361,10 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
                     register={registerHeading}
                   />
                 )}
-                {section.id === titleSectionId && <DocTitleMeta meta={doc.meta} now={now} />}
+                {section.id === titleSectionId && titleBlock}
+                {section.anchor === visibility.forcedRoot && (
+                  <HiddenSectionNotice conditions={section} />
+                )}
                 {section.html !== "" && (
                   <SectionBody html={section.html} resolveAsset={resolveAsset} />
                 )}

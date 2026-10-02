@@ -2,6 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use rusqlite::{Connection, OptionalExtension, Row, Transaction, params};
 
+use super::quickref::{dedup, from_json, to_json};
 use super::text::{normalize_tags, strip_marks};
 use crate::error::AppError;
 use crate::model::{
@@ -101,8 +102,9 @@ fn insert_sections(
     input: &DocUpsertInput,
 ) -> Result<(), AppError> {
     let mut insert = tx.prepare_cached(
-        "INSERT INTO sections (document_id, parent_id, level, title, anchor, order_index, html, plain_text, keywords, page)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+        "INSERT INTO sections (document_id, parent_id, level, title, anchor, order_index, html, plain_text, keywords, page,
+           mods, without_mods)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
     )?;
     let mut link_tag = tx.prepare_cached(
         "INSERT OR IGNORE INTO section_tags (section_id, tag_id) VALUES (?1, ?2)",
@@ -135,6 +137,8 @@ fn insert_sections(
             section.plain_text,
             section.tags.join(" "),
             section.page,
+            to_json(&section.mods)?,
+            to_json(&section.without_mods)?,
         ])?;
         let section_id = tx.last_insert_rowid();
         if section.level > 0 {
@@ -196,6 +200,8 @@ fn validate(input: &DocUpsertInput) -> Result<DocUpsertInput, AppError> {
         section.title = strip_marks(section.title.trim());
         section.plain_text = strip_marks(&section.plain_text);
         section.tags = normalize_tags(&section.tags);
+        section.mods = dedup(&section.mods);
+        section.without_mods = dedup(&section.without_mods);
     }
     Ok(input)
 }
@@ -319,7 +325,7 @@ pub fn list(conn: &Connection) -> Result<Vec<DocSummary>, AppError> {
 pub fn outline(conn: &Connection) -> Result<Vec<DocOutline>, AppError> {
     let mut headings: HashMap<String, Vec<OutlineHeading>> = HashMap::new();
     let mut stmt = conn.prepare(
-        "SELECT document_id, level, title, anchor FROM sections
+        "SELECT document_id, level, title, anchor, mods, without_mods FROM sections
          WHERE level BETWEEN 1 AND ?1 ORDER BY document_id, order_index",
     )?;
     let rows = stmt.query_map([OUTLINE_MAX_LEVEL], |r| {
@@ -329,6 +335,8 @@ pub fn outline(conn: &Connection) -> Result<Vec<DocOutline>, AppError> {
                 level: r.get(1)?,
                 title: r.get(2)?,
                 anchor: r.get(3)?,
+                mods: from_json(r, 4)?,
+                without_mods: from_json(r, 5)?,
             },
         ))
     })?;
@@ -388,7 +396,8 @@ pub fn get(conn: &Connection, id: &str) -> Result<DocDetail, AppError> {
 
     let sections = conn
         .prepare(
-            "SELECT id, parent_id, level, title, anchor, order_index, html, plain_text, page
+            "SELECT id, parent_id, level, title, anchor, order_index, html, plain_text, page,
+               mods, without_mods
              FROM sections WHERE document_id = ?1 ORDER BY order_index",
         )?
         .query_map([id], |r| {
@@ -403,6 +412,8 @@ pub fn get(conn: &Connection, id: &str) -> Result<DocDetail, AppError> {
                 plain_text: r.get(7)?,
                 page: r.get(8)?,
                 tags: Vec::new(),
+                mods: from_json(r, 9)?,
+                without_mods: from_json(r, 10)?,
             })
         })?
         .map(|s| {
@@ -458,6 +469,7 @@ mod tests {
     use super::*;
     use crate::db::fixtures::{self, section};
     use crate::db::test_conn;
+    use crate::model::ModTarget;
 
     type Mutation = Box<dyn Fn(&mut DocUpsertInput)>;
 
@@ -706,6 +718,33 @@ mod tests {
             .collect();
         assert_eq!(anchors, ["a", "a-1", "a-1-x"]);
         assert_eq!(bleeding.headings[2].level, 3);
+    }
+
+    #[test]
+    fn section_mod_conditions_roundtrip_without_duplicates() {
+        let mut conn = test_conn();
+        let mut input = fixtures::bleeding();
+        let mut with_circulation = section(2, "Circulation あり", "circ", "c", &[]);
+        with_circulation.mods = vec![ModTarget::Circulation, ModTarget::Circulation];
+        let mut without_circulation = section(2, "Circulation なし", "no-circ", "n", &[]);
+        without_circulation.without_mods = vec![ModTarget::Circulation];
+        input.sections = vec![
+            section(1, "A", "a", "a", &[]),
+            with_circulation,
+            without_circulation,
+        ];
+        let id = upsert(&mut conn, &input).expect("保存できる");
+
+        let doc = get(&conn, &id).expect("取得できる");
+        assert!(doc.sections[0].mods.is_empty());
+        assert_eq!(doc.sections[1].mods, [ModTarget::Circulation]);
+        assert_eq!(doc.sections[2].without_mods, [ModTarget::Circulation]);
+
+        let docs = outline(&conn).expect("見出しを取れる");
+        let headings = &docs[0].headings;
+        assert_eq!(headings[1].mods, [ModTarget::Circulation]);
+        assert!(headings[1].without_mods.is_empty());
+        assert_eq!(headings[2].without_mods, [ModTarget::Circulation]);
     }
 
     #[test]

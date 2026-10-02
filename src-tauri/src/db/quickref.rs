@@ -135,7 +135,7 @@ fn clean_list(values: &[String]) -> Vec<String> {
         .collect()
 }
 
-fn dedup(mods: &[ModTarget]) -> Vec<ModTarget> {
+pub(super) fn dedup(mods: &[ModTarget]) -> Vec<ModTarget> {
     let mut out: Vec<ModTarget> = Vec::new();
     for m in mods {
         if !out.contains(m) {
@@ -155,11 +155,11 @@ fn search_text(row: &QuickrefRow) -> String {
     parts.join("\n")
 }
 
-fn to_json<T: Serialize + ?Sized>(value: &T) -> Result<String, AppError> {
+pub(super) fn to_json<T: Serialize + ?Sized>(value: &T) -> Result<String, AppError> {
     serde_json::to_string(value).map_err(|e| AppError::Internal(format!("JSON にできません: {e}")))
 }
 
-fn from_json<T: DeserializeOwned>(row: &Row<'_>, index: usize) -> rusqlite::Result<T> {
+pub(super) fn from_json<T: DeserializeOwned>(row: &Row<'_>, index: usize) -> rusqlite::Result<T> {
     let text: String = row.get(index)?;
     serde_json::from_str(&text).map_err(|e| {
         rusqlite::Error::FromSqlConversionFailure(index, rusqlite::types::Type::Text, Box::new(e))

@@ -1,30 +1,30 @@
 import { describe, expect, it } from "vitest";
 
-import { conditionLabel, isRowVisible } from "@/features/quickref/conditions";
+import { conditionLabel, meetsModConditions } from "@/features/settings/mod-conditions";
 import { activeMods } from "@/features/settings/mod-settings";
 
 const usual = activeMods({ enabled: ["circulation", "breathing"] });
 const coreOnly = activeMods({ enabled: [] });
 
-describe("isRowVisible", () => {
+describe("meetsModConditions", () => {
   it("条件のない行はいつも出る", () => {
     const row = { mods: [], withoutMods: [] };
-    expect(isRowVisible(row, usual)).toBe(true);
-    expect(isRowVisible(row, coreOnly)).toBe(true);
+    expect(meetsModConditions(row, usual)).toBe(true);
+    expect(meetsModConditions(row, coreOnly)).toBe(true);
   });
 
   it("mods はすべて有効なときだけ出る", () => {
     const row = { mods: ["circulation", "breathing"] as const, withoutMods: [] };
-    expect(isRowVisible(row, usual)).toBe(true);
-    expect(isRowVisible(row, activeMods({ enabled: ["circulation"] }))).toBe(false);
-    expect(isRowVisible(row, coreOnly)).toBe(false);
+    expect(meetsModConditions(row, usual)).toBe(true);
+    expect(meetsModConditions(row, activeMods({ enabled: ["circulation"] }))).toBe(false);
+    expect(meetsModConditions(row, coreOnly)).toBe(false);
   });
 
   it("withoutMods はどれも無効なときだけ出る", () => {
     const row = { mods: [], withoutMods: ["circulation"] as const };
-    expect(isRowVisible(row, usual)).toBe(false);
-    expect(isRowVisible(row, activeMods({ enabled: ["breathing"] }))).toBe(true);
-    expect(isRowVisible(row, coreOnly)).toBe(true);
+    expect(meetsModConditions(row, usual)).toBe(false);
+    expect(meetsModConditions(row, activeMods({ enabled: ["breathing"] }))).toBe(true);
+    expect(meetsModConditions(row, coreOnly)).toBe(true);
   });
 });
 

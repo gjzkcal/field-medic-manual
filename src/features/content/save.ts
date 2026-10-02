@@ -32,6 +32,8 @@ export function toUpsertInput(doc: NormalizedDoc): DocUpsertInput {
       plainText: s.plainText,
       page: null,
       tags: s.tags,
+      mods: s.mods,
+      withoutMods: s.withoutMods,
     })),
     assetIds: doc.assets.map((a) => a.id),
     originalAssetId: null,

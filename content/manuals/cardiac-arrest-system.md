@@ -48,6 +48,7 @@ category: システム
 > - 「Second Chance が与えられると心停止になる」は最初の 1 回だけ。
 
 ### Hitzones を入れている場合
+<!-- mods: hitzones -->
 
 - 心臓（臓器）が壊れたときに Second Chance が与えられた場合も心停止になる。ただし心臓の確率 `m_fSecondChanceOnHeart` は既定 0 なので、既定では即死する（[Hitzones の急所と心臓](death-second-chance.md#hitzones-の急所と心臓)）。
 
@@ -230,10 +231,12 @@ CPR を 60 s 続けて 30 s 休む、を繰り返した場合（蘇生しない�
 詳しくは [炭酸アンモニウム](ammonium-carbonate.md)、[意識が戻る条件と時間](consciousness-system.md#意識が戻る条件と時間)。
 
 ### Breathing を入れている場合
+<!-- mods: breathing -->
 
 - 気道が塞がっている間は、Stable でも意識は回復しない（[気道と意識](consciousness.md#気道と意識)）。
 
 ## Breathing を入れているとき
+<!-- mods: breathing -->
 
 - 心停止中は原因によらず SpO2 が下がり、**約 190 s（約 3 分）で 65% を割る**。
 - **SpO2 が 65% 未満の間は、CPR の判定が必ず失敗する**。

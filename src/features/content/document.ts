@@ -1,11 +1,14 @@
 // HTML（md・docx・URL などから作ったもの）を見出しでセクションに分ける共通処理。
-// 画像の取り込み → 入れ物の展開 → h1〜h3 で分割 → セクションのタグの抽出 → 無害化、の順に行う。
+// 画像の取り込み → 入れ物の展開 → h1〜h3 で分割 → セクションのタグと表示条件の抽出 → 無害化、の順に行う。
 import { AnchorAllocator } from "@/features/content/anchor";
 import { sha256Hex } from "@/features/content/hash";
 import { parseTags } from "@/features/content/meta";
 import { extensionForMime, fileName } from "@/features/content/path";
 import { cleanInlineText, sanitizeHtml } from "@/features/content/sanitize";
 import type { NormalizedAsset, NormalizedSection } from "@/features/content/types";
+import type { ModConditions } from "@/features/settings/mod-conditions";
+import { isSelectableMod, SELECTABLE_MODS } from "@/features/settings/mod-settings";
+import type { ModTarget } from "@/lib/bindings/ModTarget";
 
 export interface SectionsOptions {
   /**
@@ -29,6 +32,8 @@ const HEADING_LEVEL: Record<string, number> = { H1: 1, H2: 2, H3: 3 };
 const CONTAINERS = new Set(["DIV", "SECTION", "ARTICLE", "MAIN", "HEADER", "FOOTER", "ASIDE"]);
 const TAG_COMMENT = /^\s*tags\s*[:：](.*)$/is;
 const TAG_LINE = /^\s*(?:タグ|tags)\s*[:：](.*)$/is;
+const MODS_COMMENT = /^\s*mods\s*[:：](.*)$/is;
+const NO_CONDITIONS: ModConditions = { mods: [], withoutMods: [] };
 
 /** HTML の文字列をセクションに分ける。DOMParser で作った文書はスクリプトを実行せず、画像なども読みに行かない。 */
 export async function sectionsFromHtml(
@@ -50,11 +55,16 @@ export async function sectionsFromBody(
 
   const anchors = new AnchorAllocator();
   const sections: NormalizedSection[] = [];
+  // 見出しの表示条件は配下の深い見出しにも効くので、開いている見出しの条件を積んでおく
+  const conditionStack: { level: number; conditions: ModConditions }[] = [];
   let firstH1: string | null = null;
   for (const chunk of chunks) {
-    const tags = takeSectionTags(chunk.nodes);
+    const headingText = chunk.heading === null ? "" : cleanInlineText(chunk.heading.textContent);
+    const where = chunk.heading === null ? "見出しの前" : `「${headingText}」`;
+    const markers = takeSectionMarkers(chunk.nodes, where, warnings);
     const container = body.ownerDocument.createElement("div");
     container.append(...chunk.nodes);
+    warnMisplacedMods(container, where, warnings);
     const { html, plainText } = sanitizeHtml(container.innerHTML);
 
     if (chunk.heading === null) {
@@ -68,11 +78,22 @@ export async function sectionsFromBody(
         anchor: anchors.allocate("intro"),
         html,
         plainText,
-        tags,
+        tags: markers.tags,
+        mods: [],
+        withoutMods: [],
       });
       continue;
     }
-    const headingText = cleanInlineText(chunk.heading.textContent);
+    while ((conditionStack.at(-1)?.level ?? 0) >= chunk.level) {
+      conditionStack.pop();
+    }
+    const conditions = mergeConditions(
+      conditionStack.at(-1)?.conditions ?? NO_CONDITIONS,
+      markers.conditions,
+      where,
+      warnings,
+    );
+    conditionStack.push({ level: chunk.level, conditions });
     const title = headingText === "" ? "（無題の見出し）" : headingText;
     if (chunk.level === 1) {
       firstH1 ??= title;
@@ -83,7 +104,9 @@ export async function sectionsFromBody(
       anchor: anchors.allocate(title),
       html,
       plainText,
-      tags,
+      tags: markers.tags,
+      mods: [...conditions.mods],
+      withoutMods: [...conditions.withoutMods],
     });
   }
   return { sections, assets, warnings, firstH1 };
@@ -124,27 +147,89 @@ function splitByHeadings(nodes: Node[]): Chunk[] {
   return chunks;
 }
 
+interface SectionMarkers {
+  tags: string[];
+  conditions: ModConditions;
+}
+
 /**
- * 見出しの直後に書かれたセクションのタグを取り出し、本文から除く。
- * 書き方は `<!-- tags: a, b -->`（md / html）か `タグ: a, b` の段落（txt / docx）。
+ * 見出しの直後に書かれたセクションのタグと表示条件を取り出し、本文から除く（両方あれば順は問わない）。
+ * タグは `<!-- tags: a, b -->`（md / html）か `タグ: a, b` の段落（txt / docx）。
+ * 表示条件は `<!-- mods: circulation, !hitzones -->`（! は「入れていないとき」）。
  */
-function takeSectionTags(nodes: Node[]): string[] {
-  const index = nodes.findIndex((n) => !(n.nodeType === Node.TEXT_NODE && isBlank(n)));
-  const first = nodes[index];
-  if (first === undefined) {
-    return [];
+function takeSectionMarkers(nodes: Node[], where: string, warnings: string[]): SectionMarkers {
+  const markers: SectionMarkers = { tags: [], conditions: NO_CONDITIONS };
+  let index = 0;
+  for (let node = nodes[index]; node !== undefined; node = nodes[index]) {
+    if (node.nodeType === Node.TEXT_NODE && isBlank(node)) {
+      index += 1;
+      continue;
+    }
+    const comment = node.nodeType === Node.COMMENT_NODE ? (node.textContent ?? "") : null;
+    const tagLine =
+      node instanceof Element && node.tagName === "P" ? TAG_LINE.exec(node.textContent) : null;
+    const tags = comment === null ? tagLine?.[1] : TAG_COMMENT.exec(comment)?.[1];
+    const mods = comment === null ? undefined : MODS_COMMENT.exec(comment)?.[1];
+    if (tags !== undefined) {
+      markers.tags = parseTags(tags);
+    } else if (mods !== undefined) {
+      markers.conditions = parseModConditions(mods, where, warnings);
+    } else {
+      break;
+    }
+    nodes.splice(index, 1);
   }
-  let raw: string | undefined;
-  if (first.nodeType === Node.COMMENT_NODE) {
-    raw = TAG_COMMENT.exec(first.textContent ?? "")?.[1];
-  } else if (first instanceof Element && first.tagName === "P") {
-    raw = TAG_LINE.exec(first.textContent)?.[1];
+  return markers;
+}
+
+function parseModConditions(raw: string, where: string, warnings: string[]): ModConditions {
+  const mods: ModTarget[] = [];
+  const withoutMods: ModTarget[] = [];
+  for (const token of raw.split(/[,、\s]+/).filter((t) => t !== "")) {
+    // 日本語入力のまま書いた全角の ! も受ける
+    const without = /^[!！]/.test(token);
+    const name = token.replace(/^[!！]/, "").toLowerCase();
+    // core と general は常に有効なので条件にならず、ここで不明として扱う
+    if (!isSelectableMod(name)) {
+      warnings.push(
+        `mods の値が不明です: ${token}（${where}。${SELECTABLE_MODS.join(" / ")} のどれか。! を付けると入れていないとき）`,
+      );
+      continue;
+    }
+    const list = without ? withoutMods : mods;
+    if (!list.includes(name)) {
+      list.push(name);
+    }
   }
-  if (raw === undefined) {
-    return [];
+  return { mods, withoutMods };
+}
+
+/** 親の見出しの条件に自分の条件を足す。「あり」と「なし」が重なると、どの設定でも出ない節になるので警告する */
+function mergeConditions(
+  parent: ModConditions,
+  own: ModConditions,
+  where: string,
+  warnings: string[],
+): ModConditions {
+  const merged: ModConditions = {
+    mods: [...new Set([...parent.mods, ...own.mods])],
+    withoutMods: [...new Set([...parent.withoutMods, ...own.withoutMods])],
+  };
+  const both = merged.mods.filter((m) => merged.withoutMods.includes(m));
+  if (both.length > 0) {
+    warnings.push(`mods に同じ MOD の「あり」と「なし」があります: ${both.join(", ")}（${where}）`);
   }
-  nodes.splice(index, 1);
-  return parseTags(raw);
+  return merged;
+}
+
+/** 見出しの直後にない mods の印は効かない（h4 以下の見出しの後ろも含む）。黙って捨てずに書き間違いとして知らせる */
+function warnMisplacedMods(container: Element, where: string, warnings: string[]): void {
+  const walker = container.ownerDocument.createTreeWalker(container, NodeFilter.SHOW_COMMENT);
+  for (let node = walker.nextNode(); node !== null; node = walker.nextNode()) {
+    if (MODS_COMMENT.test(node.textContent ?? "")) {
+      warnings.push(`mods の印は h1〜h3 の見出しの直後に書いてください（${where}）`);
+    }
+  }
 }
 
 function isBlank(node: Node): boolean {

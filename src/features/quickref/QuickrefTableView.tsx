@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { conditionLabel } from "@/features/quickref/conditions";
+import { conditionLabel } from "@/features/settings/mod-conditions";
 import type { VisibleRow } from "@/features/quickref/filter";
 import { quickrefHref } from "@/features/quickref/link";
 import { SeverityBadge } from "@/features/quickref/QuickrefCard";

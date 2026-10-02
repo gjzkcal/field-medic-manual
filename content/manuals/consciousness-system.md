@@ -106,6 +106,7 @@ category: システム
 - 目覚めると、Second Chance の記録と蘇生の記録は消え、回復倍率は通常の値に戻る。
 
 ### Circulation を入れている場合
+<!-- mods: circulation -->
 
 | 場面 | 回復倍率 | 目覚めるまで（意識の値 0 から） |
 |---|---|---|
@@ -120,10 +121,12 @@ category: システム
 - Core の `m_fSecondChanceResilienceRegenScale` と「血液 33.3% 以下なら 0」は、Circulation 入りでは効かない。
 
 ### Breathing を入れている場合
+<!-- mods: breathing -->
 
 - 気道が塞がっている（舌根沈下・嘔吐）か緊張性気胸のときは、回復倍率が 0 になり、自然には目覚めない。詳しくは [気道と意識](consciousness.md#気道と意識)。
 
 ### Circulation なし（Core だけ）の場合
+<!-- mods: !circulation -->
 
 - 血液が 33.3% 以下の間は、意識の値が 100 になっても目覚めない。血液を 33.3% より上に戻す必要がある（[生理食塩水を使う](saline.md)）。
 - Second Chance で意識を失った後は、既定では自然に目覚めない（エピネフリンが要る）。

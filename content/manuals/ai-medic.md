@@ -76,6 +76,7 @@ Core のエピネフリンが使える条件（Core だけのとき）: 患者�
 計算例: 出血している意識不明の患者 → 包帯を巻く → 選び直して、出血がなく血液が 40% 未満なら生理食塩水 → 選び直して、何も要らなければ終える（Circulation 入り）。
 
 ### Circulation を入れている場合
+<!-- mods: circulation -->
 
 - AI の衛生兵が使うのは**包帯と生理食塩水だけ**になる。
 - Circulation を入れると、エピネフリンは Circulation の物品（「Epinephrine」と表示される）に置き換わり、使う操作も変わる。AI は Core のエピネフリンを探すので、見つからない。
@@ -83,11 +84,13 @@ Core のエピネフリンが使える条件（Core だけのとき）: 患者�
 - 心停止中のプレイヤー（Second Chance が発動済み、出血なし）で ACE の判断がエピネフリンを選んだとき、エピネフリンを持つ AI がいないので衛生兵が来ないまま、負傷の知らせが繰り返されるとみられる（コードからの推定）。
 
 ### Circulation なし（Core だけ）の場合
+<!-- mods: !circulation -->
 
 - 包帯・生理食塩水・エピネフリン（Core）・医療キットの 4 つが対象になる。
 - エピネフリンを使うのは Second Chance が発動した患者だけ。AI には既定で Second Chance がない（`m_bSecondChanceForAIEnabled` の既定 false）ので、実際にはプレイヤーの患者が対象になる。
 
 ### Hitzones を入れている場合
+<!-- mods: hitzones -->
 
 Hitzones を入れると、エピネフリンの健康度の条件（0.33 以上）が効かなくなる。そのため「怪我が酷い」でエピネフリンが使えない場面がなく、医療キットは選ばれない。
 
@@ -156,11 +159,13 @@ AI の負傷は、プレイヤーと同じ ACE の処理で扱われる（AI MOD
 設定の変え方は [AI の設定](server-settings.md#ai-の設定)。
 
 ### Circulation を入れている場合
+<!-- mods: circulation -->
 
 - 心停止に入る条件を満たすと、AI はその場で死亡する。
 - 出血した AI は、頻脈で心拍数が 220 を超え、血液 25% 前後で心停止する（出血が速いと、心拍が上がりきる前に血液 20% の閾値で心停止する）。つまり既定では、そこで死亡する（[心停止に入る経路](cardiac-arrest-system.md#心停止に入る経路)）。
 
 ### Breathing を入れている場合
+<!-- mods: breathing -->
 
 Breathing には AI とプレイヤーの区別がない。意識不明の AI も、気道閉塞・気胸で心停止し、既定では死亡する。
 
@@ -172,6 +177,7 @@ Breathing には AI とプレイヤーの区別がない。意識不明の AI �
 - AI の衛生兵は、これらを処置しない（[使わない物品と処置](#使わない物品と処置)）。
 
 ### Circulation なし（Core だけ）の場合
+<!-- mods: !circulation -->
 
 心停止の仕組みがないので、`m_bCardiacArrestForAIEnabled` は関係しない。Second Chance がない（既定）ので、致命打で死亡する。
 

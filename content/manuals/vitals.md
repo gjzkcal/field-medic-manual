@@ -41,6 +41,7 @@ category: 処置
 - ゲームマスターは、キャラクターのツールチップの「Vital signs」（心拍数と血圧。四捨五入、1 s ごとに更新）と「Brain」（脳の残り）で見られる。
 
 ### Circulation なし（Core だけ）の場合
+<!-- mods: !circulation -->
 
 - バイタル（脈・血圧）はなく、確かめる操作もない。診察画面の本体の表示（出血・止血帯など）で見る（[出血の見分け方](hemorrhage.md#出血の見分け方)）。
 
@@ -85,6 +86,7 @@ Circulation を入れると、生存しているキャラクターは 5 つの�
 - Breathing 入りで、気胸（Open pneumothorax / Tension pneumothorax。緊張性を優先して表示）が出る。
 
 ### Circulation を入れている場合
+<!-- mods: circulation -->
 
 - 診察の操作は、本体の条件に加えて「痛みの HP が少しでも減っている」「状態が Stable でない」ときにも出る。
 - 診察画面は 10 s 表示される。
@@ -93,6 +95,7 @@ Circulation を入れると、生存しているキャラクターは 5 つの�
 - 投薬記録の形式は [投薬記録](#投薬記録)。
 
 ### Breathing を入れている場合
+<!-- mods: breathing -->
 
 | 状態 | 見え方 |
 |---|---|
@@ -106,6 +109,7 @@ Circulation を入れると、生存しているキャラクターは 5 つの�
 - 詳しくは [気道閉塞の見分け方](airway.md#気道閉塞の見分け方)。
 
 ### Circulation なし（Core だけ）の場合
+<!-- mods: !circulation -->
 
 - 本体の表示（出血・止血帯・生理食塩水など）に、Core が骨折（腕・脚）の表示を足す。全体の損傷度は ACE の全体の健康度で計算し直している（Hitzones では最も減った部位の割合）。
 

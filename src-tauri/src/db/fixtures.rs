@@ -14,6 +14,8 @@ pub fn section(level: u8, title: &str, anchor: &str, text: &str, tags: &[&str]) 
         plain_text: text.to_owned(),
         page: None,
         tags: tags.iter().map(|&t| t.to_owned()).collect(),
+        mods: Vec::new(),
+        without_mods: Vec::new(),
     }
 }
 

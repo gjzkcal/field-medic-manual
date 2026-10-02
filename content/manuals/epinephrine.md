@@ -36,6 +36,7 @@ category: 物品
 ## 効き方
 
 ### Circulation を入れている場合
+<!-- mods: circulation -->
 
 式（C = エピネフリンの濃度 nM）:
 
@@ -77,6 +78,7 @@ category: 物品
 - 物品の説明文は、名前と同じく Circulation の英語の文言（「Administered to patients in cardiac arrest」）になるとみられる（同じ文字列の ID を Core と Circulation の両方が使っていて、名前は実機で「Epinephrine」と出た）。
 
 ### Circulation なし（Core だけ）の場合
+<!-- mods: !circulation -->
 
 - 式: `抵抗値(t) = 投与時の抵抗値 + 5 × 0.8 × 経過秒（最長 30 s）`。抵抗値が 75 を超えると目覚める。
 - 5 HP/s は prefab の値、0.8 は抵抗値の基本倍率（本体の値）。30 s で最大 120 HP 分。
@@ -104,6 +106,7 @@ category: 物品
 > ドキュメントは健康度の条件にだけ触れているが、出血している間も使えない。止血帯だけで止めた傷は出血のまま扱われるので、包帯で傷を閉じる必要がある。
 
 ### Hitzones を入れている場合
+<!-- mods: hitzones -->
 
 - 条件 4（健康度 0.33 以上）は実質効かない。ACE が見ている全体の HP が、Hitzones では減らないため。頭が 10% まで減っていても、ほかの条件を満たせば使える。
 
@@ -143,6 +146,7 @@ category: 物品
 > ドキュメントは「蘇生の確率を上げる（Increases revive chance）」とするが、実際は判定の頻度を上げる。1 回の成功率は変わらない（単位時間あたりの蘇生率としては最大 1.5 倍）。
 
 ### Circulation なし（Core だけ）の場合
+<!-- mods: !circulation -->
 
 - 心停止がないので、この役割はない。Core のエピネフリンは意識不明の患者を起こす薬（[エピネフリンで起こす](consciousness.md#エピネフリンで起こす)）。
 

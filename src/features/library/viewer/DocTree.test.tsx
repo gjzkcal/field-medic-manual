@@ -3,6 +3,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { DocTree } from "@/features/library/viewer/DocTree";
+import { activeMods, DEFAULT_MOD_SETTINGS } from "@/features/settings/mod-settings";
 import type { DocOutline } from "@/lib/bindings/DocOutline";
 
 afterEach(() => {
@@ -23,7 +24,7 @@ function outline(id: string, title: string, category: string | null): DocOutline
       order: null,
       category,
     },
-    headings: [{ level: 2, title: `${title}の節`, anchor: "a" }],
+    headings: [{ level: 2, title: `${title}の節`, anchor: "a", mods: [], withoutMods: [] }],
   };
 }
 
@@ -39,6 +40,8 @@ describe("DocTree", () => {
             outline("airway", "気道管理", "症状/処置"),
           ]}
           currentId="hemorrhage"
+          active={activeMods(DEFAULT_MOD_SETTINGS)}
+          currentVisible={new Set(["a"])}
         />
       </MemoryRouter>,
     );

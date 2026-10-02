@@ -82,12 +82,14 @@ Circulation を入れると、生存しているキャラクターは次の 5 �
 満タンから少しでも減ると Class I になるとみられる（本体の処理からの推定）。
 
 ### Breathing を入れている場合
+<!-- mods: breathing -->
 
 - SpO2 の条件（85 / 75 / 65%）が加わる。戻るときは SpO2 が閾値以上であることも必要。
 - 気道が塞がっている間は、状態に関係なく意識が戻らない（[気道と意識](consciousness.md#気道と意識)）。
 - 気胸が最大（0.75）まで進むと、状態が心停止に切り替わる（設定 `m_fPneumothoraxArrestEnabled`、既定 true）。
 
 ### Circulation なし（Core だけ）の場合
+<!-- mods: !circulation -->
 
 - 5 つの状態はなく、生存・意識不明・死亡だけ。血液の分類（Class）もない。意識は抵抗値と血液量で決まる（[意識を失う条件](consciousness-system.md#意識を失う条件)、[血液量と出血の段階](bleeding-system.md#血液量と出血の段階)）。
 

@@ -36,6 +36,7 @@ category: 処置
 - CPR を受けている最中は、心停止のままでも脈が 100〜120 と出る。蘇生すると通常の計算に戻り、30 から 80 へ上がっていく（[蘇生した後](#蘇生した後)）。
 
 ### Circulation なし（Core だけ）の場合
+<!-- mods: !circulation -->
 
 - 心停止はない。致命傷（Second Chance）の後は意識不明になるだけ（[Second Chance とは](death-second-chance.md#second-chance-とは)）。
 
@@ -87,6 +88,7 @@ category: 処置
 > CPR の終わり方はドキュメントにない。蘇生しても CPR は自動では止まらず、施術する人が降りるまで続く。
 
 ### Circulation なし（Core だけ）の場合
+<!-- mods: !circulation -->
 
 - CPR の操作はない。
 
@@ -109,6 +111,7 @@ category: 処置
 状態の移り方と、目覚めるまでの式は [蘇生した後](cardiac-arrest-system.md#蘇生した後)。
 
 ## Breathing を入れているとき
+<!-- mods: breathing -->
 
 - 心停止中は原因によらず SpO2 が下がり、**約 190 s（約 3 分）で 65% を割る**。
 - **SpO2 が 65% 未満の間は、CPR の判定が必ず失敗する**。

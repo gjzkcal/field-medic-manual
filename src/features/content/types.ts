@@ -1,6 +1,7 @@
 // 同梱する原稿を DB に入れるときの型。
 // DocMeta / SourceType は Rust から生成した bindings を使う（手で同期しないため）。
 import type { DocMeta } from "@/lib/bindings/DocMeta";
+import type { ModTarget } from "@/lib/bindings/ModTarget";
 import type { SourceType } from "@/lib/bindings/SourceType";
 
 /** アプリに同梱した原稿 1 ファイル。 */
@@ -30,6 +31,10 @@ export interface NormalizedSection {
   html: string;
   plainText: string;
   tags: string[];
+  /** 表示条件（親の見出しの条件を合わせたもの）。この MOD をすべて入れているときだけ出す */
+  mods: ModTarget[];
+  /** 表示条件。この MOD をどれも入れていないときだけ出す */
+  withoutMods: ModTarget[];
 }
 
 export interface NormalizedAsset {

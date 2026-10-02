@@ -67,6 +67,47 @@ describe("sectionsFromHtml", () => {
     expect(sections[0]?.html).not.toContain("tags");
   });
 
+  it("見出し直後の mods の印を表示条件にし、配下の深い見出しにも合わせる", async () => {
+    const { sections, warnings } = await sectionsFromHtml(
+      [
+        "<h1>心停止</h1><p>共通</p>",
+        "<h2>Breathing を入れているとき</h2>\n<!-- tags: 気道 -->\n<!-- mods: breathing -->\n<p>本文</p>",
+        "<h3>Hitzones なし</h3><!-- mods: !Hitzones, breathing --><p>本文</p>",
+        "<h2>Circulation なし</h2><!-- mods: ！circulation --><p>本文</p>",
+        "<h2>関連ページ</h2><p>本文</p>",
+      ].join(""),
+    );
+    expect(warnings).toEqual([]);
+    expect(sections.map((s) => [s.title, s.mods, s.withoutMods])).toEqual([
+      ["心停止", [], []],
+      ["Breathing を入れているとき", ["breathing"], []],
+      ["Hitzones なし", ["breathing"], ["hitzones"]],
+      ["Circulation なし", [], ["circulation"]],
+      ["関連ページ", [], []],
+    ]);
+    expect(sections[1]?.tags).toEqual(["気道"]);
+    expect(sections[1]?.html).not.toContain("mods");
+  });
+
+  it("mods の書き間違いと、見出しの直後にない印を警告する", async () => {
+    const { sections, warnings } = await sectionsFromHtml(
+      [
+        "<h2>A</h2><!-- mods: circulaton, core, !breathing --><p>本文</p>",
+        "<h3>A-1</h3><!-- mods: breathing --><p>本文</p>",
+        "<h2>B</h2><p>本文</p><!-- mods: ai -->",
+        "<h4>深い見出し</h4><!-- mods: hitzones -->",
+      ].join(""),
+    );
+    expect(sections[0]?.withoutMods).toEqual(["breathing"]);
+    expect(warnings).toEqual([
+      expect.stringContaining("mods の値が不明です: circulaton（「A」"),
+      expect.stringContaining("mods の値が不明です: core（「A」"),
+      "mods に同じ MOD の「あり」と「なし」があります: breathing（「A-1」）",
+      "mods の印は h1〜h3 の見出しの直後に書いてください（「B」）",
+      "mods の印は h1〜h3 の見出しの直後に書いてください（「B」）",
+    ]);
+  });
+
   it("script・イベント属性・javascript: URL・style を取り除く", async () => {
     const { sections } = await sectionsFromHtml(
       '<h2 onclick="x()">見出し</h2><script>alert(1)</script><p style="color:red" onmouseover="x()">本文<a href="javascript:alert(1)">危険</a><a href="https://example.com">安全</a></p><iframe src="https://example.com"></iframe>',

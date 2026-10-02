@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardAction, CardContent, CardHeader } from "@/components/ui/card";
 import { RelatedLinks } from "@/features/content/RelatedLinks";
 import { FavoriteButton } from "@/features/prefs/FavoriteButton";
-import { conditionLabel } from "@/features/quickref/conditions";
+import { conditionLabel } from "@/features/settings/mod-conditions";
 import { rowElementId } from "@/features/quickref/link";
 import {
   SEVERITY_BADGE_CLASSES,

@@ -28,7 +28,8 @@ export function ModSettingsCard(): JSX.Element {
         <CardTitle>使っている MOD</CardTitle>
         <CardDescription>
           遊んでいるサーバーに入っている ACE Medical の MOD。トリアージのフローは、MOD
-          を入れているかを尋ねずに、この設定で分岐します。Core は常に入っているものとします。
+          を入れているかを尋ねずに、この設定で分岐します。マニュアルとクイック表は、この組み合わせに合う節と行だけを表示します。Core
+          は常に入っているものとします。
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">

@@ -3,7 +3,7 @@
 import { FileTextIcon, TableIcon, WorkflowIcon, type LucideIcon } from "lucide-react";
 
 import { docHref } from "@/features/library/link";
-import { conditionLabel } from "@/features/quickref/conditions";
+import { conditionLabel } from "@/features/settings/mod-conditions";
 import { quickrefHref } from "@/features/quickref/link";
 import { severityName, toSeverity } from "@/features/quickref/severity";
 import type { PrefTarget } from "@/lib/bindings/PrefTarget";

@@ -1,5 +1,5 @@
 // クイック表の画面の絞り込み。状態は URL のクエリに持つ（小窓の「メインで開く」で同じ表示を引き継ぐため）。
-import { isRowVisible } from "@/features/quickref/conditions";
+import { meetsModConditions } from "@/features/settings/mod-conditions";
 import { SEVERITIES, type Severity } from "@/features/quickref/severity";
 import type { ActiveMods } from "@/features/triage/runner";
 import type { QuickrefRow } from "@/lib/bindings/QuickrefRow";
@@ -81,7 +81,7 @@ export function visibleRows(
 ): VisibleRow[] {
   const target = filters.rowId === null ? undefined : rows.find((r) => r.id === filters.rowId);
   return rows.flatMap((row) => {
-    const hiddenByMods = !isRowVisible(row, active);
+    const hiddenByMods = !meetsModConditions(row, active);
     // 行を指して開いたときは、前に選んでいた絞り込みでその行が隠れないよう、絞り込みを外す
     if (target !== undefined) {
       return row === target || !hiddenByMods || filters.showAll ? [{ row, hiddenByMods }] : [];

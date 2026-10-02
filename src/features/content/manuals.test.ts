@@ -61,6 +61,33 @@ describe("同梱した原稿", () => {
     },
   );
 
+  // 組み合わせの節の見出しの形。AI キャラの話（### AI の場合）や「Circulation の有無で…」のような入れ物の見出しには当たらない
+  const COMBINATION_HEADING = /(?:Hitzones|Circulation|Breathing|AI) *(?:を入れている(?:場合|とき)|なし.*の場合)/;
+  // 見出しの形は組み合わせの節だが、中身はどの組み合わせでも読ませたいので条件を付けないもの
+  const UNCONDITIONAL_HEADINGS = new Set([
+    // あり / なしを比べる表と、組み合わせに関係のない「AI の場合」を含む
+    "death-second-chance.md#circulation-を入れているときの結果",
+  ]);
+
+  it.each(converted.map((c) => [c.manual.fileName, c] as const))(
+    "%s: MOD の組み合わせの見出しには表示条件の印がある",
+    (fileName, { doc }) => {
+      const missing = doc.sections
+        .filter(
+          (s) =>
+            COMBINATION_HEADING.test(s.title) &&
+            s.mods.length === 0 &&
+            s.withoutMods.length === 0 &&
+            !UNCONDITIONAL_HEADINGS.has(`${fileName}#${s.anchor}`),
+        )
+        .map((s) => s.title);
+      expect(
+        missing,
+        "見出しの直後に <!-- mods: circulation -->（入れているとき）か <!-- mods: !circulation -->（入れていないとき）を書いてください",
+      ).toEqual([]);
+    },
+  );
+
   it("すべてに order があり、重複しない（ライブラリと見出しツリーの並び順）", () => {
     const missing = converted.filter((c) => c.doc.meta.order === null).map((c) => c.manual.fileName);
     expect(missing, "front matter の order を書いてください").toEqual([]);

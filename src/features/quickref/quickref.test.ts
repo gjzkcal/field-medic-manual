@@ -2,7 +2,7 @@
 // アプリと同じ bundle.ts（import.meta.glob）から読むので、同梱のされ方も一緒に確かめられる。
 import { describe, expect, it } from "vitest";
 
-import { isRowVisible } from "@/features/quickref/conditions";
+import { meetsModConditions } from "@/features/settings/mod-conditions";
 import { bundledQuickref, readQuickrefSource } from "@/features/quickref/bundle";
 import { activeMods, SELECTABLE_MODS, type SelectableMod } from "@/features/settings/mod-settings";
 import { parseFlowLink } from "@/features/triage/links";
@@ -49,7 +49,7 @@ describe("同梱したクイック表", () => {
       const seen = new Map<string, string>();
       for (const row of rows) {
         const conditions = { mods: row.mods ?? [], withoutMods: row.withoutMods ?? [] };
-        if (!isRowVisible(conditions, active)) {
+        if (!meetsModConditions(conditions, active)) {
           continue;
         }
         const other = seen.get(row.symptom);

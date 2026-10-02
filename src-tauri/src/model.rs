@@ -128,6 +128,10 @@ pub struct SectionInput {
     pub page: Option<u32>,
     /// 本文にない語でも検索に掛けるためのタグ
     pub tags: Vec<String>,
+    /// 表示条件: この MOD をすべて入れているときだけ出す（親の見出しの条件を合わせたもの）
+    pub mods: Vec<ModTarget>,
+    /// 表示条件: この MOD をどれも入れていないときだけ出す（同上）
+    pub without_mods: Vec<ModTarget>,
 }
 
 /// `doc_upsert` の入力。アセットは bytes を含めず、先に `asset_put` で得た id で参照する（大きなバイナリを JSON に載せないため）。
@@ -178,6 +182,8 @@ pub struct Section {
     pub plain_text: String,
     pub page: Option<u32>,
     pub tags: Vec<String>,
+    pub mods: Vec<ModTarget>,
+    pub without_mods: Vec<ModTarget>,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -463,6 +469,9 @@ pub struct OutlineHeading {
     pub level: u8,
     pub title: String,
     pub anchor: String,
+    /// 設定の「使っている MOD」に合わない見出しをツリーから外すため
+    pub mods: Vec<ModTarget>,
+    pub without_mods: Vec<ModTarget>,
 }
 
 /// 全ドキュメントの見出しの一覧。ツリーのために全文書の本文の HTML を IPC で運ばないよう、見出しだけを返す。

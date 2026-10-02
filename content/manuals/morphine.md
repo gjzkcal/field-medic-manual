@@ -37,6 +37,7 @@ category: 物品
 ## 効き方
 
 ### Circulation を入れている場合
+<!-- mods: circulation -->
 
 式（C_mor = モルヒネの濃度 nM、C_nal = ナロキソンの濃度 nM）:
 
@@ -81,6 +82,7 @@ category: 物品
 - 過量投与は [過量投与](drug-effects.md#過量投与)、弱めるときの効き方は [ナロキソン](naloxone.md) を見る。
 
 ### Circulation なし（Core だけ）の場合
+<!-- mods: !circulation -->
 
 - 式: `痛みの HP(t) = 投与時の痛みの HP + 2.5 × 経過秒（最長 60 s）+ 自然回復`（100 で頭打ち）
 - 2.5 HP/s は prefab の 5 HP/s に痛みの基本倍率 0.5 が掛かった値。60 s で最大 150 HP 分。

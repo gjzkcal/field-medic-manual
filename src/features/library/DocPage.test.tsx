@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DocPage } from "@/features/library/DocPage";
+import { DEFAULT_MOD_SETTINGS, useModSettings } from "@/features/settings/mod-settings";
 import type { DocDetail } from "@/lib/bindings/DocDetail";
 import type { DocOutline } from "@/lib/bindings/DocOutline";
 import type { Section } from "@/lib/bindings/Section";
@@ -23,6 +24,8 @@ function section(id: number, level: number, title: string, anchor: string, html:
     plainText: "",
     page: null,
     tags: [],
+    mods: [],
+    withoutMods: [],
   };
 }
 
@@ -76,20 +79,63 @@ const HEMORRHAGE: DocDetail = {
   ],
 };
 
+// MOD の組み合わせで分かれた節。条件は変換で親から子へ合わせてあるので、子も親と同じ条件を持つ
+const CARDIAC_ARREST: DocDetail = {
+  ...HEMORRHAGE,
+  id: "d3",
+  title: "心停止",
+  sourcePath: "bundle://manuals/cardiac-arrest.md",
+  assets: [],
+  sections: [
+    section(10, 1, "心停止", "心停止", "<p>共通</p>"),
+    {
+      ...section(11, 2, "Circulation を入れている場合", "circ", "<p>CPR をする</p>"),
+      mods: ["circulation"],
+    },
+    {
+      ...section(12, 2, "Circulation なし（Core だけ）の場合", "no-circ", "<p>CPR はない</p>"),
+      withoutMods: ["circulation"],
+    },
+    {
+      ...section(13, 3, "Core の蘇生", "core-revive", "<p>エピネフリン</p>"),
+      withoutMods: ["circulation"],
+    },
+    section(14, 2, "関連ページ", "関連ページ", "<p>リンク</p>"),
+  ],
+};
+
 const OUTLINE: DocOutline[] = [
   {
     id: "d1",
     title: "止血",
     sourcePath: "bundle://manuals/hemorrhage.md",
     meta: HEMORRHAGE.meta,
-    headings: [{ level: 2, title: "止血帯を使う", anchor: "止血帯を使う" }],
+    headings: [
+      { level: 2, title: "止血帯を使う", anchor: "止血帯を使う", mods: [], withoutMods: [] },
+    ],
   },
   {
     id: "d2",
     title: "心停止と CPR",
     sourcePath: "bundle://manuals/cardiac-arrest.md",
     meta: HEMORRHAGE.meta,
-    headings: [{ level: 2, title: "CPR の手順", anchor: "cpr-の手順" }],
+    headings: [
+      { level: 2, title: "CPR の手順", anchor: "cpr-の手順", mods: [], withoutMods: [] },
+      {
+        level: 2,
+        title: "Breathing を入れているとき",
+        anchor: "breathing",
+        mods: ["breathing"],
+        withoutMods: [],
+      },
+      {
+        level: 2,
+        title: "Circulation を入れている場合",
+        anchor: "circulation",
+        mods: ["circulation"],
+        withoutMods: [],
+      },
+    ],
   },
 ];
 
@@ -97,6 +143,7 @@ const opened: unknown[] = [];
 const revoked: string[] = [];
 
 beforeEach(() => {
+  useModSettings.setState({ settings: DEFAULT_MOD_SETTINGS });
   opened.length = 0;
   revoked.length = 0;
   // jsdom にない API の代わり（Blob URL、要素のスクロール、要素の大きさの監視）
@@ -131,9 +178,13 @@ beforeEach(() => {
   mockIPC((cmd, args) => {
     switch (cmd) {
       case "doc_get":
-        return args !== undefined && "id" in args && args["id"] === "d1"
-          ? HEMORRHAGE
-          : Promise.reject(new Error("unexpected"));
+        return args === undefined || !("id" in args)
+          ? Promise.reject(new Error("unexpected"))
+          : args["id"] === "d1"
+            ? HEMORRHAGE
+            : args["id"] === "d3"
+              ? CARDIAC_ARREST
+              : Promise.reject(new Error("unexpected"));
       case "doc_outline":
         return OUTLINE;
       case "asset_get":
@@ -259,6 +310,63 @@ describe("DocPage", () => {
       expect(router.state.location.search).toBe("");
     });
     expect(highlights.has("search-hit")).toBe(false);
+  });
+
+  it("設定の MOD に合わない節を外し、合う節は見出しの代わりにラベルで出し、スイッチですべて出す", async () => {
+    renderDoc("/doc/d3");
+
+    expect(await screen.findByText("CPR をする")).toBeDefined();
+    // 合う組み合わせの節は、見出しではなくラベルにして目次からも外す
+    expect(screen.queryByRole("heading", { name: "Circulation を入れている場合" })).toBeNull();
+    const label = document.querySelector('[data-anchor="circ"]');
+    expect(label?.textContent).toBe("Circulation あり");
+    expect(screen.queryByText("CPR はない")).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Core の蘇生" })).toBeNull();
+    expect(screen.getByRole("heading", { level: 2, name: "関連ページ" })).toBeDefined();
+    const toc = screen.getByRole("navigation", { name: "目次" });
+    expect(toc.textContent).toContain("関連ページ");
+    expect(toc.textContent).not.toContain("Circulation");
+    expect(document.body.textContent).toContain(
+      "Core + Circulation + Breathing に合う節を表示しています（設定で変更）。2 節を省略",
+    );
+
+    fireEvent.click(screen.getByRole("switch", { name: "すべての組み合わせを表示" }));
+
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Circulation を入れている場合" }),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Circulation なし（Core だけ）の場合" }),
+    ).toBeDefined();
+    expect(screen.getByRole("heading", { level: 3, name: "Core の蘇生" })).toBeDefined();
+    expect(document.body.textContent).toContain("すべての組み合わせの節を表示しています");
+  });
+
+  it("隠れる節をアンカーで直接開いたときは、隠れている親からまとめて出して印を付ける", async () => {
+    renderDoc(`/doc/d3#${encodeURIComponent("core-revive")}`);
+
+    const parent = await screen.findByRole("heading", {
+      level: 2,
+      name: "Circulation なし（Core だけ）の場合",
+    });
+    expect(screen.getByRole("heading", { level: 3, name: "Core の蘇生" })).toBeDefined();
+    expect(parent.nextElementSibling?.textContent).toContain(
+      "今の MOD の設定では表示しない組み合わせです（Circulation なし）",
+    );
+  });
+
+  it("ツリーの他の文書の見出しも設定の MOD で絞る", async () => {
+    useModSettings.setState({ settings: { enabled: ["circulation"] } });
+    renderDoc("/doc/d1");
+    await screen.findByRole("heading", { level: 2, name: "止血帯を使う" });
+
+    const tree = screen.getByRole("navigation", { name: "マニュアルの見出し" });
+    fireEvent.click(within(tree).getByRole("button", { name: "心停止と CPRの見出しを開く" }));
+
+    expect(within(tree).getByText("CPR の手順")).toBeDefined();
+    expect(within(tree).queryByText("Breathing を入れているとき")).toBeNull();
+    // 合う組み合わせの見出しも、本文ではラベルになるのでツリーには出さない
+    expect(within(tree).queryByText("Circulation を入れている場合")).toBeNull();
   });
 
   it("見つからない文書はその旨を出す", async () => {

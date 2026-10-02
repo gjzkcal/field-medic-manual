@@ -229,6 +229,7 @@ CPR を始めてからの SpO2（気道を開けたとき・酸素マスクの�
 AI にも同じ仕組みが働く。AI は既定で心停止に入った瞬間に死亡するので、仰向けで放置された意識不明の AI は、20 分で約半数が死亡する計算になる（[AI 自身が負傷したとき](ai-medic.md#ai-自身が負傷したとき)）。AI の衛生兵は気道の処置をしない（[使わない物品と処置](ai-medic.md#使わない物品と処置)）。
 
 ### Breathing なしの場合
+<!-- mods: !breathing -->
 
 Core + Circulation で同じ時間放置しても、気道の仕組みがないので何も起きない（Circulation のほかの条件を満たさなければ Stable のまま）。
 
@@ -258,10 +259,12 @@ Core + Circulation で同じ時間放置しても、気道の仕組みがない�
 > 気胸になった瞬間に、1 回目の悪化の判定がすぐ起きることがある（サーバーにほかに気胸の患者がいないとき）。そのときは被弾した瞬間に 50% で大きさ 0.36 になり、5% で緊張性になる（[気胸の悪化と放置したときの時間](#気胸の悪化と放置したときの時間)）。
 
 ### Hitzones を入れている場合
+<!-- mods: hitzones -->
 
 気胸の式は Hitzones の有無で変わらない。Hitzones で変わるのは、胸が壊れたときの死亡と Second Chance の扱いだけ（[Hitzones の急所と心臓](death-second-chance.md#hitzones-の急所と心臓)）。
 
 ### Breathing なしの場合
+<!-- mods: !breathing -->
 
 Breathing を入れていない組み合わせ（Core だけ、Core + Circulation）には気胸がない。胸への打撃は出血と HP の減少だけになる。
 
