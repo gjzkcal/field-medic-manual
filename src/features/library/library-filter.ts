@@ -1,14 +1,11 @@
 // ライブラリ画面の絞り込みと並び替え。原稿は多くても数十件なので、DB ではなく画面の中で行う。
 import { isStale } from "@/features/library/stale";
 import type { DocSummary } from "@/lib/bindings/DocSummary";
-import type { ModChannel } from "@/lib/bindings/ModChannel";
 import type { ModTarget } from "@/lib/bindings/ModTarget";
 
 export interface LibraryFilter {
   /** いずれかに当てはまるもの。空なら絞らない */
   modTargets: readonly ModTarget[];
-  /** 指定した版のものと、版を問わないもの。null なら絞らない */
-  channel: ModChannel | null;
   /** すべてを持つもの */
   tags: readonly string[];
   staleOnly: boolean;
@@ -16,7 +13,6 @@ export interface LibraryFilter {
 
 export const EMPTY_FILTER: LibraryFilter = {
   modTargets: [],
-  channel: null,
   tags: [],
   staleOnly: false,
 };
@@ -25,12 +21,7 @@ export const EMPTY_FILTER: LibraryFilter = {
 export type LibrarySort = "order" | "title" | "updated";
 
 export function isFiltering(filter: LibraryFilter): boolean {
-  return (
-    filter.modTargets.length > 0 ||
-    filter.channel !== null ||
-    filter.tags.length > 0 ||
-    filter.staleOnly
-  );
+  return filter.modTargets.length > 0 || filter.tags.length > 0 || filter.staleOnly;
 }
 
 export function filterDocs(
@@ -39,14 +30,11 @@ export function filterDocs(
   now: Date,
 ): DocSummary[] {
   return docs.filter((doc) => {
-    const { modTarget, modChannel, tags, verifiedAt } = doc.meta;
+    const { modTarget, tags, verifiedAt } = doc.meta;
     if (
       filter.modTargets.length > 0 &&
       (modTarget === null || !filter.modTargets.includes(modTarget))
     ) {
-      return false;
-    }
-    if (filter.channel !== null && modChannel !== null && modChannel !== filter.channel) {
       return false;
     }
     if (!filter.tags.every((tag) => tags.includes(tag))) {

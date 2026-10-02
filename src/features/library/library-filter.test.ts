@@ -53,10 +53,6 @@ describe("filterDocs", () => {
     expect(ids(filterDocs(DOCS, filter, NOW))).toEqual(["a", "c"]);
   });
 
-  it("版で絞っても、版を問わない原稿は残す", () => {
-    expect(ids(filterDocs(DOCS, { ...EMPTY_FILTER, channel: "dev" }, NOW))).toEqual(["a", "b"]);
-  });
-
   it("タグはすべてを持つもの", () => {
     expect(ids(filterDocs(DOCS, { ...EMPTY_FILTER, tags: ["出血", "止血帯"] }, NOW))).toEqual([
       "a",

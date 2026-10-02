@@ -1,22 +1,20 @@
 // 検索パレットの絞り込み。settings テーブルのキー `search` に保存し、再起動しても残す
-// （「Release しか使わない」などを一度選べば済むようにするため）。
+// （「Core しか使わない」などを一度選べば済むようにするため）。
+// 版（Release / Dev）では絞らない。同梱の原稿はすべて Dev 版向けで、Release を選んでも 0 件になるだけのため。
 import { create } from "zustand";
 
-import { isModChannel, isModTarget, MOD_TARGET_VALUES } from "@/features/content/meta";
-import type { ModChannel } from "@/lib/bindings/ModChannel";
+import { isModTarget, MOD_TARGET_VALUES } from "@/features/content/meta";
 import type { ModTarget } from "@/lib/bindings/ModTarget";
 import type { SearchFilter } from "@/lib/bindings/SearchFilter";
 import { errorMessage, settingsGet, settingsSet } from "@/lib/tauri";
 
 export interface SearchFilterSettings {
   modTargets: ModTarget[];
-  modChannel: ModChannel | null;
   tags: string[];
 }
 
 export const EMPTY_SEARCH_FILTER: SearchFilterSettings = {
   modTargets: [],
-  modChannel: null,
   tags: [],
 };
 
@@ -26,16 +24,17 @@ function stringsOf(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
 }
 
-/** 保存された値を読む。項目ごとに検査し、不正な項目だけ既定値に戻す（1 項目の誤りで他の設定を失わないため）。 */
+/**
+ * 保存された値を読む。項目ごとに検査し、不正な項目だけ既定値に戻す（1 項目の誤りで他の設定を失わないため）。
+ * 以前の版で保存した modChannel は読まない。画面から解除できないまま検索が絞られ続けないようにするため
+ */
 export function parseSearchFilter(value: unknown): SearchFilterSettings {
   const record: Record<string, unknown> =
     typeof value === "object" && value !== null ? Object.fromEntries(Object.entries(value)) : {};
   const modTargets = stringsOf(record["modTargets"]).filter(isModTarget);
-  const channel = record["modChannel"];
   return {
     // 並びを固定しておくと、同じ条件のときに検索し直さずに済む（依存の比較が文字列で一致するため）
     modTargets: MOD_TARGET_VALUES.filter((t) => modTargets.includes(t)),
-    modChannel: typeof channel === "string" && isModChannel(channel) ? channel : null,
     tags: [...new Set(stringsOf(record["tags"]).map((t) => t.trim()))].filter((t) => t !== ""),
   };
 }
@@ -46,9 +45,6 @@ export function toQueryFilter(settings: SearchFilterSettings): SearchFilter {
   if (settings.modTargets.length > 0) {
     filter.modTargets = settings.modTargets;
   }
-  if (settings.modChannel !== null) {
-    filter.modChannel = settings.modChannel;
-  }
   if (settings.tags.length > 0) {
     filter.tags = settings.tags;
   }
@@ -56,7 +52,7 @@ export function toQueryFilter(settings: SearchFilterSettings): SearchFilter {
 }
 
 export function activeFilterCount(settings: SearchFilterSettings): number {
-  return settings.modTargets.length + (settings.modChannel === null ? 0 : 1) + settings.tags.length;
+  return settings.modTargets.length + settings.tags.length;
 }
 
 interface SearchFilterState {

@@ -143,15 +143,13 @@ describe("CommandPalette", () => {
 
   it("保存した絞り込みで検索し、絞り込み中の数を出す", async () => {
     useSearchFilter.setState({
-      filter: { modTargets: ["core"], modChannel: "release", tags: [] },
+      filter: { modTargets: ["core"], tags: [] },
     });
     render(<CommandPalette onSelect={vi.fn()} />);
-    expect(screen.getByRole("button", { name: "絞り込み（2 件）" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "絞り込み（1 件）" })).toBeTruthy();
     fireEvent.change(input(), { target: { value: "CPR" } });
     await waitFor(() => {
-      expect(queries).toEqual([
-        { q: "CPR", filter: { modTargets: ["core"], modChannel: "release" } },
-      ]);
+      expect(queries).toEqual([{ q: "CPR", filter: { modTargets: ["core"] } }]);
     });
   });
 });

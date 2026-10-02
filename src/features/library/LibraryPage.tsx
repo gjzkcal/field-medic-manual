@@ -16,7 +16,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Toggle } from "@/components/ui/toggle";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { MOD_CHANNEL_LABELS, MOD_TARGET_LABELS, MOD_TARGET_VALUES } from "@/features/content/meta";
+import { MOD_TARGET_LABELS, MOD_TARGET_VALUES } from "@/features/content/meta";
 import { useContentSync } from "@/features/content/sync";
 import { categoryLabel, groupByCategory } from "@/features/library/doc-category";
 import { DocMetaBadges } from "@/features/library/DocMetaBadges";
@@ -33,11 +33,9 @@ import { SyncStatusCard } from "@/features/sync/SyncStatusCard";
 import { useSyncedLoad } from "@/features/sync/use-synced-load";
 import { useNow } from "@/hooks/use-now";
 import type { DocSummary } from "@/lib/bindings/DocSummary";
-import type { ModChannel } from "@/lib/bindings/ModChannel";
 import { docList, errorMessage } from "@/lib/tauri";
 
 type ViewMode = "card" | "list";
-const MOD_CHANNELS: readonly ModChannel[] = ["release", "dev"];
 const SORT_LABELS: Record<LibrarySort, string> = {
   order: "標準",
   title: "タイトル",
@@ -220,26 +218,6 @@ function FilterBar({
             </ToggleGroupItem>
           ))}
         </ToggleGroup>
-      </FilterRow>
-      <FilterRow label="版">
-        <ToggleGroup
-          variant="outline"
-          size="sm"
-          value={filter.channel === null ? [] : [filter.channel]}
-          onValueChange={(values) => {
-            onFilterChange({
-              ...filter,
-              channel: MOD_CHANNELS.find((c) => values.includes(c)) ?? null,
-            });
-          }}
-        >
-          {MOD_CHANNELS.map((c) => (
-            <ToggleGroupItem key={c} value={c}>
-              {MOD_CHANNEL_LABELS[c]}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-        <span className="text-xs text-muted-foreground">版を問わない原稿は常に表示</span>
       </FilterRow>
       {tags.length > 0 && (
         <FilterRow label="タグ">

@@ -9,15 +9,24 @@ import {
 
 describe("parseSearchFilter", () => {
   it("正しい値はそのまま読む（モジュールは決まった並びに揃える）", () => {
-    expect(
-      parseSearchFilter({ modTargets: ["circulation", "core"], modChannel: "dev", tags: ["出血"] }),
-    ).toEqual({ modTargets: ["core", "circulation"], modChannel: "dev", tags: ["出血"] });
+    expect(parseSearchFilter({ modTargets: ["circulation", "core"], tags: ["出血"] })).toEqual({
+      modTargets: ["core", "circulation"],
+      tags: ["出血"],
+    });
   });
 
   it("不正な項目だけ既定値に戻す", () => {
-    expect(
-      parseSearchFilter({ modTargets: ["core", "manw", 1], modChannel: "manw", tags: "出血" }),
-    ).toEqual({ modTargets: ["core"], modChannel: null, tags: [] });
+    expect(parseSearchFilter({ modTargets: ["core", "manw", 1], tags: "出血" })).toEqual({
+      modTargets: ["core"],
+      tags: [],
+    });
+  });
+
+  it("以前の版で保存した版（modChannel）は読まず、検索にも渡さない", () => {
+    const settings = parseSearchFilter({ modTargets: ["core"], modChannel: "release", tags: [] });
+    expect(settings).toEqual({ modTargets: ["core"], tags: [] });
+    expect(toQueryFilter(settings)).toEqual({ modTargets: ["core"] });
+    expect(activeFilterCount(settings)).toBe(1);
   });
 
   it("タグの空白と重複を除く", () => {
@@ -37,7 +46,7 @@ describe("toQueryFilter / activeFilterCount", () => {
   });
 
   it("指定した条件だけを渡し、数える", () => {
-    const settings = { modTargets: ["core" as const], modChannel: null, tags: ["a", "b"] };
+    const settings = { modTargets: ["core" as const], tags: ["a", "b"] };
     expect(toQueryFilter(settings)).toEqual({ modTargets: ["core"], tags: ["a", "b"] });
     expect(activeFilterCount(settings)).toBe(3);
   });

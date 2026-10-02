@@ -5,14 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { MOD_CHANNEL_LABELS, MOD_TARGET_LABELS, MOD_TARGET_VALUES } from "@/features/content/meta";
+import { MOD_TARGET_LABELS, MOD_TARGET_VALUES } from "@/features/content/meta";
 import { activeFilterCount, useSearchFilter } from "@/features/search/search-filter";
-import type { ModChannel } from "@/lib/bindings/ModChannel";
 import { errorMessage, tagList } from "@/lib/tauri";
 
-const MOD_CHANNELS: readonly ModChannel[] = ["release", "dev"];
-
-/** 検索パレットの絞り込み（モジュール / 版 / タグ）。選んだ内容は保存され、次に開いたときも効く。 */
+/** 検索パレットの絞り込み（モジュール / タグ）。選んだ内容は保存され、次に開いたときも効く。 */
 export function SearchFilterPopover(): JSX.Element {
   const filter = useSearchFilter((s) => s.filter);
   const update = useSearchFilter((s) => s.update);
@@ -96,22 +93,6 @@ export function SearchFilterPopover(): JSX.Element {
             ))}
           </ToggleGroup>
         </FilterRow>
-        <FilterRow label="版" note="版を問わない原稿は常に出る">
-          <ToggleGroup
-            variant="outline"
-            size="sm"
-            value={filter.modChannel === null ? [] : [filter.modChannel]}
-            onValueChange={(values) => {
-              update({ modChannel: MOD_CHANNELS.find((c) => values.includes(c)) ?? null });
-            }}
-          >
-            {MOD_CHANNELS.map((c) => (
-              <ToggleGroupItem key={c} value={c}>
-                {MOD_CHANNEL_LABELS[c]}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-        </FilterRow>
         <FilterRow label="タグ" note="選んだタグをすべて持つ節だけ">
           {tagOptions.length === 0 ? (
             <span className="text-xs text-muted-foreground">タグはまだありません</span>
@@ -141,7 +122,7 @@ export function SearchFilterPopover(): JSX.Element {
           className="self-end"
           disabled={count === 0}
           onClick={() => {
-            update({ modTargets: [], modChannel: null, tags: [] });
+            update({ modTargets: [], tags: [] });
           }}
         >
           すべて解除
