@@ -325,7 +325,7 @@ pub fn list(conn: &Connection) -> Result<Vec<DocSummary>, AppError> {
 pub fn outline(conn: &Connection) -> Result<Vec<DocOutline>, AppError> {
     let mut headings: HashMap<String, Vec<OutlineHeading>> = HashMap::new();
     let mut stmt = conn.prepare(
-        "SELECT document_id, level, title, anchor, mods, without_mods FROM sections
+        "SELECT document_id, level, title, anchor, mods, without_mods, html <> '' FROM sections
          WHERE level BETWEEN 1 AND ?1 ORDER BY document_id, order_index",
     )?;
     let rows = stmt.query_map([OUTLINE_MAX_LEVEL], |r| {
@@ -337,6 +337,7 @@ pub fn outline(conn: &Connection) -> Result<Vec<DocOutline>, AppError> {
                 anchor: r.get(3)?,
                 mods: from_json(r, 4)?,
                 without_mods: from_json(r, 5)?,
+                has_body: r.get(6)?,
             },
         ))
     })?;
@@ -728,10 +729,13 @@ mod tests {
         with_circulation.mods = vec![ModTarget::Circulation, ModTarget::Circulation];
         let mut without_circulation = section(2, "Circulation なし", "no-circ", "n", &[]);
         without_circulation.without_mods = vec![ModTarget::Circulation];
+        let mut wrapper = section(2, "MOD による違い", "wrapper", "", &[]);
+        wrapper.html = String::new();
         input.sections = vec![
             section(1, "A", "a", "a", &[]),
             with_circulation,
             without_circulation,
+            wrapper,
         ];
         let id = upsert(&mut conn, &input).expect("保存できる");
 
@@ -745,6 +749,8 @@ mod tests {
         assert_eq!(headings[1].mods, [ModTarget::Circulation]);
         assert!(headings[1].without_mods.is_empty());
         assert_eq!(headings[2].without_mods, [ModTarget::Circulation]);
+        assert!(headings[0].has_body);
+        assert!(!headings[3].has_body);
     }
 
     #[test]

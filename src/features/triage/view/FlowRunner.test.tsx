@@ -68,7 +68,14 @@ const OUTLINE: DocOutline[] = [
       category: null,
     },
     headings: [
-      { level: 2, title: "止血帯を使う", anchor: "止血帯を使う", mods: [], withoutMods: [] },
+      {
+        level: 2,
+        title: "止血帯を使う",
+        anchor: "止血帯を使う",
+        mods: [],
+        withoutMods: [],
+        hasBody: true,
+      },
     ],
   },
 ];

@@ -143,7 +143,13 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
   // 保存しない。普段は設定の組み合わせだけを読み、ほかの組み合わせは見比べたいときだけ出すため
   const [showAll, setShowAll] = useState(false);
   const visibility = useMemo(
-    () => sectionVisibility(doc.sections, active, showAll, hashAnchor === "" ? null : hashAnchor),
+    () =>
+      sectionVisibility(
+        doc.sections.map((s) => ({ ...s, hasBody: s.html !== "" })),
+        active,
+        showAll,
+        hashAnchor === "" ? null : hashAnchor,
+      ),
     [doc.sections, active, showAll, hashAnchor],
   );
   const shownSections = useMemo(
@@ -161,6 +167,7 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
           anchor: s.anchor,
           mods: s.mods,
           withoutMods: s.withoutMods,
+          hasBody: s.html !== "",
         })),
     [shownSections, visibility],
   );

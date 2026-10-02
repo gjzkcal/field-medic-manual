@@ -472,6 +472,8 @@ pub struct OutlineHeading {
     /// 設定の「使っている MOD」に合わない見出しをツリーから外すため
     pub mods: Vec<ModTarget>,
     pub without_mods: Vec<ModTarget>,
+    /// 見出しの下に本文があるか。本文がなく配下の節がすべて隠れる入れ物の見出し（「MOD による違い」）も外すため
+    pub has_body: bool,
 }
 
 /// 全ドキュメントの見出しの一覧。ツリーのために全文書の本文の HTML を IPC で運ばないよう、見出しだけを返す。

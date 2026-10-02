@@ -24,7 +24,9 @@ function outline(id: string, title: string, category: string | null): DocOutline
       order: null,
       category,
     },
-    headings: [{ level: 2, title: `${title}の節`, anchor: "a", mods: [], withoutMods: [] }],
+    headings: [
+      { level: 2, title: `${title}の節`, anchor: "a", mods: [], withoutMods: [], hasBody: true },
+    ],
   };
 }
 

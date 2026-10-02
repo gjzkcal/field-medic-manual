@@ -8,4 +8,8 @@ export type OutlineHeading = { level: number, title: string, anchor: string,
 /**
  * 設定の「使っている MOD」に合わない見出しをツリーから外すため
  */
-mods: Array<ModTarget>, withoutMods: Array<ModTarget>, };
+mods: Array<ModTarget>, withoutMods: Array<ModTarget>, 
+/**
+ * 見出しの下に本文があるか。本文がなく配下の節がすべて隠れる入れ物の見出し（「MOD による違い」）も外すため
+ */
+hasBody: boolean, };

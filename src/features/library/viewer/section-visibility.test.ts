@@ -13,8 +13,9 @@ function s(
   anchor: string,
   mods: ModTarget[] = [],
   withoutMods: ModTarget[] = [],
+  hasBody = true,
 ): VisibilitySection {
-  return { level, anchor, mods, withoutMods };
+  return { level, anchor, mods, withoutMods, hasBody };
 }
 
 // 変換で親の条件を子に合わせた後の形
@@ -84,5 +85,32 @@ describe("ラベルにする節", () => {
 
   it("親より条件が増えた節を、条件が新しく付く節とする", () => {
     expect([...conditionRoots(SECTIONS)]).toEqual(["circ", "breathing", "breathing-no-hz"]);
+  });
+});
+
+describe("入れ物の見出し", () => {
+  // 「## MOD による違い」の下に組み合わせの節だけがある形
+  const WRAPPED = [
+    s(1, "title"),
+    s(2, "diff", [], [], false),
+    s(3, "hz", ["hitzones"]),
+    s(2, "related"),
+  ];
+
+  it("本文がなく配下がすべて隠れる見出しは一緒に隠す", () => {
+    const result = sectionVisibility(WRAPPED, usual, false, null);
+    expect([...result.visible]).toEqual(["title", "related"]);
+    expect(result.hiddenCount).toBe(2);
+  });
+
+  it("配下が 1 つでも出るとき、すべて出すとき、配下を直接開いたときは残す", () => {
+    expect(sectionVisibility(WRAPPED, hitzones, false, null).visible.has("diff")).toBe(true);
+    expect(sectionVisibility(WRAPPED, usual, true, null).visible.has("diff")).toBe(true);
+    expect(sectionVisibility(WRAPPED, usual, false, "hz").visible.has("diff")).toBe(true);
+  });
+
+  it("本文のある見出しは配下が隠れても残す", () => {
+    const withBody = [s(2, "topic"), s(3, "hz", ["hitzones"])];
+    expect([...sectionVisibility(withBody, usual, false, null).visible]).toEqual(["topic"]);
   });
 });

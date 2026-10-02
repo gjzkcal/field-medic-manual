@@ -1,5 +1,5 @@
 // 原稿の節のうち、設定の「使っている MOD」に合うものを選ぶ。節の条件は変換のときに親の見出しの条件を合わせてあるので、
-// 隠れる見出しの配下も自分の条件で隠れる。
+// 隠れる見出しの配下も自分の条件で隠れる。本文がなく配下がすべて隠れる入れ物の見出し（「MOD による違い」）も隠す。
 import {
   hasModConditions,
   meetsModConditions,
@@ -11,6 +11,8 @@ export interface VisibilitySection extends ModConditions {
   /** 0 = 導入部 */
   level: number;
   anchor: string;
+  /** 見出しの下に本文があるか */
+  hasBody: boolean;
 }
 
 export interface SectionVisibility {
@@ -42,6 +44,7 @@ export function sectionVisibility(
       .filter((s, i) => meets(s) || (forcedRange !== null && inRange(i, forcedRange)))
       .map((s) => s.anchor),
   );
+  hideEmptyWrappers(sections, visible);
   // すべて出すときと、直接開いた節（隠れるはずの節）は、どの組み合わせの話か分かるよう見出しのままにする
   const labeled = showAll
     ? new Set<string>()
@@ -79,6 +82,35 @@ export function conditionRoots(sections: readonly VisibilitySection[]): Readonly
   return roots;
 }
 
+/**
+ * 本文がなく、配下の節がすべて隠れた見出しを visible から除く。見出しだけが空で残るのを防ぐため。
+ * 入れ物が入れ子になっていても内側から決まるよう、後ろから見る
+ */
+function hideEmptyWrappers(sections: readonly VisibilitySection[], visible: Set<string>): void {
+  for (let index = sections.length - 1; index >= 0; index -= 1) {
+    const section = sections[index];
+    if (section === undefined || section.level === 0 || section.hasBody) {
+      continue;
+    }
+    const children = descendantsOf(sections, index);
+    if (children.length > 0 && children.every((child) => !visible.has(child.anchor))) {
+      visible.delete(section.anchor);
+    }
+  }
+}
+
+function descendantsOf(
+  sections: readonly VisibilitySection[],
+  index: number,
+): readonly VisibilitySection[] {
+  const level = sections[index]?.level ?? 0;
+  let end = index + 1;
+  while ((sections[end]?.level ?? 0) > level) {
+    end += 1;
+  }
+  return sections.slice(index + 1, end);
+}
+
 interface Range {
   start: number;
   /** 含まない */
@@ -111,12 +143,7 @@ function forcedRangeOf(
     root = parent;
     parent = parentIndex(sections, root);
   }
-  const rootLevel = sections[root]?.level ?? 0;
-  let end = root + 1;
-  while ((sections[end]?.level ?? 0) > rootLevel) {
-    end += 1;
-  }
-  return { start: root, end };
+  return { start: root, end: root + 1 + descendantsOf(sections, root).length };
 }
 
 /** 自分より浅い直前の見出し。導入部（level 0）は親にならない */

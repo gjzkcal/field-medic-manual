@@ -7,8 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { categoryLabel, groupByCategory } from "@/features/library/doc-category";
 import { docHref } from "@/features/library/link";
 import { headingIndent } from "@/features/library/viewer/heading-indent";
-import { conditionRoots } from "@/features/library/viewer/section-visibility";
-import { meetsModConditions } from "@/features/settings/mod-conditions";
+import { sectionVisibility } from "@/features/library/viewer/section-visibility";
 import type { ActiveMods } from "@/features/triage/runner";
 import type { DocOutline } from "@/lib/bindings/DocOutline";
 import type { OutlineHeading } from "@/lib/bindings/OutlineHeading";
@@ -27,10 +26,17 @@ interface DocTreeProps {
 export function DocTree({ outline, currentId, active, currentVisible }: DocTreeProps): JSX.Element {
   // 開閉を触っていない文書は「今の文書だけ開く」。別の文書へ移ったときに、その文書が自動で開くようにするため
   const [expanded, setExpanded] = useState<Partial<Record<string, boolean>>>({});
-  // 他の文書でも、本文でラベルになる「〜を入れている場合」の見出しはツリーに出さない（今の文書の目次とそろえる）
-  const roots = useMemo(
-    () => new Map(outline.map((doc) => [doc.id, conditionRoots(doc.headings)])),
-    [outline],
+  // 他の文書も本文と同じ判定で絞り、ラベルになる「〜を入れている場合」の見出しも出さない（今の文書の目次とそろえる）
+  const shown = useMemo(
+    () =>
+      new Map(
+        outline.map((doc) => {
+          const visibility = sectionVisibility(doc.headings, active, false, null);
+          const anchors = [...visibility.visible].filter((a) => !visibility.labeled.has(a));
+          return [doc.id, new Set(anchors)];
+        }),
+      ),
+    [outline, active],
   );
 
   return (
@@ -45,7 +51,7 @@ export function DocTree({ outline, currentId, active, currentVisible }: DocTreeP
               isVisible={(h) =>
                 doc.id === currentId
                   ? currentVisible.has(h.anchor)
-                  : meetsModConditions(h, active) && roots.get(doc.id)?.has(h.anchor) !== true
+                  : (shown.get(doc.id)?.has(h.anchor) ?? true)
               }
               open={expanded[doc.id] ?? doc.id === currentId}
               onOpenChange={(next) => {

@@ -111,7 +111,14 @@ const OUTLINE: DocOutline[] = [
     sourcePath: "bundle://manuals/hemorrhage.md",
     meta: HEMORRHAGE.meta,
     headings: [
-      { level: 2, title: "止血帯を使う", anchor: "止血帯を使う", mods: [], withoutMods: [] },
+      {
+        level: 2,
+        title: "止血帯を使う",
+        anchor: "止血帯を使う",
+        mods: [],
+        withoutMods: [],
+        hasBody: true,
+      },
     ],
   },
   {
@@ -120,13 +127,21 @@ const OUTLINE: DocOutline[] = [
     sourcePath: "bundle://manuals/cardiac-arrest.md",
     meta: HEMORRHAGE.meta,
     headings: [
-      { level: 2, title: "CPR の手順", anchor: "cpr-の手順", mods: [], withoutMods: [] },
+      {
+        level: 2,
+        title: "CPR の手順",
+        anchor: "cpr-の手順",
+        mods: [],
+        withoutMods: [],
+        hasBody: true,
+      },
       {
         level: 2,
         title: "Breathing を入れているとき",
         anchor: "breathing",
         mods: ["breathing"],
         withoutMods: [],
+        hasBody: true,
       },
       {
         level: 2,
@@ -134,6 +149,7 @@ const OUTLINE: DocOutline[] = [
         anchor: "circulation",
         mods: ["circulation"],
         withoutMods: [],
+        hasBody: true,
       },
     ],
   },

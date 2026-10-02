@@ -88,6 +88,14 @@ describe("同梱した原稿", () => {
     },
   );
 
+  it("「MOD による違い」の見出しは本文を持たない（配下の組み合わせの節がすべて隠れたら一緒に隠すため）", () => {
+    const wrappers = converted.flatMap(({ manual, doc }) =>
+      doc.sections.filter((s) => s.title === "MOD による違い").map((s) => ({ file: manual.fileName, html: s.html })),
+    );
+    expect(wrappers.length).toBeGreaterThan(0);
+    expect(wrappers.filter((w) => w.html !== "")).toEqual([]);
+  });
+
   it("すべてに order があり、重複しない（ライブラリと見出しツリーの並び順）", () => {
     const missing = converted.filter((c) => c.doc.meta.order === null).map((c) => c.manual.fileName);
     expect(missing, "front matter の order を書いてください").toEqual([]);
