@@ -18,7 +18,7 @@ ACE Medical の設定をどこで変えるか、ミッションヘッダーで�
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [この原稿の読み方](about-this-manual.md) ／ [物品・操作と所要時間](items-and-timing.md) ／ [致命傷と Second Chance](death-second-chance.md) ／ [AI の治療](ai-medic.md)
+関連: [この原稿の読み方](about-this-manual.md) ／ [物品の一覧](items.md) ／ [致命傷と Second Chance](death-second-chance.md) ／ [AI の治療](ai-medic.md)
 
 ## 設定の入口
 

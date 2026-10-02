@@ -18,7 +18,7 @@ category: 処置
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [呼吸と SpO2](respiration-system.md) ／ [チェストシール](chest-seal.md) ／ [NCD キット](ncd-kit.md) ／ [酸素マスク](oxygen-mask.md) ／ [気道閉塞と気道の確保](airway.md) ／ [診察とバイタルの確かめ方](vitals.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [物品・操作と所要時間](items-and-timing.md) ／ [サーバー設定の注意点](server-settings.md)
+関連: [呼吸と SpO2](respiration-system.md) ／ [チェストシール](chest-seal.md) ／ [NCD キット](ncd-kit.md) ／ [酸素マスク](oxygen-mask.md) ／ [気道閉塞と気道の確保](airway.md) ／ [診察とバイタルの確かめ方](vitals.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [物品の一覧](items.md) ／ [サーバー設定の注意点](server-settings.md)
 
 ## 開放性気胸と緊張性気胸
 
@@ -68,19 +68,7 @@ category: 処置
 
 Breathing の 4 物品（King LT・チェストシール・NCD キット・酸素マスク）は、**初期装備にも医療キットにも入っていない**（ゲーム内で確認）。**補給（アーセナル）で手に入れる**。
 
-| 物品（表示名） | 補給コスト | 操作（部位） | 効果 | 使った後 |
-|---|---|---|---|---|
-| King LT | 5 | Insert King LT（頭） | 気道閉塞を解除し、以後防ぐ（[King LT を使う](airway.md#king-lt-を使う)） | 患者の口元に残る |
-| Chest Seal（チェストシール） | 3 | Use chest seal（胸） | 気胸を 0 にする | 消費 |
-| NCD Kit（NCD キット） | 3 | Perform needle decompression（胸） | 緊張性気胸を解除する | 消費 |
-| Oxygen Mask（酸素マスク） | 5 | Put oxygen mask on（頭） | 肺の酸素を増やし、最低限の換気を保つ | 患者の口元に残る |
-
-- 表示名・操作名は日本語に翻訳されておらず、英語で表示される。
-- 医療ラジアルメニュー（既定 Ctrl+H）に「Airway/Thorax management」の分類が加わり、手持ちのこの 4 物品から選んで手に持てる（[医療ラジアルメニュー](items-and-timing.md#医療ラジアルメニュー)）。
-- 移動しながら使える。
-- 所要時間の一覧は [処置の所要時間](items-and-timing.md#処置の所要時間)。
-- Circulation 入りの医療キットの中身（モルヒネ注射器・Epinephrine・包帯・生理食塩水・Ammonium Carbonate・Naloxone・Phenylephrine・Metoprolol）に、Breathing の物品は含まれない（[医療キット](items-and-timing.md#医療キット)）。
-- AI の衛生兵は、これらの物品を使わない（[使わない物品と処置](ai-medic.md#使わない物品と処置)）。
+物品ごとの補給コストと、医療ラジアルメニューでの選び方は [入手](items.md#入手)。
 
 ## 詳しい仕組み
 

@@ -18,7 +18,7 @@ category: 物品
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [出血と止血](hemorrhage.md) ／ [出血](bleeding-system.md) ／ [物品・操作と所要時間](items-and-timing.md)
+関連: [出血と止血](hemorrhage.md) ／ [出血](bleeding-system.md) ／ [物品の一覧](items.md)
 
 ## 効果
 
@@ -32,7 +32,7 @@ category: 物品
 | 左腕 / 右腕 | 上腕・前腕・手 |
 | 左脚 / 右脚 | 太もも・すね・足 |
 
-- 包帯は本体の物品。ACE は使った後のゴミ（手袋 1・包帯の切れ端 2・包装 1）だけを足している（[ゴミ](items-and-timing.md#ゴミ)）。
+- 包帯は本体の物品。ACE は使った後のゴミ（手袋 1・包帯の切れ端 2・包装 1）だけを足している（[ゴミ](medical-actions.md#ゴミ)）。
 
 ## 使い方
 
@@ -50,4 +50,4 @@ category: 物品
 | 意識のない相手 | 5.1 s | 7.7 s |
 
 - ガーゼ（本体の Gauze）は 1.7〜4.5 s と大幅に短い。ただし標準の装備・アーセナルには無い。
-- 詳しくは [処置の所要時間](items-and-timing.md#処置の所要時間)。
+- 詳しくは [処置の所要時間](treatment-times.md)。

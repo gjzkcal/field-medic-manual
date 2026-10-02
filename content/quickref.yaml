@@ -87,7 +87,7 @@ rows:
       - doc:phenylephrine.md
       - doc:drug-effects.md#過量投与
       - doc:saline.md
-      - doc:items-and-timing.md#負傷者を運ぶ
+      - doc:medical-actions.md#負傷者を運ぶ
       - doc:death-second-chance.md#倒れた後の追い打ち
       - flow:casualty-first-contact
     mods: [circulation]
@@ -104,7 +104,7 @@ rows:
       意識を失ってから 1 秒以上たった後に致命打を受けると、Second Chance の判定なしで即死する。
       運んでいる間は移動が半分の速さになる。離すのは Ctrl+X。武器を選ぶと手を離す
     links:
-      - doc:items-and-timing.md#負傷者を運ぶ
+      - doc:medical-actions.md#負傷者を運ぶ
       - doc:death-second-chance.md#倒れた後の追い打ち
       - flow:casualty-first-contact
     withoutMods: [circulation]
@@ -123,7 +123,7 @@ rows:
     links:
       - doc:hemorrhage.md#出血の見分け方
       - doc:bandage.md
-      - doc:items-and-timing.md#医療ラジアルメニュー
+      - doc:medical-actions.md#医療ラジアルメニュー
 
   - id: blood-loss
     category: 出血
@@ -378,7 +378,7 @@ rows:
     links:
       - doc:respiration-system.md#仰向けで放置したとき
       - doc:airway.md#回復体位
-      - doc:items-and-timing.md#体位を変える
+      - doc:medical-actions.md#体位を変える
     mods: [breathing]
 
   # ---- 意識 ----
@@ -554,7 +554,7 @@ rows:
       本体の「適用済み」の文言が出たら、前のエピネフリンの効果（30 秒）が切れるまで待つ
     links:
       - doc:consciousness.md#エピネフリンで起こす
-      - doc:items-and-timing.md#医療キット
+      - doc:medical-kit.md
     withoutMods: [circulation]
 
   - id: no-items
@@ -570,7 +570,7 @@ rows:
       Circulation 入りでは、エピネフリンが Epinephrine に替わり、Ammonium Carbonate・Naloxone・Phenylephrine・Metoprolol が 8 ずつ加わる。
       Breathing の物品（King LT・チェストシール・NCD キット・酸素マスク）は医療キットにも初期装備にも無く、補給（アーセナル）で手に入れる
     links:
-      - doc:items-and-timing.md#医療キット
+      - doc:medical-kit.md
       - doc:breathing.md#breathing-の物品の入手
 
   - id: pain
@@ -619,5 +619,5 @@ rows:
       医療キットは部位の HP を 3 秒ごとに 10 回復するだけで、出血・血液・痛みは戻らない。
       出血が止まっていれば、血液は 10 秒後から自然に戻る（毎分 4.4%）
     links:
-      - doc:items-and-timing.md#医療キット
+      - doc:medical-kit.md
       - doc:bleeding-system.md#血液の回復

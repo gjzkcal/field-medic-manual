@@ -18,7 +18,7 @@ category: 物品
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [痛みと抑え方](pain.md) ／ [痛み](pain-system.md) ／ [ナロキソン](naloxone.md) ／ [薬の効き方](drug-effects.md) ／ [痛みと抑え方](pain.md) ／ [診察とバイタルの確かめ方](vitals.md) ／ [物品・操作と所要時間](items-and-timing.md)
+関連: [痛みと抑え方](pain.md) ／ [痛み](pain-system.md) ／ [ナロキソン](naloxone.md) ／ [薬の効き方](drug-effects.md) ／ [痛みと抑え方](pain.md) ／ [診察とバイタルの確かめ方](vitals.md) ／ [物品の一覧](items.md)
 
 ## 効果
 
@@ -34,7 +34,7 @@ category: 物品
 
 ## 所要時間
 
-注射の所要時間は、自分に 3.2〜4.1 s（立ちで 4.1 s）、意識のある他人に 3.3 s、意識のない相手に 2.4 s（アニメーションの長さから算出。実測ではない）。詳しくは [処置の所要時間](items-and-timing.md#処置の所要時間)。
+注射の所要時間は、自分に 3.2〜4.1 s（立ちで 4.1 s）、意識のある他人に 3.3 s、意識のない相手に 2.4 s（アニメーションの長さから算出。実測ではない）。詳しくは [処置の所要時間](treatment-times.md)。
 
 ## 効き方
 
@@ -96,4 +96,4 @@ category: 物品
 
 ## 入手
 
-医療キットに 8 本入っている（Core だけでも Circulation 入りでも。[医療キット](items-and-timing.md#医療キット)）。
+医療キットに 8 本入っている（Core だけでも Circulation 入りでも。[医療キット](medical-kit.md)）。

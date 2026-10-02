@@ -18,7 +18,7 @@ King LT の効果、使い方、所要時間、入手をまとめる。Breathing
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [気道閉塞と気道の確保](airway.md) ／ [呼吸と SpO2](respiration-system.md) ／ [気胸と処置](breathing.md) ／ [物品・操作と所要時間](items-and-timing.md)
+関連: [気道閉塞と気道の確保](airway.md) ／ [呼吸と SpO2](respiration-system.md) ／ [気胸と処置](breathing.md) ／ [物品の一覧](items.md)
 
 ## 効果
 

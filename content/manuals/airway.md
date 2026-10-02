@@ -18,7 +18,7 @@ category: 処置
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [呼吸と SpO2](respiration-system.md) ／ [King LT](king-lt.md) ／ [気胸と処置](breathing.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [意識不明への対応](consciousness.md) ／ [診察とバイタルの確かめ方](vitals.md) ／ [物品・操作と所要時間](items-and-timing.md) ／ [AI の治療](ai-medic.md)
+関連: [呼吸と SpO2](respiration-system.md) ／ [King LT](king-lt.md) ／ [気胸と処置](breathing.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [意識不明への対応](consciousness.md) ／ [診察とバイタルの確かめ方](vitals.md) ／ [物品の一覧](items.md) ／ [AI の治療](ai-medic.md)
 
 ## 気道閉塞の種類
 
@@ -156,7 +156,7 @@ SpO2 の推移の表とグラフ、途中で気道を開けたとき、心停止
 
 - 患者の腰（腹部）の操作。距離 2 m 以内、押し続ける時間 1 秒、姿勢の移行に 1 秒。
 - 意識不明の患者にだけ出る。今の体位と同じ操作は出ない。
-- 詳しくは [体位を変える](items-and-timing.md#体位を変える)。
+- 詳しくは [体位を変える](medical-actions.md#体位を変える)。
 
 体位ごとの気道の違い:
 

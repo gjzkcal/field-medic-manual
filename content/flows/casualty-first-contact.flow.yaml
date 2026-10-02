@@ -60,7 +60,7 @@ nodes:
       腰の「引きずって運ぶ（Drag）」（1 秒、しゃがんで後ろ向きにだけ動ける）か、「持ちあげて運ぶ（Carry）」（3 秒、立ったまま）。
       移動は半分の速さになる。離すのは Ctrl+X。武器を選ぶと手を離す
     links:
-      - doc:items-and-timing.md#負傷者を運ぶ
+      - doc:medical-actions.md#負傷者を運ぶ
       - doc:death-second-chance.md#倒れた後の追い打ち
     next: q-safe
 
@@ -95,7 +95,7 @@ nodes:
       医療キットには包帯が 8 個入っている。医療キットで部位を治しても、出血は止まらず血液も戻らない。
       止血帯があれば、腕・脚の出血はほぼ止められる
     links:
-      - doc:items-and-timing.md#医療キット
+      - doc:medical-kit.md
     next: q-bleeding
 
   q-conscious:
@@ -140,7 +140,7 @@ nodes:
       注意: 既に嘔吐で塞がっている気道（頭に「Clear vomit」が出る）と、緊張性気胸は回復体位では解けない。次のバイタルの確認で分かる
     links:
       - doc:airway.md#回復体位
-      - doc:items-and-timing.md#体位を変える
+      - doc:medical-actions.md#体位を変える
     next: a-vitals
 
   a-vitals:
