@@ -18,7 +18,7 @@ category: システム
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [診察とバイタルの確かめ方](vitals.md) ／ [状態と閾値](states.md) ／ [出血](bleeding-system.md) ／ [心停止と蘇生](cardiac-arrest-system.md) ／ [痛みと薬](pain-medications.md) ／ [呼吸と気胸](breathing.md) ／ [サーバー設定の注意点](server-settings.md)
+関連: [診察とバイタルの確かめ方](vitals.md) ／ [状態と閾値](states.md) ／ [出血](bleeding-system.md) ／ [心停止と蘇生](cardiac-arrest-system.md) ／ [痛みと薬](pain-medications.md) ／ [気胸と処置](breathing.md) ／ [サーバー設定の注意点](server-settings.md)
 
 ## 心拍数の決まり方
 

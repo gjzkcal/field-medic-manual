@@ -19,7 +19,7 @@ category: 物品
 > 処置の所要時間は、ゲーム本体（1.8.0.13）のアニメーションの長さから算出した値で、実測ではない。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [出血と止血](hemorrhage.md) ／ [痛みと薬](pain-medications.md) ／ [気道管理](airway.md) ／ [呼吸と気胸](breathing.md) ／ [サーバー設定の注意点](server-settings.md) ／ [この原稿の読み方](about-this-manual.md)
+関連: [出血と止血](hemorrhage.md) ／ [痛みと薬](pain-medications.md) ／ [気道閉塞と気道の確保](airway.md) ／ [気胸と処置](breathing.md) ／ [サーバー設定の注意点](server-settings.md) ／ [この原稿の読み方](about-this-manual.md)
 
 ## 物品の一覧
 
@@ -97,7 +97,7 @@ Breathing の物品は英語で表示される。初期装備には無く、補�
 
 - King LT と酸素マスクは、患者から外せる（実機で確認）。酸素マスクは外すとその場で効果が消える。King LT は外すと、以後の嘔吐を防げなくなる（入れたときに解除した閉塞は戻らない）。
 - 同じ患者に 2 本目の King LT・2 つ目の酸素マスクは使えない。
-- 詳しくは [King LT を使う](airway.md#king-lt-を使う)、[チェストシールを使う](breathing.md#チェストシールを使う)、[NCD キットを使う](breathing.md#ncd-キットを使う)、[酸素マスクを使う](breathing.md#酸素マスクを使う)、[Breathing の物品の入手](breathing.md#breathing-の物品の入手) を見る。
+- 詳しくは [King LT を使う](king-lt.md)、[チェストシールを使う](chest-seal.md)、[NCD キットを使う](ncd-kit.md)、[酸素マスクを使う](oxygen-mask.md)、[Breathing の物品の入手](breathing.md#breathing-の物品の入手) を見る。
 
 > [!NOTE]
 > 公式ドキュメントとの違い: ドキュメントは Breathing の物品を King LT・チェストシール・NCD キットの 3 つとしているが、酸素マスクもあり、補給で手に入る。
@@ -213,7 +213,7 @@ Core の枠に Circulation の枠が足される。実機（2026-09-27、日本�
 - 仰向けになるたびに、15% で舌根沈下（気道閉塞）の抽選がある（`m_fAirwayObstructionChance` の既定 0.15 のとき）。仰向けから横向きにして仰向けに戻すと、抽選し直す。
 - 左右の横向き（回復体位）では、舌根沈下は解除され、以後の嘔吐も起きない。すでに嘔吐で塞がっている気道は解除されない（嘔吐物の除去が要る）。
 - うつ伏せでは、舌根沈下は起きないが嘔吐は起きる。
-- 詳しくは [回復体位](airway.md#回復体位) と [仰向けで放置したとき](airway.md#仰向けで放置したとき) を見る。
+- 詳しくは [回復体位](airway.md#回復体位) と [仰向けで放置したとき](respiration-system.md#仰向けで放置したとき) を見る。
 
 ### Circulation なし（Core だけ）の場合
 

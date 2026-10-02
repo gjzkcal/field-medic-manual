@@ -18,7 +18,7 @@ category: 処置
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [心停止と蘇生](cardiac-arrest-system.md) ／ [診察とバイタルの確かめ方](vitals.md) ／ [痛みと薬](pain-medications.md) ／ [致命傷と Second Chance](death-second-chance.md) ／ [出血と止血](hemorrhage.md) ／ [気道管理](airway.md) ／ [呼吸と気胸](breathing.md) ／ [AI の治療](ai-medic.md)
+関連: [心停止と蘇生](cardiac-arrest-system.md) ／ [診察とバイタルの確かめ方](vitals.md) ／ [痛みと薬](pain-medications.md) ／ [致命傷と Second Chance](death-second-chance.md) ／ [出血と止血](hemorrhage.md) ／ [気道閉塞と気道の確保](airway.md) ／ [気胸と処置](breathing.md) ／ [AI の治療](ai-medic.md)
 
 ## 心停止の見分け方
 
@@ -148,7 +148,7 @@ category: 処置
 - 気道が塞がったままだと、長い無呼吸の後の心停止（気道閉塞が原因の心停止など）では SpO2 が戻らず、蘇生しない。
 - 酸素マスクは、気道が開いていれば CPR 中の SpO2 を 82% 前後に保つ。気道が塞がっていると効かない。
 
-このマニュアルの手順（作者の方針）: CPR の前に気道を確保する。King LT があれば入れる。なければ、頭に「Clear vomit」が出ていれば嘔吐物を除去し、あご先挙上をする（[King LT を使う](airway.md#king-lt-を使う)、[嘔吐物の除去](airway.md#嘔吐物の除去)、[あご先挙上](airway.md#あご先挙上)）。酸素マスクを持っていれば、気道を確保した後に付ける（[酸素マスクを使う](breathing.md#酸素マスクを使う)）。
+このマニュアルの手順（作者の方針）: CPR の前に気道を確保する。King LT があれば入れる。なければ、頭に「Clear vomit」が出ていれば嘔吐物を除去し、あご先挙上をする（[King LT を使う](king-lt.md)、[嘔吐物の除去](airway.md#嘔吐物の除去)、[あご先挙上](airway.md#あご先挙上)）。酸素マスクを持っていれば、気道を確保した後に付ける（[酸素マスクを使う](oxygen-mask.md)）。
 
 心停止中の SpO2 の式と、CPR を始めてからの SpO2 の推移は [Breathing を入れているとき](cardiac-arrest-system.md#breathing-を入れているとき)。
 

@@ -41,7 +41,7 @@ nodes:
     items: [King LT]
     ifMissing: { next: q-vomit }
     links:
-      - doc:airway.md#king-lt-を使う
+      - doc:king-lt.md
       - doc:airway.md#気道閉塞の種類
     next: q-chest
 
@@ -97,7 +97,7 @@ nodes:
     items: [NCD キット（NCD Kit）]
     ifMissing: { next: end-no-ncd }
     links:
-      - doc:breathing.md#ncd-キットを使う
+      - doc:ncd-kit.md
       - doc:breathing.md#開放性気胸と緊張性気胸
     next: q-chest
 
@@ -120,7 +120,7 @@ nodes:
     items: [チェストシール（Chest Seal）]
     ifMissing: { next: end-no-chest-seal }
     links:
-      - doc:breathing.md#チェストシールを使う
+      - doc:chest-seal.md
     next: q-chest
 
   end-no-chest-seal:
@@ -141,7 +141,7 @@ nodes:
       意識不明の間は、仰向けで舌根沈下が、仰向け・うつ伏せで嘔吐が起こりうる。回復体位と King LT はどちらも防ぐ。
       状態が変わったら、もう一度確かめる
     links:
-      - doc:airway.md#仰向けで放置したとき
+      - doc:respiration-system.md#仰向けで放置したとき
 
   end-no-breathing:
     type: end

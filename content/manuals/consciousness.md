@@ -18,7 +18,7 @@ category: 処置
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [意識](consciousness-system.md) ／ [炭酸アンモニウム](ammonium-carbonate.md) ／ [出血と止血](hemorrhage.md) ／ [致命傷と Second Chance](death-second-chance.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [痛みと薬](pain-medications.md) ／ [気道管理](airway.md) ／ [診察とバイタルの確かめ方](vitals.md)
+関連: [意識](consciousness-system.md) ／ [炭酸アンモニウム](ammonium-carbonate.md) ／ [出血と止血](hemorrhage.md) ／ [致命傷と Second Chance](death-second-chance.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [痛みと薬](pain-medications.md) ／ [気道閉塞と気道の確保](airway.md) ／ [診察とバイタルの確かめ方](vitals.md)
 
 ## 意識が戻る条件と時間
 
@@ -103,7 +103,7 @@ Breathing を入れていると、気道が塞がった（舌根沈下・嘔吐�
 - 出血していれば少し早く、サーバーの負荷によっては遅くなる（観測例: 人の多いサーバーで 17 分 35 秒）。
 - 気道を開けると、SpO2 は十数秒（900 s 塞がっていた後でも約 25 s）で 85% 以上に戻り、Stable に戻る。Stable に戻れば回復倍率は通常の値になり、意識の値が戻り始める。
 - 気道が塞がると、16 s ほどで Unstable になり、炭酸アンモニウムは効かなくなる。
-- 気道を開ける処置は [あご先挙上](airway.md#あご先挙上)・[嘔吐物の除去](airway.md#嘔吐物の除去)・[回復体位](airway.md#回復体位)・[King LT を使う](airway.md#king-lt-を使う)、放置したときの詳しい推移は [放置したときの推移](airway.md#放置したときの推移)。
+- 気道を開ける処置は [あご先挙上](airway.md#あご先挙上)・[嘔吐物の除去](airway.md#嘔吐物の除去)・[回復体位](airway.md#回復体位)・[King LT を使う](king-lt.md)、放置したときの詳しい推移は [放置したときの推移](airway.md#放置したときの推移)。
 - 意識を失った直後に仰向けになるかどうかは倒れ方による（2026-09-27 に実機で確認）。
 
 > [!NOTE]

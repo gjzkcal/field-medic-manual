@@ -241,7 +241,7 @@ nodes:
     items: [King LT]
     ifMissing: { next: a-airway-no-kinglt }
     links:
-      - doc:airway.md#king-lt-を使う
+      - doc:king-lt.md
       - doc:cardiac-arrest.md#breathing-を入れているとき
     next: a-oxygen
 
@@ -266,7 +266,7 @@ nodes:
     items: [酸素マスク（Oxygen Mask）]
     ifMissing: { next: a-epi }
     links:
-      - doc:breathing.md#酸素マスクを使う
+      - doc:oxygen-mask.md
     next: a-epi
 
   a-epi:

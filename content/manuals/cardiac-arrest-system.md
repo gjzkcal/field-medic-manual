@@ -18,7 +18,7 @@ category: システム
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [心停止と CPR](cardiac-arrest.md) ／ [バイタル](vitals-system.md) ／ [出血](bleeding-system.md) ／ [致命傷と Second Chance](death-second-chance.md) ／ [呼吸と気胸](breathing.md) ／ [AI の治療](ai-medic.md)
+関連: [心停止と CPR](cardiac-arrest.md) ／ [バイタル](vitals-system.md) ／ [出血](bleeding-system.md) ／ [致命傷と Second Chance](death-second-chance.md) ／ [気胸と処置](breathing.md) ／ [AI の治療](ai-medic.md)
 
 ## 心停止に入る経路
 
@@ -30,7 +30,7 @@ category: システム
 | 心拍数・血圧の閾値 | 心拍数 < 20 か > 220、平均血圧 < 5.21 kPa かつ心拍数 ≤ 30、平均血圧 > 29.5 kPa | 薬の過量投与（[過量投与](pain-medications.md#過量投与)） |
 | CPR をやめた | 蘇生中 → 心停止に戻る | [CPR を行う](cardiac-arrest.md#cpr-を行う) |
 | SpO2（Breathing） | SpO2 < 65% | 気道が塞がったまま約 15 分（914 s） |
-| 気胸の最大進行（Breathing） | 気胸が 0.75 に達したとき（設定 `m_fPneumothoraxArrestEnabled`、既定 true） | 開放性気胸を放置すると中央値 8 分で心停止（最大進行が約 7 割、緊張性気胸の無呼吸が約 3 割。[気胸の悪化と放置したときの時間](breathing.md#気胸の悪化と放置したときの時間)） |
+| 気胸の最大進行（Breathing） | 気胸が 0.75 に達したとき（設定 `m_fPneumothoraxArrestEnabled`、既定 true） | 開放性気胸を放置すると中央値 8 分で心停止（最大進行が約 7 割、緊張性気胸の無呼吸が約 3 割。[気胸の悪化と放置したときの時間](respiration-system.md#気胸の悪化と放置したときの時間)） |
 
 - 心停止に入ると、抵抗値が 0 になって意識を失い、脳の損傷が始まる（[脳の損傷と残り時間](#脳の損傷と残り時間)）。
 - 2 回目以降の Second Chance（目覚める前にもう一度致命傷を受けた場合）は、心停止に切り替えない（[Circulation を入れているときの結果](death-second-chance.md#circulation-を入れているときの結果)）。
@@ -273,4 +273,4 @@ CPR を 60 s 続けて 30 s 休む、を繰り返した場合（蘇生しない�
 - 実機（シングルプレイ、AI）で 14 分 43 秒（撃たれた AI の失血で少し早まった）。人の多いサーバーでは 17 分 35 秒かかった。
 - 気道閉塞で心停止した場合は、その時点で SpO2 がすでに 65% 前後なので、気道を開けないと CPR で蘇生しない（開ければ約 2 s で 65% を超える）。
 - 緊張性気胸（無呼吸）はもっと速い（気胸 0.18 で 827 s、0.36 で 727 s、0.54 で 604 s、0.72 で 433 s）。
-- 推移の詳細は [放置したときの推移](airway.md#放置したときの推移)、[呼吸数と SpO2](vitals.md#呼吸数と-spo2)。
+- 推移の詳細は [放置したときの推移](respiration-system.md#気道閉塞を放置したときの推移)、[呼吸数と SpO2](respiration-system.md#呼吸数と-spo2)。

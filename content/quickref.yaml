@@ -196,7 +196,7 @@ rows:
       - doc:cardiac-arrest.md#心停止の見分け方
       - doc:cardiac-arrest.md#cpr-を行う
       - doc:cardiac-arrest.md#breathing-を入れているとき
-      - doc:airway.md#king-lt-を使う
+      - doc:king-lt.md
       - flow:casualty-first-contact
     mods: [circulation, breathing]
 
@@ -296,8 +296,8 @@ rows:
       チェストシール・回復体位・King LT・酸素マスクでは解けない。心停止した後に使っても、それだけでは蘇生しない（CPR が要る）。
       NCD キットは初期装備にも医療キットにも無く、補給（アーセナル）で手に入れる
     links:
-      - doc:breathing.md#ncd-キットを使う
-      - doc:breathing.md#緊張性気胸から心停止まで
+      - doc:ncd-kit.md
+      - doc:respiration-system.md#緊張性気胸から心停止まで
       - doc:breathing.md#breathing-の物品の入手
       - flow:airway-breathing
     mods: [breathing]
@@ -339,7 +339,7 @@ rows:
       意識不明の間は、約 60 秒ごとに 10% で再び吐く（吐いた後 6 分は吐かない）。King LT は初期装備に無く、補給で手に入れる
     links:
       - doc:airway.md#嘔吐物の除去
-      - doc:airway.md#king-lt-を使う
+      - doc:king-lt.md
       - doc:airway.md#回復体位
       - flow:airway-breathing
     mods: [breathing]
@@ -357,7 +357,7 @@ rows:
       状態は Stable のままで SpO2 もあまり下がらないので、呼吸数（17〜40）と診察の表示で気づく。
       チェストシールは初期装備にも医療キットにも無く、補給（アーセナル）で手に入れる
     links:
-      - doc:breathing.md#チェストシールを使う
+      - doc:chest-seal.md
       - doc:breathing.md#気胸の悪化と放置したときの時間
       - doc:breathing.md#breathing-の物品の入手
       - flow:airway-breathing
@@ -376,7 +376,7 @@ rows:
       回復体位にすると舌根沈下はその場で解け、以後の嘔吐も起きない（すでにある嘔吐は残る）。King LT を入れても、体位を問わず塞がらなくなる。
       CPR のために仰向けに戻すと、そのとき 15% で舌根沈下する
     links:
-      - doc:airway.md#仰向けで放置したとき
+      - doc:respiration-system.md#仰向けで放置したとき
       - doc:airway.md#回復体位
       - doc:items-and-timing.md#体位を変える
     mods: [breathing]
