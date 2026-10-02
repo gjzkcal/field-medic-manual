@@ -18,7 +18,7 @@ category: システム
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [出血と止血](hemorrhage.md) ／ [止血帯](tourniquet.md) ／ [包帯](bandage.md) ／ [生理食塩水](saline.md) ／ [バイタルと状態の見方](vitals.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [致命傷と Second Chance](death-second-chance.md)
+関連: [出血と止血](hemorrhage.md) ／ [止血帯](tourniquet.md) ／ [包帯](bandage.md) ／ [生理食塩水](saline.md) ／ [診察とバイタルの確かめ方](vitals.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [致命傷と Second Chance](death-second-chance.md)
 
 ## 血液量と出血の段階
 
@@ -38,7 +38,7 @@ Circulation を入れると血液は 3000 ml になり、Class I〜IV の分類�
 
 - Circulation の分類の境目は「残りの割合 ≤ 閾値」でその分類に入る（Class II ≤ 70%、Class III ≤ 40%、Class IV ≤ 20%）。
 - Class I の上の境目は満タン。満タンから少しでも減ると Class I になるとみられる（本体の処理からの推定）。
-- 状態（Stable / Unstable / Critical / 心停止）の詳しい条件は [5 つの状態と閾値](vitals.md#5-つの状態と閾値)。
+- 状態（Stable / Unstable / Critical / 心停止）の詳しい条件は [状態の閾値](vitals-system.md#状態の閾値)。
 
 ### 心停止が Class IV より先に起きる理由
 
@@ -71,7 +71,7 @@ Critical（血液 ≤ 40%）の間は、出血性ショックで心拍数の目�
 - 血液が 0 になると出血死の判定をする。AI は常に死亡する。
 - プレイヤーは `m_bBleedOutForPlayersEnabled`（既定 true）が true なら死亡する。false なら死なずに意識不明のまま残る。
 - `m_bPlayerCannotDie`（既定 false）を true にすると、プレイヤーは出血死しない。詳しくは [死亡の条件と死亡を防ぐ設定](death-second-chance.md#死亡の条件と死亡を防ぐ設定)。
-- Circulation 入りでは、多くの場合その前に心停止する。心停止に入った AI は既定で即死する（[AI の心停止](cardiac-arrest.md#ai-の心停止)）。
+- Circulation 入りでは、多くの場合その前に心停止する。心停止に入った AI は既定で即死する（[AI の心停止](ai-medic.md#ai-の心停止)）。
 
 ## 傷の出血率
 
@@ -181,16 +181,16 @@ Circulation 入りで 40 ml/s の出血を放置すると、23 s で Unstable、
 
 | 出来事 | 15 ml/s | 40 ml/s | 100 ml/s |
 |---|---|---|---|
-| Unstable（血液 70% 以下） | 61 s | 23 s | 10 s |
-| Critical・意識喪失（40% 以下） | 121 s | 46 s | 23 s |
-| 心停止 | 150 s（血液 25.0%、心拍数 222） | 58 s（22.7%） | 31 s（19.3%） |
+| Unstable（血液 70% 以下） | 61 s（69.5%） | 23 s（69.3%） | 10 s（67.4%） |
+| Critical・意識喪失（40% 以下） | 121 s（39.5%） | 46 s（38.7%） | 23 s（38.4%） |
+| 心停止 | 150 s（血液 25.0%、心拍数 222） | 58 s（22.7%、心拍数 225.9） | 31 s（19.3%、Class IV） |
 | 出血死（血液 0） | 200 s | 91 s | 57.4 s |
 | Circulation なし: 意識喪失（33.3%） | 133.4 s | 50 s | 20 s |
 | Circulation なし: 出血死 | 200 s | 75 s | 30 s |
 
 - Unstable の間は心拍数は 80 のままで、血圧だけが下がる。
 - 心停止すると失血は 20 ml/s に抑えられるので、出血死までの時間は Circulation なしより延びる（40 ml/s: 75 s → 91 s、100 ml/s: 30 s → 57.4 s）。
-- プレイヤーは心停止した時点で画面がほぼ真っ黒になる。心停止した後の脳の損傷は [脳の損傷と残り時間](cardiac-arrest.md#脳の損傷と残り時間)。
+- プレイヤーは心停止した時点で画面がほぼ真っ黒になる。心停止した後の脳の損傷は [脳の損傷と残り時間](cardiac-arrest-system.md#脳の損傷と残り時間)。
 - フェニレフリン 1 本を投与すると、40 ml/s の出血で心停止が 58 s → 82 s、出血死が 91 s → 116.7 s に延びる（2 本で 93 s・128.6 s）。
 
 ### Circulation なし（Core だけ）の場合
@@ -241,7 +241,7 @@ Circulation 入りで 40 ml/s の出血を放置すると、23 s で Unstable、
 - 回復を止めるのは「出血の効果が 1 つでもあること」。止血帯で止めた傷も出血の効果として残るので、包帯でその傷を消すまで回復しない。
 - 医療キットで部位を治しても、血液は戻らない（2026-09-27 に実機で確認）。
 - `m_fBloodRegenScale` は血液だけでなく、部位の HP・痛み・脳（Circulation）の自然回復にも掛かる。意識（resilience）の回復には掛からない。
-- Circulation 入りの心停止では、血液が戻るほど CPR の蘇生の判定が成功しやすくなる（[蘇生の判定](cardiac-arrest.md#蘇生の判定)）。
+- Circulation 入りの心停止では、血液が戻るほど CPR の蘇生の判定が成功しやすくなる（[蘇生の判定](cardiac-arrest-system.md#蘇生の判定)）。
 
 ## 首と大腿動脈の大出血
 

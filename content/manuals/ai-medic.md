@@ -153,14 +153,14 @@ AI の負傷は、プレイヤーと同じ ACE の処理で扱われる（AI MOD
 | 設定 | 既定値 | 既定での AI の扱い |
 |---|---|---|
 | `m_bSecondChanceForAIEnabled`（Core） | false | Second Chance がない。致命打で死亡する（[Second Chance とは](death-second-chance.md#second-chance-とは)） |
-| `m_bCardiacArrestForAIEnabled`（Circulation） | false | 心停止に入った瞬間に死亡する（[AI の心停止](cardiac-arrest.md#ai-の心停止)） |
+| `m_bCardiacArrestForAIEnabled`（Circulation） | false | 心停止に入った瞬間に死亡する（[AI の心停止](#ai-の心停止)） |
 
 設定の変え方は [AI の設定](server-settings.md#ai-の設定)。
 
 ### Circulation を入れている場合
 
 - 心停止に入る条件を満たすと、AI はその場で死亡する。
-- 出血した AI は、頻脈で心拍数が 220 を超え、血液 25% 前後で心停止する（出血が速いと、心拍が上がりきる前に血液 20% の閾値で心停止する）。つまり既定では、そこで死亡する（[心停止に入る経路](cardiac-arrest.md#心停止に入る経路)）。
+- 出血した AI は、頻脈で心拍数が 220 を超え、血液 25% 前後で心停止する（出血が速いと、心拍が上がりきる前に血液 20% の閾値で心停止する）。つまり既定では、そこで死亡する（[心停止に入る経路](cardiac-arrest-system.md#心停止に入る経路)）。
 
 ### Breathing を入れている場合
 
@@ -179,3 +179,28 @@ Breathing には AI とプレイヤーの区別がない。意識不明の AI �
 
 - 血液が 0 になると、AI は常に出血死する（プレイヤーの出血死を止める `m_bBleedOutForPlayersEnabled` は AI には効かない）。
 - 出血を止めてあれば、意識不明のままでも心停止や気道閉塞で死ぬことはない。
+
+## AI の心停止
+
+- 既定では、**AI は心停止に入った瞬間に死ぬ**（`m_bCardiacArrestForAIEnabled` の既定 false）。true にすると、AI もプレイヤーと同じように心停止になる。
+- AI には Second Chance もない（`m_bSecondChanceForAIEnabled` の既定 false）ので、致命打で即死する。そのため AI が心停止に入るのは、主に出血・薬・Breathing の経路。
+- AI の衛生兵は CPR をしない。
+
+### 目安
+
+| 場面 | AI が死ぬまで |
+|---|---|
+| 40 ml/s の出血が止まらない | 46 s で Critical（意識喪失）、58 s で心停止 = 死亡（血液約 23%）。Circulation なしなら血液 0 の 75 s まで生きる |
+| Breathing 入り、意識不明で仰向けのまま放置 | 気道が塞がる割合は 5 分で 54.9%、10 分で 73.5%。塞がってから約 15 分で心停止 = 死亡。心停止した割合は 15 分まで 0%、20 分で 49.8%、30 分で 82.6% |
+| 同上、回復体位か King LT | 気道は塞がらない（0%） |
+
+- 仰向けの割合の表は、その時点でサーバーにほかの意識不明者がいない場合の計算。
+- 実機では、気道が塞がった AI がシングルプレイで 14 分 43 秒、人の多いサーバーで 17 分 35 秒で死亡した。
+
+### AI の衛生兵が使わないもの
+
+- CPR、炭酸アンモニウム、Circulation の注射（エピネフリンを含む）、Breathing の物品と処置は一切使わない。
+- Circulation を入れるとエピネフリンの物品の種類が変わるため、AI のエピネフリンの投与は働かない。
+- Circulation 入りで、心停止した（Second Chance が与えられた）プレイヤーに対しては、AI の衛生兵が来ないまま負傷の知らせが繰り返されるとみられる（コードからの推定）。
+
+詳しくは [使わない物品と処置](#使わない物品と処置)、[AI 自身が負傷したとき](#ai-自身が負傷したとき)、[AI の設定](server-settings.md#ai-の設定)。

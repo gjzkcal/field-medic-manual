@@ -112,7 +112,7 @@ Circulation の閾値の値（Settings.conf の値。ミッションヘッダー
 | `m_eBloodState` | Class II | Class III | Class IV | 血液がこの段階以下で移る |
 | `m_fSpO2`（Breathing） | 85 | 75 | 65 | SpO2（%）がこれ未満で移る |
 
-- 閾値の意味は [5 つの状態と閾値](vitals.md#5-つの状態と閾値) を見る。
+- 閾値の意味は [状態の閾値](vitals-system.md#状態の閾値) を見る。
 - 段階（`m_eBloodState`）などの列挙の値や、入れ子のオブジェクトを JSON でどう書くかは未確認（[ミッションヘッダーの設定は丸ごと差し替わる](#ミッションヘッダーの設定は丸ごと差し替わる) の注記）。
 
 ## 効かない設定
@@ -200,7 +200,7 @@ AI の MOD について:
 
 - AI の MOD（ACE Medical AI Dev）にはサーバー設定が無い。AI の振る舞いの内部の値（衛生兵を探し直す間隔 5 s など）は既定値のまま使われ、サーバー設定では変えられない。
 - AI の MOD は ACE All in One Dev に含まれない。別に入れる。
-- 詳しくは [AI 自身が負傷したとき](ai-medic.md#ai-自身が負傷したとき) と [AI の心停止](cardiac-arrest.md#ai-の心停止) を見る。
+- 詳しくは [AI 自身が負傷したとき](ai-medic.md#ai-自身が負傷したとき) と [AI の心停止](ai-medic.md#ai-の心停止) を見る。
 
 ## 主な設定の既定値
 
@@ -264,7 +264,7 @@ AI の MOD について:
 | `m_fMaxRevivalResilienceRecoveryScale` | 0.2 | 蘇生した後の意識の回復倍率 |
 | `m_fCardiacArrestMaxTotalBleedingRate` | 20 | 出血の上限 `max(この値, 心拍出量 ÷ 60)` ml/s の下限側 |
 
-- 計算例（脳）: 既定なら心停止から死亡まで 10 + 100 ÷ 0.333 ≈ 310 s（約 5 分）。CPR 中は脳の損傷が止まる（[脳の損傷と残り時間](cardiac-arrest.md#脳の損傷と残り時間)）。
+- 計算例（脳）: 既定なら心停止から死亡まで 10 + 100 ÷ 0.333 ≈ 310 s（約 5 分）。CPR 中は脳の損傷が止まる（[脳の損傷と残り時間](cardiac-arrest-system.md#脳の損傷と残り時間)）。
 
 ### 薬の設定（Circulation）
 

@@ -18,7 +18,7 @@ category: 処置
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [気道管理](airway.md) ／ [バイタルと状態の見方](vitals.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [物品・操作と所要時間](items-and-timing.md) ／ [サーバー設定の注意点](server-settings.md)
+関連: [気道管理](airway.md) ／ [診察とバイタルの確かめ方](vitals.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [物品・操作と所要時間](items-and-timing.md) ／ [サーバー設定の注意点](server-settings.md)
 
 ## 呼吸数と SpO2 を確かめる
 
@@ -79,7 +79,7 @@ SpO2 が閾値を割ると、状態が悪化する。元の状態に戻るには
 | 75% 未満 | Critical（強制的に意識不明） | `m_CriticalThresholds` の `m_fSpO2`（既定 75） |
 | 65% 未満 | 心停止。SpO2 が 65% 未満の間は、CPR の蘇生の判定が必ず失敗する | `m_CardiacArrestThresholds` の `m_fSpO2`（既定 65） |
 
-- 状態の全体の仕組みは [5 つの状態と閾値](vitals.md#5-つの状態と閾値)、心拍・血圧などとの関係は [呼吸数と SpO2](vitals.md#呼吸数と-spo2)。
+- 状態の全体の仕組みは [状態の閾値](vitals-system.md#状態の閾値)、心拍・血圧などとの関係は [呼吸数と SpO2](vitals.md#呼吸数と-spo2)。
 - 呼吸数が正常より高い（頻呼吸）と、心拍数の目標が上がる: `心拍数の目標 = 基準の目標 + 2 × max(0, 呼吸数 − 14.573)`。例: 気胸 0.54 なら +34.2 で 114.2、0.72 以上なら +50.9 で 130.9（基準の目標 80 のとき）。
 
 > [!WARNING]

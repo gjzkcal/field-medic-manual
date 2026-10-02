@@ -218,7 +218,7 @@ nodes:
     ifMissing: { next: a-wake-no-ammonia }
     links:
       - doc:consciousness.md#炭酸アンモニウムで起こす
-      - doc:vitals.md#5-つの状態と閾値
+      - doc:vitals-system.md#状態の閾値
     next: q-pain
 
   a-wake-no-ammonia:
@@ -292,7 +292,7 @@ nodes:
     timerSec: 22
     links:
       - doc:cardiac-arrest.md#cpr-を行う
-      - doc:cardiac-arrest.md#蘇生の判定
+      - doc:cardiac-arrest-system.md#蘇生の判定
     next: q-rosc
 
   q-rosc:
@@ -312,7 +312,7 @@ nodes:
     items: [生理食塩水]
     ifMissing: { next: a-cpr }
     links:
-      - doc:cardiac-arrest.md#蘇生までの時間
+      - doc:cardiac-arrest-system.md#蘇生までの時間
     next: a-cpr
 
   a-epi-core:

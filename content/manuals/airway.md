@@ -18,7 +18,7 @@ category: 処置
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [呼吸と気胸](breathing.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [意識喪失と回復](consciousness.md) ／ [バイタルと状態の見方](vitals.md) ／ [物品・操作と所要時間](items-and-timing.md) ／ [AI の治療](ai-medic.md)
+関連: [呼吸と気胸](breathing.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [意識喪失と回復](consciousness.md) ／ [診察とバイタルの確かめ方](vitals.md) ／ [物品・操作と所要時間](items-and-timing.md) ／ [AI の治療](ai-medic.md)
 
 ## 気道閉塞の種類
 
@@ -146,7 +146,7 @@ Breathing を入れていない組み合わせ（Core だけ、Core + Circulatio
 | Critical | `m_CriticalThresholds` の `m_fSpO2` | 75 |
 | 心停止 | `m_CardiacArrestThresholds` の `m_fSpO2` | 65 |
 
-閾値の詳しい扱いは [5 つの状態と閾値](vitals.md#5-つの状態と閾値)。サーバーのミッションヘッダーで Circulation の設定を書くと、この 3 つが 0 になることがある（[ミッションヘッダーの設定は丸ごと差し替わる](server-settings.md#ミッションヘッダーの設定は丸ごと差し替わる)）。
+閾値の詳しい扱いは [状態の閾値](vitals-system.md#状態の閾値)。サーバーのミッションヘッダーで Circulation の設定を書くと、この 3 つが 0 になることがある（[ミッションヘッダーの設定は丸ごと差し替わる](server-settings.md#ミッションヘッダーの設定は丸ごと差し替わる)）。
 
 ### ゆっくり下がる理由
 
@@ -212,7 +212,7 @@ Stable に戻った後は、意識の自然回復が再び始まる（[意識が
 | 開けた | あり | 2 秒 | 74.2% | 82.2% | 82.2% |
 
 - **気道が塞がったままでは、CPR を続けても SpO2 が 65% に届かず、蘇生しない**。
-- 気道を開けると、CPR を始めて約 2 秒で 65% を超え、判定が有効になる。判定は 22 秒ごと（[蘇生の判定](cardiac-arrest.md#蘇生の判定)）。
+- 気道を開けると、CPR を始めて約 2 秒で 65% を超え、判定が有効になる。判定は 22 秒ごと（[蘇生の判定](cardiac-arrest-system.md#蘇生の判定)）。
 - 酸素マスクがないと、CPR 中の SpO2 は約 74% を頂点にゆっくり下がる。酸素マスクがあると 82% で安定する（[酸素マスクを使う](breathing.md#酸素マスクを使う)）。
 
 Breathing を入れているときの CPR 全体の話は [Breathing を入れているとき](cardiac-arrest.md#breathing-を入れているとき)。

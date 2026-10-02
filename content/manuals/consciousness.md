@@ -18,7 +18,7 @@ category: 処置
 > 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
-関連: [出血と止血](hemorrhage.md) ／ [致命傷と Second Chance](death-second-chance.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [痛みと薬](pain-medications.md) ／ [気道管理](airway.md) ／ [バイタルと状態の見方](vitals.md)
+関連: [出血と止血](hemorrhage.md) ／ [致命傷と Second Chance](death-second-chance.md) ／ [心停止と CPR](cardiac-arrest.md) ／ [痛みと薬](pain-medications.md) ／ [気道管理](airway.md) ／ [診察とバイタルの確かめ方](vitals.md)
 
 ## 意識を失う条件
 

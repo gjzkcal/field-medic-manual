@@ -131,13 +131,13 @@ Circulation を入れていると、Second Chance で助かった人は心停止
 | 放置した場合 | 脳が約 310 s で破壊され死亡 | 意識不明のまま（出血していれば出血死） |
 
 - 心停止中の脳は、心停止に入って 10 s 後から 0.333 HP/s で減り、`10 + 100 ÷ 0.333 = 310.3 s` で 0 になる。CPR 中は減らない（[脳の損傷と残り時間](cardiac-arrest.md#脳の損傷と残り時間)）。
-- CPR のやり方と蘇生の判定は [CPR を行う](cardiac-arrest.md#cpr-を行う)・[蘇生の判定](cardiac-arrest.md#蘇生の判定)、蘇生した後の意識の戻り方は [蘇生した後](cardiac-arrest.md#蘇生した後) と [意識が戻る条件と時間](consciousness.md#意識が戻る条件と時間)。
+- CPR のやり方と蘇生の判定は [CPR を行う](cardiac-arrest.md#cpr-を行う)・[蘇生の判定](cardiac-arrest-system.md#蘇生の判定)、蘇生した後の意識の戻り方は [蘇生した後](cardiac-arrest.md#蘇生した後) と [意識が戻る条件と時間](consciousness.md#意識が戻る条件と時間)。
 - Breathing を入れていると、心停止中は SpO2 が下がり、約 190 s で 65% を割る。SpO2 が 65% 未満の間は CPR で蘇生しない（[Breathing を入れているとき](cardiac-arrest.md#breathing-を入れているとき)）。
 - Hitzones と Circulation の両方を入れていると、心臓の破壊で助かった場合も心停止になる（`m_fSecondChanceOnHeart` の既定 0 では即死）。
 
 ### 心停止に入るほかの経路
 
-Second Chance のほかにも、次のときに心停止になる。詳しくは [心停止に入る経路](cardiac-arrest.md#心停止に入る経路)。
+Second Chance のほかにも、次のときに心停止になる。詳しくは [心停止に入る経路](cardiac-arrest-system.md#心停止に入る経路)。
 
 | 経路 | 条件（既定値） |
 |---|---|
@@ -151,7 +151,7 @@ Second Chance のほかにも、次のときに心停止になる。詳しくは
 ### AI の場合
 
 - AI は既定で Second Chance が無い（`m_bSecondChanceForAIEnabled` = false）ので、致命打で即死する。
-- AI は既定で、心停止に入った瞬間に死亡する（`m_bCardiacArrestForAIEnabled` = false）。出血した AI は血液 25% 前後で、気道が塞がった AI は約 15 分で死にうる（[AI の心停止](cardiac-arrest.md#ai-の心停止)）。
+- AI は既定で、心停止に入った瞬間に死亡する（`m_bCardiacArrestForAIEnabled` = false）。出血した AI は血液 25% 前後で、気道が塞がった AI は約 15 分で死にうる（[AI の心停止](ai-medic.md#ai-の心停止)）。
 
 ## Hitzones の急所と心臓
 

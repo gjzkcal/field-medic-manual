@@ -141,7 +141,7 @@ rows:
     links:
       - doc:saline.md
       - doc:bleeding-system.md#血液の回復
-      - doc:vitals.md#5-つの状態と閾値
+      - doc:vitals-system.md#状態の閾値
     mods: [circulation]
 
   - id: blood-loss-core
@@ -237,8 +237,8 @@ rows:
       出血を止めて血液 100% なら、平均約 56 秒で蘇生する。止まっていない出血があると、CPR で失血が速くなる。
       Breathing を入れていれば、気道が塞がったまま（SpO2 65% 未満）では蘇生しない
     links:
-      - doc:cardiac-arrest.md#蘇生の判定
-      - doc:cardiac-arrest.md#蘇生までの時間
+      - doc:cardiac-arrest-system.md#蘇生の判定
+      - doc:cardiac-arrest-system.md#蘇生までの時間
       - doc:cardiac-arrest.md#breathing-を入れているとき
     mods: [circulation]
 
@@ -256,7 +256,7 @@ rows:
       血液 26.4% 未満で心拍数の目標が 220 を超え、心停止する（実際は 19〜25% 付近）。
       Unstable までは、出血しても脈は 80 のままで血圧だけが下がる
     links:
-      - doc:vitals.md#心拍数の決まり方
+      - doc:vitals-system.md#心拍数の決まり方
       - doc:bleeding-system.md#心停止が-class-iv-より先に起きる理由
       - quickref:cardiac-arrest
     mods: [circulation]
@@ -400,7 +400,7 @@ rows:
       蘇生していなければ、脳 75% 以上で必ず成功し、約 3 秒で目覚める
     links:
       - doc:consciousness.md#炭酸アンモニウムで起こす
-      - doc:vitals.md#5-つの状態と閾値
+      - doc:vitals-system.md#状態の閾値
       - doc:airway.md#回復体位
       - flow:casualty-first-contact
     mods: [circulation, breathing]
@@ -421,7 +421,7 @@ rows:
       蘇生していなければ、脳 75% 以上で必ず成功し、約 3 秒で目覚める
     links:
       - doc:consciousness.md#炭酸アンモニウムで起こす
-      - doc:vitals.md#5-つの状態と閾値
+      - doc:vitals-system.md#状態の閾値
       - quickref:cardiac-arrest-no-breathing
       - flow:casualty-first-contact
     mods: [circulation]
@@ -461,7 +461,7 @@ rows:
       CPR で蘇生した後は、脳の状態で成功率が下がる（脳 50% で 60%）。気道が塞がっている間は、Stable でも自然には目覚めない
     links:
       - doc:consciousness.md#炭酸アンモニウムで起こす
-      - doc:vitals.md#5-つの状態と閾値
+      - doc:vitals-system.md#状態の閾値
       - doc:consciousness.md#気道と意識
       - quickref:apnea
     mods: [circulation, breathing]
@@ -480,7 +480,7 @@ rows:
       CPR で蘇生した後は、脳の状態で成功率が下がる（脳 50% で 60%）
     links:
       - doc:consciousness.md#炭酸アンモニウムで起こす
-      - doc:vitals.md#5-つの状態と閾値
+      - doc:vitals-system.md#状態の閾値
     mods: [circulation]
     withoutMods: [breathing]
 
@@ -499,7 +499,7 @@ rows:
       出血が止まらなければ、血液 25% 前後で心停止し死亡する（40 ml/s で 58 秒）。
       Breathing を入れていれば、仰向けのまま気道が塞がると約 15 分で死亡する
     links:
-      - doc:cardiac-arrest.md#ai-の心停止
+      - doc:ai-medic.md#ai-の心停止
       - doc:ai-medic.md#ai-自身が負傷したとき
     mods: [circulation]
 
