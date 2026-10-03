@@ -54,13 +54,13 @@ category: 処置
 | 項目 | 内部の値 | 通知に出る値 | 決める設定（既定値） |
 |---|---|---|---|
 | 心拍数 | 80 bpm | 80 | `m_fDefaultHeartRateBPM`（80） |
-| 血圧 | 収縮期 120.0 / 拡張期 80.0 mmHg（平均 93.3 mmHg = 12.443 kPa） | **119/79**（実機で確認） | `m_fDefaultMeanArterialPressureKPA`（12.443）、`m_fDefaultPulsePressureKPA`（5.3329） |
+| 血圧 | 収縮期 119.997 / 拡張期 79.997 mmHg（平均 93.330 mmHg = 12.443 kPa） | **119/79**（実機で確認） | `m_fDefaultMeanArterialPressureKPA`（12.443）、`m_fDefaultPulsePressureKPA`（5.3329） |
 | 呼吸数（Breathing） | 14.573 回/分 | 14 | `m_fDefaultRespiratoryRateBPM`（14.573） |
 | SpO2（Breathing） | 97.149% | 97 | —（既定値の釣り合いで決まる） |
 | 一回拍出量 | 95 ml | 出ない | `m_fDefaultStrokeVolumeML`（95） |
 | 心拍出量 | 7600 ml/分 | 出ない | — |
 
-- 血圧が 120/80 ではなく 119/79 と出るのは、切り捨てのため（ゲームマスターのツールチップは四捨五入で 120/80）。
+- 血圧が 120/80 ではなく 119/79 と出るのは、内部の値が 120/80 にわずかに届かず、通知がそれを切り捨てるため（ゲームマスターのツールチップは四捨五入で 120/80）。
 - 単位の換算: `mmHg = 7.5006 × kPa`。
 
 場面ごとの通知の値:
