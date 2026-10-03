@@ -150,6 +150,23 @@ describe("同梱した原稿", () => {
     },
   );
 
+  it.each(converted.map((c) => [c.manual.fileName, c] as const))(
+    "%s: 冒頭の NOTE は 1 文ずつ改行して表示する",
+    (_, { manual, doc }) => {
+      const block = /^> \[!NOTE\]\n((?:> .*\n)+)/m.exec(manual.text)?.[1];
+      expect(block, "冒頭に > [!NOTE] を書いてください").toBeDefined();
+      // 行末の \ がないと、Markdown の決まりで行がつながって 1 段落に詰まって表示される
+      const lines = (block ?? "").trimEnd().split("\n");
+      expect(
+        lines.slice(0, -1).filter((line) => !line.endsWith("\\")),
+        "冒頭の NOTE の最後以外の行末に \\ を付けてください",
+      ).toEqual([]);
+      const container = document.createElement("div");
+      container.innerHTML = doc.sections.map((s) => s.html).join("");
+      expect(container.querySelector(".markdown-alert-note")?.querySelectorAll("br").length).toBe(lines.length - 1);
+    },
+  );
+
   it("すべてに order があり、重複しない（ライブラリと見出しツリーの並び順）", () => {
     const missing = converted.filter((c) => c.doc.meta.order === null).map((c) => c.manual.fileName);
     expect(missing, "front matter の order を書いてください").toEqual([]);

@@ -16,8 +16,8 @@ category: 処置
 意識が自然に戻るまでの目安、エピネフリン（Core）と炭酸アンモニウム（Circulation）で起こすときの条件と時間、気道と意識の関係をまとめる。意識を失う条件と、意識が戻る速さの式は [意識](consciousness-system.md) にある。
 
 > [!NOTE]
-> [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。
-> 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。
+> [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。\
+> 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。\
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
 ## 意識が戻る条件と時間

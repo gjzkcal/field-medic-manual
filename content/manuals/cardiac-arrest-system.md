@@ -16,8 +16,8 @@ category: システム
 心停止に入る経路、脳の損傷の式、CPR 中のバイタル、蘇生の判定の式と蘇生までの時間、蘇生した後の状態の移り方と目覚めるまでの式、Breathing を入れたときの心停止中の SpO2 をまとめる。見分け方と CPR のやり方は [心停止と CPR](cardiac-arrest.md) にある。
 
 > [!NOTE]
-> [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。
-> 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。
+> [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。\
+> 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。\
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
 ## 心停止に入る経路

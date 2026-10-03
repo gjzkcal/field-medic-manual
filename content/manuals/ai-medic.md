@@ -16,8 +16,8 @@ category: 管理者向け
 ACE Medical AI を入れたときに、AI の衛生兵が誰をどの物品で治療するか、何をしないか、どの AI が衛生兵になるかが分かる。AI 自身が負傷したときの扱い（AI MOD の有無に関係なく決まる）もまとめた。
 
 > [!NOTE]
-> [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。
-> 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。
+> [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。\
+> 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。\
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
 ## AI が治療する相手

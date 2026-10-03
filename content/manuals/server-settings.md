@@ -16,8 +16,8 @@ category: 管理者向け
 ACE Medical の設定をどこで変えるか、ミッションヘッダーで設定するときの落とし穴、効かない設定、ゲームモードの設定との関係（出血倍率・意識喪失の禁止）、死亡を防ぐ設定、AI に関わる設定、主な設定の既定値をまとめる。サーバー管理者とミッション作者向け。
 
 > [!NOTE]
-> [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。
-> 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。
+> [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。\
+> 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。\
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
 ## 設定の入口

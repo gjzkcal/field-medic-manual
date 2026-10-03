@@ -16,8 +16,8 @@ category: 処置
 胸の負傷で起きる開放性気胸・緊張性気胸の見分け方と悪化の要点、チェストシール・NCD キット・酸素マスクの使いどころと入手をまとめる。どれも Breathing を入れているときだけの仕組み。呼吸数と SpO2 の決まり方、気胸の起き方と悪化の式は [呼吸と SpO2](respiration-system.md) にある。
 
 > [!NOTE]
-> [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。
-> 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。
+> [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。\
+> 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。\
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
 ## 開放性気胸と緊張性気胸

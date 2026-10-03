@@ -16,8 +16,8 @@ category: 処置
 痛みの見分け方（画面の点滅）と、痛みのたまり方・モルヒネでの抑え方の要点をまとめる。痛みの式と画面効果の設定は [痛み](pain-system.md)、薬ごとの効き方は各物品の原稿と [薬の効き方](drug-effects.md) にある。
 
 > [!NOTE]
-> [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。
-> 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。
+> [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。\
+> 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。\
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
 ## 痛みの画面効果

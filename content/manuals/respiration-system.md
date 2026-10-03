@@ -16,8 +16,8 @@ category: システム
 呼吸数と SpO2 の決まり方と状態との関係、気道閉塞を放置したときの SpO2 の推移、仰向けで放置したときに気道が塞がる割合、気胸の起き方・段階ごとの値・悪化の式をまとめる。どれも Breathing を入れているときだけの仕組み。処置は [気道閉塞と気道の確保](airway.md) と [気胸と処置](breathing.md) にある。
 
 > [!NOTE]
-> [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。
-> 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。
+> [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。\
+> 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。\
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
 ## 呼吸数と SpO2

@@ -16,8 +16,8 @@ category: システム
 致命打を受けたときに即死するか意識不明で済むか（Second Chance）の判定の流れと部位ごとの確率、倒れた後の追い打ち、Circulation・Hitzones での違い、死亡の条件をまとめる。死亡を防ぐ設定は [サーバー設定の注意点](server-settings.md#死亡を防ぐ設定) にある。
 
 > [!NOTE]
-> [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。
-> 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。
+> [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。\
+> 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。\
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
 ## Second Chance とは
