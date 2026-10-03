@@ -3,6 +3,8 @@ title: 診察とバイタルの確かめ方
 mod: circulation
 channel: dev
 mod_version: "1.5.36"
+ace_commit: "703d1aa7"
+game_version: "1.8.0.13"
 verified_at: 2026-09-27
 tags: [循環]
 order: 20
@@ -14,8 +16,8 @@ category: 処置
 脈・血圧・呼吸数・SpO2 の確かめ方と正常値、Circulation の 5 つの状態のあらまし、診察画面と画面の効果をまとめる。バイタルは Circulation を入れたときだけある（呼吸数と SpO2 は Breathing も必要）。状態の閾値は [状態と閾値](states.md)、心拍数・血圧の決まり方は [バイタル](vitals-system.md)、呼吸数と SpO2 の決まり方は [呼吸と SpO2](respiration-system.md) にある。
 
 > [!NOTE]
-> ACE Medical **Dev 1.5.36** のソースコード（[acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) の dev ブランチ `703d1aa7`）とゲーム本体 1.8.0.13 の処理を読んで書いた（2026-09-27 確認）。Release 版（1.4.3）では違う場合がある。
-> 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
+> [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。
+> 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
 ## バイタルを確かめる操作

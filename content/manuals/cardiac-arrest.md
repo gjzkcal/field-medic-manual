@@ -3,6 +3,8 @@ title: 心停止と CPR
 mod: circulation
 channel: dev
 mod_version: "1.5.36"
+ace_commit: "703d1aa7"
+game_version: "1.8.0.13"
 verified_at: 2026-09-27
 tags: [循環]
 order: 50
@@ -14,8 +16,8 @@ category: 処置
 心停止の見分け方、脳が尽きるまでの時間、CPR のやり方、エピネフリンの役割、蘇生した後と Breathing を入れたときの注意をまとめる。心停止と CPR は Circulation を入れたときだけある。心停止に入る経路、蘇生の判定の式、蘇生までの時間などの仕組みは [心停止と蘇生](cardiac-arrest-system.md) にある。
 
 > [!NOTE]
-> ACE Medical **Dev 1.5.36** のソースコード（[acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) の dev ブランチ `703d1aa7`）とゲーム本体 1.8.0.13 の処理を読んで書いた（2026-09-27 確認）。Release 版（1.4.3）では違う場合がある。
-> 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
+> [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。
+> 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
 ## 心停止の見分け方

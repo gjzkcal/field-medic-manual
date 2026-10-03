@@ -68,6 +68,8 @@ describe("データ層のラッパ", () => {
         modChannel: null,
         modVersion: null,
         verifiedAt: null,
+        aceCommit: null,
+        gameVersion: null,
         tags: [],
         order: null,
         category: null,

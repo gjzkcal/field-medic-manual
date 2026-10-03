@@ -3,6 +3,8 @@ title: バイタル
 mod: circulation
 channel: dev
 mod_version: "1.5.36"
+ace_commit: "703d1aa7"
+game_version: "1.8.0.13"
 verified_at: 2026-09-27
 tags: [循環]
 order: 420
@@ -14,8 +16,8 @@ category: システム
 心拍数と血圧の決まり方（式・計算例・出血したときの推移）をまとめる。バイタルの確かめ方は [診察とバイタルの確かめ方](vitals.md)、状態が変わる閾値は [状態と閾値](states.md) にある。
 
 > [!NOTE]
-> ACE Medical **Dev 1.5.36** のソースコード（[acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) の dev ブランチ `703d1aa7`）とゲーム本体 1.8.0.13 の処理を読んで書いた（2026-09-27 確認）。Release 版（1.4.3）では違う場合がある。
-> 時間の数値は、コードの式から計算した目安（シングルプレイ）。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある（出来事の順番は変わらない）。
+> [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。
+> 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
 ## 心拍数の決まり方

@@ -113,6 +113,8 @@ interface FrontMatter extends Record<string, unknown> {
   channel?: unknown;
   modVersion?: unknown;
   verifiedAt?: unknown;
+  aceCommit?: unknown;
+  gameVersion?: unknown;
   tags?: unknown;
   order?: unknown;
   category?: unknown;
@@ -138,13 +140,15 @@ async function splitFrontMatter(
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
     return { frontMatter: null, body };
   }
-  // 原稿では snake_case（mod_version / verified_at）で書く決まりなので、DocMeta の camelCase に読み替える
+  // 原稿では snake_case（mod_version / verified_at / ace_commit / game_version）で書く決まりなので、DocMeta の camelCase に読み替える
   const record = Object.fromEntries(Object.entries(parsed));
   return {
     frontMatter: {
       ...record,
       modVersion: record["mod_version"],
       verifiedAt: record["verified_at"],
+      aceCommit: record["ace_commit"],
+      gameVersion: record["game_version"],
     },
     body,
   };

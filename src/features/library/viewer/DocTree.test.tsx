@@ -20,6 +20,8 @@ function outline(id: string, title: string, category: string | null): DocOutline
       modChannel: null,
       modVersion: null,
       verifiedAt: null,
+      aceCommit: null,
+      gameVersion: null,
       tags: [],
       order: null,
       category,

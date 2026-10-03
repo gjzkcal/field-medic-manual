@@ -23,6 +23,8 @@ function doc(id: string, title: string, meta: Partial<DocSummary["meta"]>): DocS
       modChannel: null,
       modVersion: null,
       verifiedAt: "2099-01-01",
+      aceCommit: null,
+      gameVersion: null,
       tags: [],
       order: null,
       category: null,

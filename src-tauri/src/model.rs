@@ -105,6 +105,10 @@ pub struct DocMeta {
     pub mod_version: Option<String>,
     /// YYYY-MM-DD
     pub verified_at: Option<String>,
+    /// 読んだ ACE-Anvil のソースのコミット（小文字の 16 進 7〜40 桁）
+    pub ace_commit: Option<String>,
+    /// 処理を確かめたゲーム本体の版（例: 1.8.0.13）
+    pub game_version: Option<String>,
     pub tags: Vec<String>,
     /// ライブラリと見出しツリーでの順番（小さいほど前）。ないものはタイトル順で後ろに並ぶ
     pub order: Option<u32>,

@@ -130,6 +130,26 @@ describe("同梱した原稿", () => {
     expect(wrappers.filter((w) => w.html !== "")).toEqual([]);
   });
 
+  it.each(converted.map((c) => [c.manual.fileName, c] as const))(
+    "%s: Dev の原稿は読んだソースのコミットと本体の版を書き、本文に出てくるコミットもそれと同じ",
+    (_, { manual, doc }) => {
+      if (doc.meta.modChannel !== "dev") {
+        return;
+      }
+      // 末尾の欄はこの 2 つから出し、冒頭の NOTE には版を書かない決まりなので、書き忘れると読んだ版がどこにも出ない
+      expect(doc.meta.aceCommit, "front matter の ace_commit を書いてください").not.toBeNull();
+      expect(doc.meta.gameVersion, "front matter の game_version を書いてください").not.toBeNull();
+      // 版の違いの説明（「ソースの dev ブランチ `…` では〜」）に書いたコミット。数字だけの値は設定値などと紛れるので除く
+      const cited = [...manual.text.matchAll(/`([0-9a-f]{7,40})`/g)]
+        .map((m) => m[1] ?? "")
+        .filter((hash) => /[a-f]/.test(hash) && /\d/.test(hash));
+      expect(
+        cited.filter((hash) => hash !== doc.meta.aceCommit),
+        "本文のコミットを front matter の ace_commit に合わせてください",
+      ).toEqual([]);
+    },
+  );
+
   it("すべてに order があり、重複しない（ライブラリと見出しツリーの並び順）", () => {
     const missing = converted.filter((c) => c.doc.meta.order === null).map((c) => c.manual.fileName);
     expect(missing, "front matter の order を書いてください").toEqual([]);

@@ -16,6 +16,8 @@ function doc(id: string, title: string, updatedAt: string, meta: Partial<DocMeta
       modChannel: null,
       modVersion: null,
       verifiedAt: "2026-09-25",
+      aceCommit: null,
+      gameVersion: null,
       tags: [],
       order: null,
       category: null,

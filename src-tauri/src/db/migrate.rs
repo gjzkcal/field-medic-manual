@@ -12,6 +12,8 @@ const MIGRATIONS: &[&str] = &[
     include_str!("migrations/0006_doc_order.sql"),
     include_str!("migrations/0007_doc_category.sql"),
     include_str!("migrations/0008_section_mods.sql"),
+    include_str!("migrations/0009_doc_ace_commit.sql"),
+    include_str!("migrations/0010_doc_game_version.sql"),
 ];
 
 /// `PRAGMA user_version` を「適用済みのマイグレーションの数」として使い、未適用分を順に適用する。
@@ -59,7 +61,7 @@ mod tests {
     #[test]
     fn applies_all_migrations() {
         let conn = test_conn();
-        assert_eq!(user_version(&conn), 8);
+        assert_eq!(user_version(&conn), 10);
         for table in [
             "documents",
             "sections",
@@ -89,7 +91,7 @@ mod tests {
         conn.execute("DELETE FROM synonym_groups WHERE id = 1", [])
             .expect("削除できる");
         migrate(&mut conn).expect("再実行できる");
-        assert_eq!(user_version(&conn), 8);
+        assert_eq!(user_version(&conn), 10);
         let count: i64 = conn
             .query_row(
                 "SELECT COUNT(*) FROM synonym_groups WHERE id = 1",

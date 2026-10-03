@@ -14,7 +14,7 @@ const MANUAL_TEXTS = import.meta.glob<string>("/content/manuals/*.md", {
  * 原稿の変換の版。変換の出力（保存する HTML・読み取るメタデータ）を変えたら上げる。
  * DB の原稿はハッシュが同じなら入れ直さないので、上げないと更新後も古い変換結果が残る。
  */
-const CONVERTER_VERSION = 7;
+const CONVERTER_VERSION = 8;
 
 // 画像は本文に比べて大きいので、中身ではなく URL を同梱し、DB に入れるときにだけ読む
 const IMAGE_URLS = import.meta.glob<string>("/content/manuals/images/*", {

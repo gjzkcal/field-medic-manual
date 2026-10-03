@@ -49,8 +49,9 @@ pub fn upsert(conn: &mut Connection, input: &DocUpsertInput) -> Result<String, A
 
     tx.execute(
         "INSERT INTO documents (id, title, source_type, source_path, source_hash, original_asset_id,
-           mod_target, mod_channel, mod_version, verified_at, sort_order, category, created_at, updated_at)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
+           mod_target, mod_channel, mod_version, verified_at, sort_order, category, ace_commit,
+           game_version, created_at, updated_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)",
         params![
             id,
             input.title,
@@ -64,6 +65,8 @@ pub fn upsert(conn: &mut Connection, input: &DocUpsertInput) -> Result<String, A
             input.meta.verified_at,
             input.meta.order,
             input.meta.category,
+            input.meta.ace_commit,
+            input.meta.game_version,
             created_at,
             now,
         ],
@@ -166,6 +169,16 @@ fn validate(input: &DocUpsertInput) -> Result<DocUpsertInput, AppError> {
     input.meta.mod_version = non_empty(input.meta.mod_version.as_deref());
     input.meta.verified_at = non_empty(input.meta.verified_at.as_deref());
     input.meta.category = non_empty(input.meta.category.as_deref());
+    input.meta.game_version = non_empty(input.meta.game_version.as_deref());
+    input.meta.ace_commit =
+        non_empty(input.meta.ace_commit.as_deref()).map(|commit| commit.to_ascii_lowercase());
+    if let Some(commit) = &input.meta.ace_commit
+        && !is_commit_hash(commit)
+    {
+        return Err(AppError::InvalidInput(format!(
+            "ace_commit は 16 進 7〜40 桁のコミットで書いてください: {commit}"
+        )));
+    }
     if let Some(date) = &input.meta.verified_at
         && !is_iso_date(date)
     {
@@ -222,6 +235,11 @@ pub(super) fn is_iso_date(s: &str) -> bool {
         })
 }
 
+/// Git の短縮〜完全なコミットのハッシュ（小文字の 16 進 7〜40 桁）か。
+fn is_commit_hash(s: &str) -> bool {
+    (7..=40).contains(&s.len()) && s.bytes().all(|c| matches!(c, b'0'..=b'9' | b'a'..=b'f'))
+}
+
 /// FK 違反を DB のエラーのまま返すと原因が分かりにくいため、先に確かめて分かる言葉で返す。
 fn ensure_assets_exist(tx: &Transaction<'_>, input: &DocUpsertInput) -> Result<(), AppError> {
     let mut exists = tx.prepare_cached("SELECT 1 FROM assets WHERE id = ?1")?;
@@ -263,7 +281,7 @@ fn delete_unused_tags(conn: &Connection) -> Result<(), AppError> {
 const SUMMARY_COLUMNS: &str =
     "d.id, d.title, d.source_type, d.source_path, d.mod_target, d.mod_channel,
        d.mod_version, d.verified_at, d.created_at, d.updated_at,
-       (SELECT COUNT(*) FROM sections s WHERE s.document_id = d.id), d.source_hash, d.sort_order, d.category";
+       (SELECT COUNT(*) FROM sections s WHERE s.document_id = d.id), d.source_hash, d.sort_order, d.category, d.ace_commit, d.game_version";
 
 fn read_summary(row: &Row<'_>) -> rusqlite::Result<DocSummary> {
     Ok(DocSummary {
@@ -277,6 +295,8 @@ fn read_summary(row: &Row<'_>) -> rusqlite::Result<DocSummary> {
             mod_channel: row.get(5)?,
             mod_version: row.get(6)?,
             verified_at: row.get(7)?,
+            ace_commit: row.get(14)?,
+            game_version: row.get(15)?,
             tags: Vec::new(),
             order: row.get(12)?,
             category: row.get(13)?,
@@ -501,6 +521,26 @@ mod tests {
     }
 
     #[test]
+    fn ace_commit_and_game_version_roundtrip() {
+        let mut conn = test_conn();
+        let mut input = fixtures::cpr();
+        input.meta.ace_commit = Some(" 703D1AA7 ".to_owned());
+        input.meta.game_version = Some(" 1.8.0.13 ".to_owned());
+        let id = upsert(&mut conn, &input).expect("保存できる");
+        let doc = get(&conn, &id).expect("取得できる");
+        assert_eq!(doc.summary.meta.ace_commit.as_deref(), Some("703d1aa7"));
+        assert_eq!(doc.summary.meta.game_version.as_deref(), Some("1.8.0.13"));
+
+        input.meta.ace_commit = Some("  ".to_owned());
+        input.meta.game_version = Some("  ".to_owned());
+        let id = upsert(&mut conn, &input).expect("保存できる");
+        let listed = list(&conn).expect("一覧を取れる");
+        let found = listed.iter().find(|d| d.id == id).expect("一覧にある");
+        assert_eq!(found.meta.ace_commit, None);
+        assert_eq!(found.meta.game_version, None);
+    }
+
+    #[test]
     fn upsert_computes_parents_from_levels() {
         let mut conn = test_conn();
         let mut input = fixtures::bleeding();
@@ -582,6 +622,14 @@ mod tests {
             (
                 "日付の形式",
                 Box::new(|d| d.meta.verified_at = Some("2026/09/25".to_owned())),
+            ),
+            (
+                "コミットが 16 進でない",
+                Box::new(|d| d.meta.ace_commit = Some("dev-branch".to_owned())),
+            ),
+            (
+                "コミットが短すぎる",
+                Box::new(|d| d.meta.ace_commit = Some("703d1a".to_owned())),
             ),
             (
                 "存在しないアセット",

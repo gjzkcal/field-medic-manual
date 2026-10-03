@@ -37,6 +37,8 @@ pub fn doc(
             mod_target,
             mod_channel,
             mod_version: None,
+            ace_commit: None,
+            game_version: None,
             verified_at: None,
             tags: tags.iter().map(|&t| t.to_owned()).collect(),
             order: None,

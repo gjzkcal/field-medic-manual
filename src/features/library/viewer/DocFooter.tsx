@@ -4,6 +4,8 @@ import { MOD_CHANNEL_LABELS } from "@/features/content/meta";
 import { daysSinceVerified } from "@/features/library/stale";
 import type { DocMeta } from "@/lib/bindings/DocMeta";
 
+const ACE_COMMIT_URL = "https://github.com/acemod/ACE-Anvil/commit/";
+
 interface DocFooterProps {
   meta: DocMeta;
   now: Date;
@@ -18,6 +20,21 @@ export function DocFooter({ meta, now }: DocFooterProps): JSX.Element {
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
         <dt>対象の版</dt>
         <dd>{meta.modVersion === null ? channel : `${channel} ${meta.modVersion}`}</dd>
+        {meta.aceCommit !== null && (
+          <>
+            <dt>ソースのコミット</dt>
+            <dd>
+              {/* 本文のリンクと同じく、外部ブラウザで開くのは親の article のクリックで受ける */}
+              <a href={`${ACE_COMMIT_URL}${meta.aceCommit}`}>{meta.aceCommit}</a>（ACE-Anvil）
+            </dd>
+          </>
+        )}
+        {meta.gameVersion !== null && (
+          <>
+            <dt>ゲーム本体</dt>
+            <dd>{meta.gameVersion}</dd>
+          </>
+        )}
         <dt>最終確認日</dt>
         <dd>
           {meta.verifiedAt === null

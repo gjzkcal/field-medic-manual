@@ -1,5 +1,5 @@
 // front matter や <meta> に書かれたメタデータを DocMeta に直す。
-// 原稿に書く項目は mod（対象モジュール）・channel（release / dev）・mod_version・verified_at（確認日）・tags・order（並び順）・category（分類）。
+// 原稿に書く項目は mod（対象モジュール）・channel（release / dev）・mod_version・ace_commit（読んだ ACE-Anvil のコミット）・game_version（確かめたゲーム本体の版）・verified_at（確認日）・tags・order（並び順）・category（分類）。
 import type { DocMeta } from "@/lib/bindings/DocMeta";
 import type { ModChannel } from "@/lib/bindings/ModChannel";
 import type { ModTarget } from "@/lib/bindings/ModTarget";
@@ -32,6 +32,8 @@ export function emptyMeta(): DocMeta {
     modChannel: null,
     modVersion: null,
     verifiedAt: null,
+    aceCommit: null,
+    gameVersion: null,
     tags: [],
     order: null,
     category: null,
@@ -44,6 +46,8 @@ export interface RawMeta {
   channel?: unknown;
   modVersion?: unknown;
   verifiedAt?: unknown;
+  aceCommit?: unknown;
+  gameVersion?: unknown;
   tags?: unknown;
   order?: unknown;
   category?: unknown;
@@ -84,6 +88,18 @@ export function toDocMeta(raw: RawMeta, warnings: string[]): DocMeta {
       warnings.push(`verified_at は YYYY-MM-DD で書いてください: ${verifiedAt}`);
     }
   }
+
+  if (raw.aceCommit !== undefined && raw.aceCommit !== null) {
+    // 数字だけのハッシュは YAML が数値にして先頭の 0 などを落とすので、引用符で囲んだ文字列だけを受ける
+    const commit = typeof raw.aceCommit === "string" ? raw.aceCommit.trim().toLowerCase() : null;
+    if (commit !== null && /^[0-9a-f]{7,40}$/.test(commit)) {
+      meta.aceCommit = commit;
+    } else if (commit !== "") {
+      warnings.push(`ace_commit は 16 進 7〜40 桁のコミットを引用符で囲んで書いてください: ${JSON.stringify(raw.aceCommit)}`);
+    }
+  }
+
+  meta.gameVersion = scalarText(raw.gameVersion) ?? null;
 
   meta.tags = parseTags(raw.tags);
 

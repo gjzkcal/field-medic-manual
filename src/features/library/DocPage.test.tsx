@@ -34,6 +34,8 @@ const META = {
   modChannel: null,
   modVersion: null,
   verifiedAt: "2026-09-25",
+  aceCommit: null,
+  gameVersion: null,
   tags: [],
   order: null,
   category: null,
@@ -85,6 +87,7 @@ const CARDIAC_ARREST: DocDetail = {
   id: "d3",
   title: "心停止",
   sourcePath: "bundle://manuals/cardiac-arrest.md",
+  meta: { ...HEMORRHAGE.meta, aceCommit: "703d1aa7", gameVersion: "1.8.0.13" },
   assets: [],
   sections: [
     section(10, 1, "心停止", "心停止", "<p>共通</p>"),
@@ -253,6 +256,8 @@ describe("DocPage", () => {
     const footer = article?.querySelector("footer");
     expect(footer?.textContent).toContain("版を問わない");
     expect(footer?.textContent).toContain("2026-09-25");
+    expect(footer?.textContent).not.toContain("ソースのコミット");
+    expect(footer?.textContent).not.toContain("ゲーム本体");
     expect(article?.lastElementChild).toBe(footer);
     // 目次にも見出しが並ぶ
     expect(screen.getByRole("navigation", { name: "目次" }).textContent).toContain("包帯を巻く");
@@ -280,6 +285,21 @@ describe("DocPage", () => {
       expect(opened).toEqual([expect.objectContaining({ url: "https://anvil.acemod.org/dev/" })]);
     });
     expect(router.state.location.pathname).toBe("/doc/d1");
+  });
+
+  it("ソースのコミットとゲーム本体の版があれば末尾に出し、コミットを押すと ACE-Anvil のページを開く", async () => {
+    renderDoc("/doc/d3");
+
+    const link = await screen.findByRole("link", { name: "703d1aa7" });
+    expect(link.closest("footer")?.textContent).toContain("ソースのコミット");
+    expect(link.closest("footer")?.textContent).toContain("ゲーム本体1.8.0.13");
+    fireEvent.click(link);
+
+    await waitFor(() => {
+      expect(opened).toEqual([
+        expect.objectContaining({ url: "https://github.com/acemod/ACE-Anvil/commit/703d1aa7" }),
+      ]);
+    });
   });
 
   it("相対パスの md のリンクは、sourcePath で探した文書のアンカーへ移る", async () => {

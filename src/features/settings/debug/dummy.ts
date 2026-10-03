@@ -74,6 +74,8 @@ export function makeDummyDocs(): DocUpsertInput[] {
       modChannel: CHANNELS[d % CHANNELS.length] ?? null,
       modVersion: null,
       verifiedAt: null,
+      aceCommit: null,
+      gameVersion: null,
       tags: ["ダミー"],
       order: null,
       category: null,

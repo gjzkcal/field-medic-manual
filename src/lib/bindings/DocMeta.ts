@@ -10,7 +10,15 @@ modVersion: string | null,
 /**
  * YYYY-MM-DD
  */
-verifiedAt: string | null, tags: Array<string>, 
+verifiedAt: string | null, 
+/**
+ * 読んだ ACE-Anvil のソースのコミット（小文字の 16 進 7〜40 桁）
+ */
+aceCommit: string | null, 
+/**
+ * 処理を確かめたゲーム本体の版（例: 1.8.0.13）
+ */
+gameVersion: string | null, tags: Array<string>, 
 /**
  * ライブラリと見出しツリーでの順番（小さいほど前）。ないものはタイトル順で後ろに並ぶ
  */

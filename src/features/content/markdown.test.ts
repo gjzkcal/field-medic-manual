@@ -19,6 +19,8 @@ const SAMPLE = `---
 title: 止血
 mod: core
 verified_at: 2026-09-25
+ace_commit: " 703D1AA7 "
+game_version: 1.8.0.13
 tags: [出血, 止血帯]
 order: 20
 category: " 症状/処置 "
@@ -60,6 +62,8 @@ describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
       modChannel: null,
       modVersion: null,
       verifiedAt: "2026-09-25",
+      aceCommit: "703d1aa7",
+      gameVersion: "1.8.0.13",
       tags: ["出血", "止血帯"],
       order: 20,
       category: "症状/処置",
@@ -94,7 +98,7 @@ describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
   it("不正なメタデータと読めない画像は警告にして変換を続ける", async () => {
     const { doc, warnings } = await convertManual(
       manual(
-        "---\nmod: medic\nchannel: beta\nverified_at: 2026/09/25\nmod_version: 1.5\norder: 1.5\ncategory: [a]\n---\n# A\n![x](images/missing.png)",
+        "---\nmod: medic\nchannel: beta\nverified_at: 2026/09/25\nmod_version: 1.5\norder: 1.5\ncategory: [a]\nace_commit: 1234567\n---\n# A\n![x](images/missing.png)",
       ),
       noImages,
       noData,
@@ -103,7 +107,9 @@ describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
     expect(doc.meta.modVersion).toBe("1.5");
     expect(doc.meta.order).toBeNull();
     expect(doc.meta.category).toBeNull();
-    expect(warnings).toHaveLength(6);
+    // 数字だけのハッシュは YAML で数値になるので、引用符の付け忘れとして知らせる
+    expect(doc.meta.aceCommit).toBeNull();
+    expect(warnings).toHaveLength(7);
     expect(warnings[0]).toContain("images/missing.png");
   });
 
