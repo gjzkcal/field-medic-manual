@@ -13,6 +13,8 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-07
+
 ### Added
 
 - エピネフリン・メトプロロール・モルヒネ・ナロキソン・フェニレフリンの原稿の「効き方」に、1 本打ったときの体内の濃度（nM）の推移のグラフを付けました。
@@ -96,7 +98,8 @@
 - 設定の「使っている MOD」に合わせて、フローとクイック表の内容が切り替わります。
 - 起動時に新しい版を確かめ、自動で更新できます。
 
-[Unreleased]: https://github.com/gjzkcal/field-medic-manual/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/gjzkcal/field-medic-manual/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/gjzkcal/field-medic-manual/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/gjzkcal/field-medic-manual/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/gjzkcal/field-medic-manual/compare/v0.0.2...v0.1.0
 [0.0.2]: https://github.com/gjzkcal/field-medic-manual/compare/v0.0.1...v0.0.2
