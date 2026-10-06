@@ -86,7 +86,7 @@ GNU General Public License v3.0 またはそれ以降のバージョン（GPL-3.
 ```sh
 pnpm install
 cargo install cargo-about --locked --features cli   # 依存のライセンス表記の生成に使う
-pnpm tauri dev                                      # 開発起動
+pnpm tauri:dev                                      # 開発起動（DB などはインストール版と別のフォルダ）
 pnpm lint && pnpm test                              # 確認
 cd src-tauri && cargo clippy --all-targets -- -D warnings && cargo test
 ```
