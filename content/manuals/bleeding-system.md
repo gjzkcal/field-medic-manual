@@ -243,7 +243,7 @@ Circulation 入りで 40 ml/s の出血を放置すると、23 s で Unstable、
 計算例:
 
 - Circulation あり: 血液 40% で出血を全部止めた → 70% を超える（Stable に戻る）まで `10 + 0.3 × 1350 = 415 s`（約 7 分）。
-- Circulation なし: 2000 ml 失った状態で包帯を巻いた → 10 s 後から 4.44 ml/s で戻り、約 450 s で満タン。
+- Circulation なし: 2000 ml 失った状態で包帯を巻いた → 10 s 後から 4.44 ml/s で戻り、包帯から約 460 s（回復開始から 450 s）で満タン。
 - `m_fBloodRegenScale` を 2 にすると、Circulation なしで 8.9 ml/s。
 
 注意点:
