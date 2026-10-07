@@ -5,7 +5,7 @@ channel: dev
 mod_version: "1.5.36"
 ace_commit: "703d1aa7"
 game_version: "1.8.0.13"
-verified_at: 2026-09-27
+verified_at: 2026-10-07
 tags: [薬・物品]
 order: 160
 category: 物品
@@ -13,23 +13,30 @@ category: 物品
 
 # エピネフリン
 
-エピネフリンの効果、使い方、所要時間、Circulation の有無で変わる効き方、CPR での役割、入手をまとめる。Circulation を入れると、意識不明の人を起こす薬から、心拍数を上げて CPR の蘇生の判定を速める薬に変わる。
-
 > [!NOTE]
 > [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。\
 > 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。\
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
+## 概要
+
+エピネフリン（アドレナリン）とは、交感神経に働く薬で、血管を締め、気道の筋肉をゆるめる。命に関わるアレルギー反応やショックで下がった血圧を上げるのに使われ（[MedlinePlus: Epinephrine Injection](https://medlineplus.gov/druginfo/meds/a603002.html)）、心停止の蘇生でも早めに投与される（[MSD マニュアル プロフェッショナル版「心停止」](https://www.msdmanuals.com/ja-jp/professional/21-%E6%95%91%E5%91%BD%E5%8C%BB%E7%99%82/%E5%BF%83%E5%81%9C%E6%AD%A2%E3%81%A8%E5%BF%83%E8%82%BA%E8%98%87%E7%94%9F-cpr/%E5%BF%83%E5%81%9C%E6%AD%A2)）。打つと、Circulation 入りでは心拍数が上がって CPR の蘇生の判定が速くなり、Circulation なしでは意識不明の人が目を覚ます。
+
 ## 効果
 
-- **Circulation あり**（表示「Epinephrine」）: 意識は戻さない。心拍数を最大 25 bpm 上げ、CPR の蘇生判定の頻度を最大 1.43 倍にする。いつでも何本でも打てる。健康な人に同時に 4.36 本で心停止する（激痛なら 2.37 本）。
-- **Circulation なし**（表示「エピネフリン」）: 意識不明の患者を起こす。抵抗値（意識の HP）を 4 HP/s で 30 s 回復し、0 からでも 18.75 s で目覚める。出血中・効果中・健康度 0.33 未満では使えない。
+- **Circulation あり**: 意識は戻さない。心拍数を上げ（1 本のピークで +25.2 bpm、約 23.5 s 後）、CPR の蘇生判定の頻度を最大 1.43 倍にする。効果は約 2 分 44 秒で消える。同時に 4.36 本で、意識喪失（Critical）を経ずに心停止する（血液 100%。激痛なら 2.37 本）。
+- **Circulation なし**: 意識不明の患者を起こす。抵抗値（意識の HP）を 4 HP/s で 30 s 回復し、0 からでも 18.75 s で目覚める。過量投与はない（効果が続いている間は次を打てない）。
 
 ## 使い方
 
-- Circulation 入りでは「Epinephrine」と表示される（実機で確認）。Circulation なしでは「エピネフリン」。
-- 左右の腕・脚に打つ。
-- Circulation の有無で使える条件が違う（下の「効き方」）。
+- 表示名は、Circulation 入りでは「Epinephrine」、Circulation なしでは「エピネフリン」（実機で確認）。
+- 操作は「エピネフリンを注射」（Inject epinephrine）。左右の腕・脚に打つ。Circulation は操作の種類だけを入れ替え、部位の設定は Core のまま。
+- 使用条件:
+  - Circulation あり: ない。いつでも何本でも打てる（意識のある健康な仲間にも打てる）。
+  - Circulation なし: 意識不明の患者だけに使える。出血中・効果中・健康度 0.33 未満でも使えない（[使えない条件](#circulation-なしcore-だけの場合)）。
+- 説明文とヒント:
+  - Circulation あり: 「Administered to patients in cardiac arrest」「Increases heart rate」になるとみられる（同じ文字列の ID を Core と Circulation の両方が使っていて、名前は実機で Circulation の「Epinephrine」と出た）。
+  - Circulation なし: 「意識不明の患者に投与する。」「覚醒の可能性を高める」。
 
 ## 所要時間
 
@@ -51,7 +58,7 @@ category: 物品
 | 1 本の量 | 550 nM |
 | 濃度が最大になる時刻 | 23.5 s |
 | 最大の濃度 | 245.1 nM |
-| 最大の半分に下がる時刻 | 63.7 s |
+| 最大の半分に下がる時刻 | 63.7 s（約 1 分 4 秒） |
 | 体内から消える時刻 | 164 s（約 2 分 44 秒） |
 
 1 本打ったときの体内の濃度（体内から消える時刻に 0 になる）:
@@ -76,8 +83,6 @@ category: 物品
 
 - CPR での使い方の数字は [CPR での役割](#cpr-での役割) を見る。
 - Core の「出血中は使えない」などの条件と、その理由の表示はなくなる。
-- 注射の操作は、Core と同じく両腕・両脚に出る（Circulation は操作の種類だけを入れ替え、部位の設定は Core のまま）。
-- 物品の説明文は、名前と同じく Circulation の英語の文言（「Administered to patients in cardiac arrest」）になるとみられる（同じ文字列の ID を Core と Circulation の両方が使っていて、名前は実機で「Epinephrine」と出た）。
 
 ### Circulation なし（Core だけ）の場合
 <!-- mods: !circulation -->
@@ -100,7 +105,6 @@ category: 物品
 | Second Chance の後（自然回復 0、抵抗値 0）に投与 | 75 ÷ 4 = 18.75 s |
 | 通常の意識不明（自然回復 1.2 HP/s、意識の値 0 から）で、倒れて 5 s 後に投与 | 倒れてから約 20.6 s |
 
-- 注射の所要時間は意識のない相手に 2.4 s（アニメーションの長さから算出。実測ではない）。
 - 意識の回復の全体は [エピネフリンで起こす](consciousness.md#エピネフリンで起こす) を見る。
 
 > [!NOTE]
@@ -154,14 +158,15 @@ category: 物品
 
 ## 入手
 
-医療キットに 8 本入っている。Circulation 入りでは「Epinephrine」の 8 本になる（[医療キット](medical-kit.md)）。Core のエピネフリンは補給（アーセナル）でも手に入る（補給コスト 3）。
+医療キットに 8 本入っている（[医療キット](medical-kit.md)）。Circulation 入りでは「Epinephrine」の 8 本になる。補給（アーセナル）でも手に入る（補給コスト 3。Circulation の有無によらない）。
 
 ## 関連ページ
 
 - [心停止と CPR](cardiac-arrest.md)
 - [意識不明への対応](consciousness.md)
+- [痛みと抑え方](pain.md)
 - [心停止と蘇生](cardiac-arrest-system.md)
 - [薬の効き方](drug-effects.md)
-- [痛みと抑え方](pain.md)
+- [炭酸アンモニウム](ammonium-carbonate.md)
 - [診察とバイタルの確かめ方](vitals.md)
 - [物品の一覧](items.md)

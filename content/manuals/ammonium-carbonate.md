@@ -5,7 +5,7 @@ channel: dev
 mod_version: "1.5.36"
 ace_commit: "703d1aa7"
 game_version: "1.8.0.13"
-verified_at: 2026-09-27
+verified_at: 2026-10-07
 tags: [意識, 薬・物品]
 order: 200
 category: 物品
@@ -13,29 +13,32 @@ category: 物品
 
 # 炭酸アンモニウム
 
-炭酸アンモニウム（Ammonium Carbonate）の効果、使い方、所要時間、成功率の式（効き方）、入手をまとめる。Circulation の物品。
-
 > [!NOTE]
 > [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。\
 > 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。\
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
+## 概要
+
+炭酸アンモニウムとは、気付け薬（スメリングソルト）の主な成分で、鼻の前で嗅がせて、失神を防いだり失神から回復させたりする（[DailyMed: Smelling Salt（ammonium carbonate inhalant）](https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=41cbc0c9-3979-6762-e063-6294a90a07fb)）。使うと、状態が Stable の意識不明の人が確率で目を覚ます。
+
 ## 効果
 
-炭酸アンモニウム（Ammonium Carbonate）は Circulation の物品で、状態が Stable の意識不明の人を確率で起こす。成功すると約 3.1 s で目覚める。失敗しても、Stable でなくても、物品は減る。
-
-- Stable 以外（Unstable・Critical・心停止）では何も起きない。
+- 状態が Stable の意識不明の人を確率で起こす。成功すると約 3.1 s で目覚める。
 - 成功すると意識の値を 24 HP/s（30 × 本体の基本倍率 0.8）で 5 s 回復する（最大 120）。回復倍率の影響は受けない。
+- Stable 以外（Unstable・Critical・心停止）では何も起きない。失敗しても、Stable でなくても、物品は減る。
 - 成功したときだけ投薬記録に残る（[投薬記録](vitals.md#投薬記録)）。
+- 過量投与はない。
 
 ## 使い方
 
-- 操作は頭に対する「Hold under nose」。意識不明の人に使う。
-- 効くのは状態が Stable のときだけ。状態ごとに起きることは [5 つの状態](states.md#5-つの状態)。
+- 表示名は「Ammonium Carbonate」、操作は頭に対する「Hold under nose」（Circulation には日本語訳がなく、英語で表示される）。
+- 使用条件はない。ただし効くのは、意識不明で状態が Stable の人だけ（状態ごとに起きることは [5 つの状態](states.md#5-つの状態)）。
+- 説明文は「Administered to unconscious patients.」、ヒントは「Increases wake-up chance」。
 
 ## 所要時間
 
-約 2.4 s（アニメーションの長さから算出。実測ではない）。
+意識のない相手に約 2.4 s（アニメーションの長さから算出。実測ではない）。詳しくは [処置の所要時間](treatment-times.md)。
 
 ## 効き方
 
@@ -72,7 +75,7 @@ category: 物品
 
 ## 入手
 
-- Circulation 入りの医療キットに 8 個入っている。Circulation なしでは存在しない。
+Circulation 入りの医療キットに 8 個入っている（[医療キット](medical-kit.md)）。補給（アーセナル）でも手に入る（補給コスト 3）。Circulation なしでは存在しない。
 
 ## 関連ページ
 
@@ -80,4 +83,6 @@ category: 物品
 - [意識](consciousness-system.md)
 - [状態と閾値](states.md)
 - [薬の効き方](drug-effects.md)
+- [エピネフリン](epinephrine.md)
+- [診察とバイタルの確かめ方](vitals.md)
 - [物品の一覧](items.md)

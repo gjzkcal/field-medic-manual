@@ -5,7 +5,7 @@ channel: dev
 mod_version: "1.5.36"
 ace_commit: "703d1aa7"
 game_version: "1.8.0.13"
-verified_at: 2026-09-27
+verified_at: 2026-10-07
 tags: [薬・物品]
 order: 190
 category: 物品
@@ -13,27 +13,31 @@ category: 物品
 
 # フェニレフリン
 
-フェニレフリン（Phenylephrine）の効果、使い方、所要時間、効き方（式・推移・出血への効果）、入手をまとめる。Circulation の物品。
-
 > [!NOTE]
 > [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。\
 > 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。\
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
+## 概要
+
+フェニレフリンとは、α1 受容体に働く薬で、血管の筋肉を縮めて血管を締め、下がった血圧を上げる（[DailyMed: Phenylephrine Hydrochloride Injection](https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=86abb371-3ac9-9f74-e053-2991aa0a66af)）。打つと血圧が上がり、出血も遅くなる。
+
 ## 効果
 
-- Circulation だけの薬（表示「Phenylephrine」）。血管を締めて血圧を上げ（1 本のピークで血管抵抗 +47%）、**出血を遅くする**（1 本のピークで出血が 0.685 倍、何本打っても 0.45 倍が下限）。
-- **生理食塩水の入る速さは変わらない**。
-- 効果は約 3 分。
-- 健康な人は同時に 2.92 本で心停止する。
+- 血管を締めて血圧を上げる（1 本のピークで血管抵抗 +46.9%、約 29.3 s 後）。
+- **出血を遅くする**（1 本のピークで出血が 0.685 倍、何本打っても 0.45 倍が下限）。**生理食塩水の入る速さは変わらない**。
+- 効果は約 3 分 8 秒で消える。
+- 同時に 2.92 本で、意識喪失（Critical）を経ずに心停止する（血液 100%。激痛なら 0.98 本）。
 
 > [!WARNING]
 > 痛みが強い患者（痛みの HP 30% ほど、心拍数 130）では、フェニレフリン **1 本弱（0.98 本）で心停止**する計算になる。痛みで上がった心拍数に血管抵抗の上昇が重なり、平均血圧が上限（29.5 kPa = 221 mmHg）を超えるため。
 
 ## 使い方
 
-- 左右の腕・脚に打つ（「Inject phenylephrine」）。表示と操作は英語（Circulation には日本語訳がない）。
+- 表示名は「Phenylephrine」、操作は「Inject phenylephrine」（Circulation には日本語訳がなく、英語で表示される）。
+- 左右の腕・脚に打つ。
 - 使用条件はない（意識のある健康な仲間にも打てる）。
+- 説明文は「Administered to patients for raising blood pressure」、ヒントは「Increases blood pressure and slows down bleeding and transfusion」（輸液は実際には遅くならない。下の「効き方」の NOTE）。
 
 ## 所要時間
 
@@ -52,8 +56,8 @@ category: 物品
 | 1 本の量 | 650 nM |
 | 濃度が最大になる時刻 | 29.3 s |
 | 最大の濃度 | 209.9 nM |
-| 最大の半分に下がる時刻 | 78.8 s |
-| 体内から消える時刻 | 188 s（体内から消える約 186〜188 s に、出血の倍率が 0.97 から 1.00 に跳ぶ） |
+| 最大の半分に下がる時刻 | 78.8 s（約 1 分 19 秒） |
+| 体内から消える時刻 | 188 s（約 3 分 8 秒） |
 
 1 本打ったときの体内の濃度（体内から消える時刻に 0 になる）:
 
@@ -74,6 +78,8 @@ category: 物品
 | 180 s | 0.97 | 95.0 mmHg |
 | 190 s 以降 | 1.00 | 93.3 mmHg |
 
+- 体内から消える約 186〜188 s に、出血の倍率が 0.97 から 1.00 に跳ぶ。
+
 40 ml/s の出血が続いている患者に、出血の始めに打った場合:
 
 | 本数 | 30 s 時点の出血 | Class II に入る | Class III に入る | 心停止 | 失血死 |
@@ -88,14 +94,15 @@ category: 物品
 
 ## 入手
 
-Circulation 入りの医療キットに 8 本入っている（[医療キット](medical-kit.md)）。Circulation なしでは存在しない。
+Circulation 入りの医療キットに 8 本入っている（[医療キット](medical-kit.md)）。補給（アーセナル）でも手に入る（補給コスト 3）。Circulation なしでは存在しない。
 
 ## 関連ページ
 
 - [出血と止血](hemorrhage.md)
+- [痛みと抑え方](pain.md)
 - [出血](bleeding-system.md)
 - [バイタル](vitals-system.md)
 - [薬の効き方](drug-effects.md)
-- [痛みと抑え方](pain.md)
+- [生理食塩水](saline.md)
 - [診察とバイタルの確かめ方](vitals.md)
 - [物品の一覧](items.md)

@@ -5,7 +5,7 @@ channel: dev
 mod_version: "1.5.36"
 ace_commit: "703d1aa7"
 game_version: "1.8.0.13"
-verified_at: 2026-09-27
+verified_at: 2026-10-07
 tags: [薬・物品]
 order: 170
 category: 物品
@@ -13,21 +13,25 @@ category: 物品
 
 # メトプロロール
 
-メトプロロール（Metoprolol）の効果、使い方、所要時間、効き方（式と推移）、入手をまとめる。Circulation の物品。
-
 > [!NOTE]
 > [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。\
 > 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。\
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
+## 概要
+
+メトプロロールとは、β 遮断薬で、心拍を遅くし、血管をゆるめて血圧を下げる（[MedlinePlus: Metoprolol](https://medlineplus.gov/druginfo/meds/a682864.html)）。打つと心拍数が下がり、それにつれて血圧も下がる。
+
 ## 効果
 
-- Circulation だけの薬（表示「Metoprolol」）。心拍数を下げる（1 本のピークで −16.5 bpm、約 26 s 後）。血圧は心拍数を通じて下がる。
-- 健康な人に同時に 3 本で Critical（意識喪失）、4 本で心停止する。痛みがある患者では心拍数が上がっているので、必要な本数が増える（激痛なら 5.84 本で Critical、6.05 本で心停止）。
+- 心拍数を下げる（1 本のピークで −16.5 bpm、約 25.8 s 後）。血圧は心拍数を通じて下がる。効果は約 2 分 48 秒で消える。
+- 同時に 2.82 本で意識喪失（Critical）、3.03 本で心停止する（血液 100%。整数では 3 本で Critical、4 本で心停止）。
+- 痛みがある患者では心拍数が上がっているので、必要な本数が増える（激痛なら 5.84 本で Critical、6.05 本で心停止）。
 
 ## 使い方
 
-- 左右の腕・脚に打つ（「Inject metoprolol」）。表示と操作は英語（Circulation には日本語訳がない）。
+- 表示名は「Metoprolol」、操作は「Inject metoprolol」（Circulation には日本語訳がなく、英語で表示される）。
+- 左右の腕・脚に打つ。
 - 使用条件はない（意識のある健康な仲間にも打てる）。
 - 説明文は「Administered to patients with too high heart rate」、ヒントは「Decreases heart rate」。
 
@@ -44,7 +48,7 @@ category: 物品
 | 1 本の量 | 480 nM |
 | 濃度が最大になる時刻 | 25.8 s |
 | 最大の濃度 | 176.6 nM |
-| 最大の半分に下がる時刻 | 69.2 s |
+| 最大の半分に下がる時刻 | 69.2 s（約 1 分 9 秒） |
 | 体内から消える時刻 | 168 s（約 2 分 48 秒） |
 
 1 本打ったときの体内の濃度（体内から消える時刻に 0 になる）:
@@ -66,13 +70,13 @@ category: 物品
 
 ## 入手
 
-Circulation 入りの医療キットに 8 本入っている（[医療キット](medical-kit.md)）。Circulation なしでは存在しない。
+Circulation 入りの医療キットに 8 本入っている（[医療キット](medical-kit.md)）。補給（アーセナル）でも手に入る（補給コスト 3）。Circulation なしでは存在しない。
 
 ## 関連ページ
 
+- [痛みと抑え方](pain.md)
 - [状態と閾値](states.md)
 - [バイタル](vitals-system.md)
 - [薬の効き方](drug-effects.md)
-- [痛みと抑え方](pain.md)
 - [診察とバイタルの確かめ方](vitals.md)
 - [物品の一覧](items.md)
