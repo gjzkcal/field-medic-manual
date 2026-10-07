@@ -20,7 +20,7 @@ category: 物品
 
 ## 概要
 
-ナロキソンとは、オピオイドの働きを妨げる薬（拮抗薬）で、血液中に多すぎるオピオイドの効果を打ち消し、過量投与の危険な症状を和らげる（[MedlinePlus: Naloxone Injection](https://medlineplus.gov/druginfo/meds/a612022.html)）。打つと、体内のモルヒネの効き目（鎮痛・心拍数と血圧の低下）が弱まる。単独では何も起きない。
+ナロキソンとは、オピオイドの働きを妨げる薬（拮抗薬）で、血液中に多すぎるオピオイドの効果を打ち消し、過量投与の危険な症状を和らげる。打つと、体内のモルヒネの効き目（鎮痛・心拍数と血圧の低下）が弱まる。単独では何も起きない。
 
 ## 効果
 
@@ -80,3 +80,7 @@ Circulation 入りの医療キットに 8 本入っている（[医療キット]
 - [モルヒネ注射器](morphine.md)
 - [診察とバイタルの確かめ方](vitals.md)
 - [物品の一覧](items.md)
+
+## 出典
+
+- [MedlinePlus: Naloxone Injection](https://medlineplus.gov/druginfo/meds/a612022.html)（2026-10-07 に確認）

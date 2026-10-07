@@ -20,7 +20,7 @@ category: 物品
 
 ## 概要
 
-メトプロロールとは、β 遮断薬で、心拍を遅くし、血管をゆるめて血圧を下げる（[MedlinePlus: Metoprolol](https://medlineplus.gov/druginfo/meds/a682864.html)）。打つと心拍数が下がり、それにつれて血圧も下がる。
+メトプロロールとは、β 遮断薬で、心拍を遅くし、血管をゆるめて血圧を下げる。打つと心拍数が下がり、それにつれて血圧も下がる。
 
 ## 効果
 
@@ -80,3 +80,7 @@ Circulation 入りの医療キットに 8 本入っている（[医療キット]
 - [薬の効き方](drug-effects.md)
 - [診察とバイタルの確かめ方](vitals.md)
 - [物品の一覧](items.md)
+
+## 出典
+
+- [MedlinePlus: Metoprolol](https://medlineplus.gov/druginfo/meds/a682864.html)（2026-10-07 に確認）

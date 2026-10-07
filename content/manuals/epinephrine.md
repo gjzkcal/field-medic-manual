@@ -20,7 +20,7 @@ category: 物品
 
 ## 概要
 
-エピネフリン（アドレナリン）とは、交感神経に働く薬で、血管を締め、気道の筋肉をゆるめる。命に関わるアレルギー反応やショックで下がった血圧を上げるのに使われ（[MedlinePlus: Epinephrine Injection](https://medlineplus.gov/druginfo/meds/a603002.html)）、心停止の蘇生でも早めに投与される（[MSD マニュアル プロフェッショナル版「心停止」](https://www.msdmanuals.com/ja-jp/professional/21-%E6%95%91%E5%91%BD%E5%8C%BB%E7%99%82/%E5%BF%83%E5%81%9C%E6%AD%A2%E3%81%A8%E5%BF%83%E8%82%BA%E8%98%87%E7%94%9F-cpr/%E5%BF%83%E5%81%9C%E6%AD%A2)）。打つと、Circulation 入りでは心拍数が上がって CPR の蘇生の判定が速くなり、Circulation なしでは意識不明の人が目を覚ます。
+エピネフリン（アドレナリン）とは、交感神経に働く薬で、血管を締め、気道の筋肉をゆるめる。命に関わるアレルギー反応やショックで下がった血圧を上げるのに使われ、心停止の蘇生でも早めに投与される。打つと、Circulation 入りでは心拍数が上がって CPR の蘇生の判定が速くなり、Circulation なしでは意識不明の人が目を覚ます。
 
 ## 効果
 
@@ -170,3 +170,8 @@ category: 物品
 - [炭酸アンモニウム](ammonium-carbonate.md)
 - [診察とバイタルの確かめ方](vitals.md)
 - [物品の一覧](items.md)
+
+## 出典
+
+- [MedlinePlus: Epinephrine Injection](https://medlineplus.gov/druginfo/meds/a603002.html)（2026-10-07 に確認）
+- [MSD マニュアル プロフェッショナル版「心停止」](https://www.msdmanuals.com/ja-jp/professional/21-%E6%95%91%E5%91%BD%E5%8C%BB%E7%99%82/%E5%BF%83%E5%81%9C%E6%AD%A2%E3%81%A8%E5%BF%83%E8%82%BA%E8%98%87%E7%94%9F-cpr/%E5%BF%83%E5%81%9C%E6%AD%A2)（2026-10-07 に確認）

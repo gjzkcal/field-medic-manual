@@ -20,7 +20,7 @@ category: 物品
 
 ## 概要
 
-炭酸アンモニウムとは、気付け薬（スメリングソルト）の主な成分で、鼻の前で嗅がせて、失神を防いだり失神から回復させたりする（[DailyMed: Smelling Salt（ammonium carbonate inhalant）](https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=41cbc0c9-3979-6762-e063-6294a90a07fb)）。使うと、状態が Stable の意識不明の人が確率で目を覚ます。
+炭酸アンモニウムとは、気付け薬（スメリングソルト）の主な成分で、鼻の前で嗅がせて、失神を防いだり失神から回復させたりする。使うと、状態が Stable の意識不明の人が確率で目を覚ます。
 
 ## 効果
 
@@ -86,3 +86,7 @@ Circulation 入りの医療キットに 8 個入っている（[医療キット]
 - [エピネフリン](epinephrine.md)
 - [診察とバイタルの確かめ方](vitals.md)
 - [物品の一覧](items.md)
+
+## 出典
+
+- [DailyMed: Smelling Salt（ammonium carbonate inhalant）](https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=41cbc0c9-3979-6762-e063-6294a90a07fb)（2026-10-07 に確認）

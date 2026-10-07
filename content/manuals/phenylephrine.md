@@ -20,7 +20,7 @@ category: 物品
 
 ## 概要
 
-フェニレフリンとは、α1 受容体に働く薬で、血管の筋肉を縮めて血管を締め、下がった血圧を上げる（[DailyMed: Phenylephrine Hydrochloride Injection](https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=86abb371-3ac9-9f74-e053-2991aa0a66af)）。打つと血圧が上がり、出血も遅くなる。
+フェニレフリンとは、α1 受容体に働く薬で、血管の筋肉を縮めて血管を締め、下がった血圧を上げる。打つと血圧が上がり、出血も遅くなる。
 
 ## 効果
 
@@ -106,3 +106,7 @@ Circulation 入りの医療キットに 8 本入っている（[医療キット]
 - [生理食塩水](saline.md)
 - [診察とバイタルの確かめ方](vitals.md)
 - [物品の一覧](items.md)
+
+## 出典
+
+- [DailyMed: Phenylephrine Hydrochloride Injection](https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=86abb371-3ac9-9f74-e053-2991aa0a66af)（2026-10-07 に確認）

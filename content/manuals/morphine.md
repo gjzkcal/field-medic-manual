@@ -20,7 +20,7 @@ category: 物品
 
 ## 概要
 
-モルヒネとは、オピオイドの鎮痛薬で、脳と神経が痛みを感じる仕組みを変えて、強い痛みを和らげる（[MedlinePlus: Morphine Injection](https://medlineplus.gov/druginfo/meds/a601161.html)）。打つと痛みを感じにくくなり、Circulation 入りでは心拍数と血圧も下がる。
+モルヒネとは、オピオイドの鎮痛薬で、脳と神経が痛みを感じる仕組みを変えて、強い痛みを和らげる。打つと痛みを感じにくくなり、Circulation 入りでは心拍数と血圧も下がる。
 
 ## 効果
 
@@ -116,3 +116,7 @@ category: 物品
 - [ナロキソン](naloxone.md)
 - [診察とバイタルの確かめ方](vitals.md)
 - [物品の一覧](items.md)
+
+## 出典
+
+- [MedlinePlus: Morphine Injection](https://medlineplus.gov/druginfo/meds/a601161.html)（2026-10-07 に確認）
