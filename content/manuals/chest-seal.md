@@ -69,7 +69,7 @@ category: 物品
 ## 関連ページ
 
 - [気胸と処置](breathing.md)
-- [呼吸と SpO2](respiration-system.md)
+- [気胸の仕組み](pneumothorax-system.md)
 - [NCD キット](ncd-kit.md)
 - [医療の操作](medical-actions.md)
 - [物品の一覧](items.md)

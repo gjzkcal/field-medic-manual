@@ -76,7 +76,7 @@ category: 物品
 
 - [痛みと抑え方](pain.md)
 - [状態と閾値](states.md)
-- [バイタル](vitals-system.md)
+- [バイタルの仕組み](vitals-system.md)
 - [薬の効き方](drug-effects.md)
 - [診察とバイタルの確かめ方](vitals.md)
 - [物品の一覧](items.md)

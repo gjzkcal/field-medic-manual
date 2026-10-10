@@ -154,6 +154,6 @@ Circulation を入れると、生存しているキャラクターは 5 つの�
 - [心停止と CPR](cardiac-arrest.md)
 - [痛みと抑え方](pain.md)
 - [状態と閾値](states.md)
-- [バイタル](vitals-system.md)
-- [呼吸と SpO2](respiration-system.md)
+- [バイタルの仕組み](vitals-system.md)
+- [呼吸と気道の仕組み](respiration-system.md)
 - [医療の操作](medical-actions.md)

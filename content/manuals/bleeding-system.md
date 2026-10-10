@@ -1,5 +1,5 @@
 ---
-title: 出血
+title: 出血の仕組み
 mod: core
 channel: dev
 mod_version: "1.5.36"
@@ -7,11 +7,11 @@ ace_commit: "703d1aa7"
 game_version: "1.8.0.13"
 verified_at: 2026-09-27
 tags: [出血, 循環]
-order: 400
+order: 420
 category: システム
 ---
 
-# 出血
+# 出血の仕組み
 
 > [!NOTE]
 > [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。\

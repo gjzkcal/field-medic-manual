@@ -75,7 +75,7 @@ category: 物品
 ## 関連ページ
 
 - [出血と止血](hemorrhage.md)
-- [出血](bleeding-system.md)
+- [出血の仕組み](bleeding-system.md)
 - [包帯](bandage.md)
 - [医療の操作](medical-actions.md)
 - [物品の一覧](items.md)

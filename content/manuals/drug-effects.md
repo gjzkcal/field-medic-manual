@@ -7,7 +7,7 @@ ace_commit: "703d1aa7"
 game_version: "1.8.0.13"
 verified_at: 2026-10-07
 tags: [薬・物品]
-order: 480
+order: 490
 category: システム
 ---
 
@@ -152,8 +152,8 @@ Circulation を入れると、エピネフリンとモルヒネは別の仕組�
 - [心停止と CPR](cardiac-arrest.md)
 - [意識不明への対応](consciousness.md)
 - [状態と閾値](states.md)
-- [バイタル](vitals-system.md)
-- [痛み](pain-system.md)
+- [バイタルの仕組み](vitals-system.md)
+- [痛みの仕組み](pain-system.md)
 - [エピネフリン](epinephrine.md)
 - [モルヒネ注射器](morphine.md)
 - [メトプロロール](metoprolol.md)

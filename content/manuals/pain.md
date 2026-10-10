@@ -53,8 +53,8 @@ category: 処置
 
 ## 関連ページ
 
-- [痛み](pain-system.md)
-- [バイタル](vitals-system.md)
+- [痛みの仕組み](pain-system.md)
+- [バイタルの仕組み](vitals-system.md)
 - [薬の効き方](drug-effects.md)
 - [モルヒネ注射器](morphine.md)
 - [ナロキソン](naloxone.md)

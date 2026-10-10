@@ -1,5 +1,5 @@
 ---
-title: バイタル
+title: バイタルの仕組み
 mod: circulation
 channel: dev
 mod_version: "1.5.36"
@@ -7,11 +7,11 @@ ace_commit: "703d1aa7"
 game_version: "1.8.0.13"
 verified_at: 2026-09-27
 tags: [循環]
-order: 420
+order: 410
 category: システム
 ---
 
-# バイタル
+# バイタルの仕組み
 
 > [!NOTE]
 > [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。\
@@ -125,9 +125,9 @@ category: システム
 
 - [診察とバイタルの確かめ方](vitals.md)
 - [状態と閾値](states.md)
-- [出血](bleeding-system.md)
+- [出血の仕組み](bleeding-system.md)
 - [心停止と蘇生](cardiac-arrest-system.md)
-- [痛み](pain-system.md)
+- [痛みの仕組み](pain-system.md)
 - [薬の効き方](drug-effects.md)
 - [気胸と処置](breathing.md)
 - [サーバー設定の注意点](server-settings.md)

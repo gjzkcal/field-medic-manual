@@ -64,7 +64,7 @@ category: 物品
 
 - [気胸と処置](breathing.md)
 - [心停止と CPR](cardiac-arrest.md)
-- [呼吸と SpO2](respiration-system.md)
+- [気胸の仕組み](pneumothorax-system.md)
 - [チェストシール](chest-seal.md)
 - [医療の操作](medical-actions.md)
 - [物品の一覧](items.md)

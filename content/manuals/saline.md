@@ -71,7 +71,7 @@ category: 物品
 ## 関連ページ
 
 - [出血と止血](hemorrhage.md)
-- [出血](bleeding-system.md)
+- [出血の仕組み](bleeding-system.md)
 - [薬の効き方](drug-effects.md)
 - [フェニレフリン](phenylephrine.md)
 - [診察とバイタルの確かめ方](vitals.md)

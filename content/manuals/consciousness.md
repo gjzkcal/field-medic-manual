@@ -98,7 +98,7 @@ Breathing を入れていると、気道が塞がった（舌根沈下・嘔吐�
 - [出血と止血](hemorrhage.md)
 - [気道閉塞と気道の確保](airway.md)
 - [心停止と CPR](cardiac-arrest.md)
-- [意識](consciousness-system.md)
+- [意識の仕組み](consciousness-system.md)
 - [状態と閾値](states.md)
 - [致命傷と Second Chance](death-second-chance.md)
 - [炭酸アンモニウム](ammonium-carbonate.md)

@@ -89,7 +89,7 @@ category: 物品
 - [気道閉塞と気道の確保](airway.md)
 - [気胸と処置](breathing.md)
 - [心停止と CPR](cardiac-arrest.md)
-- [呼吸と SpO2](respiration-system.md)
+- [呼吸と気道の仕組み](respiration-system.md)
 - [King LT](king-lt.md)
 - [医療の操作](medical-actions.md)
 - [物品の一覧](items.md)

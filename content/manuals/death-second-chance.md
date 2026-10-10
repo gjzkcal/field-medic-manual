@@ -7,7 +7,7 @@ ace_commit: "703d1aa7"
 game_version: "1.8.0.13"
 verified_at: 2026-09-27
 tags: [意識]
-order: 460
+order: 470
 category: システム
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: 痛み
+title: 痛みの仕組み
 mod: core
 channel: dev
 mod_version: "1.5.36"
@@ -7,11 +7,11 @@ ace_commit: "703d1aa7"
 game_version: "1.8.0.13"
 verified_at: 2026-09-27
 tags: [薬・物品]
-order: 470
+order: 480
 category: システム
 ---
 
-# 痛み
+# 痛みの仕組み
 
 > [!NOTE]
 > [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。\
@@ -117,5 +117,5 @@ category: システム
 - [痛みと抑え方](pain.md)
 - [モルヒネ注射器](morphine.md)
 - [薬の効き方](drug-effects.md)
-- [バイタル](vitals-system.md)
+- [バイタルの仕組み](vitals-system.md)
 - [サーバー設定の注意点](server-settings.md)

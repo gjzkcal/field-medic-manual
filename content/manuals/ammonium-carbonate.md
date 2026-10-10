@@ -80,7 +80,7 @@ category: 物品
 ## 関連ページ
 
 - [意識不明への対応](consciousness.md)
-- [意識](consciousness-system.md)
+- [意識の仕組み](consciousness-system.md)
 - [状態と閾値](states.md)
 - [薬の効き方](drug-effects.md)
 - [エピネフリン](epinephrine.md)

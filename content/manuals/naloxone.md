@@ -76,7 +76,7 @@ category: 物品
 ## 関連ページ
 
 - [痛みと抑え方](pain.md)
-- [痛み](pain-system.md)
+- [痛みの仕組み](pain-system.md)
 - [薬の効き方](drug-effects.md)
 - [モルヒネ注射器](morphine.md)
 - [診察とバイタルの確かめ方](vitals.md)

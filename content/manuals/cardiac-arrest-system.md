@@ -7,7 +7,7 @@ ace_commit: "703d1aa7"
 game_version: "1.8.0.13"
 verified_at: 2026-09-27
 tags: [循環]
-order: 450
+order: 460
 category: システム
 ---
 
@@ -28,7 +28,7 @@ category: システム
 | 心拍数・血圧の閾値 | 心拍数 < 20 か > 220、平均血圧 < 5.21 kPa かつ心拍数 ≤ 30、平均血圧 > 29.5 kPa | 薬の過量投与（[過量投与](drug-effects.md#過量投与)） |
 | CPR をやめた | 蘇生中 → 心停止に戻る | [CPR を行う](cardiac-arrest.md#cpr-を行う) |
 | SpO2（Breathing） | SpO2 < 65% | 気道が塞がったまま約 15 分（914 s） |
-| 気胸の最大進行（Breathing） | 気胸が 0.75 に達したとき（設定 `m_fPneumothoraxArrestEnabled`、既定 true） | 開放性気胸を放置すると中央値 8 分で心停止（最大進行が約 7 割、緊張性気胸の無呼吸が約 3 割。[気胸の悪化と放置したときの時間](respiration-system.md#気胸の悪化と放置したときの時間)） |
+| 気胸の最大進行（Breathing） | 気胸が 0.75 に達したとき（設定 `m_fPneumothoraxArrestEnabled`、既定 true） | 開放性気胸を放置すると中央値 8 分で心停止（最大進行が約 7 割、緊張性気胸の無呼吸が約 3 割。[気胸の悪化と放置したときの時間](pneumothorax-system.md#気胸の悪化と放置したときの時間)） |
 
 - 心停止に入ると、意識の値が 0 になって意識を失い、脳の損傷が始まる（[脳の損傷と残り時間](#脳の損傷と残り時間)）。
 - 2 回目の Second Chance（意識を失ってから 1 s 以内に、別の急所への致命打で助かった場合。Hitzones なしでは全体 HP が 0 のままなので起きない）では、心停止に切り替えない。1 s 以上たった後の致命打は、判定なしで即死する（[倒れた後の追い打ち](death-second-chance.md#倒れた後の追い打ち)）。
@@ -296,8 +296,8 @@ CPR を 60 s 続けて 30 s 休む、を繰り返した場合（蘇生しない�
 ## 関連ページ
 
 - [心停止と CPR](cardiac-arrest.md)
-- [バイタル](vitals-system.md)
-- [出血](bleeding-system.md)
+- [バイタルの仕組み](vitals-system.md)
+- [出血の仕組み](bleeding-system.md)
 - [致命傷と Second Chance](death-second-chance.md)
 - [気胸と処置](breathing.md)
 - [AI の治療](ai-medic.md)

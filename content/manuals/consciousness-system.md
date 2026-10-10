@@ -1,5 +1,5 @@
 ---
-title: 意識
+title: 意識の仕組み
 mod: core
 channel: dev
 mod_version: "1.5.36"
@@ -7,11 +7,11 @@ ace_commit: "703d1aa7"
 game_version: "1.8.0.13"
 verified_at: 2026-09-27
 tags: [意識]
-order: 440
+order: 430
 category: システム
 ---
 
-# 意識
+# 意識の仕組み
 
 > [!NOTE]
 > [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。\
@@ -151,7 +151,7 @@ category: システム
 
 - [意識不明への対応](consciousness.md)
 - [状態と閾値](states.md)
-- [出血](bleeding-system.md)
+- [出血の仕組み](bleeding-system.md)
 - [心停止と蘇生](cardiac-arrest-system.md)
 - [致命傷と Second Chance](death-second-chance.md)
 - [サーバー設定の注意点](server-settings.md)

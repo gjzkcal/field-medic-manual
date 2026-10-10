@@ -7,7 +7,7 @@ ace_commit: "703d1aa7"
 game_version: "1.8.0.13"
 verified_at: 2026-09-27
 tags: [循環]
-order: 410
+order: 400
 category: システム
 ---
 
@@ -96,8 +96,8 @@ Circulation を入れると、生存しているキャラクターは次の 5 �
 ## 関連ページ
 
 - [診察とバイタルの確かめ方](vitals.md)
-- [バイタル](vitals-system.md)
-- [出血](bleeding-system.md)
+- [バイタルの仕組み](vitals-system.md)
+- [出血の仕組み](bleeding-system.md)
 - [心停止と蘇生](cardiac-arrest-system.md)
 - [意識不明への対応](consciousness.md)
 - [薬の効き方](drug-effects.md)

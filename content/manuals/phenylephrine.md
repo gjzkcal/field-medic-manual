@@ -99,8 +99,8 @@ category: 物品
 
 - [出血と止血](hemorrhage.md)
 - [痛みと抑え方](pain.md)
-- [出血](bleeding-system.md)
-- [バイタル](vitals-system.md)
+- [出血の仕組み](bleeding-system.md)
+- [バイタルの仕組み](vitals-system.md)
 - [薬の効き方](drug-effects.md)
 - [生理食塩水](saline.md)
 - [診察とバイタルの確かめ方](vitals.md)

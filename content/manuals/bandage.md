@@ -62,7 +62,7 @@ category: 物品
 ## 関連ページ
 
 - [出血と止血](hemorrhage.md)
-- [出血](bleeding-system.md)
+- [出血の仕組み](bleeding-system.md)
 - [止血帯](tourniquet.md)
 - [医療キット](medical-kit.md)
 - [医療の操作](medical-actions.md)

@@ -78,7 +78,7 @@ Circulation 入りで 40 ml/s の出血を放置すると、23 s で Unstable、
 
 - [意識不明への対応](consciousness.md)
 - [心停止と CPR](cardiac-arrest.md)
-- [出血](bleeding-system.md)
+- [出血の仕組み](bleeding-system.md)
 - [止血帯](tourniquet.md)
 - [包帯](bandage.md)
 - [生理食塩水](saline.md)
