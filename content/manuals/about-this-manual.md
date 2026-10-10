@@ -182,8 +182,9 @@ category: はじめに
 | [致命傷と Second Chance](death-second-chance.md) | システム | Core | 致命打で即死するか倒れるかの判定、部位ごとの確率、倒れた後の追い打ち、死亡の条件 |
 | [痛みの仕組み](pain-system.md) | システム | Core | 痛みの仕組み（式・損傷の合計と痛み・放置したとき）、痛みの画面効果の式と設定 |
 | [薬の効き方](drug-effects.md) | システム | Circulation | Circulation の有無で変わる薬の扱い、表示名と操作、過量投与、薬の効き方の計算 |
-| [AI の治療](ai-medic.md) | 管理者向け | AI | AI が治療する相手、使う物品と使わない物品、衛生兵になる AI、AI 自身が負傷したとき、AI の心停止 |
+| [AI の治療](ai-medic.md) | システム | AI | AI が治療する相手、使う物品と使わない物品、衛生兵になる AI、AI 自身が負傷したとき、AI の心停止 |
 | [サーバー設定の注意点](server-settings.md) | 管理者向け | 一般 | 設定の入口、ミッションヘッダーの差し替え、危険な設定と効かない設定、ゲームモードの設定（出血倍率・意識喪失の禁止）、死亡を防ぐ設定、AI の設定、主な既定値 |
+| [設定の一覧](server-settings-defaults.md) | 管理者向け | 一般 | Core・Hitzones・Circulation・薬・Breathing の設定の既定値 |
 
 ## 関連ページ
 

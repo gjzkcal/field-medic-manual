@@ -115,7 +115,7 @@ CPR での数字は [CPR での役割](epinephrine.md#cpr-での役割)、式と
 
 - 心停止に入るのは、最初の致命傷（Second Chance）、出血（多くは血液 25% 前後の頻脈）、心拍数・血圧の閾値（薬の過量投与）、CPR をやめたとき、Breathing の SpO2 65% 未満と気胸の最大進行（[心停止に入る経路](cardiac-arrest-system.md#心停止に入る経路)）。
 - 蘇生の判定の式、血液ごとの成功率、蘇生までの時間の分布は [蘇生の判定](cardiac-arrest-system.md#蘇生の判定) と [蘇生までの時間](cardiac-arrest-system.md#蘇生までの時間)。
-- AI は既定で心停止に入った瞬間に死ぬ（[AI の心停止](ai-medic.md#ai-の心停止)）。
+- AI は既定で心停止に入った瞬間に死ぬ（[AI 自身が負傷したとき](ai-medic.md#ai-自身が負傷したとき)）。
 
 ## 関連ページ
 

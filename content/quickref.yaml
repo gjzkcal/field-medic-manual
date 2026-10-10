@@ -499,7 +499,7 @@ rows:
       出血が止まらなければ、血液 25% 前後で心停止し死亡する（40 ml/s で 58 秒）。
       Breathing を入れていれば、仰向けのまま気道が塞がると約 15 分で死亡する
     links:
-      - doc:ai-medic.md#ai-の心停止
+      - doc:ai-medic.md#ai-自身が負傷したとき
       - doc:ai-medic.md#ai-自身が負傷したとき
     mods: [circulation]
 

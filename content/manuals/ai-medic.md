@@ -7,8 +7,8 @@ ace_commit: "703d1aa7"
 game_version: "1.8.0.13"
 verified_at: 2026-09-27
 tags: [管理者向け]
-order: 500
-category: 管理者向け
+order: 495
+category: システム
 ---
 
 # AI の治療
@@ -18,6 +18,19 @@ category: 管理者向け
 > 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。\
 > 公式ドキュメント: [ACE Anvil – Medical（Dev）](https://anvil.acemod.org/dev/components/medical/)
 
+## AI の治療の要点
+
+- AI の衛生兵が ACE の治療をするのは、意識不明（心停止を含む）の味方だけ（[AI が治療する相手](#ai-が治療する相手)）。
+- 「ACE Medical AI Dev」は、Core だけに依存する別の MOD。**ACE All in One Dev には含まれない**。AI の治療を使うには、別に入れる。
+- AI MOD は、AI の衛生兵の振る舞い（ゲーム本体の「衛生兵が負傷者を治療する」振る舞い）を ACE 版に差し替え、何を使うかを ACE が決めるようにする。
+
+AI の衛生兵がしないこと（仕様から分かること）:
+
+- 意識不明の患者の気道は、AI では確保されない。気道が塞がってから約 15 分で心停止しうる（[仰向けで放置したとき](respiration-system.md#仰向けで放置したとき)）。
+- 気胸は AI では治らない（[気胸の悪化と放置したときの時間](pneumothorax-system.md#気胸の悪化と放置したときの時間)）。
+- 心停止した患者に AI は CPR をしない（[CPR を行う](cardiac-arrest.md#cpr-を行う)）。
+- 止血帯を使わないので、四肢の出血も包帯で止める（[包帯を巻く](bandage.md)）。
+
 ## AI が治療する相手
 
 AI の衛生兵が ACE の治療をする相手は、**意識不明（心停止を含む）の味方だけ**。意識のある負傷者には、ACE の治療をしない。
@@ -26,11 +39,7 @@ AI の衛生兵が ACE の治療をする相手は、**意識不明（心停止�
 - 意識のある負傷者には、ACE の判断は「治療不要」を返す。意識のある AI は、ゲーム本体の振る舞いで、出血し始めたときに包帯を持っていれば自分で巻く。持っていなければグループに負傷を知らせるが、AI の衛生兵はすぐに治療を終える（何もしない）。
 - 負傷の知らせ: ゲーム本体では出血しているときだけグループに送る。AI MOD を入れると、出血していなくても ACE の治療が必要ならグループに送る（例: 出血は止まったが血液が少ない意識不明のプレイヤー）。
 
-AI MOD について:
-
-- 「ACE Medical AI Dev」は、Core だけに依存する別の MOD。**ACE All in One Dev には含まれない**。AI の治療を使うには、別に入れる。
-- Release 版（1.4.3）には AI MOD がない。
-- AI MOD は、AI の衛生兵の振る舞い（ゲーム本体の「衛生兵が負傷者を治療する」振る舞い）を ACE 版に差し替え、何を使うかを ACE が決めるようにする。
+AI MOD の有無による違い:
 
 | 話題 | AI MOD なし（ゲーム本体の振る舞い） | AI MOD あり |
 |---|---|---|
@@ -78,15 +87,12 @@ Core のエピネフリンが使える条件（Core だけのとき）: 患者�
 ### Circulation を入れている場合（使う物品）
 <!-- mods: circulation -->
 
-- AI の衛生兵が使うのは**包帯と生理食塩水だけ**になる。
 - Circulation を入れると、エピネフリンは Circulation の物品（「Epinephrine」と表示される）に置き換わり、使う操作も変わる。AI は Core のエピネフリンを探すので、見つからない。
-- Circulation では Second Chance が発動すると心停止になり、AI は CPR をしない。
 - 心停止中のプレイヤー（Second Chance が発動済み、出血なし）で ACE の判断がエピネフリンを選んだとき、エピネフリンを持つ AI がいないので衛生兵が来ないまま、負傷の知らせが繰り返されるとみられる（コードからの推定）。
 
 ### Circulation なし（Core だけ）の場合（使う物品）
 <!-- mods: !circulation -->
 
-- 包帯・生理食塩水・エピネフリン（Core）・医療キットの 4 つが対象になる。
 - エピネフリンを使うのは Second Chance が発動した患者だけ。AI には既定で Second Chance がない（`m_bSecondChanceForAIEnabled` の既定 false）ので、実際にはプレイヤーの患者が対象になる。
 
 ### Hitzones を入れている場合
@@ -115,19 +121,12 @@ AI の衛生兵は、**包帯・生理食塩水・Core のエピネフリン・�
 - ACE の判断は医療キットを選ぶことがある（[使う物品と順番](#使う物品と順番) の 4）。
 - しかし ACE が AI の持ち物を数える方法では、医療キットが数えられない。そのため医療キットを持つ衛生兵が見つからず、実際には使われないとみられる。
 
-気をつける場面（仕様から分かること）:
-
-- 意識不明の患者の気道は、AI では確保されない。気道が塞がってから約 15 分で心停止しうる（[仰向けで放置したとき](respiration-system.md#仰向けで放置したとき)）。
-- 気胸は AI では治らない（[気胸の悪化と放置したときの時間](pneumothorax-system.md#気胸の悪化と放置したときの時間)）。
-- 心停止した患者に AI は CPR をしない（[CPR を行う](cardiac-arrest.md#cpr-を行う)）。
-- 止血帯を使わないので、四肢の出血も包帯で止める（[包帯を巻く](bandage.md)）。
-
 > [!NOTE]
 > 公式ドキュメントとの違い: ドキュメントには「今は Core の手順にだけ対応している」とあり、これはコードと合う。ドキュメントに書かれていないこととして、ACE の治療は意識不明の患者だけが対象になる。
 
 ## 衛生兵になる AI
 
-衛生兵に選ばれるのは、負傷者のグループの AI のうち、**必要な物品を持ち、意識があり、手が空いている AI の中で最も近い AI**。さらに治療を始める前に、**包帯を 1 つ以上持っている**ことを確かめる。
+衛生兵に選ばれるのは、負傷者のグループの AI のうち、**必要な物品を持ち、意識があり、手が空いている AI の中で最も近い AI**。
 
 選ばれる条件（すべて満たす AI のうち、負傷者に最も近い AI）:
 
@@ -156,7 +155,7 @@ AI の負傷は、プレイヤーと同じ ACE の処理で扱われる（AI MOD
 | 設定 | 既定値 | 既定での AI の扱い |
 |---|---|---|
 | `m_bSecondChanceForAIEnabled`（Core） | false | Second Chance がない。致命打で死亡する（[Second Chance とは](death-second-chance.md#second-chance-とは)） |
-| `m_bCardiacArrestForAIEnabled`（Circulation） | false | 心停止に入った瞬間に死亡する（[AI の心停止](#ai-の心停止)） |
+| `m_bCardiacArrestForAIEnabled`（Circulation） | false | 心停止に入った瞬間に死亡する |
 
 設定の変え方は [AI の設定](server-settings.md#ai-の設定)。
 
@@ -165,6 +164,9 @@ AI の負傷は、プレイヤーと同じ ACE の処理で扱われる（AI MOD
 
 - 心停止に入る条件を満たすと、AI はその場で死亡する。
 - 出血した AI は、頻脈で心拍数が 220 を超え、血液 25% 前後で心停止する（出血が速いと、心拍が上がりきる前に血液 20% の閾値で心停止する）。つまり既定では、そこで死亡する（[心停止に入る経路](cardiac-arrest-system.md#心停止に入る経路)）。
+- 例: 40 ml/s の出血が止まらないと、46 s で Critical（意識喪失）、58 s で心停止 = 死亡（血液約 23%）。Circulation なしなら血液 0 の 75 s まで生きる。
+- AI には Second Chance もない（既定）ので、AI が心停止に入るのは主に出血・薬・Breathing の経路。AI の衛生兵は CPR をしない。
+- `m_bCardiacArrestForAIEnabled` を true にすると、AI もプレイヤーと同じように心停止になり、CPR で蘇生できる（[AI の設定](server-settings.md#ai-の設定)）。
 
 ### Breathing を入れている場合
 <!-- mods: breathing -->
@@ -186,20 +188,15 @@ Breathing には AI とプレイヤーの区別がない。意識不明の AI �
 - 血液が 0 になると、AI は常に出血死する（プレイヤーの出血死を止める `m_bBleedOutForPlayersEnabled` は AI には効かない）。
 - 出血を止めてあれば、意識不明のままでも心停止や気道閉塞で死ぬことはない。
 
-## AI の心停止
-
-- 既定では、**AI は心停止に入った瞬間に死ぬ**（`m_bCardiacArrestForAIEnabled` の既定 false）。true にすると、AI もプレイヤーと同じように心停止になる。
-- AI には Second Chance もない（`m_bSecondChanceForAIEnabled` の既定 false）ので、致命打で即死する。そのため AI が心停止に入るのは、主に出血・薬・Breathing の経路。
-- AI の衛生兵は CPR をしない。
-- 40 ml/s の出血が止まらないと、46 s で Critical（意識喪失）、58 s で心停止 = 死亡（血液約 23%）。Circulation なしなら血液 0 の 75 s まで生きる。
-- Breathing 入りで、意識不明のまま仰向けで放置したときに死亡する割合と時間は [Breathing を入れている場合](#breathing-を入れている場合)。回復体位か King LT なら気道は塞がらない。
-
-AI の衛生兵が使わない物品と処置は [使わない物品と処置](#使わない物品と処置)、Circulation 入りのエピネフリンと心停止したプレイヤーへの扱いは [使う物品と順番](#使う物品と順番)、設定の変え方は [AI の設定](server-settings.md#ai-の設定)。
-
 ## 関連ページ
 
 - [出血と止血](hemorrhage.md)
 - [気道閉塞と気道の確保](airway.md)
 - [心停止と CPR](cardiac-arrest.md)
 - [致命傷と Second Chance](death-second-chance.md)
+- [心停止と蘇生](cardiac-arrest-system.md)
+- [呼吸と気道の仕組み](respiration-system.md)
+- [気胸の仕組み](pneumothorax-system.md)
+- [医療の操作](medical-actions.md)
+- [物品の一覧](items.md)
 - [サーバー設定の注意点](server-settings.md)
