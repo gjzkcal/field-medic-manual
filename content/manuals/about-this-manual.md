@@ -12,8 +12,6 @@ category: はじめに
 
 # この原稿の読み方
 
-このマニュアルが対象にする ACE Medical の版と MOD、MOD の組み合わせによる書き分け、時間と数値の読み方、ゲームの表示名の言語、原稿の一覧をまとめる。
-
 > [!NOTE]
 > [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。\
 > 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。\
@@ -54,7 +52,7 @@ category: はじめに
 
 主な違い（詳しくは各原稿）:
 
-| 話題 | Core + Circulation + Breathing（普段） | Core + Circulation | Core だけ | Hitzones を足したとき |
+| 話題 | Core + Circulation + Breathing | Core + Circulation | Core だけ | Hitzones あり |
 |---|---|---|---|---|
 | 血液の最大量 | 3000 ml | 3000 ml | 6000 ml | 変わらない |
 | 意識を失ったあと戻す物品 | 炭酸アンモニウム（状態が Stable のときだけ、確率で効く） | 同左 | エピネフリン | Core だけのとき、エピネフリンの健康度の条件が効かない |

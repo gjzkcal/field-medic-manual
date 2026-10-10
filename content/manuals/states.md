@@ -13,8 +13,6 @@ category: システム
 
 # 状態と閾値
 
-Circulation の 5 つの状態（Stable / Unstable / Critical / 心停止 / 蘇生中）で起きること、状態が変わる閾値と設定、血液の分類をまとめる。状態は Circulation を入れたときだけある。
-
 > [!NOTE]
 > [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。\
 > 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。\
@@ -26,7 +24,7 @@ Circulation を入れると、生存しているキャラクターは次の 5 �
 
 | 状態 | 起きること |
 |---|---|
-| Stable（安定） | 意識不明なら自然に目覚める（抵抗値が 1.2 HP/s × 脳の割合で回復。CPR で蘇生した後は 0.8 HP/s × 脳の割合）。炭酸アンモニウムが効く |
+| Stable（安定） | 意識不明なら自然に目覚める（意識の値が 1.2 HP/s × 脳の割合で回復。CPR で蘇生した後は 0.8 HP/s × 脳の割合）。炭酸アンモニウムが効く |
 | Unstable（不安定） | これだけでは意識を失わない。ただし意識不明なら自然には目覚めない（回復が 0）。炭酸アンモニウムは効かない |
 | Critical（重篤） | **入った瞬間に意識を失う**。血液 40% 未満なら頻脈が始まる |
 | 心停止（Cardiac arrest） | 心拍数・血圧が 0。意識不明。10 s 後から脳が減り、約 5 分で死亡（[心停止と CPR](cardiac-arrest.md)） |
@@ -63,7 +61,7 @@ Circulation を入れると、生存しているキャラクターは次の 5 �
 > - 出血による心停止は Class IV ではなく、多くは Class III の中（血液 25% 前後）で頻脈によって起きる（[心拍数の決まり方](vitals-system.md#心拍数の決まり方)）。
 > - Breathing の説明には「気道が塞がると Unstable」とあるが、直接その規則はない。無呼吸で SpO2 が 85% を割ると（約 16 s 後）Unstable になる。
 
-### 設定
+### 閾値の設定
 
 閾値はサーバーの設定 `m_UnstableThresholds` / `m_CriticalThresholds` / `m_CardiacArrestThresholds` の中にある。項目は `m_fHeartRateLowBPM`（心拍数の下限）、`m_fHeartRateHighBPM`（上限）、`m_fMeanArterialPressureLowKPA`（平均血圧の下限）、`m_fMaxHeartForMeanArterialPressureLowBPM`（平均血圧の下限を使う心拍数の上限）、`m_fMeanArterialPressureHighKPA`（平均血圧の上限）、`m_eBloodState`（血液の分類）、`m_fSpO2`（Breathing）。既定値は上の表のとおり。
 
@@ -93,7 +91,7 @@ Circulation を入れると、生存しているキャラクターは次の 5 �
 ### Circulation なし（Core だけ）の場合
 <!-- mods: !circulation -->
 
-- 5 つの状態はなく、生存・意識不明・死亡だけ。血液の分類（Class）もない。意識は抵抗値と血液量で決まる（[意識を失う条件](consciousness-system.md#意識を失う条件)、[血液量と出血の段階](bleeding-system.md#血液量と出血の段階)）。
+- 5 つの状態はなく、生存・意識不明・死亡だけ。血液の分類（Class）もない。意識は意識の値と血液量で決まる（[意識を失う条件](consciousness-system.md#意識を失う条件)、[血液量と出血の段階](bleeding-system.md#血液量と出血の段階)）。
 
 ## 関連ページ
 

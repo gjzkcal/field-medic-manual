@@ -13,8 +13,6 @@ category: システム
 
 # 意識
 
-意識を失う条件（被弾で減る量・血液）、意識が戻る条件と時間の式、回復倍率の決まり方と組み合わせごとの違いをまとめる。起こし方と気道と意識の関係は [意識不明への対応](consciousness.md) にある。
-
 > [!NOTE]
 > [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。\
 > 時間の数値は、コードの式から計算した目安。人の多いサーバーでは、負荷によって全体が 1〜2 割遅く進むことがある。\
@@ -26,7 +24,7 @@ category: システム
 
 <!-- columns: - | circulation, breathing | circulation, !breathing | !circulation | hitzones -->
 
-| きっかけ | Core + Circulation + Breathing（普段） | Circulation だけ追加 | Core だけ | Hitzones を足したとき |
+| きっかけ | Core + Circulation + Breathing | Core + Circulation | Core だけ | Hitzones あり |
 |---|---|---|---|---|
 | 被弾で意識の値が 33.3 以下 | 意識を失う | 同左 | 同左 | 変わらない |
 | 状態が Critical・心停止に入る | 意識の値が 0 になり意識を失う | 同左 | —（状態がない） | 変わらない |
@@ -98,7 +96,7 @@ category: システム
 
 <!-- columns: - | circulation, breathing | circulation, !breathing | !circulation -->
 
-| 状況 | Core + Circulation + Breathing（普段） | Circulation だけ追加 | Core だけ |
+| 状況 | Core + Circulation + Breathing | Core + Circulation | Core だけ |
 |---|---|---|---|
 | 通常 | Stable なら `0.3 × 脳の割合` | 同左 | 0.3 |
 | Unstable・Critical・心停止 | 0（自然には目覚めない） | 同左 | —（状態がない） |
