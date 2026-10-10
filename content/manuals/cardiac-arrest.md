@@ -94,7 +94,7 @@ category: 処置
 
 このマニュアルの手順（作者の方針）: CPR の前に気道を確保する。King LT があれば入れる。なければ、頭に「Clear vomit」が出ていれば嘔吐物を除去し、あご先挙上をする（[King LT を使う](king-lt.md)、[嘔吐物の除去](airway.md#嘔吐物の除去)、[あご先挙上](airway.md#あご先挙上)）。酸素マスクを持っていれば、気道を確保した後に付ける（[酸素マスクを使う](oxygen-mask.md)）。
 
-心停止中の SpO2 の式と、CPR を始めてからの SpO2 の推移は [Breathing を入れているとき](cardiac-arrest-system.md#breathing-を入れているとき)。
+心停止中の SpO2 の式と、CPR を始めてからの SpO2 の推移は [心停止中の SpO2](cardiac-arrest-system.md#心停止中の-spo2)。
 
 ## エピネフリンの役割
 

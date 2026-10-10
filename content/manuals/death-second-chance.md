@@ -40,12 +40,7 @@ Second Chance は、致命打で即死する代わりに意識不明にする仕
 | Circulation あり（普段の組み合わせ） | 心停止になる（最初の 1 回だけ）。CPR で蘇生させる（[Circulation を入れているときの結果](#circulation-を入れているときの結果)） |
 | Circulation なし | 意識の値が 0 になり、回復倍率が 0 になる。既定ではエピネフリンを打たないと目覚めない（[エピネフリンで起こす](consciousness.md#エピネフリンで起こす)） |
 
-**Second Chance が無いもの**（既定）:
-
-| 設定 | 意味 | 既定値 |
-|---|---|---|
-| `m_bSecondChanceForAIEnabled` | AI にも Second Chance を与えるか | false（AI は致命打で即死） |
-| `m_bSecondChanceForFallDamageEnabled` | 落下の損傷で意識を失ったときにも与えるか | false（落下による致命傷は即死） |
+**Second Chance が無いもの**（既定）: AI と、落下による致命傷（設定は [設定](#設定)）。
 
 2026-09-27 の実機での印象（頭部の損傷以外で即死した印象はない）は、既定の確率（頭 0、ほか 1）と合う。
 
@@ -130,28 +125,13 @@ Circulation を入れていると、Second Chance で助かった人は心停止
 | `m_fSecondChanceResilienceRegenScale` | 効かない | 効く（既定 0） |
 | 放置した場合 | 脳が約 310 s で破壊され死亡 | 意識不明のまま（出血していれば出血死） |
 
-- 心停止中の脳は、心停止に入って 10 s 後から 0.333 HP/s で減り、`10 + 100 ÷ 0.333 = 310.3 s` で 0 になる。CPR 中は減らない（[脳の損傷と残り時間](cardiac-arrest.md#脳の損傷と残り時間)）。
-- CPR のやり方と蘇生の判定は [CPR を行う](cardiac-arrest.md#cpr-を行う)・[蘇生の判定](cardiac-arrest-system.md#蘇生の判定)、蘇生した後の意識の戻り方は [蘇生した後](cardiac-arrest.md#蘇生した後) と [意識が戻る条件と時間](consciousness.md#意識が戻る条件と時間)。
-- Breathing を入れていると、心停止中は SpO2 が下がり、約 190 s で 65% を割る。SpO2 が 65% 未満の間は CPR で蘇生しない（[Breathing を入れているとき](cardiac-arrest.md#breathing-を入れているとき)）。
+- 心停止中の脳は、心停止に入って 10 s 後から 0.333 HP/s で減り、`10 + 100 ÷ 0.333 = 310.3 s` で 0 になる。CPR 中は減らない（[脳の損傷と残り時間](cardiac-arrest-system.md#脳の損傷と残り時間)）。
+- CPR のやり方と蘇生の判定は [CPR を行う](cardiac-arrest.md#cpr-を行う)・[蘇生の判定](cardiac-arrest-system.md#蘇生の判定)、蘇生した後の意識の戻り方は [蘇生した後](cardiac-arrest-system.md#蘇生した後) と [意識が戻る条件と時間](consciousness-system.md#意識が戻る条件と時間)。
+- Breathing を入れていると、心停止中は SpO2 が下がり、約 190 s で 65% を割る。SpO2 が 65% 未満の間は CPR で蘇生しない（[心停止中の SpO2](cardiac-arrest-system.md#心停止中の-spo2)）。
 - Hitzones と Circulation の両方を入れていると、心臓の破壊で助かった場合も心停止になる（`m_fSecondChanceOnHeart` の既定 0 では即死）。
+- Second Chance のほかに心停止に入る経路（心拍数・血圧・血液量・CPR をやめる・SpO2・気胸）は [心停止に入る経路](cardiac-arrest-system.md#心停止に入る経路)。
+- AI は既定で、心停止に入った瞬間に死亡する（`m_bCardiacArrestForAIEnabled` = false）。出血した AI は血液 25% 前後で、気道が塞がった AI は約 15 分で死にうる（[AI 自身が負傷したとき](ai-medic.md#ai-自身が負傷したとき)）。
 
-### 心停止に入るほかの経路
-
-Second Chance のほかにも、次のときに心停止になる。詳しくは [心停止に入る経路](cardiac-arrest-system.md#心停止に入る経路)。
-
-| 経路 | 条件（既定値） |
-|---|---|
-| 心拍数 | 20 未満、または 220 超（出血性ショックの頻脈で血液 25% 前後） |
-| 平均動脈圧 | 5.21 kPa（39.1 mmHg）未満 かつ 心拍数 30 以下、または 29.5 kPa 超 |
-| 血液量 | 20% 以下（Class IV） |
-| CPR をやめる | 蘇生中に CPR をやめると心停止に戻る |
-| SpO2（Breathing） | 65% 未満 |
-| 気胸（Breathing） | 気胸が最大（0.75）まで悪化したとき |
-
-### AI の場合
-
-- AI は既定で Second Chance が無い（`m_bSecondChanceForAIEnabled` = false）ので、致命打で即死する。
-- AI は既定で、心停止に入った瞬間に死亡する（`m_bCardiacArrestForAIEnabled` = false）。出血した AI は血液 25% 前後で、気道が塞がった AI は約 15 分で死にうる（[AI の心停止](ai-medic.md#ai-の心停止)）。
 
 ## Hitzones の急所と心臓
 
@@ -161,7 +141,9 @@ Hitzones を入れると全体 HP が無くなり、頭・胸・腹（急所）�
 - 部位が破壊されると、急所かどうかに関係なく必ず出血が付く。
 - 診察画面の全体の健康度は、全部位の HP の割合の最小値になる。
 - Circulation なしのエピネフリンの健康度の条件は効かなくなる（[エピネフリンで起こす](consciousness.md#エピネフリンで起こす)）。
+- 大腿動脈と首の大出血は [首と大腿動脈の大出血](bleeding-system.md#首と大腿動脈の大出血)。
 - この組み合わせは実機では確かめていない（普段の組み合わせは Hitzones なし）。
+- 臓器の設定は [設定](#設定)。
 
 | 部位 | 急所 | 中の臓器 | 確率（既定） | 破壊されたとき |
 |---|---|---|---|---|
@@ -189,18 +171,6 @@ Hitzones を入れると全体 HP が無くなり、頭・胸・腹（急所）�
 | 0.5 | 25% |
 | 1 | 100% |
 
-### 大腿動脈と首
-
-- 大腿動脈と首の大出血は [首と大腿動脈の大出血](bleeding-system.md#首と大腿動脈の大出血)。
-
-### 設定
-
-| 設定 | 意味 | 既定値 |
-|---|---|---|
-| `m_bOrganHitZonesEnabled` | 臓器（心臓・大腿動脈）を使うか。false なら心臓の即死と大腿動脈の大出血が無くなる | true |
-| `m_fSecondChanceOnHeart` | 心臓の確率 | 0 |
-| `m_bInstantUnconOnMassiveBleeding` | 首・大腿動脈の大出血でその場で意識を失うか | true |
-
 > [!NOTE]
 > 公式ドキュメントとの違い: ドキュメントは心臓を「Second Chance を評価する」、確率を設定値としている。実際は 2 回判定するので、助かる確率は設定値の 2 乗になる。
 
@@ -220,9 +190,26 @@ ACE が死亡させるのは、Second Chance で外れたとき、意識を失�
 
 死亡を防ぐ設定の既定値と、無効にしたときに防げない死亡は [死亡を防ぐ設定](server-settings.md#死亡を防ぐ設定)。
 
+## 設定
+
+部位ごとの確率の設定は [判定の流れと部位ごとの確率](#判定の流れと部位ごとの確率) の表。
+
+| 設定 | 意味 | 既定値 |
+|---|---|---|
+| `m_bSecondChanceForAIEnabled` | AI にも Second Chance を与えるか | false（AI は致命打で即死） |
+| `m_bSecondChanceForFallDamageEnabled` | 落下の損傷で意識を失ったときにも与えるか | false（落下による致命傷は即死） |
+| `m_bOrganHitZonesEnabled` | 臓器（心臓・大腿動脈）を使うか。false なら心臓の即死と大腿動脈の大出血が無くなる | true |
+| `m_fSecondChanceOnHeart` | 心臓の確率 | 0 |
+| `m_bInstantUnconOnMassiveBleeding` | 首・大腿動脈の大出血でその場で意識を失うか | true |
+
 ## 関連ページ
 
 - [意識不明への対応](consciousness.md)
 - [出血と止血](hemorrhage.md)
 - [心停止と CPR](cardiac-arrest.md)
+- [意識の仕組み](consciousness-system.md)
+- [心停止と蘇生](cardiac-arrest-system.md)
+- [出血の仕組み](bleeding-system.md)
+- [エピネフリン](epinephrine.md)
+- [AI の治療](ai-medic.md)
 - [サーバー設定の注意点](server-settings.md)

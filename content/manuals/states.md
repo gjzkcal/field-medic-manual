@@ -30,6 +30,11 @@ Circulation を入れると、生存しているキャラクターは次の 5 �
 | 心停止（Cardiac arrest） | 心拍数・血圧が 0。意識不明。10 s 後から脳が減り、約 5 分で死亡（[心停止と CPR](cardiac-arrest.md)） |
 | 蘇生中（Resuscitation） | CPR を受けている間。脳は減らない |
 
+### Circulation なし（Core だけ）の場合
+<!-- mods: !circulation -->
+
+- 5 つの状態はなく、生存・意識不明・死亡だけ。血液の分類（Class）もない。意識は意識の値と血液量で決まる（[意識を失う条件](consciousness-system.md#意識を失う条件)、[血液量と出血の段階](bleeding-system.md#血液量と出血の段階)）。
+
 ## 状態の閾値
 
 次のどれか 1 つでも当たると、その状態に移る。判定は「心停止 → Critical → Unstable」の順で、最初に当たったものになる（Stable から直接 Critical や心停止に移ることもある）。
@@ -88,17 +93,16 @@ Circulation を入れると、生存しているキャラクターは次の 5 �
 - 気道が塞がっている間は、状態に関係なく意識が戻らない（[気道と意識](consciousness.md#気道と意識)）。
 - 気胸が最大（0.75）まで進むと、状態が心停止に切り替わる（設定 `m_fPneumothoraxArrestEnabled`、既定 true）。
 
-### Circulation なし（Core だけ）の場合
-<!-- mods: !circulation -->
-
-- 5 つの状態はなく、生存・意識不明・死亡だけ。血液の分類（Class）もない。意識は意識の値と血液量で決まる（[意識を失う条件](consciousness-system.md#意識を失う条件)、[血液量と出血の段階](bleeding-system.md#血液量と出血の段階)）。
-
 ## 関連ページ
 
-- [診察とバイタルの確かめ方](vitals.md)
+- [意識不明への対応](consciousness.md)
+- [心停止と CPR](cardiac-arrest.md)
 - [バイタルの仕組み](vitals-system.md)
 - [出血の仕組み](bleeding-system.md)
+- [意識の仕組み](consciousness-system.md)
+- [呼吸と気道の仕組み](respiration-system.md)
+- [気胸の仕組み](pneumothorax-system.md)
 - [心停止と蘇生](cardiac-arrest-system.md)
-- [意識不明への対応](consciousness.md)
 - [薬の効き方](drug-effects.md)
+- [診察とバイタルの確かめ方](vitals.md)
 - [サーバー設定の注意点](server-settings.md)

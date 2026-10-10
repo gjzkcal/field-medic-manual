@@ -29,9 +29,9 @@ category: システム
 | 被弾で意識の値が 33.3 以下 | 意識を失う | 同左 | 同左 | 変わらない |
 | 状態が Critical・心停止に入る | 意識の値が 0 になり意識を失う | 同左 | —（状態がない） | 変わらない |
 | 血液の減少 | 40% 以下で Critical → 意識を失う | 同左 | 33.3% 以下で意識を失う | 変わらない |
-| SpO2 の低下 | 75% 未満で Critical → 意識を失う | — | — | 変わらない |
-| Second Chance（致命打で即死しなかったとき） | 心停止 → 意識を失う | 同左 | 意識の値が 0 → 意識を失う | きっかけが急所・心臓の破壊になる |
-| 首・大腿動脈の大出血 | — | — | — | 意識の値が 0 → その場で意識を失う（`m_bInstantUnconOnMassiveBleeding`、既定 true） |
+| [SpO2 の低下](respiration-system.md#spo2-と状態) | 75% 未満で Critical → 意識を失う | — | — | 変わらない |
+| [Second Chance](death-second-chance.md#second-chance-とは)（致命打で即死しなかったとき） | 心停止 → 意識を失う | 同左 | 意識の値が 0 → 意識を失う | きっかけが急所・心臓の破壊になる |
+| [首・大腿動脈の大出血](bleeding-system.md#首と大腿動脈の大出血) | — | — | — | 意識の値が 0 → その場で意識を失う（`m_bInstantUnconOnMassiveBleeding`、既定 true） |
 
 - 意識の値の段階は本体の値で、75（WEAKENED）・50・33.3（UNCONSCIOUS）。意識があるときは 33.3 以下の段階で意識を失う。
 - 境目ちょうどの値（33.3）では、意識を失う側になるとみられる（本体が意識を失わせるときに、ちょうど閾値の値にしているため）。
@@ -55,8 +55,8 @@ category: システム
 
 ### 血液で意識を失う条件
 
-- Circulation あり: 血液 40% 以下で Critical になり、意識の値が 0 になって意識を失う。本体の「血液が少ないと意識不明」の条件は Class IV（20% 以下）に当たり、心停止の閾値と重なるので、単独では効かない。
-- Circulation なし: 血液 33.3%（1998 ml）以下の間は、意識の値に関係なく意識不明になる。33.3% を超えるまで目覚めない。
+- Circulation あり: 本体の「血液が少ないと意識不明」の条件は Class IV（20% 以下）に当たり、心停止の閾値と重なるので、単独では効かない。
+- Circulation なし: 33.3% は 1998 ml。この間は意識の値に関係なく意識不明で、33.3% を超えるまで目覚めない。
 - 詳しくは [血液量と出血の段階](bleeding-system.md#血液量と出血の段階)。
 
 > [!NOTE]
@@ -92,7 +92,7 @@ category: システム
 
 エピネフリン・炭酸アンモニウムの回復は待ちをやり直さない。被弾すると待ちは最初からになる。
 
-### 回復倍率の決まり方
+## 回復倍率の決まり方
 
 <!-- columns: - | circulation, breathing | circulation, !breathing | !circulation -->
 
@@ -127,13 +127,15 @@ category: システム
 ### Breathing を入れている場合
 <!-- mods: breathing -->
 
-- 気道が塞がっている（舌根沈下・嘔吐）か緊張性気胸のときは、回復倍率が 0 になり、自然には目覚めない。詳しくは [気道と意識](consciousness.md#気道と意識)。
+- 気道が塞がっている（舌根沈下・嘔吐）か緊張性気胸のときは、回復倍率が 0 になり、自然には目覚めない。処置は [気道と意識](consciousness.md#気道と意識)、SpO2 の推移は [気道閉塞を放置したときの推移](respiration-system.md#気道閉塞を放置したときの推移)。
 
 ### Circulation なし（Core だけ）の場合
 <!-- mods: !circulation -->
 
 - 血液が 33.3% 以下の間は、意識の値が 100 になっても目覚めない。血液を 33.3% より上に戻す必要がある（[生理食塩水を使う](saline.md)）。
 - Second Chance で意識を失った後は、既定では自然に目覚めない（エピネフリンが要る）。
+
+設定 `m_fDefaultResilienceRegenScale` を変えたときの、目覚めるまでの時間:
 
 | `m_fDefaultResilienceRegenScale` | 通常 | Second Chance の後（`m_fSecondChanceResilienceRegenScale` = 0.1） | 同（= 0.3） |
 |---|---|---|---|
@@ -153,5 +155,8 @@ category: システム
 - [状態と閾値](states.md)
 - [出血の仕組み](bleeding-system.md)
 - [心停止と蘇生](cardiac-arrest-system.md)
+- [呼吸と気道の仕組み](respiration-system.md)
 - [致命傷と Second Chance](death-second-chance.md)
+- [エピネフリン](epinephrine.md)
+- [炭酸アンモニウム](ammonium-carbonate.md)
 - [サーバー設定の注意点](server-settings.md)
