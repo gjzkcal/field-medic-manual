@@ -56,7 +56,7 @@ describe("同梱した原稿", () => {
       }
       expect(
         broken,
-        "リンク切れです。他の原稿へは content/manuals/ のファイル名と見出しのアンカー（例: hemorrhage.md#止血帯を使う）、同じ原稿の中は #アンカー で書きます",
+        "リンク切れです。他の原稿へは content/manuals/ のファイル名と見出しのアンカー（例: tourniquet.md#使い方）、同じ原稿の中は #アンカー で書きます",
       ).toEqual([]);
     },
   );
@@ -122,12 +122,12 @@ describe("同梱した原稿", () => {
     },
   );
 
-  it("「MOD による違い」の見出しは本文を持たない（配下の組み合わせの節がすべて隠れたら一緒に隠すため）", () => {
+  it("「MOD による違い」だけを入れる見出しは作らない", () => {
     const wrappers = converted.flatMap(({ manual, doc }) =>
-      doc.sections.filter((s) => s.title === "MOD による違い").map((s) => ({ file: manual.fileName, html: s.html })),
+      doc.sections.filter((s) => s.title === "MOD による違い").map(() => manual.fileName),
     );
-    expect(wrappers.length).toBeGreaterThan(0);
-    expect(wrappers.filter((w) => w.html !== "")).toEqual([]);
+    // 既定の設定では配下の組み合わせの節が隠れ、中身のない見出しだけが残るため。組み合わせの節は関係する節の h3 に置く
+    expect(wrappers, "組み合わせの節は、効果・効き方など関係する節の h3 に置いてください").toEqual([]);
   });
 
   it.each(converted.map((c) => [c.manual.fileName, c] as const))(
