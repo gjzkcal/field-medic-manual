@@ -24,7 +24,7 @@ category: 処置
 
 | 方法 | 相手 | 所要時間 | 開き方 |
 |---|---|---|---|
-| 医療ラジアルメニューの「診察する（Examine patient）」 | 照準の先のキャラクターなら誰でも（意識があっても） | なし（すぐ出る） | 既定 Ctrl+H |
+| [医療ラジアルメニュー](medical-actions.md#医療ラジアルメニュー)の「診察する（Examine patient）」 | 照準の先のキャラクターなら誰でも（意識があっても） | なし（すぐ出る） | 既定 Ctrl+H |
 | 体への操作 | 意識不明の相手だけ | 押し続け 3 s | 相手の体の部位を見て操作 |
 
 | 項目 | 体の操作の名前と部位 | 通知の文 | 必要な MOD |
@@ -81,13 +81,12 @@ Circulation を入れると、生存しているキャラクターは 5 つの�
 
 ## 診察画面の表示
 
-- 診察画面（負傷者を診察 / Inspect casualty）に、Circulation 入りで**出血の分類（Class I〜IV hemorrhage）**と**投薬記録（最新 8 件）**が加わる。
-- **心拍数・血圧の数値は診察画面には出ない**。バイタルは [バイタルを確かめる操作](#バイタルを確かめる操作) で見る。
-- Breathing 入りで、気胸（Open pneumothorax / Tension pneumothorax。緊張性を優先して表示）が出る。
+- 診察画面（負傷者を診察 / Inspect casualty）には、**心拍数・血圧の数値は出ない**。バイタルは [バイタルを確かめる操作](#バイタルを確かめる操作) で見る。
 
 ### Circulation を入れている場合
 <!-- mods: circulation -->
 
+- 診察画面に**出血の分類（Class I〜IV hemorrhage）**と**投薬記録（最新 8 件）**が加わる。
 - 診察の操作は、本体の条件に加えて「痛みの HP が少しでも減っている」「状態が Stable でない」ときにも出る。
 - 診察画面は 10 s 表示される。
 - 医療ラジアルメニューの「診察する」から離れた位置でも開けるが、相手との距離が 3 m を超えると薄くなり、4 m 以上で閉じる（この距離の挙動は本体の診察画面のもので、Circulation がなくても同じ）。
@@ -105,6 +104,7 @@ Circulation を入れると、生存しているキャラクターは 5 つの�
 | 舌根沈下 | **直接は見えない**（「Lift chin」は塞がっていなくても出る）。呼吸数 0 で見分ける |
 | King LT・酸素マスク | 口元に付けた物が見える |
 
+- 開放性と緊張性の両方があるときは、緊張性（Tension pneumothorax）を表示する。
 - インベントリの気胸の表示は、自分のキャラクターの状態を出す。
 - 詳しくは [気道閉塞の見分け方](airway.md#気道閉塞の見分け方)。
 
@@ -122,7 +122,6 @@ Circulation を入れると、生存しているキャラクターは 5 つの�
 例: `14:5 Epinephrine (Player1)`
 
 - 炭酸アンモニウムは、失敗したとき（Stable でなかったときを含む）は記録に残らない。
-- Circulation なし（Core だけ）では投薬記録はない。
 
 ## 画面の効果
 
@@ -148,12 +147,13 @@ Circulation を入れると、生存しているキャラクターは 5 つの�
 
 ## 関連ページ
 
+- [出血と止血](hemorrhage.md)
+- [意識不明への対応](consciousness.md)
+- [気道閉塞と気道の確保](airway.md)
+- [気胸と処置](breathing.md)
+- [心停止と CPR](cardiac-arrest.md)
+- [痛みと抑え方](pain.md)
 - [状態と閾値](states.md)
 - [バイタル](vitals-system.md)
 - [呼吸と SpO2](respiration-system.md)
-- [心停止と CPR](cardiac-arrest.md)
-- [痛みと抑え方](pain.md)
-- [出血と止血](hemorrhage.md)
-- [気胸と処置](breathing.md)
-- [気道閉塞と気道の確保](airway.md)
-- [意識不明への対応](consciousness.md)
+- [医療の操作](medical-actions.md)

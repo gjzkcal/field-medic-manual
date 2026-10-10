@@ -33,7 +33,7 @@ rows:
     links:
       - doc:bandage.md
       - doc:tourniquet.md
-      - doc:bleeding-system.md#放置したときの時間
+      - doc:bleeding-system.md#出血を放置したときの時間
       - flow:casualty-first-contact
 
   - id: torso-head-bleeding
@@ -298,7 +298,7 @@ rows:
     links:
       - doc:ncd-kit.md
       - doc:respiration-system.md#緊張性気胸から心停止まで
-      - doc:breathing.md#breathing-の物品の入手
+      - doc:items.md#breathing-の物品の入手
       - flow:airway-breathing
     mods: [breathing]
 
@@ -359,7 +359,7 @@ rows:
     links:
       - doc:chest-seal.md
       - doc:breathing.md#気胸の悪化と放置したときの時間
-      - doc:breathing.md#breathing-の物品の入手
+      - doc:items.md#breathing-の物品の入手
       - flow:airway-breathing
     mods: [breathing]
 
@@ -571,7 +571,7 @@ rows:
       Breathing の物品（King LT・チェストシール・NCD キット・酸素マスク）は医療キットにも初期装備にも無く、補給（アーセナル）で手に入れる
     links:
       - doc:medical-kit.md
-      - doc:breathing.md#breathing-の物品の入手
+      - doc:items.md#breathing-の物品の入手
 
   - id: pain
     category: 薬・物品

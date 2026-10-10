@@ -52,6 +52,12 @@ category: 処置
 
 - 首と大腿動脈の大出血では、量の多い大出血の粒子が出る（[首と大腿動脈の大出血](#首と大腿動脈の大出血)）。
 
+## 出血を放置したときの時間
+
+Circulation 入りで 40 ml/s の出血を放置すると、23 s で Unstable、46 s で Critical になって意識を失い、58 s で心停止、91 s で出血死する。Circulation なしで同じ傷（80 ml/s・6000 ml）なら、50 s で意識を失い、75 s で出血死する。
+
+出血の速さごとの時刻は [出血を放置したときの時間](bleeding-system.md#出血を放置したときの時間)。
+
 ## 止血に使う物品
 
 - [止血帯](tourniquet.md)（Tourniquet）: 巻いた腕・脚の傷の出血を 0.001 倍にし、出血はほぼ止まる。包帯を巻くまで血液は回復しない。頭・首・胸・腹・腰には巻けない。
@@ -60,22 +66,21 @@ category: 処置
 
 ## 首と大腿動脈の大出血
 
-首は Hitzones がなくても本体の出血係数が 10（ほかの部位は 0.65）と大きく、傷 1 つで Circulation なしなら 162.5〜250 ml/s、Circulation ありでも 81.25〜125 ml/s になる。止血帯は巻けず、頭のグループに包帯を巻くと止まる。Hitzones を入れると、首の負傷と大腿動脈（Femoral artery）の損傷でその場で意識を失い、大腿動脈の出血は腰の傷として数える。
+首は止血帯を巻けず、頭のグループに包帯を巻くと止まる。傷 1 つでも出血がとても速い（ほかの部位の約 15 倍）。Hitzones を入れると、首の負傷と大腿動脈（Femoral artery）の損傷でその場で意識を失い、大腿動脈の出血は腰の傷として数える（脚の止血帯では止まらないとみられる）。
 
 数値と放置したときの時間は [首と大腿動脈の大出血](bleeding-system.md#首と大腿動脈の大出血) を見る。
 
 ## 詳しい仕組み
 
-- Circulation 入りで 40 ml/s の出血を放置すると、23 s で Unstable、46 s で Critical になって意識を失い、58 s で心停止、91 s で出血死する。Circulation なしで同じ傷（80 ml/s・6000 ml）なら、50 s で意識を失い、75 s で出血死する。詳しくは [放置したときの時間](bleeding-system.md#放置したときの時間)。
 - 血液量と状態の段階は [血液量と出血の段階](bleeding-system.md#血液量と出血の段階)、傷ごとの出血の速さは [傷の出血率](bleeding-system.md#傷の出血率)、血液が戻る速さは [血液の回復](bleeding-system.md#血液の回復) を見る。
 
 ## 関連ページ
 
+- [意識不明への対応](consciousness.md)
+- [心停止と CPR](cardiac-arrest.md)
+- [出血](bleeding-system.md)
 - [止血帯](tourniquet.md)
 - [包帯](bandage.md)
 - [生理食塩水](saline.md)
-- [出血](bleeding-system.md)
-- [意識不明への対応](consciousness.md)
-- [心停止と CPR](cardiac-arrest.md)
 - [診察とバイタルの確かめ方](vitals.md)
 - [物品の一覧](items.md)

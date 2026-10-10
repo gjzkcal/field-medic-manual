@@ -36,7 +36,7 @@ category: システム
 
 ### 出血が続いたときの時刻
 
-薬・痛みなしで出血が止まらない場合の時刻（Unstable・Critical・心停止・失血死）と、そのときの血液の残りは [放置したときの時間](bleeding-system.md#放置したときの時間)。
+薬・痛みなしで出血が止まらない場合の時刻（Unstable・Critical・心停止・失血死）と、そのときの血液の残りは [放置したときの時間](bleeding-system.md#出血を放置したときの時間)。
 
 - 心停止中は心拍出量が 0 なので、出血は最大 20 ml/s に抑えられる（`m_fCardiacArrestMaxTotalBleedingRate` の既定 20 のとき）。そのため心停止した後も失血死までに時間がある。
 

@@ -98,7 +98,7 @@ nodes:
     ifMissing: { next: end-no-ncd }
     links:
       - doc:ncd-kit.md
-      - doc:breathing.md#開放性気胸と緊張性気胸
+      - doc:breathing.md#気胸の見分け方
     next: q-chest
 
   end-no-ncd:
@@ -109,7 +109,7 @@ nodes:
       チェストシールでは緊張性気胸は治らない。NCD キットは医療キットにも初期装備にも無く、補給（アーセナル）で手に入れる。
       緊張性の間は呼吸数 0 になり、放置すると気胸 0.18 で約 14 分、0.72 で約 7 分で心停止する
     links:
-      - doc:breathing.md#breathing-の物品の入手
+      - doc:items.md#breathing-の物品の入手
 
   a-chest-seal:
     type: action
