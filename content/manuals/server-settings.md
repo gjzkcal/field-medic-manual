@@ -218,4 +218,4 @@ ACE の死亡処理による死亡（[死亡の条件](death-second-chance.md#�
 - [薬の効き方](drug-effects.md)
 - [致命傷と Second Chance](death-second-chance.md)
 - [AI の治療](ai-medic.md)
-- [この原稿の読み方](about-this-manual.md)
+- [このマニュアルの読み方](about-this-manual.md)

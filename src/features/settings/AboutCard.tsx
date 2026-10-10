@@ -64,7 +64,7 @@ export function AboutCard(): JSX.Element {
             同梱のマニュアル・クイック表・トリアージのフローは、ACE Medical
             のソースコードとドキュメント（acemod/ACE-Anvil、GPL-2.0-or-later、Copyright (C)
             acemod）を作者が読んで要約・解説したものです。ACE の公式のものではなく、ACE
-            チームの承認も受けていません。対象の版と確認日は、マニュアル「このマニュアルについて」と各マニュアルの末尾にあります。処置の手順はゲーム内の遊び方の参考で、古くなっている場合があります。
+            チームの承認も受けていません。対象の版と確認日は、マニュアル「このマニュアルの読み方」と各マニュアルの末尾にあります。処置の手順はゲーム内の遊び方の参考で、古くなっている場合があります。
           </p>
           <div className="flex flex-wrap gap-x-4">
             <ExternalLink onOpen={open} url={ACE_REPOSITORY_URL}>

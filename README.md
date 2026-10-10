@@ -65,7 +65,7 @@ Medical procedures shown in the app are for gameplay only and may be outdated. A
 ## マニュアルの出典 / Sources
 
 同梱のマニュアル・クイック表・トリアージのフロー（`content/`）は、ACE Medical のソースコードとドキュメント（[acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil)、GPL-2.0-or-later、Copyright (C) acemod）を作者が読んで要約・解説したものです。
-対象の版と確認日は、マニュアル「このマニュアルについて」（`content/manuals/about-this-manual.md`）と各マニュアルの末尾に書いてあります。
+対象の版と確認日は、マニュアル「このマニュアルの読み方」（`content/manuals/about-this-manual.md`）と各マニュアルの末尾に書いてあります。
 
 The bundled manuals, quick reference and triage flows are the author's summaries of the ACE Medical source code and documentation (acemod/ACE-Anvil, GPL-2.0-or-later, Copyright (C) acemod).
 

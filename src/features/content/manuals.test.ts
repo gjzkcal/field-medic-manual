@@ -182,22 +182,22 @@ describe("同梱した原稿", () => {
     expect(new Set(runs).size, `同じ分類の原稿の間に別の分類の原稿があります: ${runs.join(" → ")}`).toBe(runs.length);
   });
 
-  it("「この原稿の読み方」の「原稿の一覧」の表は order の順に並び、分類が front matter と合う", () => {
+  it("「このマニュアルの読み方」の「マニュアルの一覧」は分類ごとの表で、order の順に並び、分類が front matter と合う", () => {
     const about = converted.find((c) => c.manual.fileName === "about-this-manual.md");
-    const section = about?.doc.sections.find((s) => s.title === "原稿の一覧");
-    expect(section, "about-this-manual.md に「原稿の一覧」の節がありません").toBeDefined();
-    const container = document.createElement("div");
-    container.innerHTML = section?.html ?? "";
-    const headers = Array.from(container.querySelectorAll("table thead th")).map((th) => th.textContent.trim());
-    const categoryColumn = headers.indexOf("分類");
-    expect(categoryColumn, "表に「分類」の列がありません").toBeGreaterThanOrEqual(0);
-    const rows = Array.from(container.querySelectorAll("table tbody tr")).map((tr) => {
-      const a = tr.querySelector("a[href]");
-      const link = resolveLink(a?.getAttribute("href") ?? "");
-      return {
-        fileName: link.kind === "doc" ? link.fileName : a?.getAttribute("href"),
-        category: tr.children[categoryColumn]?.textContent.trim(),
-      };
+    const sections = about?.doc.sections ?? [];
+    const start = sections.findIndex((s) => s.level === 2 && s.title === "マニュアルの一覧");
+    expect(start, "about-this-manual.md に「マニュアルの一覧」の節がありません").toBeGreaterThanOrEqual(0);
+    const next = sections.findIndex((s, i) => i > start && s.level <= 2);
+    // 分類ごとの小見出し（h3）の下に表を置く。小見出しの名前を分類として照合する
+    const groups = sections.slice(start + 1, next === -1 ? undefined : next).filter((s) => s.level === 3);
+    const rows = groups.flatMap((group) => {
+      const container = document.createElement("div");
+      container.innerHTML = group.html;
+      return Array.from(container.querySelectorAll("table tbody tr")).map((tr) => {
+        const href = tr.querySelector("a[href]")?.getAttribute("href") ?? "";
+        const link = resolveLink(href);
+        return { fileName: link.kind === "doc" ? link.fileName : href, category: group.title };
+      });
     });
     const expected = byOrder();
     expect(
@@ -206,7 +206,7 @@ describe("同梱した原稿", () => {
     ).toEqual(expected.map((c) => c.manual.fileName));
     expect(
       rows.map((r) => [r.fileName, r.category]),
-      "表の「分類」の列と front matter の category を合わせてください",
+      "表を置いた小見出し（分類）と front matter の category を合わせてください",
     ).toEqual(expected.map((c) => [c.manual.fileName, c.doc.meta.category]));
   });
 

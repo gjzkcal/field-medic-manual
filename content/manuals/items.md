@@ -93,4 +93,4 @@ Breathing の 4 物品（King LT・チェストシール・NCD キット・酸�
 - [医療の操作](medical-actions.md)
 - [処置の所要時間](treatment-times.md)
 - [薬の効き方](drug-effects.md)
-- [この原稿の読み方](about-this-manual.md)
+- [このマニュアルの読み方](about-this-manual.md)

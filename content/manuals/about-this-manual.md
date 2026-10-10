@@ -1,5 +1,5 @@
 ---
-title: この原稿の読み方
+title: このマニュアルの読み方
 mod: general
 channel: dev
 mod_version: "1.5.36"
@@ -10,7 +10,7 @@ order: 10
 category: はじめに
 ---
 
-# この原稿の読み方
+# このマニュアルの読み方
 
 > [!NOTE]
 > [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil) のソースコードとゲーム本体の処理を読んで書いた。\
@@ -40,7 +40,11 @@ category: はじめに
 ## MOD の組み合わせで変わること
 
 - Core は必須で、Breathing には Circulation が要る。成り立つ組み合わせは、Hitzones の有無 ×（なし・Circulation・Circulation + Breathing）の **6 通り**。
-- 同じ物品・同じ負傷でも、入れている MOD で答えが変わることが多い。原稿では次の順に書き分けた。
+- 同じ物品・同じ負傷でも、入れている MOD で答えが変わることが多い。
+
+### 原稿での書き分け
+
+原稿では次の順に書き分けた。
 
 1. 共通の事実（どの組み合わせでも同じこと）
 2. `### Circulation を入れている場合`（Breathing で違いがあれば `### Breathing を入れている場合`）
@@ -48,9 +52,13 @@ category: はじめに
 4. `### Hitzones を入れている場合`（違いの補足）
 
 - 表で書き分けるときは、普段の組み合わせを左端の列に置いた。
+### アプリでの表示
+
 - 2〜4 の節は、アプリの設定「使っている MOD」に合うものだけを表示する。ほかの組み合わせの節は、各原稿の上部の「すべての組み合わせを表示」で見られる。検索は組み合わせに関係なくすべての節から探し、合わない節を開いたときはその旨を出す。組み合わせごとの列がある表も、合う列だけを表示する（下の「主な違い」のように見比べるための表は除く）。文中の書き分けは切り替わらない。
 
-主な違い（詳しくは各原稿）:
+### 主な違い
+
+詳しくは各原稿。
 
 | 話題 | Core + Circulation + Breathing | Core + Circulation | Core だけ | Hitzones あり |
 |---|---|---|---|---|
@@ -67,7 +75,7 @@ category: はじめに
 - 表の詳細: [血液量と出血の段階](bleeding-system.md#血液量と出血の段階) ／ [Circulation の有無で変わる薬の扱い](drug-effects.md#circulation-の有無で変わる薬の扱い) ／ [Circulation を入れているときの結果](death-second-chance.md#circulation-を入れているときの結果) ／ [心停止に入る経路](cardiac-arrest-system.md#心停止に入る経路) ／ [AI が治療する相手](ai-medic.md#ai-が治療する相手)
 - AI（ACE Medical AI）は治療する側の追加なので、組み合わせとは別に、AI が関わる話題だけで書き分けた。
 
-## 時間と数値の読み方
+## 数値と注記の読み方
 
 ### 時間
 
@@ -92,7 +100,7 @@ category: はじめに
 
 - ゲームの通知に出る数値は、小数点以下を切り捨てた値。例: 無傷の人の血圧は計算上 119.997 / 79.997 mmHg だが、通知では「119/79 mmHg」と出る（実機で確認）。SpO2・呼吸数・心拍数も同じく切り捨て。
 
-### 【要確認】と注記
+### 注記の読み方
 
 - **【要確認】**は、ソースやゲーム本体のスクリプトでは決まらず、ゲームエンジン側の処理や実機の操作で確かめる必要があるものに付けた。理由を短く添えた。
 - ACE のコードやゲーム本体の処理で確かめた事実と、実機で確かめた事実には付けていない。「〜とみられる」は、コードから強く推定できるが直接は確かめていないもの。
@@ -132,7 +140,9 @@ category: はじめに
 | Lift chin ／ Clear vomit ／ Insert King LT ／ Use chest seal ／ Perform needle decompression ／ Put oxygen mask on ／ Check SpO2 | 気道・気胸の操作 | Breathing |
 | King LT ／ Chest Seal ／ NCD Kit ／ Oxygen Mask ／ Open pneumothorax ／ Tension pneumothorax ／ Airway/Thorax management | 物品・診察の表示・ラジアルメニューの分類 | Breathing |
 
-用語（このマニュアルでの書き方）:
+## 用語
+
+このマニュアルでの書き方。検索で見つからないときは、使う表記で探す。
 
 | 使う表記 | 使わない表記 |
 |---|---|
@@ -142,51 +152,76 @@ category: はじめに
 | 意識喪失（意識を失う出来事） | 気絶、ダウン |
 | 意識不明（意識がない状態） | 気絶中、ダウン中 |
 | 生理食塩水 | 輸液パック、サライン |
+| 意識の値（resilience） | 抵抗値、意識の HP |
 
-## 原稿の一覧
+## マニュアルの一覧
 
-| 原稿 | 分類 | 対象 | 内容 |
-|---|---|---|---|
-| [この原稿の読み方](about-this-manual.md) | はじめに | 一般 | 対象の版と MOD、組み合わせの書き分け、時間と数値の読み方、表示名の言語 |
-| [診察とバイタルの確かめ方](vitals.md) | 処置 | Circulation | バイタルを確かめる操作、正常値、5 つの状態のあらまし、診察画面の表示、投薬記録、画面の効果 |
-| [出血と止血](hemorrhage.md) | 処置 | Core | 出血の見分け方、止血に使う物品、首と大腿動脈の大出血の処置の要点 |
-| [意識不明への対応](consciousness.md) | 処置 | Core | 意識が戻る条件と時間の目安、エピネフリン・炭酸アンモニウムで起こす、気道と意識 |
-| [気道閉塞と気道の確保](airway.md) | 処置 | Breathing | 気道閉塞の種類と見分け方、放置したときの推移の要点、あご先挙上・嘔吐物の除去・回復体位・King LT |
-| [気胸と処置](breathing.md) | 処置 | Breathing | 開放性気胸と緊張性気胸の見分け方、悪化の要点、チェストシール・NCD キット・酸素マスク、物品の入手の要点 |
-| [心停止と CPR](cardiac-arrest.md) | 処置 | Circulation | 心停止の見分け方、脳が尽きるまでの時間、CPR の条件と時間の流れ、エピネフリンの役割、蘇生した後、Breathing を入れているとき |
-| [痛みと抑え方](pain.md) | 処置 | Core | 痛みの画面効果（見分け方）、痛みの仕組みとモルヒネで抑える要点 |
-| [物品の一覧](items.md) | 物品 | Core | 本体と Core・Circulation・Breathing の物品の一覧（効果・使える条件・使った後）、入手 |
-| [止血帯](tourniquet.md) | 物品 | Core | 効果、使い方、巻いたままにしたとき、所要時間 |
-| [包帯](bandage.md) | 物品 | Core | 効果、使い方、所要時間 |
-| [生理食塩水](saline.md) | 物品 | Core | 効果、使い方、所要時間、Circulation の有無による違い |
-| [医療キット](medical-kit.md) | 物品 | Core | 効果、使い方、所要時間、回復の式、中身 |
-| [モルヒネ注射器](morphine.md) | 物品 | Core | 効果、使い方、所要時間、Circulation の有無で変わる効き方、入手 |
-| [エピネフリン](epinephrine.md) | 物品 | Core | 効果、使い方、所要時間、Circulation の有無で変わる効き方、CPR での役割、入手 |
-| [メトプロロール](metoprolol.md) | 物品 | Circulation | 効果、使い方、所要時間、効き方、入手 |
-| [ナロキソン](naloxone.md) | 物品 | Circulation | 効果、使い方、所要時間、効き方（モルヒネを弱める）、入手 |
-| [フェニレフリン](phenylephrine.md) | 物品 | Circulation | 効果、使い方、所要時間、効き方（血圧と出血）、入手 |
-| [炭酸アンモニウム](ammonium-carbonate.md) | 物品 | Circulation | 効果、使い方、所要時間、成功率の式、入手 |
-| [King LT](king-lt.md) | 物品 | Breathing | 効果、使い方、所要時間、入手 |
-| [チェストシール](chest-seal.md) | 物品 | Breathing | 効果、使い方、所要時間、貼るまでの時間と気胸の進み方、入手 |
-| [NCD キット](ncd-kit.md) | 物品 | Breathing | 効果、使い方、所要時間、使うまでの時間と結果、入手 |
-| [酸素マスク](oxygen-mask.md) | 物品 | Breathing | 効果、使い方、所要時間、付けたときの SpO2 の推移、入手 |
-| [医療の操作](medical-actions.md) | 操作 | Core | 医療ラジアルメニュー、体位を変える、負傷者を運ぶ、衛生兵かどうかの違い、ゴミ |
-| [処置の所要時間](treatment-times.md) | 操作 | Core | 代表値、時間の式、物品ごとの時間、効果が付く時刻、サーバーで時間が違う理由、衛生兵による時間の差 |
-| [状態と閾値](states.md) | システム | Circulation | 5 つの状態で起きること、状態の閾値と設定、血液の分類 |
-| [バイタルの仕組み](vitals-system.md) | システム | Circulation | 心拍数の決まり方、血圧の決まり方と出血したときの推移 |
-| [出血の仕組み](bleeding-system.md) | システム | Core | 血液量と出血の段階、傷の出血率、放置したときの時間、血液の回復、首と大腿動脈の大出血の数値 |
-| [意識の仕組み](consciousness-system.md) | システム | Core | 意識を失う条件（被弾・血液）、意識が戻る条件と時間の式、回復倍率の決まり方と組み合わせごとの違い |
-| [呼吸と気道の仕組み](respiration-system.md) | システム | Breathing | 呼吸数と SpO2 の決まり方と状態、気道閉塞を放置したときの推移、気道が塞がる仕組み、仰向けで放置したとき |
-| [気胸の仕組み](pneumothorax-system.md) | システム | Breathing | 気胸の起き方、開放性気胸と緊張性気胸の段階ごとの値、悪化と放置したときの時間 |
-| [心停止と蘇生](cardiac-arrest-system.md) | システム | Circulation | 心停止に入る経路、脳の損傷の式、CPR 中のバイタル、蘇生の判定と蘇生までの時間、蘇生した後の状態の移り方、心停止中の SpO2 |
-| [致命傷と Second Chance](death-second-chance.md) | システム | Core | 致命打で即死するか倒れるかの判定、部位ごとの確率、倒れた後の追い打ち、死亡の条件 |
-| [痛みの仕組み](pain-system.md) | システム | Core | 痛みの仕組み（式・損傷の合計と痛み・放置したとき）、痛みの画面効果の式と設定 |
-| [薬の効き方](drug-effects.md) | システム | Circulation | Circulation の有無で変わる薬の扱い、表示名と操作、過量投与、薬の効き方の計算 |
-| [AI の治療](ai-medic.md) | システム | AI | AI が治療する相手、使う物品と使わない物品、衛生兵になる AI、AI 自身が負傷したとき、AI の心停止 |
-| [サーバー設定の注意点](server-settings.md) | 管理者向け | 一般 | 設定の入口、ミッションヘッダーの差し替え、危険な設定と効かない設定、ゲームモードの設定（出血倍率・意識喪失の禁止）、死亡を防ぐ設定、AI の設定、主な既定値 |
-| [設定の一覧](server-settings-defaults.md) | 管理者向け | 一般 | Core・Hitzones・Circulation・薬・Breathing の設定の既定値 |
+分類はライブラリと見出しツリーの見出しと同じ。並びもライブラリの「標準」の並び順と同じ。
 
-## 関連ページ
+### はじめに
 
-- [物品の一覧](items.md)
-- [サーバー設定の注意点](server-settings.md)
+| マニュアル | 対象 | 内容 |
+|---|---|---|
+| [このマニュアルの読み方](about-this-manual.md) | 一般 | どの版を対象にし、MOD の組み合わせや数値・注記をどう読むか |
+
+### 処置
+
+| マニュアル | 対象 | 内容 |
+|---|---|---|
+| [診察とバイタルの確かめ方](vitals.md) | Circulation | 脈・血圧・呼吸数・SpO2 をどう確かめ、通知の値をどう読むか |
+| [出血と止血](hemorrhage.md) | Core | 出血をどう見分け、何で止めるか |
+| [意識不明への対応](consciousness.md) | Core | 意識不明の人がいつ目覚め、どう起こすか |
+| [気道閉塞と気道の確保](airway.md) | Breathing | 気道が塞がっているかをどう見分け、どう開けるか |
+| [気胸と処置](breathing.md) | Breathing | 開放性気胸と緊張性気胸をどう見分け、何で治すか |
+| [心停止と CPR](cardiac-arrest.md) | Circulation | 心停止をどう見分け、CPR でどう蘇生させるか |
+| [痛みと抑え方](pain.md) | Core | 痛みをどう見分け、モルヒネでどう抑えるか |
+
+### 物品
+
+| マニュアル | 対象 | 内容 |
+|---|---|---|
+| [物品の一覧](items.md) | Core | どの MOD にどの物品があり、どこで手に入るか |
+| [止血帯](tourniquet.md) | Core | 止血帯で何が止まり、巻いたままだとどうなるか |
+| [包帯](bandage.md) | Core | 包帯 1 本でどこまで出血が消え、何秒かかるか |
+| [生理食塩水](saline.md) | Core | 生理食塩水で血液がどれだけ、どの速さで戻るか |
+| [医療キット](medical-kit.md) | Core | 医療キットで何が治り、何が入っているか |
+| [モルヒネ注射器](morphine.md) | Core | モルヒネがどう効き、何本で危険か |
+| [エピネフリン](epinephrine.md) | Core | エピネフリンが何をし、CPR でどう役立つか |
+| [メトプロロール](metoprolol.md) | Circulation | メトプロロールで心拍数がどれだけ下がり、何本で危険か |
+| [ナロキソン](naloxone.md) | Circulation | ナロキソンでモルヒネの効果がどれだけ弱まるか |
+| [フェニレフリン](phenylephrine.md) | Circulation | フェニレフリンで血圧と出血がどう変わり、何本で危険か |
+| [炭酸アンモニウム](ammonium-carbonate.md) | Circulation | 炭酸アンモニウムで誰が、どの確率で目覚めるか |
+| [King LT](king-lt.md) | Breathing | King LT で気道がどう守られ、何秒かかるか |
+| [チェストシール](chest-seal.md) | Breathing | チェストシールで気胸がどう治り、遅れるとどうなるか |
+| [NCD キット](ncd-kit.md) | Breathing | NCD キットで緊張性気胸がどう治り、遅れるとどうなるか |
+| [酸素マスク](oxygen-mask.md) | Breathing | 酸素マスクで SpO2 がどう変わるか |
+
+### 操作
+
+| マニュアル | 対象 | 内容 |
+|---|---|---|
+| [医療の操作](medical-actions.md) | Core | 医療ラジアルメニュー・体位の変え方・運び方・ゴミはどうなっているか |
+| [処置の所要時間](treatment-times.md) | Core | 処置ごとに何秒かかり、衛生兵かどうかでどれだけ違うか |
+
+### システム
+
+| マニュアル | 対象 | 内容 |
+|---|---|---|
+| [状態と閾値](states.md) | Circulation | 5 つの状態で何が起き、どの値で状態が変わるか |
+| [バイタルの仕組み](vitals-system.md) | Circulation | 心拍数と血圧がどう決まり、出血でどう変わるか |
+| [出血の仕組み](bleeding-system.md) | Core | 傷ごとの出血の速さ、放置したときの時間、血液の戻り方 |
+| [意識の仕組み](consciousness-system.md) | Core | どの条件で意識を失い、どの速さで戻るか |
+| [呼吸と気道の仕組み](respiration-system.md) | Breathing | 呼吸数と SpO2 がどう決まり、気道が塞がるとどう推移するか |
+| [気胸の仕組み](pneumothorax-system.md) | Breathing | 気胸がどう起きて悪化し、放置するといつ心停止するか |
+| [心停止と蘇生](cardiac-arrest-system.md) | Circulation | 心停止に入る経路、脳が尽きるまでの時間、蘇生の確率と時間 |
+| [致命傷と Second Chance](death-second-chance.md) | Core | 致命打で即死するか倒れるかがどう決まり、いつ死亡するか |
+| [痛みの仕組み](pain-system.md) | Core | 痛みがどう決まり、放置するといつ消えるか |
+| [薬の効き方](drug-effects.md) | Circulation | 薬の濃度と効果をどう計算し、何本で過量投与になるか |
+| [AI の治療](ai-medic.md) | AI | AI の衛生兵が何をして何をしないか、AI 自身がどう死ぬか |
+
+### 管理者向け
+
+| マニュアル | 対象 | 内容 |
+|---|---|---|
+| [サーバー設定の注意点](server-settings.md) | 一般 | ミッションヘッダーの書き方の落とし穴と、効かない・危険な設定 |
+| [設定の一覧](server-settings-defaults.md) | 一般 | サーバー設定の既定値 |
