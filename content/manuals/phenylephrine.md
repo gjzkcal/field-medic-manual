@@ -27,7 +27,7 @@ category: 物品
 - 血管を締めて血圧を上げる（1 本のピークで血管抵抗 +46.9%、約 29.3 s 後）。
 - **出血を遅くする**（1 本のピークで出血が 0.685 倍、何本打っても 0.45 倍が下限）。**生理食塩水の入る速さは変わらない**。
 - 効果は約 3 分 8 秒で消える。
-- 同時に 2.92 本で、意識喪失（Critical）を経ずに心停止する（血液 100%。激痛なら 0.98 本）。
+- 同時に 2.92 本で、意識喪失（Critical）を経ずに心停止する（血液 100%。激痛なら 0.98 本）（[過量投与](drug-effects.md#過量投与)）。
 
 > [!WARNING]
 > 痛みが強い患者（痛みの HP 30% ほど、心拍数 130）では、フェニレフリン **1 本弱（0.98 本）で心停止**する計算になる。痛みで上がった心拍数に血管抵抗の上昇が重なり、平均血圧が上限（29.5 kPa = 221 mmHg）を超えるため。
@@ -37,7 +37,7 @@ category: 物品
 - 表示名は「Phenylephrine」、操作は「Inject phenylephrine」（Circulation には日本語訳がなく、英語で表示される）。
 - 左右の腕・脚に打つ。
 - 使用条件はない（意識のある健康な仲間にも打てる）。
-- 説明文は「Administered to patients for raising blood pressure」、ヒントは「Increases blood pressure and slows down bleeding and transfusion」（輸液は実際には遅くならない。下の「効き方」の NOTE）。
+- 説明文は「Administered to patients for raising blood pressure」、ヒントは「Increases blood pressure and slows down bleeding and transfusion」。
 
 ## 所要時間
 

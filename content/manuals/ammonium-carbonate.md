@@ -33,7 +33,7 @@ category: 物品
 ## 使い方
 
 - 表示名は「Ammonium Carbonate」、操作は頭に対する「Hold under nose」（Circulation には日本語訳がなく、英語で表示される）。
-- 使用条件はない。ただし効くのは、意識不明で状態が Stable の人だけ（状態ごとに起きることは [5 つの状態](states.md#5-つの状態)）。
+- 使用条件はない（状態ごとに起きることは [5 つの状態](states.md#5-つの状態)）。
 - 説明文は「Administered to unconscious patients.」、ヒントは「Increases wake-up chance」。
 
 ## 所要時間

@@ -30,17 +30,17 @@ Circulation を入れると、エピネフリンとモルヒネは別の仕組�
 
 | 物品 | Circulation あり | Circulation なし |
 |---|---|---|
-| エピネフリン（Epinephrine） | 意識は戻さない。心拍数を上げ、CPR の判定を速める | 意識不明の患者を起こす |
-| モルヒネ注射器 | 鎮痛量を足す（痛みの HP は残る）。心拍数・血圧を下げる | 痛みの HP を治す |
-| メトプロロール（Metoprolol） | 心拍数を下げる | ない |
-| ナロキソン（Naloxone） | モルヒネを弱める | ない |
-| フェニレフリン（Phenylephrine） | 血圧を上げ、出血を遅くする | ない |
-| 炭酸アンモニウム（Ammonium Carbonate） | Stable の意識不明者を確率で起こす | ない |
-| 使用条件 | なし（意識のある健康な仲間にも打てる） | エピネフリン・モルヒネに条件がある |
-| 過量投与 | ある（[過量投与](drug-effects.md#過量投与)） | ない |
-| 投薬記録 | 最新 8 件（[投薬記録](vitals.md#投薬記録)） | ない |
+| [エピネフリン](epinephrine.md)（Epinephrine） | 意識は戻さない。心拍数を上げ、CPR の判定を速める | 意識不明の患者を起こす |
+| [モルヒネ注射器](morphine.md) | 鎮痛量を足す（痛みの HP は残る）。心拍数・血圧を下げる | 痛みの HP を治す |
+| [メトプロロール](metoprolol.md)（Metoprolol） | 心拍数を下げる | ない |
+| [ナロキソン](naloxone.md)（Naloxone） | モルヒネを弱める | ない |
+| [フェニレフリン](phenylephrine.md)（Phenylephrine） | 血圧を上げ、出血を遅くする | ない |
+| [炭酸アンモニウム](ammonium-carbonate.md)（Ammonium Carbonate） | Stable の意識不明者を確率で起こす | ない |
 
-医療キットに最初から入っている薬は [医療キット](medical-kit.md) を見る。どの薬も補給（アーセナル）で手に入る（補給コスト 3）。Circulation の物品と操作は英語で表示される（日本語訳がない）。薬 1 つだけの式と推移、表示名・操作・所要時間は、各物品の原稿にある。
+- 使用条件: Circulation ありでは、どの薬にもない（意識のある健康な仲間にも打てる）。Circulation なしでは、エピネフリンとモルヒネに条件があり、効果が続いている間は次を打てない。
+- 過量投与: Circulation ありだけにある（[過量投与](#過量投与)）。
+- 投薬記録: Circulation ありだけにある（最新 8 件。[投薬記録](vitals.md#投薬記録)）。
+- Circulation の物品と操作は英語で表示される（日本語訳がない）。薬 1 つだけの式と推移、表示名・操作・所要時間・入手は、各物品の原稿（表の物品名のリンク）にある。
 
 ## 過量投与
 
@@ -85,11 +85,6 @@ Circulation を入れると、エピネフリンとモルヒネは別の仕組�
 
 > [!NOTE]
 > 公式ドキュメントとの違い: ドキュメントは TD50 / LD50 を「50% の患者が中毒・死亡する量」と確率で定義しているが、ソースに乱数はない。本数はドキュメントの値とよく一致するが、「この条件なら必ず」起きる。痛みで閾値が大きく下がることは書かれていない。
-
-### Circulation なし（Core だけ）の場合
-<!-- mods: !circulation -->
-
-- 過量投与はない。エピネフリンとモルヒネは、効果が続いている間は次を打てない。
 
 ## 薬の効き方の計算
 
@@ -153,14 +148,20 @@ Circulation を入れると、エピネフリンとモルヒネは別の仕組�
 
 ## 関連ページ
 
+- [痛みと抑え方](pain.md)
+- [心停止と CPR](cardiac-arrest.md)
+- [意識不明への対応](consciousness.md)
 - [状態と閾値](states.md)
-- [生理食塩水](saline.md)
-- [モルヒネ注射器](morphine.md)
+- [バイタル](vitals-system.md)
+- [痛み](pain-system.md)
 - [エピネフリン](epinephrine.md)
+- [モルヒネ注射器](morphine.md)
 - [メトプロロール](metoprolol.md)
 - [ナロキソン](naloxone.md)
 - [フェニレフリン](phenylephrine.md)
 - [炭酸アンモニウム](ammonium-carbonate.md)
+- [生理食塩水](saline.md)
+- [物品の一覧](items.md)
 - [サーバー設定の注意点](server-settings.md)
 
 ## 出典
