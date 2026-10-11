@@ -84,7 +84,7 @@ Circulation を入れると、生存しているキャラクターは次の 5 �
 | Class IV | 0〜20%（20% ちょうどを含む） | Class IV hemorrhage |
 | Fatal | 0 | 死亡 |
 
-満タンから少しでも減ると Class I になるとみられる（本体の処理からの推定）。
+満タンから少しでも減ると Class I になる。
 
 ### Breathing を入れている場合
 <!-- mods: breathing -->
