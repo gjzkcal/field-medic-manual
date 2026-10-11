@@ -52,7 +52,7 @@ category: 処置
 | 項目 | 内部の値 | 通知に出る値 | 決める設定（既定値） |
 |---|---|---|---|
 | 心拍数 | 80 bpm | 80 | `m_fDefaultHeartRateBPM`（80） |
-| 血圧 | 収縮期 119.997 / 拡張期 79.997 mmHg（平均 93.330 mmHg = 12.443 kPa） | **119/79**（実機で確認） | `m_fDefaultMeanArterialPressureKPA`（12.443）、`m_fDefaultPulsePressureKPA`（5.3329） |
+| 血圧 | 収縮期 119.997 / 拡張期 79.997 mmHg（平均 93.330 mmHg = 12.443 kPa） | **119/79** | `m_fDefaultMeanArterialPressureKPA`（12.443）、`m_fDefaultPulsePressureKPA`（5.3329） |
 | 呼吸数（Breathing） | 14.573 回/分 | 14 | `m_fDefaultRespiratoryRateBPM`（14.573） |
 | SpO2（Breathing） | 97.149% | 97 | —（既定値の釣り合いで決まる） |
 | 一回拍出量 | 95 ml | 出ない | `m_fDefaultStrokeVolumeML`（95） |
