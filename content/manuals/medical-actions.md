@@ -89,7 +89,7 @@ category: 操作
 
 ## 負傷者を運ぶ
 
-意識不明の人は、腰の操作で**引きずって運ぶ（Drag）**か**持ちあげて運ぶ（Carry）**ことができる。ACE Medical ではなく **ACE Carrying**（ACE All in One に含まれる）の機能。
+意識不明の人は、腰の操作で**引きずって運ぶ**（Drag）か**持ちあげて運ぶ**（Carry）ことができる。ACE Medical ではなく **ACE Carrying**（ACE All in One に含まれる）の機能。
 
 | 操作（表示） | 英語 | 押し続け | 運び方 |
 |---|---|---|---|
