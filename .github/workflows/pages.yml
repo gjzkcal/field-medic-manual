@@ -1,0 +1,75 @@
+# マニュアルの Web 版を GitHub Pages（https://gjzkcal.github.io/field-medic-manual/）に公開する。
+# 配ったアプリと同じ原稿にするため、リリース（release.yml）が Releases への公開に成功してから呼び出す。
+# 手で公開し直すときは、Actions の画面で版のタグ（v0.4.0 など）を選んで実行する。
+name: Pages
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# 付け替えられるタグではなくコミットの SHA で外部のアクションを固定し、版はコメントに書く
+# （Renovate が ci.yml・release.yml とそろえて SHA とコメントを両方更新する。手で変えるときも同じようにする）
+jobs:
+  build:
+    # 画面のビルドは OS に依らないので、起動の速いランナーにする
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      # main など、配っていない原稿を公開しないよう、版のタグからだけ公開する
+      - name: Check that a release tag is selected
+        if: github.ref_type != 'tag' || !startsWith(github.ref_name, 'v')
+        run: |
+          echo "::error::Web 版は版のタグ（v0.4.0 など）から公開してください（今は ${GITHUB_REF}）"
+          exit 1
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+        with:
+          version: 11
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm build:web
+
+      # ディープリンクを開けなくなる・Tauri の API がブラウザに入って落ちる、という壊れ方を公開の前に止める
+      - name: Check the build output
+        run: |
+          cmp dist-web/index.html dist-web/404.html
+          if grep -rl "__TAURI" dist-web; then
+            echo "::error::Web 版のビルドに Tauri の API が入っています"
+            exit 1
+          fi
+
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: dist-web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Pages への書き込みと、その認証に使う OIDC のトークンは、公開するこのジョブだけに与える
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    # タグの push と手での実行が重なっても、公開の途中で止めない
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

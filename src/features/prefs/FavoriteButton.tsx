@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toggleFavorite, useIsFavorite } from "@/features/prefs/prefs-store";
 import type { PrefTarget } from "@/lib/bindings/PrefTarget";
+import { IS_WEB } from "@/lib/platform";
 import { errorMessage } from "@/lib/tauri";
 
 interface FavoriteButtonProps {
@@ -13,8 +14,12 @@ interface FavoriteButtonProps {
   label: string;
 }
 
-/** お気に入りの切り替え。入っているときは星を塗りつぶす。 */
-export function FavoriteButton({ target, label }: FavoriteButtonProps): JSX.Element {
+/** お気に入りの切り替え。入っているときは星を塗りつぶす。Web 版にはお気に入りがないので出さない。 */
+export function FavoriteButton(props: FavoriteButtonProps): JSX.Element | null {
+  return IS_WEB ? null : <FavoriteToggle {...props} />;
+}
+
+function FavoriteToggle({ target, label }: FavoriteButtonProps): JSX.Element {
   const on = useIsFavorite(target);
   const [error, setError] = useState<string | null>(null);
   const text = on ? `${label}をお気に入りから外す` : `${label}をお気に入りに入れる`;

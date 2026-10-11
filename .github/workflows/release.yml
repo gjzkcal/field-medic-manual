@@ -29,7 +29,7 @@ jobs:
     permissions:
       contents: write
     # 署名鍵と書き込みの権限を持つジョブなので、付け替えられるタグではなくコミットの SHA で
-    # 外部のアクションを固定し、版はコメントに書く（Renovate が ci.yml とそろえて SHA とコメントを両方更新する）
+    # 外部のアクションを固定し、版はコメントに書く（Renovate が ci.yml・pages.yml とそろえて SHA とコメントを両方更新する）
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -84,3 +84,14 @@ jobs:
           uploadUpdaterJson: true
           # README は管理者権限の要らない -setup.exe（NSIS）で案内しているので、自動更新も NSIS にそろえる
           updaterJsonPreferNsis: true
+
+  # マニュアルの Web 版（GitHub Pages）を、配った版と同じ原稿で公開する。
+  # Releases への公開が失敗したら出さない（アプリと Web で中身が食い違わないように）
+  pages:
+    needs: release
+    uses: ./.github/workflows/pages.yml
+    # 呼び出したワークフローはここで与えた権限までしか持てない。Pages への書き込みと OIDC は pages.yml の deploy ジョブだけが使う
+    permissions:
+      contents: read
+      pages: write
+      id-token: write

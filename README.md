@@ -10,6 +10,14 @@ Arma Reforger の ACE Medical MOD 向けの**非公式**デスクトップ マ�
 - ホットキーで呼び出す、ゲームの上に重なる常に最前面の小窓
 - 新しい版は起動時に自動で確かめて更新できます（マニュアルの本文の更新もこれで届きます）
 
+## Web 版
+
+アプリを入れなくても、ブラウザでマニュアルを読めます: https://gjzkcal.github.io/field-medic-manual/
+
+- マニュアルの閲覧・全文検索・クイック表を使えます。設定（使っている MOD・文字サイズ）はブラウザに保存されます。
+- トリアージのフロー、お気に入りと履歴、ゲームの上に重なる小窓とホットキーは、デスクトップ版だけにあります。
+- 中身は最新のリリースと同じです（リリースのたびに更新します）。
+
 ## インストール
 
 対応 OS は Windows 10 / 11（64 ビット）です。
@@ -87,6 +95,8 @@ GNU General Public License v3.0 またはそれ以降のバージョン（GPL-3.
 pnpm install
 cargo install cargo-about --locked --features cli   # 依存のライセンス表記の生成に使う
 pnpm tauri:dev                                      # 開発起動（DB などはインストール版と別のフォルダ）
+pnpm dev:web                                        # Web 版の開発起動（http://localhost:1420/field-medic-manual/）
+pnpm build:web && pnpm preview:web                  # Web 版をビルドして確かめる（dist-web/）
 pnpm lint && pnpm test                              # 確認
 cd src-tauri && cargo clippy --all-targets -- -D warnings && cargo test
 ```
@@ -102,5 +112,7 @@ cd src-tauri && cargo clippy --all-targets -- -D warnings && cargo test
 3. `CHANGELOG.md`（[Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) の形）の `## [Unreleased]` の見出しを `## [0.0.2] - 日付` に書き換え、その上に空の `## [Unreleased]` を足す。末尾のリンクも `[Unreleased]: …/compare/v0.0.2...HEAD` と `[0.0.2]: …/compare/v0.0.1...v0.0.2` に直す（`pnpm test` で確かめる）。この節が Releases の本文と、アプリの更新のダイアログの「変更点」になる。
 4. `pnpm lint` と `pnpm test` を通してコミットし、`git tag v0.0.2` → `git push origin main v0.0.2`。
 5. GitHub Actions（`.github/workflows/release.yml`）が確認（`.github/workflows/ci.yml`。main への push と PR でも走る）を通してから、ビルド・署名をして Releases に公開し、`latest.json` を置く。
+6. Releases への公開が成功すると、同じ版の Web 版を GitHub Pages に公開する（`.github/workflows/pages.yml`）。公開し直すときは、Actions の「Pages」を版のタグを選んで手で実行する。
 
 リリースには、GitHub の Secrets に更新用の署名鍵（`TAURI_SIGNING_PRIVATE_KEY`・`TAURI_SIGNING_PRIVATE_KEY_PASSWORD`）が要ります。
+Web 版の公開には、リポジトリの Settings → Pages の Source を「GitHub Actions」にし、Settings → Environments → github-pages の「Deployment branches and tags」に、タグのルール `v*` を足しておきます（既定は main だけなので、足さないとタグからの公開が失敗します）。

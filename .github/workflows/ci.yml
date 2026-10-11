@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: ${{ github.ref_type != 'tag' }}
 
 # 付け替えられるタグではなくコミットの SHA で外部のアクションを固定し、版はコメントに書く
-# （Renovate が release.yml とそろえて SHA とコメントを両方更新する。手で変えるときも同じようにする）
+# （Renovate が release.yml・pages.yml とそろえて SHA とコメントを両方更新する。手で変えるときも同じようにする）
 jobs:
   # 変更したファイルで、画面側と Rust 側のどちらを走らせるかを決める。
   # main では前回の push との差分しか見ないので、古い実行を止めた回の変更は確かめられずに残ることがある。
@@ -44,11 +44,12 @@ jobs:
         with:
           predicate-quantifier: some-with-excludes
           # 画面側のテストは src-tauri の about.toml・tauri.conf.json・Cargo.toml・Cargo.lock を読み、
-          # Prettier は src-tauri の JSON も確かめるので、画面側は「全部から Rust だけのファイルを除いたもの」にする
+          # Prettier は src-tauri の JSON も確かめるので、画面側は「全部から Rust だけのファイルを除いたもの」にする。
+          # Web 版は同義語の初期値をマイグレーションの SQL から読むので、SQL は画面側にも含める
           filters: |
             frontend:
               - '**'
-              - '!src-tauri/src/**'
+              - '!src-tauri/src/**/*.rs'
               - '!src-tauri/build.rs'
               - '!src-tauri/icons/**'
               - '!src-tauri/.cargo/**'
@@ -83,6 +84,8 @@ jobs:
 
       - run: pnpm lint
       - run: pnpm test
+      # Web 版は alias とエントリの差し替えでビルドするので、壊れたかはバンドルして初めて分かる
+      - run: pnpm build:web
 
   rust:
     needs: changes

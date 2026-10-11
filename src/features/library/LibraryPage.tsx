@@ -33,6 +33,7 @@ import { SyncStatusCard } from "@/features/sync/SyncStatusCard";
 import { useSyncedLoad } from "@/features/sync/use-synced-load";
 import { useNow } from "@/hooks/use-now";
 import type { DocSummary } from "@/lib/bindings/DocSummary";
+import { IS_WEB } from "@/lib/platform";
 import { docList, errorMessage } from "@/lib/tauri";
 
 type ViewMode = "card" | "list";
@@ -41,7 +42,8 @@ const SORT_LABELS: Record<LibrarySort, string> = {
   title: "タイトル",
   updated: "更新日",
 };
-const SORTS: readonly LibrarySort[] = ["order", "title", "updated"];
+// Web 版は全文書を表示のたびに読み込むので更新日がそろい、更新日での並べ替えに意味がない
+const SORTS: readonly LibrarySort[] = IS_WEB ? ["order", "title"] : ["order", "title", "updated"];
 // 読めないあいだに毎回新しい配列を作らず、並べ替えのメモ化を効かせるため
 const NO_DOCS: DocSummary[] = [];
 

@@ -7,12 +7,10 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check } from "@tauri-apps/plugin-updater";
 
-import type { AppError } from "@/lib/bindings/AppError";
 import type { DocDetail } from "@/lib/bindings/DocDetail";
 import type { DocOutline } from "@/lib/bindings/DocOutline";
 import type { DocSummary } from "@/lib/bindings/DocSummary";
 import type { DocUpsertInput } from "@/lib/bindings/DocUpsertInput";
-import type { ErrorKind } from "@/lib/bindings/ErrorKind";
 import type { HotkeyAction } from "@/lib/bindings/HotkeyAction";
 import type { HotkeyBinding } from "@/lib/bindings/HotkeyBinding";
 import type { OverlayMode } from "@/lib/bindings/OverlayMode";
@@ -29,36 +27,7 @@ import type { TriageDetail } from "@/lib/bindings/TriageDetail";
 import type { TriageSummary } from "@/lib/bindings/TriageSummary";
 import type { TriageUpsertInput } from "@/lib/bindings/TriageUpsertInput";
 
-// Record にしておくと、Rust 側で ErrorKind が増えたときに生成された型との不一致がコンパイルエラーになる
-const ERROR_KINDS: Record<ErrorKind, true> = {
-  io: true,
-  not_found: true,
-  invalid_input: true,
-  internal: true,
-};
-
-export function isAppError(value: unknown): value is AppError {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
-  if (!("kind" in value) || !("message" in value)) {
-    return false;
-  }
-  return (
-    typeof value.kind === "string" &&
-    Object.hasOwn(ERROR_KINDS, value.kind) &&
-    typeof value.message === "string"
-  );
-}
-
-/** 画面に出すためのエラーの文言。コマンドの失敗は AppError、それ以外（通信の失敗など）は文字列にする。 */
-export function errorMessage(error: unknown): string {
-  // Error は String() だと「Error: 」が付くので、message だけを出す
-  if (isAppError(error) || error instanceof Error) {
-    return error.message;
-  }
-  return String(error);
-}
+export { errorMessage, isAppError } from "@/lib/app-error";
 
 export async function appVersion(): Promise<string> {
   return invoke<string>("app_version");

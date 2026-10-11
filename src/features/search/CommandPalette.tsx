@@ -28,6 +28,7 @@ import { toQueryFilter, useSearchFilter } from "@/features/search/search-filter"
 import { SearchFilterPopover } from "@/features/search/SearchFilterPopover";
 import { SnippetText } from "@/features/search/SnippetText";
 import type { SearchHit } from "@/lib/bindings/SearchHit";
+import { IS_WEB } from "@/lib/platform";
 import { errorMessage, searchQuery } from "@/lib/tauri";
 
 /** 打ち終わるのを待つ時間。1 文字ごとに IPC と DB を走らせず、かつ待たされたと感じない長さ */
@@ -373,7 +374,10 @@ function HitItem({
 function EmptyHint(): JSX.Element {
   return (
     <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-      語を入力すると、マニュアルの節・トリアージのフロー・クイック表を探します。空白で区切ると、すべての語を含むものに絞ります。
+      {IS_WEB
+        ? "語を入力すると、マニュアルの節とクイック表を探します。"
+        : "語を入力すると、マニュアルの節・トリアージのフロー・クイック表を探します。"}
+      空白で区切ると、すべての語を含むものに絞ります。
     </p>
   );
 }

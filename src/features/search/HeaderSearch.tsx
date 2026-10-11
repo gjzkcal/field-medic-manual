@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 import { PrefsCommandGroups } from "@/features/prefs/PrefsCommandGroups";
 import { usePalettePrefs } from "@/features/prefs/use-palette-prefs";
 import { CommandPalette } from "@/features/search/CommandPalette";
+import { IS_WEB } from "@/lib/platform";
 
 /** メインウィンドウの上部の検索欄。欄に直接打ち、結果は欄の下に出る。Ctrl+K でここへ移る。 */
 export function HeaderSearch(): JSX.Element {
@@ -41,9 +42,8 @@ export function HeaderSearch(): JSX.Element {
       onSelect={(href) => {
         void navigate(href);
       }}
-      onFavorite={onFavorite}
-      isFavorite={isFavorite}
-      emptySlot={<PrefsCommandGroups />}
+      // Web 版にはお気に入りと履歴がないので、検索の前の一覧とお気に入りの操作を出さない
+      {...(IS_WEB ? {} : { onFavorite, isFavorite, emptySlot: <PrefsCommandGroups /> })}
     />
   );
 }

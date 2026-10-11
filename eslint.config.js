@@ -11,7 +11,14 @@ export default defineConfig(
   // bindings は ts-rs の生成物。手で直さないので対象外にする。
   // dev-docs は .gitignore 済みの非公開の資料置き場で、他のプロジェクトのソースや設定ファイルも置く。
   // ESLint は .gitignore を読まず、そこにある別の eslint.config.js まで読みに行って落ちるので明示する
-  globalIgnores(["dist", "src-tauri/target", "src-tauri/gen", "src/lib/bindings", "dev-docs"]),
+  globalIgnores([
+    "dist",
+    "dist-web",
+    "src-tauri/target",
+    "src-tauri/gen",
+    "src/lib/bindings",
+    "dev-docs",
+  ]),
   {
     linterOptions: {
       reportUnusedDisableDirectives: "error",
@@ -46,6 +53,55 @@ export default defineConfig(
     files: ["src/components/ui/**/*.tsx"],
     rules: {
       "react-refresh/only-export-components": "off",
+    },
+  },
+  // デスクトップ版と Web 版（vite --mode web）で混ざってはいけないものを import の段階で止める。
+  // Tauri の API は src/lib/tauri.ts だけが触る（Web 版ではこのファイルを tauri.web.ts に差し替えるので、
+  // ほかから直接読むと Web のバンドルに入り、ブラウザで落ちる）。
+  // Web 版だけの実装（検索・原稿の読み込み）は、デスクトップ版の画面から読まない（デスクトップのバンドルを太らせない）。
+  // テストは IPC のモックと、両方の実装の突き合わせのために両方を読む
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: [
+      "src/lib/tauri.ts",
+      "src/lib/tauri.web.ts",
+      "src/web/**",
+      "src/**/*.test.{ts,tsx}",
+      "src/test/**",
+    ],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@tauri-apps/*"],
+              message: "Tauri の API は src/lib/tauri.ts の型付きラッパを経由して呼ぶ",
+            },
+            {
+              group: ["@/web/*", "@/lib/tauri.web"],
+              message: "Web 版だけの実装は、デスクトップ版と共有する画面から読まない",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/web/**/*.{ts,tsx}", "src/lib/tauri.web.ts"],
+    ignores: ["src/**/*.test.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@tauri-apps/*"],
+              message: "Web 版には Tauri がない",
+            },
+          ],
+        },
+      ],
     },
   },
   {

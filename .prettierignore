@@ -1,4 +1,5 @@
 dist/
+dist-web/
 src-tauri/target/
 src-tauri/gen/
 pnpm-lock.yaml

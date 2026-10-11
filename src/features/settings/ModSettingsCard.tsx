@@ -8,6 +8,7 @@ import {
   useModSettings,
   type SelectableMod,
 } from "@/features/settings/mod-settings";
+import { IS_WEB } from "@/lib/platform";
 
 const MOD_DESCRIPTIONS: Record<SelectableMod, string> = {
   hitzones: "臓器（心臓・大腿動脈）への被弾を判定する",
@@ -27,8 +28,11 @@ export function ModSettingsCard(): JSX.Element {
       <CardHeader>
         <CardTitle>使っている MOD</CardTitle>
         <CardDescription>
-          遊んでいるサーバーに入っている ACE Medical の MOD。トリアージのフローは、MOD
-          を入れているかを尋ねずに、この設定で分岐します。マニュアルとクイック表は、この組み合わせに合う節と行だけを表示します。Core
+          遊んでいるサーバーに入っている ACE Medical の MOD。
+          {IS_WEB
+            ? ""
+            : "トリアージのフローは、MOD を入れているかを尋ねずに、この設定で分岐します。"}
+          マニュアルとクイック表は、この組み合わせに合う節と行だけを表示します。Core
           は常に入っているものとします。
         </CardDescription>
       </CardHeader>

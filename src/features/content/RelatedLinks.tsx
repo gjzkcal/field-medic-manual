@@ -11,6 +11,7 @@ import { useQuickrefTable } from "@/features/quickref/use-quickref";
 import { parseFlowLink, type FlowLink } from "@/features/triage/links";
 import type { DocOutline } from "@/lib/bindings/DocOutline";
 import type { QuickrefRow } from "@/lib/bindings/QuickrefRow";
+import { IS_WEB } from "@/lib/platform";
 import { errorMessage, openExternal } from "@/lib/tauri";
 
 interface RelatedLinksProps {
@@ -23,6 +24,7 @@ interface RelatedLinksProps {
 /**
  * 原稿（フローの action / end、クイック表の行）の関連リンク。
  * マニュアルはビューアへ、フローは実行画面へ、クイック表は該当の行へ、外部は既定のブラウザで開く。
+ * Web 版にはトリアージのフローがないので、フローへのリンクは出さない。
  */
 export function RelatedLinks({ links, flowTitle }: RelatedLinksProps): JSX.Element | null {
   const outline = useOutline();
@@ -30,7 +32,7 @@ export function RelatedLinks({ links, flowTitle }: RelatedLinksProps): JSX.Eleme
   const [notice, setNotice] = useState<string | null>(null);
   const parsed = links.flatMap((text) => {
     const link = parseFlowLink(text);
-    return link === null ? [] : [{ text, link }];
+    return link === null || (IS_WEB && link.kind === "flow") ? [] : [{ text, link }];
   });
   // クイック表の症状はリンクがあるときだけ読む（フローの多くはクイック表を指さないため）
   const quickref = useQuickrefTable(parsed.some(({ link }) => link.kind === "quickref"));
