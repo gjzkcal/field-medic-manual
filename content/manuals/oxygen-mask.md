@@ -5,7 +5,7 @@ channel: dev
 mod_version: "1.5.36"
 ace_commit: "703d1aa7"
 game_version: "1.8.0.13"
-verified_at: 2026-09-27
+verified_at: 2026-10-11
 tags: [気道・呼吸, 薬・物品]
 order: 240
 category: 物品
@@ -29,13 +29,14 @@ category: 物品
 
 - 表示名は「Oxygen Mask」。操作は患者の頭の「Put oxygen mask on」。
 - 医療ラジアルメニュー（既定 Ctrl+H）の「Airway/Thorax management」から手に持てる（[医療ラジアルメニュー](medical-actions.md#医療ラジアルメニュー)）。移動しながら使える。
+- 他人には、意識の有無を問わず使える。**自分には使えない**（ゲーム内で確認）。
 - 同じ患者に 2 つ目は付けられない。
 - ゲーム内で、患者の装備から外せることを確認した。外すと、その場で効果が消える。
 - 物品の説明は「Mask for oxygen therapy」、ヒントは「Provides supplemental oxygen」（英語のまま）。
 
 ## 所要時間
 
-3.3 s（アニメーションの長さから算出。実測ではない）。自分に使うときはすぐ終わる（自分用の動きが無い。実機で確認）。詳しくは [処置の所要時間](treatment-times.md)。
+3.3 s（アニメーションの長さから算出。実測ではない）。自分には使えない（自分用の動きが無いので、使ってもすぐ終わり、効果は付かない。実機で確認）。詳しくは [処置の所要時間](treatment-times.md)。
 
 ## 効き方
 
