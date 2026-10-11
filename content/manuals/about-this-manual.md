@@ -123,7 +123,7 @@ category: はじめに
 | モルヒネ | モルヒネ注射器 | 本体 |
 | エピネフリン | Circulation を入れていると「Epinephrine」（Core だけなら、文字列表では「エピネフリン」） | Core / Circulation |
 | 炭酸アンモニウム・ナロキソン・フェニレフリン・メトプロロール | Ammonium Carbonate ／ Naloxone ／ Phenylephrine ／ Metoprolol | Circulation |
-| 呼吸数の確認 | 「Check respiratory rate」と「Check Breathing」の両方が出る | Breathing |
+| 呼吸数の確認 | Check respiratory rate | Breathing |
 
 - エピネフリンの説明文も、名前と同じく英語（Circulation の文）になるとみられる（Core と Circulation が同じ文字列の ID を使っていて、名前は実機で英語と確かめた）。
 

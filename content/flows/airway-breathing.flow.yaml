@@ -24,7 +24,7 @@ nodes:
     type: question
     text: 気道が塞がっている？
     help: >-
-      頭の「Check respiratory rate」（「Check Breathing」と出ることもある。3 秒、意識不明の相手だけ）で呼吸数が 0 なら、
+      頭の「Check respiratory rate」（3 秒、意識不明の相手だけ）で呼吸数が 0 なら、
       気道閉塞か緊張性気胸か心停止。舌根沈下は見た目では分からない（Lift chin は塞がっていなくても出る）。
       嘔吐で塞がっているときは、頭に「Clear vomit」が出る
     choices:

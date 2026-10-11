@@ -31,7 +31,7 @@ category: 処置
 |---|---|---|---|
 | 脈 | 「Check pulse」（頭・胸・腕・脚） | You find a heart rate of 80 | Circulation |
 | 血圧 | 「Check blood pressure」（腕・脚） | You find a blood pressure of 119/79 mmHg（収縮期/拡張期） | Circulation |
-| 呼吸数 | 「Check respiratory rate」または「Check Breathing」（頭。場面で表記が変わり、実機で両方を確認） | You find a respiratory rate of 14 breaths per minute | Breathing |
+| 呼吸数 | 「Check respiratory rate」（頭） | You find a respiratory rate of 14 breaths per minute | Breathing |
 | SpO2 | 「Check SpO2」（腕） | You find a SpO2 of 97% | Breathing |
 
 - 通知の数値は**小数点以下を切り捨て**て出る（心拍数 79.9 なら 79）。
