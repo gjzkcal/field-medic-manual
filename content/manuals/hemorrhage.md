@@ -40,7 +40,7 @@ category: 処置
 - 診察画面と自分のインベントリに、出血分類（英語で「Class I hemorrhage」〜「Class IV hemorrhage」）が出る。Class I から表示される。分類の境目は [血液量と出血の段階](bleeding-system.md#血液量と出血の段階)。
 - 脈と血圧を測れる（Check pulse / Check blood pressure）。血液が減ると血圧が下がる。詳しくは [バイタルを確かめる操作](vitals.md#バイタルを確かめる操作)。
 - 心停止すると自分の画面はほぼ真っ黒になる（[心停止の見分け方](cardiac-arrest.md#心停止の見分け方)）。
-- Circulation 入りでは、**Class III（血液 40% 以下）で色が抜け始める**（実機で確認）。本体の画面効果は血液の段階で決まり、Circulation が段階の境目を 70% / 40% / 20% に変えるため、「色が抜け始める」段階が 40% にずれる。Class III では同時に意識を失う。
+- Circulation 入りでは、**Class III（血液 40% 以下）で色が抜け始める**。本体の画面効果は血液の段階で決まり、Circulation が段階の境目を 70% / 40% / 20% に変えるため、「色が抜け始める」段階が 40% にずれる。Class III では同時に意識を失う。
 
 ### Circulation なし（Core だけ）の場合
 <!-- mods: !circulation -->

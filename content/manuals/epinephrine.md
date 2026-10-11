@@ -30,7 +30,7 @@ category: 物品
 
 ## 使い方
 
-- 表示名は「Epinephrine」（実機で確認）。
+- 表示名は「Epinephrine」。
 - 操作は「エピネフリンを注射」（Inject epinephrine）。左右の腕・脚に打つ。
 - 使用条件はない。いつでも何本でも打てる（意識のある健康な仲間にも打てる）。
 - 説明文とヒントは「Administered to patients in cardiac arrest」「Increases heart rate」になるとみられる（同じ文字列の ID を Core と Circulation の両方が使っていて、名前は実機で「Epinephrine」と出た）。
