@@ -125,7 +125,7 @@ category: はじめに
 | 炭酸アンモニウム・ナロキソン・フェニレフリン・メトプロロール | Ammonium Carbonate ／ Naloxone ／ Phenylephrine ／ Metoprolol | Circulation |
 | 呼吸数の確認 | Check respiratory rate | Breathing |
 
-- エピネフリンの説明文も、名前と同じく英語（Circulation の文）になるとみられる（Core と Circulation が同じ文字列の ID を使っていて、名前は実機で英語と確かめた）。
+- エピネフリンの説明文も、名前と同じく英語（Circulation の文）で表示される。
 
 ソースの文字列表から分かる表示（抜粋）:
 
