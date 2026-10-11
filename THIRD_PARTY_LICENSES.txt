@@ -807,7 +807,7 @@ Apache License
 
 ------------------------------------------------------------------------------
 License: Apache-2.0 OR MIT
-Used by: @tauri-apps/api 2.12.0
+Used by: @tauri-apps/api 2.12.1
 ------------------------------------------------------------------------------
 
 Apache License
@@ -2766,7 +2766,7 @@ Used by: victory-vendor 37.3.6
 
 ------------------------------------------------------------------------------
 License: MIT OR Apache-2.0
-Used by: @tauri-apps/plugin-opener 2.5.5, @tauri-apps/plugin-process 2.4.0, @tauri-apps/plugin-updater 2.13.0
+Used by: @tauri-apps/plugin-opener 2.7.0, @tauri-apps/plugin-process 2.4.0, @tauri-apps/plugin-updater 2.13.2
 ------------------------------------------------------------------------------
 
 SPDXVersion: SPDX-2.1
@@ -4577,7 +4577,7 @@ THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: brotli-decompressor 6.0.1, dpi 0.1.2, minisign-verify 0.2.5, siphasher 1.0.3, tauri-plugin-global-shortcut 2.3.2, tauri-plugin-opener 2.5.5, tauri-plugin-process 2.4.0, tauri-plugin-single-instance 2.4.5, tauri-plugin-updater 2.13.0, tauri-plugin-window-state 2.4.1, ts-rs 12.0.1, ts-rs-macros 12.0.1, webview2-com 0.39.1, webview2-com-macros 0.8.1, webview2-com-sys 0.39.1, windows 0.61.3, windows 0.62.2, windows_x86_64_msvc 0.52.6, windows_x86_64_msvc 0.53.1, windows-collections 0.2.0, windows-collections 0.3.2, windows-core 0.61.2, windows-core 0.62.2, windows-future 0.2.1, windows-future 0.3.2, windows-implement 0.60.2, windows-interface 0.59.3, windows-link 0.1.3, windows-link 0.2.1, windows-numerics 0.2.0, windows-numerics 0.3.1, windows-registry 0.6.1, windows-result 0.3.4, windows-result 0.4.1, windows-strings 0.4.2, windows-strings 0.5.1, windows-sys 0.59.0, windows-sys 0.60.2, windows-sys 0.61.2, windows-targets 0.52.6, windows-targets 0.53.5, windows-threading 0.1.0, windows-threading 0.2.1, windows-version 0.1.7
+Used by: brotli-decompressor 6.0.1, dpi 0.1.2, minisign-verify 0.2.5, siphasher 1.0.3, tauri-plugin-global-shortcut 2.4.0, tauri-plugin-opener 2.7.0, tauri-plugin-process 2.4.0, tauri-plugin-single-instance 2.5.2, tauri-plugin-updater 2.13.2, tauri-plugin-window-state 2.5.0, ts-rs 12.0.1, ts-rs-macros 12.0.1, webview2-com 0.39.1, webview2-com-macros 0.8.1, webview2-com-sys 0.39.1, windows 0.62.2, windows_x86_64_msvc 0.52.6, windows-collections 0.3.2, windows-core 0.62.2, windows-future 0.3.2, windows-implement 0.60.2, windows-interface 0.59.3, windows-link 0.2.1, windows-numerics 0.3.1, windows-registry 0.6.1, windows-result 0.4.1, windows-strings 0.5.1, windows-sys 0.59.0, windows-sys 0.61.2, windows-targets 0.52.6, windows-threading 0.2.1, windows-version 0.1.7
 ------------------------------------------------------------------------------
 
 MIT License
@@ -4632,7 +4632,7 @@ DEALINGS IN THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: cfb 0.14.0, cfb 0.7.3
+Used by: cfb 0.14.0
 ------------------------------------------------------------------------------
 
 MIT License
@@ -5999,7 +5999,7 @@ DEALINGS IN THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: infer 0.19.0, infer 0.22.0
+Used by: infer 0.22.0
 ------------------------------------------------------------------------------
 
 MIT License
@@ -7217,7 +7217,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: tauri 2.12.0, tauri-codegen 2.7.0, tauri-macros 2.7.0, tauri-runtime 2.12.0, tauri-runtime-wry 2.12.0, tauri-utils 2.10.0
+Used by: tauri 2.12.1, tauri-codegen 2.7.1, tauri-macros 2.7.1, tauri-runtime 2.12.1, tauri-runtime-wry 2.12.1, tauri-utils 2.10.1
 ------------------------------------------------------------------------------
 
 MIT License
