@@ -85,10 +85,16 @@
   // 後に書いた規則ほど優先される
   packageRules: [
     {
-      // 既定の「… action」「… tool constraint」を付けず、ほかと同じ形にする。
+      // マネージャーの既定の表題（「… action」「… tool constraint」「Rust crate …」）はトップレベルの
+      // commitMessageTopic より優先されるので、ここで上書きしてほかと同じ形にする。
       // renovate-config は上の constraints の版で、ワークフローの Node・pnpm の版と同じ PR で上がる
-      matchManagers: ["github-actions", "renovate-config"],
+      matchManagers: ["github-actions", "renovate-config", "cargo"],
       commitMessageTopic: "{{depName}} を",
+    },
+    {
+      // rust-toolchain.toml の既定の表題は「Rust」で「を」が付かない。depName は小文字の rust なので、名前も書く
+      matchManagers: ["rust-toolchain"],
+      commitMessageTopic: "Rust を",
     },
     {
       matchManagers: ["npm"],
