@@ -10,6 +10,7 @@ import {
 } from "@/features/content/chart";
 import { sectionsFromBody } from "@/features/content/document";
 import { sha256Hex } from "@/features/content/hash";
+import { markMath } from "@/features/content/math";
 import { emptyMeta, toDocMeta } from "@/features/content/meta";
 import { markModColumns } from "@/features/content/mod-marker";
 import {
@@ -32,14 +33,16 @@ const FRONT_MATTER = /^---\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/;
 /**
  * Markdown を HTML にする。ライブラリは初めて使うときに読み込む（起動時に読み込むと起動が遅くなるため）。
  * 生の HTML（`<!-- tags: -->` や <br> など）を残すため allowDangerousHtml + rehype-raw にする。
+ * 式（`$…$` / `$$…$$`）は remark-math がコードとして残し、後で markMath が MathML にする。
  * 危険な要素は、この後の DOMPurify（sanitize.ts）で必ず取り除く。
  */
 async function markdownToHtml(markdown: string): Promise<string> {
-  const [unified, remarkParse, remarkGfm, remarkRehype, rehypeRaw, rehypeStringify] =
+  const [unified, remarkParse, remarkGfm, remarkMath, remarkRehype, rehypeRaw, rehypeStringify] =
     await Promise.all([
       import("unified"),
       import("remark-parse"),
       import("remark-gfm"),
+      import("remark-math"),
       import("remark-rehype"),
       import("rehype-raw"),
       import("rehype-stringify"),
@@ -48,6 +51,7 @@ async function markdownToHtml(markdown: string): Promise<string> {
     .unified()
     .use(remarkParse.default)
     .use(remarkGfm.default)
+    .use(remarkMath.default)
     .use(remarkRehype.default, { allowDangerousHtml: true })
     .use(rehypeRaw.default)
     .use(rehypeStringify.default)
@@ -66,6 +70,7 @@ export async function convertManual(
   const html = await markdownToHtml(body);
   const doc = new DOMParser().parseFromString(html, "text/html");
   markAlerts(doc.body);
+  await markMath(doc.body, warnings);
   markLongCells(doc.body);
   await markCharts(doc.body, manual.path, readData, warnings);
   markModColumns(doc.body, warnings);

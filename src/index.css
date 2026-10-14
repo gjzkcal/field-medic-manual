@@ -225,6 +225,30 @@
     padding: 0;
   }
   /*
+   * 式（原稿の LaTeX を MathML にしたもの）。Cambria Math は Word の数式と同じフォントで、Windows に標準で入っている。
+   * 本文の overflow-wrap: anywhere を受け継ぐと式の途中で折れるので、折らない
+   */
+  .manual-body math {
+    font-family: "Cambria Math", "STIX Two Math", math;
+    font-size: 1.1em;
+    overflow-wrap: normal;
+  }
+  /*
+   * 独立した式は中央に置き、幅が足りなければ箱を横にスクロールさせる。
+   * 中央寄せを auto の余白にするのは、はみ出したときに余白が 0 になって左端からスクロールできるため（justify-content: center だと左側が切れる）。
+   * overflow-x を auto にすると縦も auto になり、数式フォントの行の高さが式の箱から少しはみ出すだけで縦のスクロールバーが出るので、縦は隠す
+   */
+  .manual-body .manual-math {
+    display: flex;
+    margin: 0 0 0.8em;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-block: 0.2em;
+  }
+  .manual-body .manual-math > math {
+    margin-inline: auto;
+  }
+  /*
    * 表は幅が足りないときに本文ごと横に広がらないよう、表だけを横にスクロールさせる。
    * 罫線を separate で引くのは、collapse だと先頭の列を固定したときに罫線がスクロールで消えるため。
    */
@@ -252,20 +276,23 @@
         right / 0.9em 100% no-repeat scroll;
   }
   /*
-   * 表の横スクロールバーを、本文の縦スクロール（src/components/ui/scroll-area.tsx）と同じ見た目にする。
+   * 表と独立した式の横スクロールバーを、本文の縦スクロール（src/components/ui/scroll-area.tsx）と同じ見た目にする。
    * 太さ 10px・溝は透明・つまみは --border の丸。つまみの周りの 1px の隙間は、透明な枠と background-clip で作る。
    * scrollbar-width / scrollbar-color を指定すると Chromium はこの擬似要素を無視するので、それらは使わない
    */
-  .manual-body table::-webkit-scrollbar {
+  .manual-body table::-webkit-scrollbar,
+  .manual-body .manual-math::-webkit-scrollbar {
     height: 10px;
     background: transparent;
   }
-  .manual-body table::-webkit-scrollbar-thumb {
+  .manual-body table::-webkit-scrollbar-thumb,
+  .manual-body .manual-math::-webkit-scrollbar-thumb {
     border: 1px solid transparent;
     border-radius: 9999px;
     background: var(--border) padding-box;
   }
-  .manual-body table::-webkit-scrollbar-button {
+  .manual-body table::-webkit-scrollbar-button,
+  .manual-body .manual-math::-webkit-scrollbar-button {
     display: none;
   }
   /*

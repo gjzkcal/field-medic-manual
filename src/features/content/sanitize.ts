@@ -1,8 +1,11 @@
 // 原稿の HTML の無害化。保存するとき（document.ts）と表示するとき（ビューア）の両方でここを通す（設定を 1 か所にまとめ、漏れを防ぐため）。
 import DOMPurify, { type Config } from "dompurify";
 
+import { isMathElement, mathToPlainText } from "@/features/content/math";
+
 const CONFIG: Config = {
-  USE_PROFILES: { html: true },
+  // 式は MathML で組む（math.ts）。SVG は使わないので許さない
+  USE_PROFILES: { html: true, mathMl: true },
   // 見た目や操作を持ち込む要素は、閲覧専用のマニュアルには要らず、ビューアの表示を崩すので落とす
   FORBID_TAGS: [
     "style",
@@ -103,6 +106,12 @@ export function toPlainText(root: Node): string {
 function walk(node: Node, out: string[]): void {
   if (node.nodeType === Node.TEXT_NODE) {
     out.push(node.textContent ?? "");
+    return;
+  }
+  if (isMathElement(node)) {
+    // 独立した式（`$$…$$`）は段落と同じくブロックなので、前後の語とつなげない
+    const block = node.getAttribute("display") === "block";
+    out.push(block ? "\n" : "", mathToPlainText(node), block ? "\n" : "");
     return;
   }
   if (!(node instanceof Element) && node.nodeType !== Node.DOCUMENT_FRAGMENT_NODE) {

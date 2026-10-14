@@ -75,6 +75,7 @@ const HEMORRHAGE: DocDetail = {
         "<table><thead><tr><th>程度</th></tr></thead><tbody><tr><td>Class I</td></tr></tbody></table>",
         '<blockquote class="markdown-alert markdown-alert-warning"><p class="markdown-alert-title">警告</p><p>放置しない</p></blockquote>',
         `<p><img alt="図" data-asset-id="${ASSET_ID}"></p>`,
+        '<div class="manual-math"><math display="block"><mfrac><mi>a</mi><mi>b</mi></mfrac></math></div>',
       ].join(""),
     ),
     section(3, 2, "包帯を巻く", "包帯を巻く", "<p>包帯</p>"),
@@ -247,6 +248,7 @@ describe("DocPage", () => {
     const article = document.querySelector("article");
     expect(article?.querySelector("table td")?.textContent).toBe("Class I");
     expect(article?.querySelector(".markdown-alert-warning")?.textContent).toContain("警告");
+    expect(article?.querySelector(".manual-math > math[display='block'] > mfrac")).not.toBeNull();
     expect(article?.querySelector("script")).toBeNull();
     expect(article?.querySelector("[onerror]")).toBeNull();
     // モジュールとタグはタイトル（h1）の直下、版と確認日は末尾のフッター
