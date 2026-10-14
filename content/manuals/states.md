@@ -48,19 +48,6 @@ Circulation を入れると、生存しているキャラクターは次の 5 �
 | 血液の残り | ≤ 70%（Class II） | ≤ 40%（Class III） | ≤ 20%（Class IV） |
 | SpO2（Breathing のみ） | < 85% | < 75% | < 65% |
 
-式:
-
-$$
-\begin{aligned}
-\text{当たる} \Leftrightarrow\ & (\text{心拍数} < \text{下限}) \\
-\text{または}\ & (\text{心拍数} > \text{上限}) \\
-\text{または}\ & (\text{平均血圧} < \text{下限}\ \text{かつ}\ \text{心拍数} \le \text{条件の値}) \\
-\text{または}\ & (\text{平均血圧} > \text{上限}) \\
-\text{または}\ & (\text{血液の割合} \le \text{分類の閾値}) \\
-\text{または}\ & (\text{SpO2} < \text{閾値})
-\end{aligned}
-$$
-
 - 戻るとき（Unstable → Stable、Critical → Unstable）は、その状態の条件に**どれも当たらなくなった**時点で戻る。戻りの余裕（ヒステリシス）はない。
 - 心拍数と平均血圧の上限は 3 つとも同じなので、**高すぎる心拍数・血圧では Stable からいきなり心停止**する（エピネフリン・フェニレフリンの過量投与。[過量投与](drug-effects.md#過量投与)）。
 

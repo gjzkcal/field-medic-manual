@@ -51,8 +51,10 @@ S = \left( \frac{C_{\text{mor}} / 300.964}{1 + C_{\text{nal}} / 120} \right)^{2.
 $$
 
 $$
-\text{鎮痛量} = \frac{S}{1 + S} \quad \text{（痛みの HP の割合に足す。最大は 1 本で約 0.83）}
+\text{鎮痛量} = \frac{S}{1 + S}
 $$
+
+鎮痛量は痛みの HP の割合に足す。最大は 1 本で約 0.83。
 
 $$
 \text{心拍数の補正} = -\frac{C_{\text{mor}} / 41.337}{1 + C_{\text{nal}} / 120}\ \text{bpm}
