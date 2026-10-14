@@ -127,7 +127,7 @@ $$
 $$
 
 $$
-\text{通知の値} = \lfloor 7.5006 \times \text{kPa} \rfloor
+\text{通知の値（mmHg）} = \lfloor 7.5006 \times \text{収縮期・拡張期（kPa）} \rfloor
 $$
 
 | 変数 | 意味 | 既定値 |
