@@ -39,6 +39,20 @@ Circulation を入れると、生存しているキャラクターは次の 5 �
 
 次のどれか 1 つでも当たると、その状態に移る。判定は「心停止 → Critical → Unstable」の順で、最初に当たったものになる（Stable から直接 Critical や心停止に移ることもある）。
 
+```mermaid
+flowchart TD
+  accTitle: 状態の移り方
+  S([Stable]) -->|Unstable の閾値| U[Unstable]
+  U -->|Unstable の閾値に<br>どれも当たらない| S
+  U -->|Critical の閾値| C[Critical]
+  C -->|Critical の閾値に<br>どれも当たらない| U
+  C -->|心停止の閾値| A[心停止]
+  A -->|CPR を始める| R[蘇生中]
+  R -->|CPR をやめる| A
+  R -->|蘇生の判定に成功| C
+  A -->|脳が 0（約 310 s）| D([死亡])
+```
+
 | 条件 | → Unstable | → Critical | → 心停止 |
 |---|---|---|---|
 | 心拍数が下限より低い | < 40 | < 30 | < 20 |
