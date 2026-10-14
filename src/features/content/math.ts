@@ -15,11 +15,12 @@ export async function markMath(body: HTMLElement, warnings: string[]): Promise<v
   }
   const { default: temml } = await import("temml");
   for (const code of codes) {
-    const displayMode = code.classList.contains("math-display");
+    const parent = code.parentElement;
+    const display = code.classList.contains("math-display") && parent?.tagName === "PRE";
     const tex = code.textContent;
     let mathml: string;
     try {
-      mathml = temml.renderToString(tex, { displayMode, throwOnError: true });
+      mathml = temml.renderToString(tex, { displayMode: display, throwOnError: true });
     } catch (error: unknown) {
       warnings.push(
         `式「${tex.trim()}」を数式にできませんでした: ${error instanceof Error ? error.message : String(error)}`,
@@ -29,18 +30,89 @@ export async function markMath(body: HTMLElement, warnings: string[]): Promise<v
     // innerHTML に入れるのは Temml が組んだ文字列だけ。ここは表示しない文書の中で、この後に DOMPurify を必ず通す
     const template = body.ownerDocument.createElement("template");
     template.innerHTML = mathml;
-    const parent = code.parentElement;
-    if (displayMode && parent?.tagName === "PRE") {
-      // 独立した式は幅が足りないと横にスクロールさせる。math 自体に overflow を付けて中央に寄せると、
-      // はみ出した左側がスクロールで戻せなくなるので、スクロールする箱で包んで中の式を寄せる
-      const box = body.ownerDocument.createElement("div");
-      box.className = "manual-math";
-      box.append(template.content);
-      parent.replaceWith(box);
+    const math = template.content.firstElementChild;
+    if (display && math !== null) {
+      parent.replaceWith(wrappableBox(math));
     } else {
       code.replaceWith(template.content);
     }
   }
+}
+
+/**
+ * 独立した式を、折り返せる塊ごとの <math> に分けて箱に並べる。
+ * Chromium（WebView2）は 1 つの <math> の中では改行しない（Temml の自動の改行も Firefox でしか効かない）ので、
+ * 塊を別の <math> にして、箱の flex-wrap で行を送る。
+ * 折れるのは TeX と同じく一番外側の演算子の後ろと、`\quad` 以上の空き（式の後ろの「（…）」の注記）の前。
+ * 括弧や分数の中では折らない。
+ */
+function wrappableBox(math: Element): HTMLElement {
+  const doc = math.ownerDocument;
+  const items = topLevelItems(math);
+  const chunks: Element[][] = [];
+  let current: Element[] = [];
+  items.forEach((item, index) => {
+    current.push(item);
+    const last = index === items.length - 1;
+    const previous = items[index - 1];
+    // 先頭や演算子の直後の演算子は単項（−x など）なので、後ろの項と離さない
+    const operatorBreak = isBreakingOperator(item) && previous !== undefined && !isBreakingOperator(previous);
+    if (!last && (operatorBreak || isQuad(item))) {
+      chunks.push(current);
+      current = [];
+    }
+  });
+  chunks.push(current);
+
+  const box = doc.createElement("div");
+  box.className = "manual-math";
+  chunks.forEach((chunk, index) => {
+    if (index > 0) {
+      // flex の箱の中の空白は表示されない。検索用の本文で、塊の境目の語がつながらないようにするためのもの
+      box.append(" ");
+    }
+    const part = doc.createElementNS(MATHML_NS, "math");
+    part.append(...chunk);
+    box.append(part);
+  });
+  return box;
+}
+
+/** 式の一番外側の項と演算子の並び。Temml は式全体を 1 つの <mrow> で包むので、括弧で囲まれた項でない限りほどく */
+function topLevelItems(math: Element): Element[] {
+  let node = math;
+  for (;;) {
+    const children = Array.from(node.children);
+    const only = children.length === 1 ? children[0] : undefined;
+    if (only?.localName !== "mrow" || isFenced(Array.from(only.children))) {
+      return children;
+    }
+    node = only;
+  }
+}
+
+/** 後ろで折ってよい関係・二項の演算子（TeXbook p. 173 と同じ） */
+const BREAKING_OPERATORS = new Set(["=", "≈", "≠", "<", ">", "≤", "≥", "⇔", "←", "→", "+", "−", "×", "÷", "⋅"]);
+
+function isBreakingOperator(item: Element): boolean {
+  if (item.localName === "mo") {
+    return BREAKING_OPERATORS.has(item.textContent) && item.getAttribute("form") !== "prefix";
+  }
+  // 語（\text{}）と語の間の演算子は、Temml が前後の空きと一緒に <mrow> で包む
+  const children = Array.from(item.children);
+  const operators = children.filter((child) => child.localName !== "mspace");
+  return (
+    item.localName === "mrow" &&
+    children.length > 1 &&
+    operators.length === 1 &&
+    operators[0]?.localName === "mo" &&
+    isBreakingOperator(operators[0])
+  );
+}
+
+function isQuad(item: Element): boolean {
+  const width = /^([\d.]+)em$/.exec(item.getAttribute("width") ?? "");
+  return item.localName === "mspace" && width?.[1] !== undefined && Number(width[1]) >= 1;
 }
 
 export function isMathElement(node: Node): node is Element {

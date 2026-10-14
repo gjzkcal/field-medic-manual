@@ -22,9 +22,42 @@ $$`,
     );
     expect(warnings).toEqual([]);
     const box = new DOMParser().parseFromString(html, "text/html").querySelector(".manual-math");
-    expect(box?.querySelector("math[display='block'] mfrac")).not.toBeNull();
+    expect(box?.querySelector("math mfrac")).not.toBeNull();
     expect(html).not.toContain("<pre");
     expect(plainText).toBe("成功率 = (b − 0.2) ÷ (0.7 − 0.2)");
+  });
+
+  it("独立した式は、一番外側の演算子の後ろと \\quad の前で折れる塊ごとの式に分ける", async () => {
+    const { html, plainText, warnings } = await convert(
+      String.raw`$$
+\text{回復の速さ} = 5 \times (0.8 + x) \times \text{回復倍率}\ \text{HP/s} \quad \text{（注記）}
+$$`,
+    );
+    expect(warnings).toEqual([]);
+    const box = new DOMParser().parseFromString(html, "text/html").querySelector(".manual-math");
+    const parts = Array.from(box?.children ?? []).map((part) => [part.localName, part.textContent]);
+    // 括弧の中の + では分けない
+    expect(parts).toEqual([
+      ["math", "回復の速さ="],
+      ["math", "5×"],
+      ["math", "(0.8+x)×"],
+      // `\ ` は詰めない空白（U+00A0）になる
+      ["math", "回復倍率 HP/s"],
+      ["math", "（注記）"],
+    ]);
+    expect(plainText).toBe("回復の速さ = 5 × (0.8 + x) × 回復倍率 HP/s （注記）");
+  });
+
+  it("分けられない式は 1 つの式のまま箱に入れる", async () => {
+    const { html, warnings } = await convert(
+      String.raw`$$
+\begin{cases} 1 & x \\ 2 & y \end{cases}
+$$`,
+    );
+    expect(warnings).toEqual([]);
+    const box = new DOMParser().parseFromString(html, "text/html").querySelector(".manual-math");
+    expect(box?.children).toHaveLength(1);
+    expect(box?.querySelector("math mtable")).not.toBeNull();
   });
 
   it("文中・箇条書き・表のセルの式は、文の中の MathML にする", async () => {

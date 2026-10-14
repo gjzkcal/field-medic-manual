@@ -261,19 +261,25 @@
     text-align: -webkit-left;
   }
   /*
-   * 独立した式は中央に置き、幅が足りなければ箱を横にスクロールさせる。
-   * 中央寄せを auto の余白にするのは、はみ出したときに余白が 0 になって左端からスクロールできるため（justify-content: center だと左側が切れる）。
+   * 独立した式は中央に置く。式は折れる所ごとの <math> に分けてあり（src/features/content/math.ts）、幅が足りなければ
+   * flex-wrap で次の行に送る。1 つの塊だけで幅を超えるときは箱を横にスクロールさせる。
+   * safe を付けるのは、はみ出した行を左寄せにして左端からスクロールできるようにするため（center だけだと左側が切れる）。
    * overflow-x を auto にすると縦も auto になり、数式フォントの行の高さが式の箱から少しはみ出すだけで縦のスクロールバーが出るので、縦は隠す
    */
   .manual-body .manual-math {
     display: flex;
+    flex-wrap: wrap;
+    justify-content: safe center;
+    align-items: baseline;
+    row-gap: 0.5em;
     margin: 0 0 0.8em;
     overflow-x: auto;
     overflow-y: hidden;
     padding-block: 0.2em;
   }
+  /* 文中の式のモードで組んであるので、分数などを独立した式と同じ大きさにする */
   .manual-body .manual-math > math {
-    margin-inline: auto;
+    math-style: normal;
   }
   /*
    * 表は幅が足りないときに本文ごと横に広がらないよう、表だけを横にスクロールさせる。
