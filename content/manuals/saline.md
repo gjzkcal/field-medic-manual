@@ -39,10 +39,6 @@ category: 物品
 
 ## 効き方
 
-$$
-\text{入る速さ} = \frac{\text{総量}}{90\,\text{s}}
-$$
-
 <!-- columns: - | circulation | !circulation -->
 
 | 項目 | Circulation あり | Circulation なし |
