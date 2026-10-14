@@ -3,6 +3,16 @@
 
 export const SEARCH_HIGHLIGHT_NAME = "search-hit";
 
+/**
+ * 本文に後から文字を描いたときに、描いた要素から出す（泡立つ）イベント。図の部品は遅れて読み込むので、
+ * 文書を開いたときのハイライトには図の文字が入らない。これを受けてハイライトを付け直す。
+ */
+export const CONTENT_RENDERED_EVENT = "manual-content-rendered";
+
+// 図を描けたフローチャートの文のリスト（検索の本文と読み上げ用）は画面から隠しているので、色を付けても見えない。
+// 同じ文字は図の中にあるので、そちらだけに付ける
+const HIDDEN_TEXT = ".manual-flowchart > .manual-flowchart-text";
+
 /** root の中の文字列から terms の出現箇所を探す（大文字小文字は無視）。要素をまたぐ一致は扱わない。 */
 export function findTextRanges(root: Node, terms: readonly string[]): Range[] {
   const needles = [...new Set(terms.map((t) => t.trim().toLowerCase()))].filter((t) => t !== "");
@@ -10,7 +20,11 @@ export function findTextRanges(root: Node, terms: readonly string[]): Range[] {
     return [];
   }
   const doc = root.ownerDocument ?? document;
-  const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT, (node) =>
+    (node.parentElement?.closest(HIDDEN_TEXT) ?? null) === null
+      ? NodeFilter.FILTER_ACCEPT
+      : NodeFilter.FILTER_REJECT,
+  );
   const ranges: Range[] = [];
   for (let node = walker.nextNode(); node !== null; node = walker.nextNode()) {
     const text = node.textContent ?? "";

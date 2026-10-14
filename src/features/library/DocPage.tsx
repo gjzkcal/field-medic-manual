@@ -39,7 +39,11 @@ import { sectionVisibility } from "@/features/library/viewer/section-visibility"
 import { useActiveAnchor } from "@/features/library/viewer/use-active-anchor";
 import { useDoc, useOutline } from "@/features/library/viewer/use-doc-data";
 import { recordHistory } from "@/features/prefs/prefs-store";
-import { findTextRanges, paintSearchHighlight } from "@/features/search/highlight";
+import {
+  CONTENT_RENDERED_EVENT,
+  findTextRanges,
+  paintSearchHighlight,
+} from "@/features/search/highlight";
 import { activeMods, modSummary, useModSettings } from "@/features/settings/mod-settings";
 import {
   FONT_SIZE_PX,
@@ -272,7 +276,16 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
     if (article === null || highlightTerms.length === 0) {
       return undefined;
     }
-    return paintSearchHighlight(findTextRanges(article, highlightTerms));
+    let clear = paintSearchHighlight(findTextRanges(article, highlightTerms));
+    const repaint = (): void => {
+      clear();
+      clear = paintSearchHighlight(findTextRanges(article, highlightTerms));
+    };
+    article.addEventListener(CONTENT_RENDERED_EVENT, repaint);
+    return () => {
+      article.removeEventListener(CONTENT_RENDERED_EVENT, repaint);
+      clear();
+    };
   }, [doc, highlightTerms]);
 
   // 本文のリンクはまとめてここで受け、WebView の中では遷移させない（外部のページを開かせないため）

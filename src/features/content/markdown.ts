@@ -9,6 +9,7 @@ import {
   type ChartPayload,
 } from "@/features/content/chart";
 import { sectionsFromBody } from "@/features/content/document";
+import { markFlowcharts } from "@/features/content/flowchart";
 import { sha256Hex } from "@/features/content/hash";
 import { markMath } from "@/features/content/math";
 import { emptyMeta, toDocMeta } from "@/features/content/meta";
@@ -34,6 +35,7 @@ const FRONT_MATTER = /^---\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/;
  * Markdown を HTML にする。ライブラリは初めて使うときに読み込む（起動時に読み込むと起動が遅くなるため）。
  * 生の HTML（`<!-- tags: -->` や <br> など）を残すため allowDangerousHtml + rehype-raw にする。
  * 式（`$…$` / `$$…$$`）は remark-math がコードとして残し、後で markMath が MathML にする。
+ * フローチャート（` ```mermaid `）もコードブロックのまま残り、後で markFlowcharts が図の印にする。
  * 危険な要素は、この後の DOMPurify（sanitize.ts）で必ず取り除く。
  */
 async function markdownToHtml(markdown: string): Promise<string> {
@@ -71,6 +73,7 @@ export async function convertManual(
   const doc = new DOMParser().parseFromString(html, "text/html");
   markAlerts(doc.body);
   await markMath(doc.body, warnings);
+  markFlowcharts(doc.body, warnings);
   markLongCells(doc.body);
   await markCharts(doc.body, manual.path, readData, warnings);
   markModColumns(doc.body, warnings);

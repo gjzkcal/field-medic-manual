@@ -19,6 +19,21 @@ describe("findTextRanges", () => {
     expect(findTextRanges(root, ["cpr", "tq"]).map(String)).toEqual(["CPR", "cpr", "TQ"]);
   });
 
+  it("描けたフローチャートの隠した文のリストは探さず、図の文字と描けなかった図のリストは探す", () => {
+    const root = article(
+      [
+        '<figure class="manual-flowchart"><div><svg><text>止血帯</text></svg></div>',
+        '<ul class="manual-flowchart-text"><li>止血帯 → 包帯</li></ul></figure>',
+        '<figure><ul class="manual-flowchart-text"><li>止血帯 → 包帯</li></ul></figure>',
+      ].join(""),
+    );
+    const ranges = findTextRanges(root, ["止血帯"]);
+    expect(ranges.map((r) => r.startContainer.parentElement?.tagName.toLowerCase())).toEqual([
+      "text",
+      "li",
+    ]);
+  });
+
   it("空の語や重複は無視する", () => {
     const root = article("<p>止血</p>");
     expect(findTextRanges(root, ["", " ", "止血", "止血"])).toHaveLength(1);

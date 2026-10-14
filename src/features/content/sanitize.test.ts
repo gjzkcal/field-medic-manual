@@ -31,6 +31,12 @@ describe("sanitizeHtml", () => {
     );
   });
 
+  it("フローチャートの figure は印と題と文のリストを残す", () => {
+    const html =
+      '<figure data-flowchart="{&quot;direction&quot;:&quot;TB&quot;}" aria-label="流れ"><ul class="manual-flowchart-text"><li>A → B</li></ul></figure>';
+    expect(sanitizeHtml(html).html).toBe(html);
+  });
+
   it("SVG は許さない", () => {
     expect(sanitizeHtml('<p>a<svg><circle r="1"></circle></svg></p>').html).toBe("<p>a</p>");
   });

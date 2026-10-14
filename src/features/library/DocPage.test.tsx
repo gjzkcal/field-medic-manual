@@ -78,9 +78,36 @@ const HEMORRHAGE: DocDetail = {
         '<div class="manual-math"><math><mi>x</mi><mo>=</mo></math> <math><mfrac><mi>a</mi><mi>b</mi></mfrac></math></div>',
       ].join(""),
     ),
-    section(3, 2, "包帯を巻く", "包帯を巻く", "<p>包帯</p>"),
+    section(
+      3,
+      2,
+      "包帯を巻く",
+      "包帯を巻く",
+      [
+        "<p>包帯</p>",
+        flowchartFigure(
+          JSON.stringify({
+            direction: "TB",
+            title: "巻いた後",
+            nodes: [
+              { id: "A", shape: "rect", lines: ["包帯を巻く"] },
+              { id: "B", shape: "diamond", lines: ["出血が", "止まる"] },
+            ],
+            edges: [{ from: "A", to: "B", dashed: false, lines: ["10 s"] }],
+          }),
+          "包帯を巻く → 出血が 止まる（10 s）",
+        ),
+        // 形の壊れた印は図にせず、文のリストをそのまま見せる
+        flowchartFigure('{"direction":"TB"}', "壊れた図"),
+      ].join(""),
+    ),
   ],
 };
+
+function flowchartFigure(json: string, text: string): string {
+  const attr = json.replaceAll("&", "&amp;").replaceAll('"', "&quot;");
+  return `<figure data-flowchart="${attr}"><ul class="manual-flowchart-text"><li>${text}</li></ul></figure>`;
+}
 
 // MOD の組み合わせで分かれた節。条件は変換で親から子へ合わせてあるので、子も親と同じ条件を持つ
 const CARDIAC_ARREST: DocDetail = {
@@ -265,6 +292,34 @@ describe("DocPage", () => {
     expect(screen.getByRole("navigation", { name: "目次" }).textContent).toContain("包帯を巻く");
   });
 
+  it("フローチャートを SVG で描き、文のリストは残す。形の壊れた印は描かない", async () => {
+    renderDoc("/doc/d1");
+
+    await waitFor(() => {
+      expect(document.querySelector(".manual-flowchart svg")).not.toBeNull();
+    });
+    const figures = document.querySelectorAll("figure[data-flowchart]");
+    const [drawn, broken] = Array.from(figures);
+    const svg = drawn?.querySelector("svg");
+    expect(svg?.getAttribute("aria-hidden")).toBe("true");
+    expect(Array.from(svg?.querySelectorAll("tspan") ?? [], (t) => t.textContent)).toEqual([
+      "包帯を巻く",
+      "出血が",
+      "止まる",
+      "10 s",
+    ]);
+    expect(svg?.querySelector("polygon")).not.toBeNull();
+    expect(svg?.querySelector("path.manual-flowchart-edge")?.getAttribute("marker-end")).toMatch(
+      /^url\(#flowchart-arrow-[A-Za-z0-9_-]+\)$/,
+    );
+    expect(drawn?.querySelector(".manual-flowchart-text")?.textContent).toBe(
+      "包帯を巻く → 出血が 止まる（10 s）",
+    );
+    expect(broken?.classList.contains("manual-flowchart")).toBe(false);
+    expect(broken?.querySelector("svg")).toBeNull();
+    expect(broken?.textContent).toBe("壊れた図");
+  });
+
   it("画像に Blob URL を付け、画面を離れると解放する", async () => {
     renderDoc("/doc/d1");
 
@@ -337,8 +392,10 @@ describe("DocPage", () => {
     await screen.findByRole("heading", { level: 2, name: "包帯を巻く" });
 
     await waitFor(() => {
-      // 見出しと本文の 2 か所（目次の中は本文の外なので数えない）
-      expect(highlights.get("search-hit")?.ranges.map(String)).toEqual(["包帯", "包帯"]);
+      const ranges = highlights.get("search-hit")?.ranges ?? [];
+      // 見出しと本文と、遅れて描かれる図の文字の 3 か所（目次の中は本文の外、図の文のリストは画面から隠しているので数えない）
+      expect(ranges.map(String)).toEqual(["包帯", "包帯", "包帯"]);
+      expect(ranges[2]?.startContainer.parentElement?.closest("svg")).not.toBeNull();
     });
 
     fireEvent.click(

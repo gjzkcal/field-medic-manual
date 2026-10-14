@@ -2,6 +2,7 @@ import { lazy, Suspense, useLayoutEffect, useMemo, useRef, type JSX } from "reac
 import { createPortal } from "react-dom";
 
 import { readChartPayload, type ChartData, type ChartSpec } from "@/features/content/chart";
+import { readFlowchartPayload, type FlowchartPayload } from "@/features/content/flowchart";
 import { sanitizeToFragment } from "@/features/content/sanitize";
 import { hideModColumns } from "@/features/library/viewer/mod-columns";
 import type { ActiveMods } from "@/features/triage/runner";
@@ -9,6 +10,12 @@ import type { ActiveMods } from "@/features/triage/runner";
 // Recharts は大きいので、グラフのある節を開くまで読み込まない（起動を遅くしないため）
 const ManualChart = lazy(() =>
   import("@/features/library/viewer/ManualChart").then((m) => ({ default: m.ManualChart })),
+);
+// 配置に使う dagre も、図のある節を開くまで読み込まない
+const ManualFlowchart = lazy(() =>
+  import("@/features/library/viewer/ManualFlowchart").then((m) => ({
+    default: m.ManualFlowchart,
+  })),
 );
 
 interface SectionBodyProps {
@@ -25,18 +32,24 @@ interface ChartMount {
   data: ChartData;
 }
 
+interface FlowchartMount {
+  host: HTMLElement;
+  payload: FlowchartPayload;
+}
+
 /**
  * 節の本文。表示の直前にもう一度無害化し、innerHTML を使わずに DOM として差し込む。
  * 画像は `data-asset-id` だけで保存しているので、ここで Blob URL を付ける。
  * `data-chart` の付いた表は、表の直前にグラフを描く（表は残す）。表なしのグラフは `data-chart` の付いた figure に描く。
  * `data-mod-columns` の付いた表は、設定の MOD に合わない組み合わせの列を消す。
+ * `data-flowchart` の付いた figure にはフローチャートを描く。描けないときは、figure の中の文のリストがそのまま見える。
  */
 export function SectionBody({ html, resolveAsset, active }: SectionBodyProps): JSX.Element {
   const ref = useRef<HTMLDivElement>(null);
 
   // グラフの置き場所（表の直前の figure か、表なしのグラフの figure）は、描画の前に本文の DOM の中に作っておき、React からはポータルで描く。
   // 差し込む前に作るのは、差し込んだ後に state を更新するともう一度描画が要り、アンカーへのスクロールがずれるため
-  const { nodes, charts } = useMemo(() => {
+  const { nodes, charts, flowcharts } = useMemo(() => {
     const fragment = sanitizeToFragment(html);
     if (active !== null) {
       for (const table of Array.from(
@@ -66,8 +79,23 @@ export function SectionBody({ html, resolveAsset, active }: SectionBodyProps): J
       host.className = "manual-chart";
       mounts.push({ host, ...payload });
     }
+    const flowchartMounts: FlowchartMount[] = [];
+    for (const figure of Array.from(
+      fragment.querySelectorAll<HTMLElement>("figure[data-flowchart]"),
+    )) {
+      const payload = readFlowchartPayload(figure.getAttribute("data-flowchart") ?? "");
+      if (payload === null) {
+        continue;
+      }
+      // 文のリストは検索と読み上げのために残すので、図は figure の先頭に別の置き場所を作って描く
+      const host = figure.ownerDocument.createElement("div");
+      host.className = "manual-flowchart-canvas";
+      figure.prepend(host);
+      figure.classList.add("manual-flowchart");
+      flowchartMounts.push({ host, payload });
+    }
     // 開発時の StrictMode では effect が 2 回走るので、fragment ではなく節の子の一覧を持ち、何度でも差し込めるようにする
-    return { nodes: Array.from(fragment.childNodes), charts: mounts };
+    return { nodes: Array.from(fragment.childNodes), charts: mounts, flowcharts: flowchartMounts };
   }, [html, active]);
 
   // 描画の前に差し込み、アンカーへのスクロールが本文の高さの揃った状態で行われるようにする
@@ -108,6 +136,15 @@ export function SectionBody({ html, resolveAsset, active }: SectionBodyProps): J
           </Suspense>,
           host,
           `chart-${String(i)}`,
+        ),
+      )}
+      {flowcharts.map(({ host, payload }, i) =>
+        createPortal(
+          <Suspense fallback={null}>
+            <ManualFlowchart payload={payload} />
+          </Suspense>,
+          host,
+          `flowchart-${String(i)}`,
         ),
       )}
     </>

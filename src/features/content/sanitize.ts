@@ -4,7 +4,7 @@ import DOMPurify, { type Config } from "dompurify";
 import { isMathElement, mathToPlainText } from "@/features/content/math";
 
 const CONFIG: Config = {
-  // 式は MathML で組む（math.ts）。SVG は使わないので許さない
+  // 式は MathML で組む（math.ts）。フローチャートの SVG はビューアが自分で描くので、原稿の HTML には SVG を許さない
   USE_PROFILES: { html: true, mathMl: true },
   // 見た目や操作を持ち込む要素は、閲覧専用のマニュアルには要らず、ビューアの表示を崩すので落とす
   FORBID_TAGS: [
@@ -26,8 +26,8 @@ const CONFIG: Config = {
   // src / srcset を残すと閲覧時に外部やローカルのファイルを読みに行く。画像は data-asset-id で参照する
   FORBID_ATTR: ["style", "src", "srcset"],
   ALLOW_DATA_ATTR: false,
-  // data-chart はグラフにする表の印（JSON）。ビューアは形を確かめてから使い、HTML としては扱わない
-  ADD_ATTR: ["data-asset-id", "data-chart", "data-mod-columns"],
+  // data-chart はグラフにする表の印、data-flowchart はフローチャートの中身（どちらも JSON）。ビューアは形を確かめてから使い、HTML としては扱わない
+  ADD_ATTR: ["data-asset-id", "data-chart", "data-flowchart", "data-mod-columns"],
 };
 
 export interface SanitizedHtml {

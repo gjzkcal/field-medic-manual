@@ -282,6 +282,61 @@
     math-style: normal;
   }
   /*
+   * フローチャート（src/features/library/viewer/ManualFlowchart.tsx）。SVG は位置と大きさだけを属性で持ち、色と線はここでテーマの色から付ける。
+   * SVG の幅は em なので文字サイズの設定に追従し、本文より広ければ縮める（横にスクロールさせない）
+   */
+  .manual-body .manual-flowchart {
+    position: relative;
+  }
+  .manual-body .manual-flowchart svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin-inline: auto;
+  }
+  /* 文のリストは検索と読み上げのために残し、図を描けたときだけ画面から隠す（描けなければそのまま見える） */
+  .manual-body .manual-flowchart > .manual-flowchart-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .manual-body .manual-flowchart-node :where(rect, polygon) {
+    fill: var(--card);
+    stroke: var(--muted-foreground);
+    stroke-width: 1.5;
+  }
+  /* 分かれ道と端は形に加えて地の色でも見分けられるようにする */
+  .manual-body .manual-flowchart-diamond polygon,
+  .manual-body .manual-flowchart-stadium rect {
+    fill: var(--muted);
+  }
+  .manual-body .manual-flowchart text {
+    fill: var(--foreground);
+  }
+  .manual-body .manual-flowchart-edge {
+    fill: none;
+    stroke: var(--muted-foreground);
+    stroke-width: 1.5;
+  }
+  .manual-body .manual-flowchart-edge-dashed {
+    stroke-dasharray: 5 4;
+  }
+  .manual-body .manual-flowchart-arrow {
+    fill: var(--muted-foreground);
+  }
+  /* ラベルの地は本文の地と同じ色にし、ラベルの下を通る線を隠す */
+  .manual-body .manual-flowchart-edge-label rect {
+    fill: var(--background);
+  }
+  .manual-body .manual-flowchart-edge-label text {
+    fill: var(--muted-foreground);
+  }
+  /*
    * 表は幅が足りないときに本文ごと横に広がらないよう、表だけを横にスクロールさせる。
    * 罫線を separate で引くのは、collapse だと先頭の列を固定したときに罫線がスクロールで消えるため。
    */

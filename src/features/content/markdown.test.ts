@@ -250,6 +250,37 @@ describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
     expect(doc.sections[0]?.html).not.toContain("data-chart");
   });
 
+  it("mermaid のコードブロックをフローチャートの figure にし、辺の文を検索の本文に入れる", async () => {
+    const { doc, warnings } = await convertManual(
+      manual(
+        "# A\n\n前の段落\n\n```mermaid\nflowchart TD\n  accTitle: 状態\n  S[Stable] -->|血液 70% 未満| U[Unstable]\n```\n\n次の段落\n",
+      ),
+      noImages,
+      noData,
+    );
+    expect(warnings).toEqual([]);
+    const container = document.createElement("div");
+    container.innerHTML = doc.sections[0]?.html ?? "";
+    const figure = container.querySelector("figure[data-flowchart]");
+    expect(figure?.previousElementSibling?.textContent).toBe("前の段落");
+    expect(figure?.nextElementSibling?.textContent).toBe("次の段落");
+    expect(figure?.getAttribute("aria-label")).toBe("状態");
+    expect(container.querySelector("pre")).toBeNull();
+    expect(doc.sections[0]?.plainText).toContain("\nStable → Unstable（血液 70% 未満）\n");
+  });
+
+  it("フローチャートの書き間違いは警告にし、コードブロックのまま残す", async () => {
+    const { doc, warnings } = await convertManual(
+      manual("# A\n\n```mermaid\nflowchart TD\n  A ==> B\n```\n"),
+      noImages,
+      noData,
+    );
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("フローチャートを読めませんでした: 2 行目");
+    expect(doc.sections[0]?.html).toContain('<pre><code class="language-mermaid">');
+    expect(doc.sections[0]?.html).not.toContain("data-flowchart");
+  });
+
   it("生の HTML の script は取り除く", async () => {
     const { doc } = await convertManual(
       manual('# A\n<script>alert(1)</script>\n\n<b onclick="x()">太字</b>'),
