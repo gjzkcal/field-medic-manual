@@ -42,18 +42,22 @@ category: 物品
 
 ## 効き方
 
-`成功率 = m_fAmmoniumCarbonateSuccessChanceMin + (m_fAmmoniumCarbonateSuccessChanceMax − m_fAmmoniumCarbonateSuccessChanceMin) × 回復倍率 ÷ m_fMaxRevivalResilienceRecoveryScale`（1 以上なら必ず成功）
+$$
+\text{成功率} = \text{最小} + (\text{最大} - \text{最小}) \times \frac{\text{回復倍率}}{\text{蘇生後の回復倍率の上限}} \quad \text{（1 以上なら必ず成功）}
+$$
 
-`目覚めるまでの時間 = (75 − 使ったときの意識の値) ÷ 24`
+$$
+\text{目覚めるまでの時間} = \frac{75 - \text{使ったときの意識の値}}{24}
+$$
 
 | 変数 | 意味 | 既定値 |
 |---|---|---|
-| `m_fAmmoniumCarbonateSuccessChanceMin` | 成功率の下限 | 0.2 |
-| `m_fAmmoniumCarbonateSuccessChanceMax` | 成功率の上限 | 1.0 |
-| `m_fMaxRevivalResilienceRecoveryScale` | 蘇生した後の回復倍率 | 0.2 |
-| 回復倍率 | [回復倍率の決まり方](consciousness-system.md#回復倍率の決まり方)（蘇生していなければ 0.3 × 脳の割合、蘇生した後は 0.2 × 脳の割合） | — |
+| 最小 | `m_fAmmoniumCarbonateSuccessChanceMin`（成功率の下限） | 0.2 |
+| 最大 | `m_fAmmoniumCarbonateSuccessChanceMax`（成功率の上限） | 1.0 |
+| 蘇生後の回復倍率の上限 | `m_fMaxRevivalResilienceRecoveryScale`（蘇生した後の回復倍率） | 0.2 |
+| 回復倍率 | [回復倍率の決まり方](consciousness-system.md#回復倍率の決まり方)（蘇生していなければ $0.3 \times \text{脳の割合}$、蘇生した後は $0.2 \times \text{脳の割合}$） | — |
 
-既定の設定では `成功率 = 0.2 + 0.8 × 回復倍率 ÷ 0.2`。
+既定の設定では $\text{成功率} = 0.2 + 0.8 \times \text{回復倍率} \div 0.2$。
 
 | 蘇生したか | 脳の HP | 回復倍率 | 1 回の成功率 | 平均の使用数 | 自然に目覚めるまで（参考） |
 |---|---|---|---|---|---|

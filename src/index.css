@@ -231,7 +231,34 @@
   .manual-body math {
     font-family: "Cambria Math", "STIX Two Math", math;
     font-size: 1.1em;
+    /* 本文の行間（表示設定で広げられる）を受け継ぐと、場合分けや複数行の式の行の高さが崩れる */
+    line-height: normal;
     overflow-wrap: normal;
+    /*
+     * 式は途中で折れないのに、中の日本語は 1 文字ずつ折れる前提で最小幅が見積もられ、表のセルが狭くなって式が隣の列に重なる。
+     * 折らないと明示して、最小幅を式の幅にする
+     */
+    white-space: nowrap;
+  }
+  /*
+   * 場合分け（cases）や複数行の式（aligned）の表。Temml はセルの寄せをクラスで、余白をインラインの style で付けるが、
+   * style は無害化で落とすので、Temml 付属の CSS と同じ指定をここで持つ
+   */
+  .manual-body mtd {
+    padding: 0.35ex 0;
+  }
+  .manual-body mtable.tml-jot > mtr > mtd {
+    padding-block: 0.7ex;
+  }
+  /* cases の値と条件の間の空き（Temml は 1em を style で付ける）。aligned は左右の列を詰めて 1 つの式に見せる */
+  .manual-body mtable:not(.tml-jot) mtd + mtd {
+    padding-left: 1em;
+  }
+  .manual-body .tml-right {
+    text-align: -webkit-right;
+  }
+  .manual-body .tml-left {
+    text-align: -webkit-left;
   }
   /*
    * 独立した式は中央に置き、幅が足りなければ箱を横にスクロールさせる。

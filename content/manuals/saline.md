@@ -39,7 +39,9 @@ category: 物品
 
 ## 効き方
 
-`入る速さ = 総量 ÷ 90 s`
+$$
+\text{入る速さ} = \frac{\text{総量}}{90\,\text{s}}
+$$
 
 <!-- columns: - | circulation | !circulation -->
 
@@ -57,7 +59,7 @@ category: 物品
 
 - 例: Class III（血液 38%）に 1 袋 → 90 s 後に 63%（Class II）。もう 1 袋で 88%（Class I）。
 - 状態は閾値を外れた次の更新で戻る（戻りの余裕はない）。40% を超えれば Critical から Unstable へ、70% を超えれば Stable へ移る。
-- 15 ml/s の出血が続いている間に入れると、90 s で `750 − 15 × 90 = −600 ml` と出血に負ける。
+- 15 ml/s の出血が続いている間に入れると、90 s で $750 - 15 \times 90 = -600\,\text{ml}$ と出血に負ける。
 
 ### Circulation なし（Core だけ）の場合
 <!-- mods: !circulation -->

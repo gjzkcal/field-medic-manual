@@ -25,7 +25,7 @@ category: 管理者向け
 
 | 設定 | 既定値 | 内容 | 止めたいとき |
 |---|---|---|---|
-| `m_fDefaultResilienceRegenScale` | 0.3 | 意識の自然回復の倍率。回復は 5 × 0.8 × この値 HP/s（既定で 1.2 HP/s） | — |
+| `m_fDefaultResilienceRegenScale` | 0.3 | 意識の自然回復の倍率。回復は $5 \times 0.8 \times \text{この値}$ HP/s（既定で 1.2 HP/s） | — |
 | `m_fResilienceDamageScale` | 1.0 | 意識（resilience）への損傷の倍率 | 0 で「損傷では意識を失わない」 |
 | `m_fMinHealthScaledForEpinephrine` | 0.33 | Core のエピネフリンに要る全体の健康度 | 0 で条件なし |
 | `m_bPlayerCannotDie` | false | プレイヤーを死なせない | true でプレイヤーは死なない |
@@ -53,7 +53,7 @@ category: 管理者向け
 | 設定 | 既定値 | 内容 | 止めたいとき |
 |---|---|---|---|
 | `m_bOrganHitZonesEnabled` | true | 臓器（心臓・大腿動脈）を有効にする | false で臓器なし |
-| `m_fSecondChanceOnHeart` | 0 | 心臓の Second Chance の確率 p。判定が 2 回あるので、実際の生存率は p × p | — |
+| `m_fSecondChanceOnHeart` | 0 | 心臓の Second Chance の確率 $p$。判定が 2 回あるので、実際の生存率は $p \times p$ | — |
 | `m_bInstantUnconOnMassiveBleeding` | true | 首・大腿動脈の大出血でその場で意識を失う | false で大出血でも即時には意識を失わない |
 
 - 詳しくは [Hitzones の急所と心臓](death-second-chance.md#hitzones-の急所と心臓) を見る。
@@ -67,7 +67,7 @@ category: 管理者向け
 | `m_fDefaultMeanArterialPressureKPA` | 12.443 | 基準の平均血圧（kPa） |
 | `m_fDefaultPulsePressureKPA` | 5.3329 | 基準の脈圧（kPa）。血圧の表示だけに影響する |
 | `m_UnstableThresholds` ／ `m_CriticalThresholds` ／ `m_CardiacArrestThresholds` | [書き漏らすと危険な設定](server-settings.md#書き漏らすと危険な設定) の閾値の表 | 状態の閾値（既定値なし。Settings.conf の値） |
-| `m_fBrainDamageRate`（`m_CardiacArrestDamageEffect` の中） | 0.333 | 心停止中の脳の損傷（HP/s）。死亡まで `10 + 100 ÷ この値` s |
+| `m_fBrainDamageRate`（`m_CardiacArrestDamageEffect` の中） | 0.333 | 心停止中の脳の損傷（HP/s）。死亡まで $10 + 100 \div \text{この値}$ s |
 | `m_fEffectStartDelayS`（同上） | 10 | 心停止から脳の損傷が始まるまで（s） |
 | `m_bCardiacArrestForAIEnabled` | false | AI も心停止の状態になるか（false なら即死） |
 | `m_fCPRStrokeVolumeScale` | 0.23 | CPR 中の 1 回拍出量の倍率 |
@@ -77,7 +77,7 @@ category: 管理者向け
 | `m_fAmmoniumCarbonateSuccessChanceMin` | 0.2 | 炭酸アンモニウムの最小の成功率 |
 | `m_fAmmoniumCarbonateSuccessChanceMax` | 1.0 | 炭酸アンモニウムの最大の成功率 |
 | `m_fMaxRevivalResilienceRecoveryScale` | 0.2 | 蘇生した後の意識の回復倍率 |
-| `m_fCardiacArrestMaxTotalBleedingRate` | 20 | 出血の上限 `max(この値, 心拍出量 ÷ 60)` ml/s の下限側 |
+| `m_fCardiacArrestMaxTotalBleedingRate` | 20 | 出血の上限 $\max(\text{この値},\ \text{心拍出量} \div 60)$ ml/s の下限側 |
 
 - 計算例（脳）: 既定なら心停止から死亡まで 10 + 100 ÷ 0.333 ≈ 310 s（約 5 分）。CPR 中は脳の損傷が止まる（[脳の損傷と残り時間](cardiac-arrest-system.md#脳の損傷と残り時間)）。
 
