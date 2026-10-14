@@ -13,6 +13,8 @@
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-14
+
 ### Added
 
 - 原稿にフローチャートを載せられるようにし、「状態と閾値」に状態の移り方、「心停止と蘇生」に心停止から目覚めるまで、「致命傷と Second Chance」に 2 回の判定の流れの図を加えました。図の文字も検索に掛かり、検索結果から開くと図の中の語もハイライトします。
@@ -150,7 +152,8 @@
 - 設定の「使っている MOD」に合わせて、フローとクイック表の内容が切り替わります。
 - 起動時に新しい版を確かめ、自動で更新できます。
 
-[Unreleased]: https://github.com/gjzkcal/field-medic-manual/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/gjzkcal/field-medic-manual/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/gjzkcal/field-medic-manual/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/gjzkcal/field-medic-manual/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/gjzkcal/field-medic-manual/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/gjzkcal/field-medic-manual/compare/v0.1.0...v0.2.0
