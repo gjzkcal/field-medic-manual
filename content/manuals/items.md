@@ -70,14 +70,14 @@ Breathing の物品は英語で表示される。初期装備には無く、補�
 | [生理食塩水](saline.md) | —（US の衛生兵には 1） | 3 | 3 |
 | [モルヒネ注射器](morphine.md) | 1（FIA は 0） | 8 | 3 |
 | [エピネフリン](epinephrine.md) | — | 8 | 3 |
-| [医療キット](medical-kit.md) | —（衛生兵には 1） | — | 30 |
+| [医療キット](medical-kit.md) | —（衛生兵には 1） | — | 87（Circulation を入れていると 183） |
 | [炭酸アンモニウム](ammonium-carbonate.md)・[メトプロロール](metoprolol.md)・[ナロキソン](naloxone.md)・[フェニレフリン](phenylephrine.md) | — | 各 8 | 3 |
 | [King LT](king-lt.md)・[酸素マスク](oxygen-mask.md) | — | — | 5 |
 | [チェストシール](chest-seal.md)・[NCD キット](ncd-kit.md) | — | — | 3 |
 
 - 本体の基本の装備は US・USSR の歩兵の prefab の値。FIA は包帯 1・止血帯 1 だけ。衛生兵には医療キットなどが加わる。ゲームモードやサーバーの装備の設定で変わる。
 - 補給コストは補給（アーセナル）の値（US・USSR・FIA で同じ）。
-- 医療キットの中身は [医療キット](medical-kit.md#中身)。
+- 医療キットの中身は [医療キット](medical-kit.md#中身)。医療キットの補給コストは、キット自体の 30 に中身の補給コストを足した値（[医療キット](medical-kit.md#入手)）。
 - 本体と ACE の標準の装備・補給には、ガーゼ（包帯より短時間で巻ける本体の物品）は無い。ミッションやほかの MOD で配られたときだけ使う。
 
 ### Breathing の物品の入手
