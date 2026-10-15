@@ -1,5 +1,5 @@
-import { copyFileSync } from "node:fs";
-import { join } from "node:path";
+import { copyFileSync, mkdirSync, readdirSync } from "node:fs";
+import { basename, extname, join } from "node:path";
 import process from "node:process";
 import { fileURLToPath, URL } from "node:url";
 
@@ -12,6 +12,9 @@ const host = process.env["TAURI_DEV_HOST"];
 
 /** GitHub Pages の公開先（https://gjzkcal.github.io/field-medic-manual/）のパス */
 const WEB_BASE = "/field-medic-manual/";
+
+// src/web/router.tsx のルートのうち、引数を持たないもの。ルートを足したらここにも足す（足し忘れるとその URL だけ HTTP 404 に戻る）
+const WEB_STATIC_ROUTES = ["library", "quickref", "settings", "about"];
 
 const DESKTOP_ENTRY = 'src="/src/main.tsx"';
 const WEB_ENTRY = 'src="/src/web/main.tsx"';
@@ -34,7 +37,7 @@ const WEB_CSP = [
 /**
  * ブラウザ向けの Web 版（`vite --mode web`）だけの設定。
  * index.html のエントリを Web 版のもの（小窓・トリアージの同期・自動更新を読まない）に替え、
- * 公開するビルドには CSP と favicon を入れ、GitHub Pages でディープリンクを開けるように 404.html を置く。
+ * 公開するビルドには CSP と favicon を入れ、GitHub Pages でディープリンクを開けるように 404.html とルートごとの写しを置く。
  */
 function webPlugin(): Plugin {
   return {
@@ -75,9 +78,25 @@ function webPlugin(): Plugin {
       },
     },
     writeBundle(options) {
-      // Pages は無い URL（/field-medic-manual/doc/… を直接開いたとき）に 404.html を返すので、同じ画面を起動させる
       const dir = options.dir ?? "dist-web";
-      copyFileSync(join(dir, "index.html"), join(dir, "404.html"));
+      const index = join(dir, "index.html");
+      // Pages は無い URL に 404.html を返すので、どの URL でも同じ画面を起動させる
+      copyFileSync(index, join(dir, "404.html"));
+      // ただし 404.html の中身は HTTP 404 で返り、検索エンジンやリンクのプレビューには無いページに見える。
+      // Pages は拡張子なしの URL（/library）を library.html で返すので、既知のルートには写しを置いて 200 にする。
+      // library/index.html にしないのは、/library → /library/ のリダイレクトが挟まるため
+      for (const route of WEB_STATIC_ROUTES) {
+        copyFileSync(index, join(dir, `${route}.html`));
+      }
+      // 文書の id は原稿のファイル名の stem（src/features/content/bundle.ts と同じ規則）
+      const docDir = join(dir, "doc");
+      mkdirSync(docDir, { recursive: true });
+      const manuals = fileURLToPath(new URL("./content/manuals", import.meta.url));
+      for (const name of readdirSync(manuals)) {
+        if (extname(name) === ".md") {
+          copyFileSync(index, join(docDir, `${basename(name, ".md")}.html`));
+        }
+      }
     },
   };
 }

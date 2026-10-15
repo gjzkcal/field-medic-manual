@@ -42,10 +42,18 @@ jobs:
 
       - run: pnpm build:web
 
-      # ディープリンクを開けなくなる・Tauri の API がブラウザに入って落ちる、という壊れ方を公開の前に止める
+      # ディープリンクを開けなくなる・HTTP 404 で返る・Tauri の API がブラウザに入って落ちる、という壊れ方を公開の前に止める
       - name: Check the build output
         run: |
           cmp dist-web/index.html dist-web/404.html
+          cmp dist-web/index.html dist-web/library.html
+          # 原稿ごとの写しが無いと、本文の URL を直接開いたときに HTTP 404 で返る
+          manuals=$(ls content/manuals/*.md | wc -l)
+          pages=$(ls dist-web/doc/*.html | wc -l)
+          if [ "$manuals" -ne "$pages" ]; then
+            echo "::error::原稿は $manuals 本ですが、dist-web/doc の写しは $pages 個です"
+            exit 1
+          fi
           if grep -rl "__TAURI" dist-web; then
             echo "::error::Web 版のビルドに Tauri の API が入っています"
             exit 1
