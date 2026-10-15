@@ -4,7 +4,7 @@ import { Link } from "react-router";
 
 import { AppShell, type NavItem } from "@/app/AppShell";
 import { Button } from "@/components/ui/button";
-import { useSidebar } from "@/components/ui/sidebar";
+import { SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 import { version } from "../../package.json";
 import { DOWNLOAD_URL } from "@/web/links";
 
@@ -26,19 +26,29 @@ export function WebLayout(): JSX.Element {
     <AppShell
       navItems={NAV_ITEMS}
       headerEnd={
+        // 狭い画面ではこの位置にメニューのボタンが出るので、案内はメニューの中（mobileNavEnd）に移す
         <Button
           variant="outline"
           size="sm"
-          className="mr-3"
+          className="mr-3 max-md:hidden"
           nativeButton={false}
           render={<a href={DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" />}
         >
           <DownloadIcon />
-          {/* 狭い画面では検索欄の幅を確保するため、文字を隠してアイコンだけにする */}
-          <span className="max-md:sr-only">デスクトップ版</span>
+          デスクトップ版
         </Button>
       }
       sidebarFooter={<WebFooter />}
+      mobileNavEnd={
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            render={<a href={DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" />}
+          >
+            <DownloadIcon />
+            <span>デスクトップ版をダウンロード</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      }
     />
   );
 }
