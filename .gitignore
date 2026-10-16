@@ -9,6 +9,8 @@ node_modules/
 dist/
 dist-web/
 dist-ssr/
+# pnpm lighthouse:web のレポート
+lighthouse-results/
 src-tauri/target/
 *.tsbuildinfo
 

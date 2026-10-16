@@ -80,6 +80,14 @@
       matchStrings: ["tool:\\s*(?<depName>cargo-about)@(?<currentValue>\\d+\\.\\d+\\.\\d+)"],
       datasourceTemplate: "crate",
     },
+    {
+      // scripts/lighthouse.ts が pnpm dlx で使う Lighthouse の版。依存が多いので package.json に入れておらず、
+      // npm のマネージャーは拾わない
+      customType: "regex",
+      managerFilePatterns: ["/^scripts/lighthouse\\.ts$/"],
+      matchStrings: ['"(?<depName>lighthouse)@(?<currentValue>\\d+\\.\\d+\\.\\d+)"'],
+      datasourceTemplate: "npm",
+    },
   ],
 
   // 後に書いた規則ほど優先される

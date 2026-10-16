@@ -17,6 +17,7 @@
     "dev:web": "vite --mode web",
     "build:web": "tsc -b && vite build --mode web",
     "preview:web": "vite preview --mode web",
+    "lighthouse:web": "node scripts/lighthouse.ts",
     "tauri": "tauri",
     "tauri:dev": "tauri dev --config src-tauri/tauri.dev.conf.json",
     "typecheck": "tsc -b",
