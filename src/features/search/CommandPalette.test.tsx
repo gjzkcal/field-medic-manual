@@ -168,6 +168,18 @@ describe("CommandPalette（上部の検索欄）", () => {
     expect(list()).toBeNull();
   });
 
+  it("閉じている間は入力欄が無い一覧を指さず、開いたら一覧を指す", () => {
+    render(<CommandPalette variant="dropdown" onSelect={vi.fn()} />);
+    expect(input().getAttribute("aria-expanded")).toBe("false");
+    expect(input().hasAttribute("aria-controls")).toBe(false);
+    fireEvent.focus(input());
+    expect(input().getAttribute("aria-expanded")).toBe("true");
+    expect(input().getAttribute("aria-controls")).toBe(list()?.id);
+    fireEvent.keyDown(input(), { key: "Escape" });
+    expect(input().getAttribute("aria-expanded")).toBe("false");
+    expect(input().hasAttribute("aria-controls")).toBe(false);
+  });
+
   it("外を押すと閉じ、絞り込みのポップオーバーの中を押しても閉じない", () => {
     render(
       <>

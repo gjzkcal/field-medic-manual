@@ -2,6 +2,7 @@ import { cn } from "cn";
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -147,6 +148,22 @@ export function CommandPalette({
 
   const hits = trimmed !== "" && result.status === "ok" ? result.hits : [];
   const showList = !dropdown || expanded;
+
+  // cmdk は入力欄に aria-expanded="true" と一覧の id の aria-controls を必ず付け、props では上書きできない。
+  // 閉じている間は一覧を描かないので、そのままだと存在しない id を指す（支援技術に無い一覧を伝えてしまう）
+  useLayoutEffect(() => {
+    const el = input.current;
+    if (!dropdown || el === null) {
+      return;
+    }
+    el.setAttribute("aria-expanded", String(showList));
+    const listId = rootRef.current?.querySelector("[cmdk-list]")?.id;
+    if (showList && listId !== undefined) {
+      el.setAttribute("aria-controls", listId);
+    } else {
+      el.removeAttribute("aria-controls");
+    }
+  }, [dropdown, showList, input]);
 
   function collapse(): void {
     setExpanded(false);
