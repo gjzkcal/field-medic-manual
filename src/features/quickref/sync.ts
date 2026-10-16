@@ -1,10 +1,6 @@
 // 起動時に、同梱したクイック表を DB に入れる。
 // ファイル 1 つなので、変わっていれば全行を置き換える。読めなければ置き換えず、前回の内容を残す。
-import {
-  bundledQuickref,
-  readQuickrefSource,
-  type QuickrefSource,
-} from "@/features/quickref/bundle";
+import type { QuickrefSource } from "@/features/quickref/bundle";
 import { toQuickrefRows } from "@/features/quickref/schema";
 import { emptySyncResult, issuesOf, type SyncResult } from "@/features/sync/result";
 import { createBundledSync } from "@/features/sync/store";
@@ -39,6 +35,8 @@ export async function syncQuickref(
     // DB は同梱物の写しなので、ファイルを消したら表も空にする
     input = { sourceHash: hash, modChannel: null, verifiedAt: null, rows: [] };
   } else {
+    // 同梱の表は使うときに読み込む（useQuickrefSync のためにこのファイルを読む画面の JS に、表を入れないため）
+    const { readQuickrefSource } = await import("@/features/quickref/bundle");
     const read = await readQuickrefSource(source);
     if (!read.ok) {
       result.failed.push(...issuesOf(source.fileName, read.messages));
@@ -74,9 +72,12 @@ export async function syncQuickref(
 }
 
 /** 同梱したクイック表を DB に入れる。起動時に 1 回呼ぶ。結果は useQuickrefSync で見る。 */
-export const { useSync: useQuickrefSync, sync: syncBundledQuickref } = createBundledSync(async () =>
-  syncQuickref(await bundledQuickref(), {
-    listQuickref: quickrefList,
-    replaceAll: quickrefReplaceAll,
-  }),
+export const { useSync: useQuickrefSync, sync: syncBundledQuickref } = createBundledSync(
+  async () => {
+    const { bundledQuickref } = await import("@/features/quickref/bundle");
+    return syncQuickref(await bundledQuickref(), {
+      listQuickref: quickrefList,
+      replaceAll: quickrefReplaceAll,
+    });
+  },
 );

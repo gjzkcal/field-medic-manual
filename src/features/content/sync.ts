@@ -1,6 +1,5 @@
 // 起動時に、同梱した原稿を DB に入れる。
 // DB の本文は同梱物の写しなので、変わった原稿だけ入れ直し、同梱にないドキュメントは消す。
-import { bundledManuals, readBundledData, readBundledImage } from "@/features/content/bundle";
 import { convertManual } from "@/features/content/markdown";
 import { manualSourcePath } from "@/features/content/path";
 import { saveDocument } from "@/features/content/save";
@@ -55,13 +54,16 @@ export async function syncManuals(
 }
 
 /** 同梱した原稿を DB に入れる。起動時に 1 回呼ぶ（デバッグ画面からも呼べる）。結果は useContentSync で見る。 */
-export const { useSync: useContentSync, sync: syncBundledManuals } = createBundledSync(
-  async () =>
-    syncManuals(await bundledManuals(), {
-      listDocs: docList,
-      saveDoc: saveDocument,
-      deleteDoc: docDelete,
-      readImage: readBundledImage,
-      readData: readBundledData,
-    }),
-);
+// 同梱の原稿（全文）は、同期するときに読み込む。画面は useContentSync のためにこのファイルを読むので、
+// 静的に読むと、同期を使わない Web 版でも最初の JS に原稿がすべて入ってしまう
+export const { useSync: useContentSync, sync: syncBundledManuals } = createBundledSync(async () => {
+  const { bundledManuals, readBundledData, readBundledImage } =
+    await import("@/features/content/bundle");
+  return syncManuals(await bundledManuals(), {
+    listDocs: docList,
+    saveDoc: saveDocument,
+    deleteDoc: docDelete,
+    readImage: readBundledImage,
+    readData: readBundledData,
+  });
+});
