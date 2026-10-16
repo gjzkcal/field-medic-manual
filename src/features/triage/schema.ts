@@ -1,12 +1,11 @@
 // トリアージフローの形。ノードは question / action / end / subflow / branch の 5 種類。
 // ここでは形だけを確かめ、つながり（next の行き先、到達可能性など）は validate.ts の V1〜V9 で確かめる。
 // .meta() の説明と値の一覧は、ここから生成する JSON Schema（json-schema.ts）に載り、エディタの補完とホバーに出る。
-import { z } from "zod";
-
 import { isIsoDate, isModChannel, isModTarget, MOD_TARGET_VALUES } from "@/features/content/meta";
 import { FLOW_LINK_PATTERN, parseFlowLink } from "@/features/triage/links";
 import type { ModChannel } from "@/lib/bindings/ModChannel";
 import type { ModTarget } from "@/lib/bindings/ModTarget";
+import { z } from "@/lib/zod";
 
 /** フローの形式の版を表すスキーマのファイル名。フローの `$schema` にはこれを同じフォルダからの相対パスで書く */
 export const FLOW_SCHEMA_FILE = "triage-flow.v1.schema.json";

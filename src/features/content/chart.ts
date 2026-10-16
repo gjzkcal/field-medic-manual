@@ -3,7 +3,7 @@
 // 表と CSV が食い違わないよう、表の各行の値を CSV の同じ時刻の値と突き合わせる。
 // 表を作らずに推移の形だけを見せたいとき（薬の濃度など）は、表のない場所に印を置き、CSV の点だけで描く。
 // 変換（印の検査と data-chart の付与）とビューア（data-chart の検証）の両方がここを使う。
-import { z } from "zod";
+import { z } from "@/lib/zod";
 
 export const chartSpecSchema = z.strictObject({
   x: z.string().min(1),

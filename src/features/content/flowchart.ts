@@ -2,7 +2,7 @@
 // mermaid 本体は使わない（出力にインラインの style と <style> が入り、無害化で落とす方針と合わないため）。
 // 書けるのは mermaid の記法のうち、仕組みの流れを描くのに要るものだけ。それ以外は警告にして、誤りに気づけるようにする。
 // 変換（コードブロックの置き換え）とビューア（data-flowchart の検証）の両方がここを使う。
-import { z } from "zod";
+import { z } from "@/lib/zod";
 
 const flowchartNodeSchema = z.strictObject({
   id: z.string().min(1),

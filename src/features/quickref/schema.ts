@@ -1,11 +1,10 @@
 // クイック表の原稿（content/quickref.yaml）の形。書き方の決まりは content/quickref.yaml の先頭のコメント。
 // .meta() の説明と値の一覧は、ここから生成する JSON Schema（json-schema.test.ts）に載り、エディタの補完とホバーに出る。
-import { z } from "zod";
-
 import { SEVERITY_NAMES, severityOfName } from "@/features/quickref/severity";
 import { SELECTABLE_MODS } from "@/features/settings/mod-settings";
 import { isoDate, link, modChannel, text } from "@/features/triage/schema";
 import type { QuickrefRow } from "@/lib/bindings/QuickrefRow";
+import { z } from "@/lib/zod";
 
 export const QUICKREF_SCHEMA_FILE = "quickref.v1.schema.json";
 export const QUICKREF_SCHEMA_ID = `./${QUICKREF_SCHEMA_FILE}`;
