@@ -58,6 +58,11 @@ jobs:
             echo "::error::Web 版のビルドに Tauri の API が入っています"
             exit 1
           fi
+          # 原稿はビルドのときに変換して同梱する。無いと、ブラウザで原稿の表を読めない
+          if ! ls dist-web/assets/_virtual_web-store-*.js >/dev/null 2>&1; then
+            echo "::error::Web 版のビルドに、変換した原稿の表（virtual:web-store）がありません"
+            exit 1
+          fi
 
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:

@@ -5,6 +5,7 @@
 import { version } from "../../package.json";
 import type * as Desktop from "./tauri";
 
+import { fromPrebuilt } from "@/web/backend/prebuilt";
 import { searchStore } from "@/web/backend/search";
 import { findDoc, listDocs, outlineDocs, tagCounts, type WebStore } from "@/web/backend/store";
 import { readLocalSetting, writeLocalSetting } from "@/web/local-settings";
@@ -22,11 +23,14 @@ export type {
 let storePromise: Promise<WebStore> | undefined;
 
 /**
- * 原稿の変換は重いので、最初に使われたときに 1 回だけ行う。
- * 変換のコード（unified・DOMPurify など）も動的 import にして、最初の画面の JS を小さくする。
+ * 原稿の表は、最初に使われたときに 1 回だけ読む。本番はビルドのときに変換した結果を読むだけにし
+ * （ブラウザで全原稿を変換すると、スマホで数秒かかるため）、変換のコード（unified など）をバンドルに入れない。
+ * 開発サーバーとテストは、原稿の直しがすぐ反映されるよう、その場で変換する。
  */
 async function getStore(): Promise<WebStore> {
-  storePromise ??= import("@/web/backend/load").then((m) => m.loadWebStore());
+  storePromise ??= import.meta.env.DEV
+    ? import("@/web/backend/load").then((m) => m.loadWebStore())
+    : import("virtual:web-store").then((m) => fromPrebuilt(m.default));
   try {
     return await storePromise;
   } catch (error: unknown) {
