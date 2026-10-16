@@ -19,6 +19,21 @@ const WEB_STATIC_ROUTES = ["library", "quickref", "settings", "about"];
 const DESKTOP_ENTRY = 'src="/src/main.tsx"';
 const WEB_ENTRY = 'src="/src/web/main.tsx"';
 
+const EMPTY_ROOT = '<div id="root"></div>';
+// JS を読んで実行し終わるまで（低速の回線とスマホで数秒）真っ白にしないため、#root に読み込み中の表示を置く。
+// React の描画で中身ごと置き換わる。Tailwind はこのファイルの中のクラスを拾わないので、色は CSS 変数で書く。
+// デスクトップ版は最初の画面が描けるまでウィンドウを出さないので入れない
+const WEB_LOADING_ROOT = [
+  '<div id="root">',
+  '<p role="status" style="margin:0;padding:3rem 1rem;text-align:center;color:var(--muted-foreground)">',
+  "マニュアルを読み込んでいます…",
+  "</p>",
+  '<noscript><p style="margin:0;padding:0 1rem;text-align:center">',
+  "表示するには JavaScript を有効にしてください。",
+  "</p></noscript>",
+  "</div>",
+].join("");
+
 // デスクトップ版（tauri.conf.json）と同じ方針の CSP から、Rust との IPC の宛先を除いたもの。
 // 外部へ通信せず、同梱したもの以外を読まない
 const WEB_CSP = [
@@ -36,7 +51,7 @@ const WEB_CSP = [
 
 /**
  * ブラウザ向けの Web 版（`vite --mode web`）だけの設定。
- * index.html のエントリを Web 版のもの（小窓・トリアージの同期・自動更新を読まない）に替え、
+ * index.html のエントリを Web 版のもの（小窓・トリアージの同期・自動更新を読まない）に替えて読み込み中の表示を置き、
  * 公開するビルドには CSP と favicon を入れ、GitHub Pages でディープリンクを開けるように 404.html とルートごとの写しを置く。
  */
 function webPlugin(): Plugin {
@@ -48,6 +63,9 @@ function webPlugin(): Plugin {
         if (!html.includes(DESKTOP_ENTRY)) {
           // 置き換えられないまま、デスクトップ版のエントリで公開してしまわないように止める
           throw new Error(`index.html に ${DESKTOP_ENTRY} がありません`);
+        }
+        if (!html.includes(EMPTY_ROOT)) {
+          throw new Error(`index.html に ${EMPTY_ROOT} がありません`);
         }
         const tags: HtmlTagDescriptor[] = [
           // 自作のアイコン（ゲームの資産ではない）。Vite がビルドでファイル名にハッシュを付けて出力する
@@ -74,7 +92,10 @@ function webPlugin(): Plugin {
             injectTo: "head",
           });
         }
-        return { html: html.replace(DESKTOP_ENTRY, WEB_ENTRY), tags };
+        return {
+          html: html.replace(DESKTOP_ENTRY, WEB_ENTRY).replace(EMPTY_ROOT, WEB_LOADING_ROOT),
+          tags,
+        };
       },
     },
     writeBundle(options) {
