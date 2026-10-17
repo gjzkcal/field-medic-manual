@@ -13,6 +13,8 @@
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-10-17
+
 ### Changed
 
 - Web 版を狭い画面（スマホなど）で開いたとき、メニューを本文の上のボタンからではなく、ヘッダーの右端のボタンから右側に開くようにしました。デスクトップ版のダウンロードの案内は、そのメニューの中に移しました。
@@ -165,7 +167,8 @@
 - 設定の「使っている MOD」に合わせて、フローとクイック表の内容が切り替わります。
 - 起動時に新しい版を確かめ、自動で更新できます。
 
-[Unreleased]: https://github.com/gjzkcal/field-medic-manual/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/gjzkcal/field-medic-manual/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/gjzkcal/field-medic-manual/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/gjzkcal/field-medic-manual/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/gjzkcal/field-medic-manual/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/gjzkcal/field-medic-manual/compare/v0.2.0...v0.3.0
