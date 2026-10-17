@@ -12,6 +12,15 @@ on:
       - "src-tauri/build.rs"
       - "src-tauri/.cargo/**"
       - "src-tauri/rust-toolchain.toml"
+      # Web 版のビルドが読まないファイル（CHANGELOG はリリースの本文とテストにだけ使う）
+      - ".github/ISSUE_TEMPLATE/**"
+      - ".github/pull_request_template.md"
+      - ".github/renovate.json5"
+      - ".github/workflows/ci.yml"
+      - ".github/workflows/release.yml"
+      - ".github/workflows/pages.yml"
+      - "README.md"
+      - "CHANGELOG.md"
   workflow_dispatch:
 
 permissions:

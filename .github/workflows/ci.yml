@@ -54,6 +54,9 @@ jobs:
               - '!src-tauri/icons/**'
               - '!src-tauri/.cargo/**'
               - '!src-tauri/rust-toolchain.toml'
+              # GitHub の画面でだけ使い、ビルドにもテストにも読まれない。整形は手元の pnpm format と、次に画面側が走ったときの Prettier で確かめる
+              - '!.github/ISSUE_TEMPLATE/**'
+              - '!.github/pull_request_template.md'
             rust:
               - 'src-tauri/**'
               # バンドルの resources として tauri-build がビルドのときに読む
