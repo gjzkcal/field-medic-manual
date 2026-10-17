@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: ACE Medical 自体の不具合
+    url: https://github.com/acemod/ACE-Anvil/issues
+    about: ゲーム内の ACE Medical の挙動の不具合は、ACE のリポジトリへ報告してください。
+  - name: Web 版でマニュアルを読む
+    url: https://gjzkcal.github.io/field-medic-manual/
+    about: アプリを入れなくても、ブラウザでマニュアルを読めます。
