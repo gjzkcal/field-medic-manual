@@ -1,0 +1,70 @@
+name: 本文の誤り
+description: マニュアル・クイック表・トリアージのフローの内容が、ACE Medical の仕様と違う・古いとき
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        本文は ACE Medical のソースとドキュメントを作者が読んでまとめたものです。直すときも根拠を確かめてから直すので、**根拠**（ACE のソースのファイルと行、公式ドキュメント、ゲーム内で確かめた手順など）を書いてください。
+  - type: dropdown
+    id: target
+    attributes:
+      label: 対象
+      options:
+        - マニュアル
+        - クイック表
+        - トリアージのフロー
+    validations:
+      required: true
+  - type: input
+    id: location
+    attributes:
+      label: 原稿の名前と節
+      description: マニュアルなら原稿の名前と見出し、クイック表なら行、フローならフローの名前と質問を書いてください。
+      placeholder: "止血帯 → 止血帯を巻いたままにしたとき"
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: 誤っている記述
+      description: 今の本文をそのまま引用してください。
+    validations:
+      required: true
+  - type: textarea
+    id: correct
+    attributes:
+      label: 正しいと思う内容
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 根拠
+      description: ACE のソースならファイルと行（GitHub のリンクでも可）、ドキュメントなら URL、ゲーム内で確かめたなら手順とサーバーの設定を書いてください。
+    validations:
+      required: true
+  - type: input
+    id: ace-version
+    attributes:
+      label: ACE の版
+      description: Release / Dev のどちらか、Workshop に出ている版を書いてください。
+      placeholder: "Dev 1.5.36"
+  - type: checkboxes
+    id: mods
+    attributes:
+      label: 使っている MOD
+      description: アプリの「設定」→「使っている MOD」と同じものに印を付けてください。
+      options:
+        - label: Core
+        - label: Hitzones
+        - label: Circulation
+        - label: Breathing
+        - label: Defibrillation
+        - label: AI
+  - type: input
+    id: app-version
+    attributes:
+      label: アプリの版
+      description: デスクトップ版は「設定」→「このアプリについて」、Web 版は「このサイトについて」に出ています。
+      placeholder: "0.5.0"

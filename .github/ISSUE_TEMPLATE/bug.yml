@@ -1,0 +1,57 @@
+name: アプリの不具合
+description: 画面の表示・検索・小窓・ホットキー・更新などが正しく動かないとき
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        - マニュアル・クイック表・フローの**内容**の誤りは「本文の誤り」から報告してください。
+        - ゲーム内の ACE Medical 自体の挙動の不具合は、このアプリではなく [acemod/ACE-Anvil](https://github.com/acemod/ACE-Anvil/issues) へ報告してください。
+  - type: input
+    id: version
+    attributes:
+      label: アプリの版
+      description: デスクトップ版は「設定」→「このアプリについて」、Web 版は「このサイトについて」に出ています。
+      placeholder: "0.5.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: 使っている版
+      options:
+        - デスクトップ版
+        - Web 版
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: OS・ブラウザ
+      description: Web 版のときはブラウザとその版も書いてください。
+      placeholder: "Windows 11 / Edge 141"
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 起きたこと
+      description: 何が起きたか、エラーの表示があればその文言も書いてください。
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現の手順
+      placeholder: |
+        1. 「ライブラリ」で「止血帯」を開く
+        2. …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待した動き
+  - type: textarea
+    id: attachments
+    attributes:
+      label: スクリーンショット・ログ
+      description: 画像はここに貼り付けられます。
