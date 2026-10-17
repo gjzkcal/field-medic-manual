@@ -111,9 +111,10 @@ cd src-tauri && cargo clippy --all-targets -- -D warnings && cargo test
 1. `pnpm test` で原稿の検査を含むテストを通す。
 2. `pnpm version:set 0.0.2` で版を上げる（`package.json`・`Cargo.toml`・`Cargo.lock` をそろえる。`tauri.conf.json` は `package.json` の版を使う）。
 3. `CHANGELOG.md`（[Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) の形）の `## [Unreleased]` の見出しを `## [0.0.2] - 日付` に書き換え、その上に空の `## [Unreleased]` を足す。末尾のリンクも `[Unreleased]: …/compare/v0.0.2...HEAD` と `[0.0.2]: …/compare/v0.0.1...v0.0.2` に直す（`pnpm test` で確かめる）。この節が Releases の本文と、アプリの更新のダイアログの「変更点」になる。
-4. `pnpm lint` と `pnpm test` を通してコミットし、`git tag v0.0.2` → `git push origin main v0.0.2`。
-5. GitHub Actions（`.github/workflows/release.yml`）が確認（`.github/workflows/ci.yml`。main への push と PR でも走る）を通してから、ビルド・署名をして Releases に公開し、`latest.json` を置く。
-6. Releases への公開が成功すると、同じ版の Web 版を GitHub Pages に公開する（`.github/workflows/pages.yml`）。公開し直すときは、Actions の「Pages」を版のタグを選んで手で実行する。
+4. `pnpm lint` と `pnpm test` を通してブランチにコミットし、PR を出してマージする（main には直接 push しない）。
+5. マージした後の main にタグを付けて、タグだけを push する: `git switch main` → `git pull` → `git tag v0.0.2` → `git push origin v0.0.2`。
+6. GitHub Actions（`.github/workflows/release.yml`）が確認（`.github/workflows/ci.yml`。main への push と PR でも走る）を通してから、ビルド・署名をして Releases に公開し、`latest.json` を置く。
+7. Releases への公開が成功すると、同じ版の Web 版を GitHub Pages に公開する（`.github/workflows/pages.yml`）。公開し直すときは、Actions の「Pages」を版のタグを選んで手で実行する。
 
 リリースには、GitHub の Secrets に更新用の署名鍵（`TAURI_SIGNING_PRIVATE_KEY`・`TAURI_SIGNING_PRIVATE_KEY_PASSWORD`）が要ります。
 Web 版の公開には、リポジトリの Settings → Pages の Source を「GitHub Actions」にし、Settings → Environments → github-pages の「Deployment branches and tags」に、タグのルール `v*` を足しておきます（既定は main だけなので、足さないとタグからの公開が失敗します）。
