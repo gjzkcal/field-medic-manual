@@ -225,6 +225,7 @@ ACE が死亡させるのは、Second Chance で外れたとき、意識を失�
 - [意識不明への対応](consciousness.md)
 - [出血と止血](hemorrhage.md)
 - [心停止と CPR](cardiac-arrest.md)
+- [ダメージの仕組み](damage-system.md)
 - [意識の仕組み](consciousness-system.md)
 - [心停止と蘇生](cardiac-arrest-system.md)
 - [出血の仕組み](bleeding-system.md)

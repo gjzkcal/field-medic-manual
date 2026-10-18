@@ -92,7 +92,7 @@ Circulation は血液量も 6000 → 3000 ml と半分にするので、**同じ
 
 ### 出血が始まる条件
 
-被弾で出血が付くのは、その部位が 1 回に受けた損傷（防具などを差し引いた後の値）が $\text{部位の閾値} \times \text{最大 HP}$ 以上のときだけ。確率ではない（有刺鉄線だけは確率）。そのため 1 発目の傷でも出血率は小さくない。
+被弾で出血が付くのは、その部位が 1 回に受けた損傷（部位の倍率を掛けて 1 を引いた実効ダメージ。銃弾・爆発ごとの値は [ダメージの仕組み](damage-system.md)）が $\text{部位の閾値} \times \text{最大 HP}$ 以上のときだけ。確率ではない（有刺鉄線だけは確率）。そのため 1 発目の傷でも出血率は小さくない。
 
 出血が付く条件:
 
@@ -322,6 +322,7 @@ $$
 - [心停止と CPR](cardiac-arrest.md)
 - [状態と閾値](states.md)
 - [バイタルの仕組み](vitals-system.md)
+- [ダメージの仕組み](damage-system.md)
 - [心停止と蘇生](cardiac-arrest-system.md)
 - [致命傷と Second Chance](death-second-chance.md)
 - [止血帯](tourniquet.md)
