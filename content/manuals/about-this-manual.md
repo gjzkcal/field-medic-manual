@@ -209,6 +209,7 @@ category: はじめに
 |---|---|---|
 | [状態と閾値](states.md) | Circulation | 5 つの状態で何が起き、どの値で状態が変わるか |
 | [バイタルの仕組み](vitals-system.md) | Circulation | 心拍数と血圧がどう決まり、出血でどう変わるか |
+| [ダメージの仕組み](damage-system.md) | Core | 銃弾・防具・爆発・落下で、どの部位がどれだけ減るか |
 | [出血の仕組み](bleeding-system.md) | Core | 傷ごとの出血の速さ、放置したときの時間、血液の戻り方 |
 | [意識の仕組み](consciousness-system.md) | Core | どの条件で意識を失い、どの速さで戻るか |
 | [呼吸と気道の仕組み](respiration-system.md) | Breathing | 呼吸数と SpO2 がどう決まり、気道が塞がるとどう推移するか |

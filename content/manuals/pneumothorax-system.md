@@ -146,6 +146,7 @@ $$
 - [気胸と処置](breathing.md)
 - [呼吸と気道の仕組み](respiration-system.md)
 - [状態と閾値](states.md)
+- [ダメージの仕組み](damage-system.md)
 - [心停止と蘇生](cardiac-arrest-system.md)
 - [チェストシール](chest-seal.md)
 - [NCD キット](ncd-kit.md)

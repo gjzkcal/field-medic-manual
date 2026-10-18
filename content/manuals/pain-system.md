@@ -131,6 +131,7 @@ $$
 
 - [痛みと抑え方](pain.md)
 - [バイタルの仕組み](vitals-system.md)
+- [ダメージの仕組み](damage-system.md)
 - [薬の効き方](drug-effects.md)
 - [モルヒネ注射器](morphine.md)
 - [ナロキソン](naloxone.md)
