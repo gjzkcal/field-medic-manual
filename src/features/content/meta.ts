@@ -13,6 +13,7 @@ export const MOD_TARGET_LABELS: Record<ModTarget, string> = {
   defibrillation: "Defibrillation",
   ai: "AI",
   general: "一般",
+  rhs: "RHS",
 };
 export const MOD_CHANNEL_LABELS: Record<ModChannel, string> = { release: "Release", dev: "Dev" };
 

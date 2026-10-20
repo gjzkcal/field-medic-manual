@@ -97,7 +97,8 @@
                 "hitzones",
                 "circulation",
                 "breathing",
-                "ai"
+                "ai",
+                "rhs"
               ],
               "description": "設定の「使っている MOD」で選べる MOD"
             }
@@ -111,7 +112,8 @@
                 "hitzones",
                 "circulation",
                 "breathing",
-                "ai"
+                "ai",
+                "rhs"
               ],
               "description": "設定の「使っている MOD」で選べる MOD"
             }
