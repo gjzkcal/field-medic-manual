@@ -18,7 +18,7 @@ export const text = z.string().trim().min(1, "空にできません");
 export const modTarget = z
   .custom<ModTarget>(
     (v) => typeof v === "string" && isModTarget(v),
-    "対象モジュールは core / hitzones / circulation / breathing / defibrillation / ai / general のどれかです",
+    `対象モジュールは ${MOD_TARGET_VALUES.join(" / ")} のどれかです`,
   )
   .meta({ type: "string", enum: MOD_TARGET_VALUES });
 export const modChannel = z
