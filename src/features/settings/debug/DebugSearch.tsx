@@ -20,6 +20,7 @@ const MOD_TARGET_LABELS: Record<ModTarget, string> = {
   defibrillation: "Defibrillation",
   ai: "AI",
   general: "一般",
+  rhs: "RHS",
 };
 const MOD_CHANNEL_LABELS: Record<ModChannel, string> = { release: "Release", dev: "Dev" };
 
@@ -31,6 +32,7 @@ const MOD_TARGETS: readonly ModTarget[] = [
   "defibrillation",
   "ai",
   "general",
+  "rhs",
 ];
 const MOD_CHANNELS: readonly ModChannel[] = ["release", "dev"];
 
