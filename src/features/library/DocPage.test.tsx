@@ -422,7 +422,7 @@ describe("DocPage", () => {
     expect(toc.textContent).toContain("関連ページ");
     expect(toc.textContent).not.toContain("Circulation");
     expect(document.body.textContent).toContain(
-      "Core + Circulation + Breathing + RHS に合う節を表示しています（設定で変更）。2 節を省略",
+      "Core + Circulation + Breathing に合う節を表示しています（設定で変更）。2 節を省略",
     );
 
     fireEvent.click(screen.getByRole("switch", { name: "すべての組み合わせを表示" }));

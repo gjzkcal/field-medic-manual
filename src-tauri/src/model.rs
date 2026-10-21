@@ -58,9 +58,8 @@ text_enum!(SourceType {
     Url => "url",
 });
 
-/// 原稿が前提にしている MOD。ACE Medical のモジュールと、ACE 以外の MOD（RHS）。
+/// 原稿が前提にしている ACE Medical のモジュール。
 /// Release と Dev で公開されているモジュールが違うが、この値で両方の版を過不足なく表せる。
-/// RHS は RHS: Status Quo（WCS のサーバーも RHS を入れる）。防具の仕組みが本体と違うので、原稿の節を分ける。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "snake_case")]
 #[ts(export)]
@@ -72,7 +71,6 @@ pub enum ModTarget {
     Defibrillation,
     Ai,
     General,
-    Rhs,
 }
 text_enum!(ModTarget {
     Core => "core",
@@ -82,7 +80,6 @@ text_enum!(ModTarget {
     Defibrillation => "defibrillation",
     Ai => "ai",
     General => "general",
-    Rhs => "rhs",
 });
 
 /// ACE の版。`None`（DB では NULL）は「版を問わない / 不明」。

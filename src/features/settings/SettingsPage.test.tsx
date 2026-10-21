@@ -1,5 +1,5 @@
 import { clearMocks, mockIPC } from "@tauri-apps/api/mocks";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { DEFAULT_MOD_SETTINGS, useModSettings } from "@/features/settings/mod-settings";
@@ -41,19 +41,6 @@ describe("SettingsPage", () => {
       .toEqual({ key: "viewer", value: { fontSize: "xl", lineHeight: "loose" } });
   });
 
-  it("RHS は ACE 以外の MOD として分けて出し、既定で入っている", () => {
-    mockIPC(() => []);
-    render(<SettingsPage />);
-
-    const other = screen.getByRole("group", { name: "ACE 以外の MOD" });
-    expect(within(other).getByRole("switch", { name: "RHS" }).getAttribute("aria-checked")).toBe(
-      "true",
-    );
-    const ace = screen.getByRole("group", { name: "ACE Medical" });
-    expect(within(ace).queryByRole("switch", { name: "RHS" })).toBeNull();
-    expect(within(ace).getByRole("switch", { name: "Circulation" })).toBeDefined();
-  });
-
   it("使っている MOD を切り替えると保存し、既定は Circulation と Breathing が入っている", async () => {
     const saved: unknown[] = [];
     mockIPC((cmd, args) => {
@@ -79,12 +66,6 @@ describe("SettingsPage", () => {
 
     await expect
       .poll(() => saved.at(-1))
-      .toEqual({
-        key: "mods",
-        value: {
-          enabled: ["hitzones", "breathing", "rhs"],
-          known: ["hitzones", "circulation", "breathing", "ai", "rhs"],
-        },
-      });
+      .toEqual({ key: "mods", value: { enabled: ["hitzones", "breathing"] } });
   });
 });
