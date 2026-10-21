@@ -31,8 +31,7 @@
           "breathing",
           "defibrillation",
           "ai",
-          "general",
-          "rhs"
+          "general"
         ]
       }
     },
@@ -291,8 +290,7 @@
                           "breathing",
                           "defibrillation",
                           "ai",
-                          "general",
-                          "rhs"
+                          "general"
                         ]
                       },
                       "description": "すべて有効なときにこの case へ進む MOD（core と general は常に有効）"

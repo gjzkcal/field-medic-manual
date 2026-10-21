@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { markModColumns, parseModConditions, readModColumns } from "@/features/content/mod-marker";
+import { markModColumns, readModColumns } from "@/features/content/mod-marker";
 
 // 文書の先頭のコメントは body の外に置かれるので、原稿と同じく前に段落を置く
 function body(html: string): HTMLElement {
@@ -45,21 +45,6 @@ describe("markModColumns", () => {
     const marked = Array.from(el.querySelectorAll("table")).map((t) => t.hasAttribute("data-mod-columns"));
     // 書き間違えた MOD は捨てて、残りの条件で付ける（警告で気づける）
     expect(marked).toEqual([false, true]);
-  });
-});
-
-describe("parseModConditions", () => {
-  it("ACE 以外の MOD の RHS も条件に書ける", () => {
-    const warnings: string[] = [];
-    expect(parseModConditions("rhs, !hitzones", "テスト", warnings)).toEqual({
-      mods: ["rhs"],
-      withoutMods: ["hitzones"],
-    });
-    expect(parseModConditions("!rhs", "テスト", warnings)).toEqual({
-      mods: [],
-      withoutMods: ["rhs"],
-    });
-    expect(warnings).toEqual([]);
   });
 });
 
