@@ -53,4 +53,6 @@ strip = true
 tempfile = "3"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
-tauri-plugin-updater = "2"
+# 既定の機能の `zip` は、Windows で zip に包んだ更新を展開するためだけのもの。リリースは -setup.exe と .msi をそのまま配るので要らない。
+# zip の crate（^4）に直っていない脆弱性があるので外す（RUSTSEC-2026-0367〜0369）
+tauri-plugin-updater = { version = "2", default-features = false, features = ["rustls-tls", "system-proxy"] }
