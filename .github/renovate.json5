@@ -74,10 +74,12 @@
 
   customManagers: [
     {
-      // release.yml で taiki-e/install-action に渡す cargo-about の版は、どのマネージャーも拾わないので正規表現で追う
+      // taiki-e/install-action に渡す cargo-about（release.yml）と cargo-audit（audit.yml）の版は、どのマネージャーも拾わないので正規表現で追う
       customType: "regex",
       managerFilePatterns: ["/^\\.github/workflows/[^/]+\\.ya?ml$/"],
-      matchStrings: ["tool:\\s*(?<depName>cargo-about)@(?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      matchStrings: [
+        "tool:\\s*(?<depName>cargo-about|cargo-audit)@(?<currentValue>\\d+\\.\\d+\\.\\d+)",
+      ],
       datasourceTemplate: "crate",
     },
     {
@@ -121,7 +123,7 @@
     },
     {
       // ci.yml と release.yml で同じアクションを同じ版にそろえるため、ワークフローの中の更新（外部アクションの SHA、
-      // Node・pnpm・cargo-about の版）は 1 つの PR にまとめる
+      // Node・pnpm・cargo-about・cargo-audit の版）は 1 つの PR にまとめる
       matchFileNames: [".github/workflows/**"],
       matchUpdateTypes: ["minor", "patch", "digest"],
       groupName: "GitHub Actions",

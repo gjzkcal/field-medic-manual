@@ -15,11 +15,20 @@ pub fn char_len(s: &str) -> usize {
     s.chars().count()
 }
 
+/// 1 回の検索で使う語の数の上限。語ごとに同義語と列の数だけ LIKE の条件が増え、
+/// 語を大量に入れると SQLite の式の深さ・変数の数の上限に当たって検索そのものが失敗するため。
+/// TS 側の `src/web/backend/text.ts` と同じ値にする。
+pub const MAX_TERMS: usize = 16;
+
 /// 検索クエリを語に分ける。全角スペースも区切りにする（`char::is_whitespace` は U+3000 を含む）。
+/// 語は先頭から `MAX_TERMS` 個までにする。
 #[must_use]
 pub fn split_terms(query: &str) -> Vec<String> {
     let mut terms: Vec<String> = Vec::new();
     for term in query.split_whitespace() {
+        if terms.len() == MAX_TERMS {
+            break;
+        }
         let term = strip_marks(term);
         if !term.is_empty() && !terms.iter().any(|t| t.eq_ignore_ascii_case(&term)) {
             terms.push(term);
@@ -169,6 +178,17 @@ mod tests {
             ["止血帯", "出血", "cpr"]
         );
         assert!(split_terms(" \u{3000} ").is_empty());
+    }
+
+    #[test]
+    fn keeps_only_the_first_max_terms() {
+        let query = (0..MAX_TERMS + 5)
+            .map(|i| format!("語{i}"))
+            .collect::<Vec<_>>()
+            .join(" ");
+        let terms = split_terms(&query);
+        assert_eq!(terms.len(), MAX_TERMS);
+        assert_eq!(terms.first().map(String::as_str), Some("語0"));
     }
 
     #[test]

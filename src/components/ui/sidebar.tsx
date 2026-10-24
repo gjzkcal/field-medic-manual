@@ -19,8 +19,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { PanelLeftIcon } from "lucide-react";
 
-const SIDEBAR_COOKIE_NAME = "sidebar_state";
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
 const SIDEBAR_WIDTH_ICON = "3rem";
@@ -75,9 +73,8 @@ function SidebarProvider({
       } else {
         setUncontrolledOpen(openState);
       }
-
-      // This sets the cookie to keep the sidebar state.
-      document.cookie = `${SIDEBAR_COOKIE_NAME}=${String(openState)}; path=/; max-age=${String(SIDEBAR_COOKIE_MAX_AGE)}`;
+      // shadcn の元の実装はここで開閉を Cookie（sidebar_state、path=/）に書くが、消した。
+      // どこからも読まず、Web 版では origin（gjzkcal.github.io）を共有するほかのページにも送られるため。shadcn で更新したときに戻さない
     },
     [setOpenProp, open],
   );

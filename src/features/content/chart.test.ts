@@ -252,6 +252,12 @@ describe("readChartPayload", () => {
       readChartPayload(JSON.stringify({ ...valid, data: { ...valid.data, points: [{ x: "0" }] } })),
     ).toBeNull();
   });
+
+  it("系列のキーが変換の付ける形（s0, s1…）でなければ読まない", () => {
+    const valid = { spec: spec("x=経過; y=SpO2"), data: fromTableData() };
+    const series = valid.data.series.map((s) => ({ ...s, key: "a);background:url(x)" }));
+    expect(readChartPayload(JSON.stringify({ ...valid, data: { ...valid.data, series } }))).toBeNull();
+  });
 });
 
 function fromTableData(): ReturnType<typeof chartFromTable>["data"] {

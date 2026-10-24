@@ -19,9 +19,15 @@ export function stripMarks(s: string): string {
   return s.replaceAll(MARK_START, "").replaceAll(MARK_END, "");
 }
 
-/** 検索クエリを語に分ける。全角スペースも区切りにする。大文字小文字だけ違う語は 1 つにまとめる。 */
+/**
+ * 1 回の検索で使う語の数の上限。Rust の `MAX_TERMS` と同じ値にし、同じクエリで同じ結果にする
+ * （デスクトップ版では、語が多いと SQLite の上限に当たって検索が失敗するため上限を設けている）。
+ */
+export const MAX_TERMS = 16;
+
+/** 検索クエリを語に分ける。全角スペースも区切りにする。大文字小文字だけ違う語は 1 つにまとめる。語は先頭から MAX_TERMS 個まで。 */
 export function splitTerms(query: string): string[] {
-  return normalizeTerms(query.split(/\s+/));
+  return normalizeTerms(query.split(/\s+/)).slice(0, MAX_TERMS);
 }
 
 /** 語の並びを正規化する。前後の空白を除き、空は捨て、大文字小文字だけ違う重複をまとめる。 */

@@ -26,8 +26,9 @@ const chartPanelSchema = z.enum(["y", "y2"]);
 export type ChartPanel = z.infer<typeof chartPanelSchema>;
 
 const chartSeriesSchema = z.strictObject({
-  // 点の値を引くキー（列名は記号を含むので、描画ライブラリのキーには使わない）
-  key: z.string().min(1),
+  // 点の値を引くキー（列名は記号を含むので、描画ライブラリのキーには使わない）。
+  // CSS 変数の名前（--color-<key>）と SVG の属性にそのまま入るので、変換が付ける s0, s1… の形だけを受ける
+  key: z.string().regex(/^s\d+$/),
   label: z.string(),
   panel: chartPanelSchema,
   // 列のセルに共通の単位（`%` など）。単位が無いか、セルごとに違えば null

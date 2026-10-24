@@ -1,5 +1,5 @@
 // Web 版の実装（tauri.web.ts）が、デスクトップ版（tauri.ts）の代わりに使えることを確かめる。
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { bundledManuals } from "@/features/content/bundle";
 import { isAppError } from "@/lib/app-error";
@@ -63,6 +63,21 @@ describe("tauri.web.ts", () => {
       .favToggle({ kind: "flow", flowId: "x" })
       .catch((e: unknown) => e);
     expect(isAppError(error) && error.kind).toBe("invalid_input");
+  });
+
+  it("外部で開くのは http・https・mailto だけにする", async () => {
+    const open = vi.spyOn(window, "open").mockReturnValue(null);
+    try {
+      for (const url of ["javascript:alert(1)", "file:///C:/Windows", "data:text/html,x"]) {
+        const error: unknown = await web.openExternal(url).catch((e: unknown) => e);
+        expect(isAppError(error) && error.kind, url).toBe("invalid_input");
+      }
+      expect(open).not.toHaveBeenCalled();
+      await web.openExternal("https://example.com/");
+      expect(open).toHaveBeenCalledWith("https://example.com/", "_blank", "noopener,noreferrer");
+    } finally {
+      open.mockRestore();
+    }
   });
 });
 
