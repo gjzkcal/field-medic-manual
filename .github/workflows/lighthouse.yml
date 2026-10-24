@@ -1,6 +1,8 @@
-# Web 版の Lighthouse の点数を測る（scripts/lighthouse.ts）。リリースの前に、main の点数を確かめるため。
-# A11y・BP・SEO が 100 を切ったら失敗にする。Performance はランナーの速さでぶれるので記録だけにする。
-# 点数の表はジョブの概要に、レポート（HTML・JSON）は成果物の lighthouse に残る。
+# Web 版の全ページ（画面と原稿ごと）の A11y・BP・SEO を Lighthouse で測り、100 を切ったら失敗にする（scripts/lighthouse.ts）。
+# リリースの前に、main の Web 版に崩れが無いかを確かめるため。原稿によって結果が変わるので、全部を測る。
+# Performance はここでは測らない。ランナーの速さでぶれ、利用者が開く本番とも配信が違うので、
+# Pages に公開した後に本番を測る（pages.yml）。
+# 結果の表はジョブの概要に、レポート（HTML・JSON）は成果物の lighthouse に残る。
 name: Lighthouse
 
 on:
@@ -36,8 +38,8 @@ jobs:
   lighthouse:
     # Chrome が最初から入っている
     runs-on: ubuntu-latest
-    # 18 回の計測（1 回 20〜30 秒）とビルドに余裕を持たせる
-    timeout-minutes: 30
+    # 全ページ × 2 端末の計測（今は 84 回。3 本ずつ並べる）とビルドに余裕を持たせる。原稿が増えると延びる
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 

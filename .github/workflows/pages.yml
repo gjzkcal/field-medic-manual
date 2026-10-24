@@ -1,6 +1,7 @@
 # マニュアルの Web 版を GitHub Pages（https://gjzkcal.github.io/field-medic-manual/）に公開する。
 # 配ったアプリと同じ原稿にするため、リリース（release.yml）が Releases への公開に成功してから呼び出す。
 # 手で公開し直すときは、Actions の画面で版のタグ（v0.4.0 など）を選んで実行する。
+# 公開の後に、本番の代表ページの Performance を Lighthouse で測って記録する（lighthouse ジョブ）。
 name: Pages
 
 on:
@@ -19,6 +20,8 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
+    outputs:
+      index-sha256: ${{ steps.index.outputs.sha256 }}
     steps:
       # main など、配っていない原稿を公開しないよう、版のタグからだけ公開する
       - name: Check that a release tag is selected
@@ -64,6 +67,11 @@ jobs:
             exit 1
           fi
 
+      # 公開の後に本番を測る lighthouse ジョブが、CDN が新しい版を返し始めたかを見分けるのに使う
+      - name: Hash the entry page
+        id: index
+        run: echo "sha256=$(sha256sum dist-web/index.html | cut -d " " -f 1)" >> "$GITHUB_OUTPUT"
+
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: dist-web
@@ -72,6 +80,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     # Pages への書き込みと、その認証に使う OIDC のトークンは、公開するこのジョブだけに与える
     permissions:
       pages: write
@@ -86,3 +96,54 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+  # 公開した Web 版の代表ページの Performance を測って記録する（scripts/lighthouse.ts）。
+  # 利用者が開くもの（この版と Pages の配信）の数字にするため、preview ではなく本番を測る。
+  # 点数は計測のたびにぶれるので合否にはしない。表はジョブの概要に、レポートは成果物の lighthouse-production に残る
+  lighthouse:
+    needs: [build, deploy]
+    # Chrome が最初から入っている
+    runs-on: ubuntu-latest
+    # 3 ページ × 2 端末 × 5 回（1 回 15〜30 秒）と、CDN の入れ替わりを待つ時間に余裕を持たせる
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Pages は HTML を 10 分（Cache-Control: max-age=600）キャッシュするので、公開の直後は前の版が返ることがある。
+      # 前の版を測らないよう、公開したページの中身がこの版のビルドと一致するまで待つ
+      - name: Wait for the new version to be served
+        env:
+          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+          EXPECTED: ${{ needs.build.outputs.index-sha256 }}
+        run: |
+          for i in $(seq 1 40); do
+            actual=$(curl -fsS "${PAGE_URL}library" | sha256sum | cut -d " " -f 1 || true)
+            if [ "$actual" = "$EXPECTED" ]; then
+              exit 0
+            fi
+            sleep 30
+          done
+          echo "::error::20 分待っても ${PAGE_URL}library が新しい版になりませんでした"
+          exit 1
+
+      - run: pnpm lighthouse:web --url "${{ needs.deploy.outputs.page_url }}" lighthouse-results
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: lighthouse-production
+          path: lighthouse-results/
+          retention-days: 90
