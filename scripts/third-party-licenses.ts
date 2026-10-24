@@ -6,7 +6,8 @@
 // 許可の一覧に無いライセンスがあれば失敗させる（scripts/lib/licenses.ts）。
 
 import { execSync } from "node:child_process";
-import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import process from "node:process";
 
@@ -45,9 +46,6 @@ const OTHER_NOTICES = [
   },
 ];
 
-// cargo-about の JSON は数 MB になるので、既定の上限（1 MB）では足りない
-const MAX_BUFFER = 256 * 1024 * 1024;
-
 const LICENSE_FILE = /^(licen[cs]e|copying|notice)([.-].*)?$/i;
 
 function licenseTexts(dir: string): string[] {
@@ -63,7 +61,6 @@ function npmPackages(): NpmPackageLicense[] {
   const output = execSync("pnpm licenses list --prod --json", {
     cwd: ROOT,
     encoding: "utf8",
-    maxBuffer: MAX_BUFFER,
   });
   const listed = Object.values(pnpmLicensesSchema.parse(JSON.parse(output))).flat();
   const packages = listed.flatMap((pkg) =>
@@ -86,14 +83,21 @@ function npmPackages(): NpmPackageLicense[] {
 }
 
 function cargoLicenses(): z.infer<typeof cargoAboutSchema> {
-  const output = execSync("cargo about generate --format json -c about.toml", {
-    cwd: join(ROOT, "src-tauri"),
-    encoding: "utf8",
-    maxBuffer: MAX_BUFFER,
-    // 進み具合と警告は画面に出したまま、JSON だけを受け取る
-    stdio: ["ignore", "pipe", "inherit"],
-  });
-  return cargoAboutSchema.parse(JSON.parse(output));
+  // 標準出力ではなく -o でファイルに書かせる。cargo-about 0.9.2 は標準出力に書くときだけ、親プロセスが
+  // PowerShell かを親の PID をたどって調べるが、上限が無い。親が先に終わって PID が再利用され、
+  // 親の並びが輪になっていると（VS Code の中の端末で起きた）、抜けられずに止まる
+  const dir = mkdtempSync(join(tmpdir(), "cargo-about-"));
+  const file = join(dir, "licenses.json");
+  try {
+    execSync(`cargo about generate --format json -c about.toml -o "${file}"`, {
+      cwd: join(ROOT, "src-tauri"),
+      // 進み具合と警告は画面に出す
+      stdio: ["ignore", "inherit", "inherit"],
+    });
+    return cargoAboutSchema.parse(JSON.parse(readFileSync(file, "utf8")));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 }
 
 const npm = npmPackages();
