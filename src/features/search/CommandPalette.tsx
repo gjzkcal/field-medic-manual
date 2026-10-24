@@ -217,7 +217,14 @@ export function CommandPalette({
 
   const list = (
     <>
-      <CommandList className="max-h-[min(60vh,32rem)] pt-1">
+      <CommandList
+        className={cn(
+          "pt-1",
+          // 上部の検索欄から重ねて出す一覧は、本文を隠しすぎないよう高さを抑える。
+          // 置き場所いっぱいに出す一覧（小窓）は残りの高さに伸ばし、キーの案内の行を下端に付ける（上限があると途中に浮く）
+          dropdown ? "max-h-[min(60vh,32rem)]" : "max-h-none min-h-0 flex-1",
+        )}
+      >
         {trimmed === "" ? (
           <PaletteOpenContext value={open}>{emptySlot ?? <EmptyHint />}</PaletteOpenContext>
         ) : (
