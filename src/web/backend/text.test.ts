@@ -2,7 +2,14 @@
 import { describe, expect, it } from "vitest";
 
 import { MARK_END, MARK_START } from "@/features/search/snippet";
-import { compareNoCase, findCi, makeSnippet, normalizeTags, splitTerms } from "@/web/backend/text";
+import {
+  compareNoCase,
+  findCi,
+  makeSnippet,
+  MAX_TERMS,
+  normalizeTags,
+  splitTerms,
+} from "@/web/backend/text";
 
 describe("splitTerms", () => {
   it("半角と全角の空白で分け、大文字小文字だけ違う語をまとめる", () => {
@@ -12,6 +19,13 @@ describe("splitTerms", () => {
 
   it("強調の目印を取り除く", () => {
     expect(splitTerms(`${MARK_START}出血${MARK_END}`)).toEqual(["出血"]);
+  });
+
+  it("語は先頭から MAX_TERMS 個までにする", () => {
+    const query = Array.from({ length: MAX_TERMS + 5 }, (_, i) => `語${String(i)}`).join(" ");
+    const terms = splitTerms(query);
+    expect(terms).toHaveLength(MAX_TERMS);
+    expect(terms[0]).toBe("語0");
   });
 });
 

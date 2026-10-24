@@ -26,6 +26,7 @@ import type { TagCount } from "@/lib/bindings/TagCount";
 import type { TriageDetail } from "@/lib/bindings/TriageDetail";
 import type { TriageSummary } from "@/lib/bindings/TriageSummary";
 import type { TriageUpsertInput } from "@/lib/bindings/TriageUpsertInput";
+import { isExternalUrl } from "@/lib/external-url";
 
 export { errorMessage, isAppError } from "@/lib/app-error";
 
@@ -211,6 +212,10 @@ export function currentWindowLabel(): string {
 
 /** 既定のブラウザ（mailto はメールソフト）で開く。WebView の中では開かない。 */
 export async function openExternal(url: string): Promise<void> {
+  // opener の権限の範囲（http・https・mailto・tel）より狭く、本文のリンクで開く種類だけにする
+  if (!isExternalUrl(url)) {
+    throw new Error(`外部で開けない URL です: ${url}`);
+  }
   return openUrl(url);
 }
 

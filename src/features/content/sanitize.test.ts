@@ -31,6 +31,18 @@ describe("sanitizeHtml", () => {
     );
   });
 
+  it("MathML の要素の href は https でも落とし、ふつうのリンクの href は残す", () => {
+    const { html } = sanitizeHtml(
+      [
+        '<p><a href="https://example.com/">リンク</a></p>',
+        '<math><mrow href="https://example.com/"><mi xlink:href="https://example.com/">x</mi></mrow></math>',
+      ].join(""),
+    );
+    expect(html).toBe(
+      '<p><a href="https://example.com/">リンク</a></p><math><mrow><mi>x</mi></mrow></math>',
+    );
+  });
+
   it("フローチャートの figure は印と題と文のリストを残す", () => {
     const html =
       '<figure data-flowchart="{&quot;direction&quot;:&quot;TB&quot;}" aria-label="流れ"><ul class="manual-flowchart-text"><li>A → B</li></ul></figure>';

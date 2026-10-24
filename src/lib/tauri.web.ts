@@ -5,6 +5,7 @@
 import { version } from "../../package.json";
 import type * as Desktop from "./tauri";
 
+import { isExternalUrl } from "@/lib/external-url";
 import { fromPrebuilt } from "@/web/backend/prebuilt";
 import { searchStore } from "@/web/backend/search";
 import { findDoc, listDocs, outlineDocs, tagCounts, type WebStore } from "@/web/backend/store";
@@ -127,6 +128,9 @@ export const onOpenHref: typeof Desktop.onOpenHref = noopUnlisten;
 export const currentWindowLabel: typeof Desktop.currentWindowLabel = () => "main";
 
 export const openExternal: typeof Desktop.openExternal = (url) => {
+  if (!isExternalUrl(url)) {
+    return Promise.reject(new WebAppError("invalid_input", `外部で開けない URL です: ${url}`));
+  }
   // 開いたページからこのサイトを操作されないよう、opener を渡さない
   window.open(url, "_blank", "noopener,noreferrer");
   return Promise.resolve();

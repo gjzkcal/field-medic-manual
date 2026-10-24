@@ -46,13 +46,25 @@ impl AppError {
             Self::Internal(_) | Self::Db(_) => ErrorKind::Internal,
         }
     }
+
+    /// 画面に送る文面。`detailed` が false なら、DB のエラーは決まった文面にする。
+    /// rusqlite の文面は表・列の名前を含み、prepare の失敗では SQL 文を丸ごと含むため、配布版では内部の作りを画面に出さない。
+    fn message(&self, detailed: bool) -> String {
+        match self {
+            Self::Db(_) if !detailed => DB_ERROR_MESSAGE.to_owned(),
+            _ => self.to_string(),
+        }
+    }
 }
+
+const DB_ERROR_MESSAGE: &str = "データベースの処理に失敗しました";
 
 impl Serialize for AppError {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         ErrorPayload {
             kind: self.kind(),
-            message: self.to_string(),
+            // 開発中は原因を追えるよう、DB のエラーも詳しく出す
+            message: self.message(cfg!(debug_assertions)),
         }
         .serialize(serializer)
     }
@@ -70,6 +82,23 @@ mod tests {
             json,
             serde_json::json!({ "kind": "not_found", "message": "見つかりません: doc 42" })
         );
+    }
+
+    #[test]
+    fn db_error_hides_details_unless_detailed() {
+        let conn = rusqlite::Connection::open_in_memory().expect("in-memory DB should open");
+        let err = AppError::from(
+            conn.prepare("SELECT secret_column FROM secret_table")
+                .expect_err("unknown table should fail"),
+        );
+        assert_eq!(err.message(false), DB_ERROR_MESSAGE);
+        assert!(err.message(true).contains("secret_table"));
+    }
+
+    #[test]
+    fn non_db_errors_keep_their_message() {
+        let err = AppError::InvalidInput("キーが長すぎます".to_owned());
+        assert_eq!(err.message(false), "入力が不正です: キーが長すぎます");
     }
 
     #[test]

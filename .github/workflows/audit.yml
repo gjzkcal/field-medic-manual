@@ -1,0 +1,66 @@
+# 依存に既知の脆弱性がないかを、npm（配布物に入る本番の依存）と cargo の勧告の DB で確かめる。
+# PR と関係のない新しい勧告でマージやリリースが止まらないよう、ci.yml・release.yml には入れず、
+# lockfile を変えたときと週 1 回だけ回す（Renovate の脆弱性の PR とは別に、勧告が出たことに気づくため）
+name: Audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - pnpm-lock.yaml
+      - src-tauri/Cargo.lock
+      - .github/workflows/audit.yml
+  pull_request:
+    paths:
+      - pnpm-lock.yaml
+      - src-tauri/Cargo.lock
+      - .github/workflows/audit.yml
+  # 月曜 9:00 JST（月曜 0:00 UTC）。Renovate の週 1 回の PR（月曜 9 時前）とそろえる
+  schedule:
+    - cron: "0 0 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: audit-${{ github.ref }}
+  cancel-in-progress: true
+
+# 外部のアクションは ci.yml と同じくコミットの SHA で固定し、版はコメントに書く
+jobs:
+  npm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      # lockfile だけを見るので install は要らない。開発用の依存は配布物に入らないので --prod にし、
+      # low・moderate は Renovate の PR で直す（ここで落とすのは high 以上だけ）
+      - run: pnpm audit --prod --audit-level high
+
+  cargo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+        with:
+          tool: cargo-audit@0.22.2
+
+      # src-tauri の中で動かすと rust-toolchain.toml の版を入れ始めるので、ルートから lockfile を指定する。
+      # 脆弱性があれば失敗し、メンテ終了などの警告は表示だけにする（cargo audit の既定）
+      - run: cargo audit --file src-tauri/Cargo.lock

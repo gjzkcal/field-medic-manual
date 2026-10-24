@@ -30,6 +30,16 @@ const CONFIG: Config = {
   ADD_ATTR: ["data-asset-id", "data-chart", "data-flowchart", "data-mod-columns"],
 };
 
+const MATHML_NS = "http://www.w3.org/1998/Math/MathML";
+
+// MathML のプロファイルは href を許すが、Firefox では href の付いた式がリンクになり、ビューアの a[href] のクリックの処理
+// （外部は既定のブラウザで開き、内部はアプリの中で移る）を通らずにページを移れてしまう。式にリンクは要らないので落とす
+DOMPurify.addHook("uponSanitizeAttribute", (node, data) => {
+  if (node.namespaceURI === MATHML_NS && (data.attrName === "href" || data.attrName === "xlink:href")) {
+    data.keepAttr = false;
+  }
+});
+
 export interface SanitizedHtml {
   html: string;
   plainText: string;

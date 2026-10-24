@@ -1,5 +1,6 @@
 // 本文のリンクの行き先を分類する。
 // 原稿では、他のマニュアルへは相対パスの md（hemorrhage.md#止血帯を使う）、同じ文書の中は #アンカー で書く。
+import { isExternalUrl } from "@/lib/external-url";
 
 export type ResolvedLink =
   | { kind: "external"; url: string }
@@ -7,13 +8,12 @@ export type ResolvedLink =
   | { kind: "doc"; fileName: string; anchor: string | null }
   | { kind: "unknown" };
 
-const EXTERNAL = /^(?:https?|mailto):/i;
 // 原稿は content/manuals/ の直下に並べるので、同じフォルダの md だけを内部リンクとして扱う
 const MANUAL_LINK = /^(?:\.\/)?([a-z0-9-]+\.md)(?:#(.*))?$/i;
 
 export function resolveLink(href: string): ResolvedLink {
   const trimmed = href.trim();
-  if (EXTERNAL.test(trimmed)) {
+  if (isExternalUrl(trimmed)) {
     return { kind: "external", url: trimmed };
   }
   if (trimmed.startsWith("#")) {
