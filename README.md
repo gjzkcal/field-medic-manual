@@ -97,7 +97,8 @@ cargo install cargo-about --locked --features cli   # 依存のライセンス�
 pnpm tauri:dev                                      # 開発起動（DB などはインストール版と別のフォルダ）
 pnpm dev:web                                        # Web 版の開発起動（http://localhost:1420/field-medic-manual/）
 pnpm build:web && pnpm preview:web                  # Web 版をビルドして確かめる（dist-web/）
-pnpm build:web && pnpm lighthouse:web               # Web 版の Lighthouse（Chrome、Windows で無ければ Edge。lighthouse-results/）
+pnpm build:web && pnpm lighthouse:web               # Web 版の全ページの A11y・BP・SEO を Lighthouse で測る（Chrome、Windows で無ければ Edge。lighthouse-results/）
+pnpm lighthouse:web --url https://gjzkcal.github.io/field-medic-manual/  # 公開中の Web 版の Performance を測る
 pnpm lint && pnpm test                              # 確認
 cd src-tauri && cargo clippy --all-targets -- -D warnings && cargo test
 ```
