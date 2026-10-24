@@ -13,6 +13,8 @@
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-24
+
 ### Added
 
 - 原稿「ダメージの仕組み」を加えました。被弾から部位の HP が減るまでの流れ（部位ごとの最大 HP・倍率・出血が付く値）と、銃弾・防具・爆発・落下・車両・ヘリのローター・近接・発射機の後方・火・有刺鉄線・溺水・毒・素足で、どの部位が減り、出血・気絶・死亡がどう起きるかの目安をまとめています。防具で弾が止まっても意識の値は減ること（RHS のプレートも）、伏せても手榴弾のダメージは減らず物の陰なら届かないこと、爆発で気絶する距離、走っている車から降りると時速約 27 km を超えて気絶すること、ACE を入れたときに爆発・落下・火でどう出血し痛むか（臓器と気胸は銃弾と近接だけ）も載せています。
@@ -200,7 +202,8 @@
 - 設定の「使っている MOD」に合わせて、フローとクイック表の内容が切り替わります。
 - 起動時に新しい版を確かめ、自動で更新できます。
 
-[Unreleased]: https://github.com/gjzkcal/field-medic-manual/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/gjzkcal/field-medic-manual/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/gjzkcal/field-medic-manual/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/gjzkcal/field-medic-manual/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/gjzkcal/field-medic-manual/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/gjzkcal/field-medic-manual/compare/v0.3.0...v0.4.0
