@@ -24,6 +24,17 @@ describe("AboutCard", () => {
     ).toBeTruthy();
   });
 
+  // 置かれる画面の見出しは h1 だけで、カードの題名（CardTitle）は見出しではない。
+  // h3 だと見出しの段が飛び、スクリーンリーダーで階層を追えない（Lighthouse の heading-order）
+  it("節の見出しを、画面の h1 の次の段（h2）にする", async () => {
+    mockIPC((cmd) => (cmd === "app_version" ? "0.0.1" : null));
+    render(<AboutCard />);
+
+    expect(await screen.findByText("v0.0.1")).toBeTruthy();
+    expect(screen.getAllByRole("heading", { level: 2 }).length).toBeGreaterThan(0);
+    expect(screen.queryAllByRole("heading", { level: 3 })).toEqual([]);
+  });
+
   it("「更新を確認」で最新なら、その旨を出す", async () => {
     mockIPC((cmd) => (cmd === "app_version" ? "0.0.1" : null));
     render(<AboutCard />);

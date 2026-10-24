@@ -122,7 +122,7 @@ export function AboutSection({
 }): JSX.Element {
   return (
     <section className="flex flex-col gap-1.5">
-      <h3 className="font-medium">{title}</h3>
+      <h2 className="font-medium">{title}</h2>
       {children}
     </section>
   );
