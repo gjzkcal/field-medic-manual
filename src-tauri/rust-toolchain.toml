@@ -3,6 +3,6 @@
 # 新しい版は Renovate が PR にし、その CI で clippy と cargo test を確かめる。手で上げるときもここだけを変える
 # （CI の最初の 1 回はキャッシュが外れる）。
 [toolchain]
-channel = "1.98.1"
+channel = "1.99.1"
 profile = "minimal"
 components = ["clippy", "rustfmt"]
