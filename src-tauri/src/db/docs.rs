@@ -788,14 +788,14 @@ mod tests {
         let id = upsert(&mut conn, &input).expect("保存できる");
 
         let doc = get(&conn, &id).expect("取得できる");
-        assert!(doc.sections[0].mods.is_empty());
+        assert_eq!(doc.sections[0].mods, Vec::<ModTarget>::new());
         assert_eq!(doc.sections[1].mods, [ModTarget::Circulation]);
         assert_eq!(doc.sections[2].without_mods, [ModTarget::Circulation]);
 
         let docs = outline(&conn).expect("見出しを取れる");
         let headings = &docs[0].headings;
         assert_eq!(headings[1].mods, [ModTarget::Circulation]);
-        assert!(headings[1].without_mods.is_empty());
+        assert_eq!(headings[1].without_mods, Vec::<ModTarget>::new());
         assert_eq!(headings[2].without_mods, [ModTarget::Circulation]);
         assert!(headings[0].has_body);
         assert!(!headings[3].has_body);

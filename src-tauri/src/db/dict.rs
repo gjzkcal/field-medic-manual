@@ -171,7 +171,7 @@ mod tests {
     fn saved_synonyms_affect_search() {
         let mut conn = test_conn();
         docs::upsert(&mut conn, &fixtures::cpr()).expect("保存できる");
-        assert!(hit_anchors(&conn, "胸骨圧迫").is_empty());
+        assert_eq!(hit_anchors(&conn, "胸骨圧迫"), Vec::<String>::new());
 
         let group = synonym_save(
             &mut conn,
@@ -187,7 +187,7 @@ mod tests {
         assert_eq!(hit_anchors(&conn, "胸骨圧迫"), ["cpr-steps"]);
 
         synonym_delete(&conn, group.id).expect("削除できる");
-        assert!(hit_anchors(&conn, "胸骨圧迫").is_empty());
+        assert_eq!(hit_anchors(&conn, "胸骨圧迫"), Vec::<String>::new());
         assert!(matches!(
             synonym_delete(&conn, group.id),
             Err(AppError::NotFound(_))
