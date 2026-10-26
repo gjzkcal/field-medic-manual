@@ -286,7 +286,7 @@ mod tests {
         let conn = test_conn();
         let table = list(&conn).expect("読める");
         assert!(table.source_hash.is_none());
-        assert!(table.rows.is_empty());
+        assert_eq!(table.rows, Vec::<QuickrefRow>::new());
     }
 
     #[test]
@@ -332,7 +332,7 @@ mod tests {
             Some("hash-3"),
             "0 件でも記録する"
         );
-        assert!(saved.rows.is_empty());
+        assert_eq!(saved.rows, Vec::<QuickrefRow>::new());
     }
 
     #[test]

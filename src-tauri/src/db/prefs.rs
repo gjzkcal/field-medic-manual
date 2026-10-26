@@ -280,7 +280,7 @@ mod tests {
             vec![document(&bleeding_id)]
         );
         assert!(!fav_toggle(&conn, &document(&bleeding_id)).expect("外せる"));
-        assert!(fav_list(&conn).expect("読める").is_empty());
+        assert_eq!(fav_list(&conn).expect("読める"), Vec::<PrefItem>::new());
     }
 
     #[test]
@@ -322,8 +322,11 @@ mod tests {
         let mut next = quickref::fixtures::table("hash-2");
         next.rows.retain(|r| r.id != "tension-ptx");
         quickref::replace_all(&mut conn, &next).expect("置き換えられる");
-        assert!(fav_list(&conn).expect("読める").is_empty());
-        assert!(history_list(&conn, 8).expect("読める").is_empty());
+        assert_eq!(fav_list(&conn).expect("読める"), Vec::<PrefItem>::new());
+        assert_eq!(
+            history_list(&conn, 8).expect("読める"),
+            Vec::<PrefItem>::new()
+        );
     }
 
     #[test]
@@ -334,7 +337,7 @@ mod tests {
         fav_toggle(&conn, &section(&bleeding_id, "no-such-anchor")).expect("入れられる");
         fav_toggle(&conn, &flow_target("no-such-flow")).expect("入れられる");
         docs::delete(&mut conn, &cpr_id).expect("消せる");
-        assert!(fav_list(&conn).expect("読める").is_empty());
+        assert_eq!(fav_list(&conn).expect("読める"), Vec::<PrefItem>::new());
         let rows: i64 = conn
             .query_row("SELECT COUNT(*) FROM favorites", [], |r| r.get(0))
             .expect("数えられる");

@@ -177,7 +177,7 @@ mod tests {
             split_terms(" 止血帯\u{3000}出血  cpr CPR "),
             ["止血帯", "出血", "cpr"]
         );
-        assert!(split_terms(" \u{3000} ").is_empty());
+        assert_eq!(split_terms(" \u{3000} "), Vec::<String>::new());
     }
 
     #[test]
