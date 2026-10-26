@@ -4541,7 +4541,7 @@ DEALINGS IN THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: bitflags 1.3.2, bitflags 2.13.2, glob 0.3.4, log 0.4.34, regex 1.13.1, regex-automata 0.4.18, regex-syntax 0.8.11
+Used by: bitflags 2.13.2, glob 0.3.4, log 0.4.34, regex 1.13.1, regex-automata 0.4.18, regex-syntax 0.8.11
 ------------------------------------------------------------------------------
 
 Copyright (c) 2014 The Rust Project Developers
@@ -5936,7 +5936,7 @@ THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: ico 0.5.0
+Used by: ico 0.6.0
 ------------------------------------------------------------------------------
 
 MIT License
@@ -6536,7 +6536,7 @@ SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: png 0.17.16, png 0.18.1
+Used by: png 0.18.1
 ------------------------------------------------------------------------------
 
 Copyright (c) 2015 nwin
@@ -7299,7 +7299,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: tauri 2.12.4, tauri-codegen 2.7.3, tauri-macros 2.7.3, tauri-runtime 2.12.2, tauri-runtime-wry 2.12.2, tauri-utils 2.10.2
+Used by: tauri 2.12.5, tauri-codegen 2.7.4, tauri-macros 2.7.4, tauri-runtime 2.12.2, tauri-runtime-wry 2.12.3, tauri-utils 2.10.2
 ------------------------------------------------------------------------------
 
 MIT License
