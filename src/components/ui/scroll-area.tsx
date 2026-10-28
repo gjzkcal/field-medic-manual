@@ -40,9 +40,10 @@ function ScrollBar({
       )}
       {...props}
     >
+      {/* つまみは地と 3:1 で見分けられるよう、区切り線（border）より濃い入力欄の枠の色にする */}
       <ScrollAreaPrimitive.Thumb
         data-slot="scroll-area-thumb"
-        className="relative flex-1 rounded-full bg-border"
+        className="relative flex-1 rounded-full bg-input"
       />
     </ScrollAreaPrimitive.Scrollbar>
   );

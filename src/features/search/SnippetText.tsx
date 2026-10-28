@@ -12,7 +12,7 @@ export function SnippetText({ snippet }: SnippetTextProps): JSX.Element {
     <span className="text-sm text-muted-foreground">
       {splitSnippet(snippet).map((part) =>
         part.hit ? (
-          <mark key={part.start} className="rounded-sm bg-primary/25 px-0.5 text-foreground">
+          <mark key={part.start} className="rounded-sm bg-search-hit px-0.5 text-foreground">
             {part.text}
           </mark>
         ) : (

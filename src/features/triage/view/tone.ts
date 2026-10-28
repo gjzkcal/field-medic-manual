@@ -17,6 +17,6 @@ export const OUTCOME_LABELS: Record<Outcome, string> = {
 
 export const OUTCOME_CLASSES: Record<Outcome, string> = {
   ok: "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
-  warn: "border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+  warn: "border-amber-500 bg-amber-500/10 text-amber-800 dark:text-amber-300",
   critical: "border-red-500 bg-red-500/10 text-red-700 dark:text-red-300",
 };

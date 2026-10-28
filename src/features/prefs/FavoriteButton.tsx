@@ -4,6 +4,7 @@ import { useState, type JSX } from "react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toggleFavorite, useIsFavorite } from "@/features/prefs/prefs-store";
+import { STAR_ON_CLASS } from "@/features/prefs/star";
 import type { PrefTarget } from "@/lib/bindings/PrefTarget";
 import { IS_WEB } from "@/lib/platform";
 import { errorMessage } from "@/lib/tauri";
@@ -45,7 +46,7 @@ function FavoriteToggle({ target, label }: FavoriteButtonProps): JSX.Element {
           />
         }
       >
-        <StarIcon className={on ? "fill-amber-400 text-amber-400" : undefined} />
+        <StarIcon className={on ? STAR_ON_CLASS : undefined} />
       </TooltipTrigger>
       <TooltipContent>
         {error === null ? text : `切り替えられませんでした: ${error}`}

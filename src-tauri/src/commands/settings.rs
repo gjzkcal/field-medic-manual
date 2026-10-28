@@ -1,9 +1,12 @@
 use serde_json::Value;
-use tauri::{State, WebviewWindow};
+use tauri::{Emitter, Manager, State, WebviewWindow};
 
 use crate::db::{Db, settings};
 use crate::error::AppError;
-use crate::window::{hotkey, overlay};
+use crate::window::{hotkey, overlay, theme};
+
+/// Rust → もう一方のウィンドウ。保存した設定のキーを知らせ、読み直させる（テーマや文字サイズをすぐ反映するため）
+pub const SETTINGS_CHANGED_EVENT: &str = "settings-changed";
 
 /// 小窓が書けるキー。小窓の画面（ビューアの表示・検索の絞り込み・クイック表の表示）が保存するものだけにする。
 /// 常に最前面で開いている小窓から、×ボタンの動作（`window`）・使っている MOD・小窓の透明度を変えられないようにするため（最小権限）。
@@ -19,6 +22,9 @@ pub async fn settings_get(db: State<'_, Db>, key: String) -> Result<Option<Value
     db.run(move |conn, _| settings::get(conn, &key)).await
 }
 
+/// 保存したら、もう一方のウィンドウ（メイン / 小窓）に知らせる。呼んだウィンドウには送らない
+/// （続けて変えたときに、知らせを受けて読み直した古い値で、画面の新しい値を戻さないため）。
+///
 /// # Errors
 ///
 /// キーが不正な場合と、呼んだウィンドウがそのキーを書けない場合は `InvalidInput`。
@@ -30,8 +36,21 @@ pub async fn settings_set(
     value: Value,
 ) -> Result<(), AppError> {
     check_writable(window.label(), &key)?;
-    db.run(move |conn, _| settings::set(conn, &key, &value))
-        .await
+    let key = key.trim().to_owned();
+    let saved_key = key.clone();
+    db.run(move |conn, _| settings::set(conn, &saved_key, &value))
+        .await?;
+    if key == theme::VIEWER_KEY {
+        theme::apply_main_background(window.app_handle()).await;
+    }
+    let other = if window.label() == overlay::MAIN {
+        overlay::OVERLAY
+    } else {
+        overlay::MAIN
+    };
+    // 届かなくても、小窓は出すたびに読み直すので保存は成功にする
+    let _ = window.emit_to(other, SETTINGS_CHANGED_EVENT, &key);
+    Ok(())
 }
 
 fn check_writable(window_label: &str, key: &str) -> Result<(), AppError> {

@@ -35,6 +35,21 @@ describe("revealMainWindow", () => {
     expect(calls).toEqual(["main_window_ready"]);
   });
 
+  it("渡したものが済むまで出さない", async () => {
+    let finish = (): void => undefined;
+    waitForFirstScreen(
+      new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
+    );
+    const revealed = revealMainWindow();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(calls).toEqual([]);
+    finish();
+    await revealed;
+    expect(calls).toEqual(["main_window_ready"]);
+  });
+
   it("フォントを読めなくても出す", async () => {
     Object.defineProperty(document, "fonts", {
       configurable: true,

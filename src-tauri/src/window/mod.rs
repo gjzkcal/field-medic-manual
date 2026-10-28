@@ -1,7 +1,8 @@
-//! 小窓・ホットキー・トレイ・閉じるボタンの扱い。
+//! 小窓・ホットキー・トレイ・閉じるボタン・背景色の扱い。
 
 pub mod hotkey;
 pub mod overlay;
+pub mod theme;
 pub mod tray;
 
 use serde_json::Value;
@@ -23,7 +24,17 @@ pub fn close_to_tray(value: Option<&Value>) -> bool {
 
 /// ウィンドウを閉じる操作を受ける。小窓は閉じずに隠し（閉じると次のホットキーで出せないため）、
 /// メインは設定に従ってトレイに格納するか、アプリを終了する。
+/// OS のテーマが変わったら、メインの背景色を合わせ直す（テーマが「システム」のとき）。
 pub fn on_window_event(window: &Window, event: &WindowEvent) {
+    if let WindowEvent::ThemeChanged(_) = event {
+        if window.label() == overlay::MAIN {
+            let app = window.app_handle().clone();
+            tauri::async_runtime::spawn(async move {
+                theme::apply_main_background(&app).await;
+            });
+        }
+        return;
+    }
     let WindowEvent::CloseRequested { api, .. } = event else {
         return;
     };

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
 import { ViewerSettingsFields } from "@/features/settings/ViewerSettingsFields";
 
-/** 読みながら文字サイズと行間を変えるためのボタン。中身は設定画面と同じ。 */
+/** 読みながらテーマ・文字サイズ・行間を変えるためのボタン。中身は設定画面と同じ。 */
 export function ViewerSettingsPopover(): JSX.Element {
   return (
     <Popover>

@@ -54,7 +54,7 @@ export function OverlaySettingsCard(): JSX.Element {
             }}
           />
           <p className="text-xs text-muted-foreground">
-            下げると後ろのゲームが透けて見えます。文字は透けません。
+            下げると後ろのゲームが透けて見えます。文字は透けませんが、後ろの明るさによっては読みにくくなるので、そのときは上げてください。
           </p>
         </div>
         <label className="flex max-w-sm items-start justify-between gap-4 text-sm">

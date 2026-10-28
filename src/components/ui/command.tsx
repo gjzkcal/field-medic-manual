@@ -65,7 +65,11 @@ function CommandInput({
 }: React.ComponentProps<typeof CommandPrimitive.Input>): React.JSX.Element {
   return (
     <div data-slot="command-input-wrapper" className="p-1 pb-0">
-      <InputGroup className="h-8! rounded-lg! border-input/30 bg-input/30 shadow-none! *:data-[slot=input-group-addon]:pl-2!">
+      {/*
+        枠は地と 3:1 で見分けられるよう不透明にする（shadcn の既定は border-input/30）。
+        ライトでは地を塗らない（塗ると案内の文字が 4.5:1 に届かない。入力欄の input.tsx と同じ）
+      */}
+      <InputGroup className="h-8! rounded-lg! border-input shadow-none! *:data-[slot=input-group-addon]:pl-2! dark:bg-input/30">
         <CommandPrimitive.Input
           data-slot="command-input"
           className={cn(

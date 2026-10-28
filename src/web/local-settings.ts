@@ -1,9 +1,7 @@
 // Web 版の設定（デスクトップ版は SQLite の settings 表）をブラウザの localStorage に置く。
 // 値は JSON にし、形は読む側（各設定の parse 関数）が確かめる。
+import { LOCAL_SETTINGS_PREFIX as KEY_PREFIX } from "@/web/storage-keys";
 import { WebAppError } from "@/web/web-error";
-
-// gjzkcal.github.io の配下はほかのリポジトリのサイトとも origin を共有するので、キーに名前を付けて分ける
-const KEY_PREFIX = "field-medic-manual:settings:";
 
 /** 保存されていなければ null。読めないとき（プライベートブラウズで禁止されているなど）も null にして既定値で動かす。 */
 export function readLocalSetting(key: string, storage: () => Storage = defaultStorage): unknown {

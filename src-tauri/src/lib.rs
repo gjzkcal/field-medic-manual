@@ -10,7 +10,7 @@ use tauri::Manager;
 use tauri_plugin_global_shortcut::ShortcutState;
 use tauri_plugin_window_state::StateFlags;
 
-use crate::window::{hotkey, overlay, tray};
+use crate::window::{hotkey, overlay, theme, tray};
 
 const MAIN_REVEAL_TIMEOUT: Duration = Duration::from_secs(5);
 
@@ -58,6 +58,8 @@ pub fn run() {
                 .plugin(tauri_plugin_updater::Builder::new().build())?;
             let data_dir = app.path().app_data_dir()?;
             app.manage(db::Db::open(&data_dir)?);
+            // メインはまだ出していない。出す前に背景色をテーマに合わせ、ライトの人に黒を見せない
+            tauri::async_runtime::block_on(theme::apply_main_background(app.handle()));
             tray::create(app)?;
             // メインは画面を描き終えてから JS が出す。JS が動かないときにウィンドウが見えないままにならないよう、
             // 待ちきれなかったら描きかけでも出す
