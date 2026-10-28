@@ -8,10 +8,15 @@ const FONT = '1em "Geist Variable"';
 const FONT_WAIT_MS = 1000;
 
 let waiting = false;
+let ready: Promise<unknown> = Promise.resolve();
 
-/** main.tsx がメインのときだけ呼ぶ。小窓やテストでは revealMainWindow が何もしないように。 */
-export function waitForFirstScreen(): void {
+/**
+ * main.tsx がメインのときだけ呼ぶ。小窓やテストでは revealMainWindow が何もしないように。
+ * before は出す前に済ませておくもの（保存したテーマの読み込み。違うテーマの画面を一瞬でも見せないため）。失敗させないこと
+ */
+export function waitForFirstScreen(before: Promise<unknown> = Promise.resolve()): void {
   waiting = true;
+  ready = before;
 }
 
 /** 最初の画面を描き終えたときに呼ぶ。待っていなければ（小窓・2 回目以降・テスト）何もしない。 */
@@ -20,9 +25,12 @@ export async function revealMainWindow(): Promise<void> {
     return;
   }
   waiting = false;
-  await Promise.race([
-    document.fonts.load(FONT).catch(() => undefined),
-    new Promise((resolve) => setTimeout(resolve, FONT_WAIT_MS)),
+  await Promise.all([
+    ready,
+    Promise.race([
+      document.fonts.load(FONT).catch(() => undefined),
+      new Promise((resolve) => setTimeout(resolve, FONT_WAIT_MS)),
+    ]),
   ]);
   try {
     await mainWindowReady();

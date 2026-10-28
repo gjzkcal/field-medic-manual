@@ -38,8 +38,8 @@ export function severityName(severity: Severity): SeverityName {
 /** バッジ・カードの縁の色（1 = 緑、2 = 黄、3 = 橙、4 = 赤） */
 export const SEVERITY_BADGE_CLASSES: Record<Severity, string> = {
   1: "border-emerald-500 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
-  2: "border-yellow-500 bg-yellow-500/15 text-yellow-700 dark:text-yellow-300",
-  3: "border-orange-500 bg-orange-500/15 text-orange-700 dark:text-orange-300",
+  2: "border-yellow-500 bg-yellow-500/15 text-yellow-800 dark:text-yellow-300",
+  3: "border-orange-500 bg-orange-500/15 text-orange-800 dark:text-orange-300",
   4: "border-red-500 bg-red-500/15 text-red-700 dark:text-red-300",
 };
 

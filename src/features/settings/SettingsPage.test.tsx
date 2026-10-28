@@ -18,7 +18,7 @@ afterEach(() => {
 });
 
 describe("SettingsPage", () => {
-  it("文字サイズと行間を変えると、見本に反映して保存する", async () => {
+  it("テーマ・文字サイズ・行間を変えると、見本に反映して保存する", async () => {
     const saved: unknown[] = [];
     mockIPC((cmd, args) => {
       if (cmd === "settings_set") {
@@ -32,13 +32,14 @@ describe("SettingsPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "XL" }));
     fireEvent.click(screen.getByRole("button", { name: "最大" }));
+    fireEvent.click(screen.getByRole("button", { name: "ダーク" }));
 
     const preview = screen.getByLabelText("表示の見本");
     expect(preview.style.fontSize).toBe("24px");
     expect(preview.style.lineHeight).toBe("2");
     await expect
       .poll(() => saved.at(-1))
-      .toEqual({ key: "viewer", value: { fontSize: "xl", lineHeight: "loose" } });
+      .toEqual({ key: "viewer", value: { fontSize: "xl", lineHeight: "loose", theme: "dark" } });
   });
 
   it("使っている MOD を切り替えると保存し、既定は Circulation と Breathing が入っている", async () => {

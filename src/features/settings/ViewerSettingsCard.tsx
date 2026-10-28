@@ -8,14 +8,15 @@ import {
 } from "@/features/settings/viewer-settings";
 import { ViewerSettingsFields } from "@/features/settings/ViewerSettingsFields";
 
-/** 本文の文字サイズと行間。デスクトップ版と Web 版の設定画面で共有する。 */
+/** テーマと本文の文字サイズ・行間。デスクトップ版と Web 版の設定画面で共有する。 */
 export function ViewerSettingsCard(): JSX.Element {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>マニュアルの表示</CardTitle>
+        <CardTitle>表示</CardTitle>
         <CardDescription>
-          本文の文字サイズと行間。マニュアルを読んでいる画面の「表示」ボタンからも変えられます。
+          テーマと、マニュアルの本文の文字サイズ・行間。マニュアルを読んでいる画面の「表示」ボタンからも変えられます。システムを選ぶと
+          OS の設定（ライト / ダーク）に合わせます。
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-wrap items-start gap-6">

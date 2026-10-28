@@ -1,4 +1,4 @@
-// ビューアの表示設定（文字サイズ・行間）。settings テーブルのキー `viewer` に保存し、再起動しても残す。
+// 表示設定（テーマ・本文の文字サイズ・行間）。settings テーブルのキー `viewer` に保存し、再起動しても残す。
 import { create } from "zustand";
 
 import { errorMessage, settingsGet, settingsSet } from "@/lib/tauri";
@@ -7,14 +7,22 @@ export const FONT_SIZES = ["s", "m", "l", "xl"] as const;
 export type FontSize = (typeof FONT_SIZES)[number];
 export const LINE_HEIGHTS = ["normal", "relaxed", "loose"] as const;
 export type LineHeight = (typeof LINE_HEIGHTS)[number];
+/** system は OS の設定（prefers-color-scheme）に合わせる */
+export const THEMES = ["light", "dark", "system"] as const;
+export type Theme = (typeof THEMES)[number];
 
 export interface ViewerSettings {
   fontSize: FontSize;
   lineHeight: LineHeight;
+  theme: Theme;
 }
 
 // ゲームの横で目を離しながら読むので、既定でも一般的な本文（16px）より大きくする
-export const DEFAULT_VIEWER_SETTINGS: ViewerSettings = { fontSize: "m", lineHeight: "relaxed" };
+export const DEFAULT_VIEWER_SETTINGS: ViewerSettings = {
+  fontSize: "m",
+  lineHeight: "relaxed",
+  theme: "system",
+};
 
 export const FONT_SIZE_PX: Record<FontSize, number> = { s: 16, m: 18, l: 20, xl: 24 };
 export const FONT_SIZE_LABEL: Record<FontSize, string> = { s: "S", m: "M", l: "L", xl: "XL" };
@@ -28,8 +36,13 @@ export const LINE_HEIGHT_LABEL: Record<LineHeight, string> = {
   relaxed: "広め",
   loose: "最大",
 };
+export const THEME_LABEL: Record<Theme, string> = {
+  light: "ライト",
+  dark: "ダーク",
+  system: "システム",
+};
 
-const SETTINGS_KEY = "viewer";
+export const VIEWER_SETTINGS_KEY = "viewer";
 
 function oneOf<T extends string>(list: readonly T[], value: unknown): T | undefined {
   return list.find((item) => item === value);
@@ -42,6 +55,7 @@ export function parseViewerSettings(value: unknown): ViewerSettings {
   return {
     fontSize: oneOf(FONT_SIZES, record["fontSize"]) ?? DEFAULT_VIEWER_SETTINGS.fontSize,
     lineHeight: oneOf(LINE_HEIGHTS, record["lineHeight"]) ?? DEFAULT_VIEWER_SETTINGS.lineHeight,
+    theme: oneOf(THEMES, record["theme"]) ?? DEFAULT_VIEWER_SETTINGS.theme,
   };
 }
 
@@ -60,7 +74,7 @@ export const useViewerSettings = create<ViewerSettingsState>()((set, get) => ({
   update: (patch) => {
     const settings = { ...get().settings, ...patch };
     set({ settings, changed: true });
-    settingsSet(SETTINGS_KEY, settings).then(
+    settingsSet(VIEWER_SETTINGS_KEY, settings).then(
       () => {
         set({ storageError: null });
       },
@@ -77,7 +91,7 @@ export const useViewerSettings = create<ViewerSettingsState>()((set, get) => ({
  */
 export async function loadViewerSettings(force = false): Promise<void> {
   try {
-    const settings = parseViewerSettings(await settingsGet(SETTINGS_KEY));
+    const settings = parseViewerSettings(await settingsGet(VIEWER_SETTINGS_KEY));
     if (force || !useViewerSettings.getState().changed) {
       useViewerSettings.setState({ settings });
     }

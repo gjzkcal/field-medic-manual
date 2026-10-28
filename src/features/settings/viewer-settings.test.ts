@@ -19,19 +19,29 @@ afterEach(() => {
 
 describe("parseViewerSettings", () => {
   it("正しい値はそのまま読む", () => {
-    expect(parseViewerSettings({ fontSize: "xl", lineHeight: "loose" })).toEqual({
+    expect(parseViewerSettings({ fontSize: "xl", lineHeight: "loose", theme: "dark" })).toEqual({
       fontSize: "xl",
       lineHeight: "loose",
+      theme: "dark",
     });
   });
 
   it("保存されていない・不正な項目だけ既定値に戻す", () => {
     expect(parseViewerSettings(null)).toEqual(DEFAULT_VIEWER_SETTINGS);
     expect(parseViewerSettings("xl")).toEqual(DEFAULT_VIEWER_SETTINGS);
-    expect(parseViewerSettings({ fontSize: "xxl", lineHeight: "loose" })).toEqual({
+    expect(parseViewerSettings({ fontSize: "xxl", lineHeight: "loose", theme: "light" })).toEqual({
       fontSize: DEFAULT_VIEWER_SETTINGS.fontSize,
       lineHeight: "loose",
+      theme: "light",
     });
+  });
+
+  it("テーマが保存されていない（前の版で保存した値）・不正ならシステム", () => {
+    expect(DEFAULT_VIEWER_SETTINGS.theme).toBe("system");
+    expect(parseViewerSettings({ fontSize: "l", lineHeight: "normal" }).theme).toBe("system");
+    expect(parseViewerSettings({ fontSize: "l", lineHeight: "normal", theme: "sepia" }).theme).toBe(
+      "system",
+    );
   });
 });
 
@@ -57,7 +67,11 @@ describe("useViewerSettings", () => {
     mockIPC((cmd) => (cmd === "settings_get" ? { fontSize: "xl", lineHeight: "normal" } : null));
 
     await loadViewerSettings();
-    expect(useViewerSettings.getState().settings).toEqual({ fontSize: "xl", lineHeight: "normal" });
+    expect(useViewerSettings.getState().settings).toEqual({
+      fontSize: "xl",
+      lineHeight: "normal",
+      theme: "system",
+    });
 
     useViewerSettings.setState({ settings: DEFAULT_VIEWER_SETTINGS, changed: true });
     await loadViewerSettings();

@@ -17,6 +17,7 @@
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
   --color-chart-5: var(--chart-5);
+  --color-search-hit: var(--search-hit);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
@@ -48,80 +49,104 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+ * 色はライト・ダークとも WCAG 2.2 AA を満たす（文字 4.5:1、入力欄の枠・フォーカスの輪・グラフの線など文字以外 3:1）。
+ * 組み合わせは src/test/contrast.test.ts で確かめているので、色を変えたらテストを回す。
+ * フォーカスの輪は部品が --ring を 50% の不透明度で描くので（ring-ring/50）、その濃さで 3:1 にしてある。
+ * --background を変えるときは src-tauri/src/window/theme.rs の色（と、ダークなら tauri.conf.json の main の
+ * backgroundColor）も sRGB に直して揃える。揃っていないと、起動して画面を描くまでの一瞬にその色が見える。
+ * 地と文字は真っ白・真っ黒にせず、わずかに暖色に寄せる（長く読んでもまぶしくないように）。彩度を上げると黄ばんで見える。
+ */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  /* グラフの線の色。この順で並べたときに、色覚の多様性を考えても隣どうしが見分けられることを確かめてある */
+  color-scheme: light;
+  --background: oklch(0.975 0.005 85);
+  --foreground: oklch(0.2 0.005 70);
+  --card: oklch(0.99 0.003 85);
+  --card-foreground: oklch(0.2 0.005 70);
+  --popover: oklch(0.99 0.003 85);
+  --popover-foreground: oklch(0.2 0.005 70);
+  --primary: oklch(0.26 0.006 70);
+  --primary-foreground: oklch(0.975 0.005 85);
+  --secondary: oklch(0.93 0.007 85);
+  --secondary-foreground: oklch(0.26 0.006 70);
+  --muted: oklch(0.93 0.007 85);
+  --muted-foreground: oklch(0.47 0.008 70);
+  --accent: oklch(0.93 0.007 85);
+  --accent-foreground: oklch(0.26 0.006 70);
+  --destructive: oklch(0.5 0.21 27);
+  --border: oklch(0.88 0.008 85);
+  --input: oklch(0.58 0.008 75);
+  --ring: oklch(0.25 0.006 70);
+  /*
+   * グラフの線の色。この順で並べたときに、色覚の多様性を考えても隣どうしが見分けられることを確かめてある。
+   * ライトはダークの 5 色を、白い地で 3:1 に届くよう少し暗くしたもの
+   */
   --chart-1: #2a78d6;
-  --chart-2: #eb6834;
-  --chart-3: #1baf7a;
-  --chart-4: #eda100;
-  --chart-5: #e87ba4;
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+  --chart-4: #b07500;
+  --chart-5: #d55181;
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: oklch(0.95 0.006 85);
+  --sidebar-foreground: oklch(0.2 0.005 70);
+  --sidebar-primary: oklch(0.26 0.006 70);
+  --sidebar-primary-foreground: oklch(0.975 0.005 85);
+  --sidebar-accent: oklch(0.91 0.008 85);
+  --sidebar-accent-foreground: oklch(0.26 0.006 70);
+  --sidebar-border: oklch(0.87 0.008 85);
+  --sidebar-ring: oklch(0.25 0.006 70);
+  /* 本文のリンク・GFM の Alert（見出しの文字と左の線）・検索語のハイライト */
+  --manual-link: oklch(0.46 0.15 245);
+  --alert-note: oklch(0.47 0.16 255);
+  --alert-tip: oklch(0.47 0.12 150);
+  --alert-important: oklch(0.47 0.2 300);
+  --alert-warning: oklch(0.49 0.12 65);
+  --alert-caution: oklch(0.49 0.19 27);
+  /* 地と 3:1 で見分けられ、上の本文も 4.5:1 で読める濃さ */
+  --search-hit: oklch(0.62 0.12 200);
 }
 
-/*
- * プレイ中に一瞬で読めるよう、shadcn 既定のダークより背景を暗く、補助テキストと枠線を明るくしている。
- * --background を変えるときは tauri.conf.json の main の backgroundColor（sRGB に直した値）も揃える。
- * 揃っていないと、起動して画面を描くまでの一瞬にその色が見える。
- */
+/* プレイ中に一瞬で読めるよう、shadcn 既定のダークより背景を暗く、補助テキストと枠線を明るくしている。ライトと同じくわずかに暖色に寄せる */
 .dark {
-  --background: oklch(0.1 0 0);
-  --foreground: oklch(0.99 0 0);
-  --card: oklch(0.16 0 0);
-  --card-foreground: oklch(0.99 0 0);
-  --popover: oklch(0.16 0 0);
-  --popover-foreground: oklch(0.99 0 0);
-  --primary: oklch(0.95 0 0);
-  --primary-foreground: oklch(0.12 0 0);
-  --secondary: oklch(0.26 0 0);
-  --secondary-foreground: oklch(0.99 0 0);
-  --muted: oklch(0.24 0 0);
-  --muted-foreground: oklch(0.8 0 0);
-  --accent: oklch(0.3 0 0);
-  --accent-foreground: oklch(0.99 0 0);
+  color-scheme: dark;
+  --background: oklch(0.12 0.003 70);
+  --foreground: oklch(0.95 0.006 85);
+  --card: oklch(0.18 0.004 70);
+  --card-foreground: oklch(0.95 0.006 85);
+  --popover: oklch(0.18 0.004 70);
+  --popover-foreground: oklch(0.95 0.006 85);
+  --primary: oklch(0.93 0.006 85);
+  --primary-foreground: oklch(0.15 0.003 70);
+  --secondary: oklch(0.28 0.004 70);
+  --secondary-foreground: oklch(0.95 0.006 85);
+  --muted: oklch(0.26 0.004 70);
+  --muted-foreground: oklch(0.8 0.006 80);
+  --accent: oklch(0.32 0.005 70);
+  --accent-foreground: oklch(0.95 0.006 85);
   --destructive: oklch(0.72 0.2 22.216);
-  --border: oklch(1 0 0 / 22%);
-  --input: oklch(1 0 0 / 28%);
-  --ring: oklch(0.75 0 0);
-  /* 同じ 5 色を暗い背景向けの明るさにしたもの（背景に対して 3:1 以上） */
+  --border: oklch(0.95 0.008 85 / 22%);
+  --input: oklch(0.95 0.008 85 / 40%);
+  --ring: oklch(0.85 0.006 85);
   --chart-1: #3987e5;
   --chart-2: #d95926;
   --chart-3: #199e70;
   --chart-4: #c98500;
   --chart-5: #d55181;
-  --sidebar: oklch(0.14 0 0);
-  --sidebar-foreground: oklch(0.99 0 0);
+  --sidebar: oklch(0.16 0.004 70);
+  --sidebar-foreground: oklch(0.95 0.006 85);
   --sidebar-primary: oklch(0.6 0.2 264.376);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.3 0 0);
-  --sidebar-accent-foreground: oklch(0.99 0 0);
-  --sidebar-border: oklch(1 0 0 / 22%);
-  --sidebar-ring: oklch(0.75 0 0);
+  --sidebar-primary-foreground: oklch(0.95 0.006 85);
+  --sidebar-accent: oklch(0.32 0.005 70);
+  --sidebar-accent-foreground: oklch(0.95 0.006 85);
+  --sidebar-border: oklch(0.95 0.008 85 / 22%);
+  --sidebar-ring: oklch(0.85 0.006 85);
+  --manual-link: oklch(0.82 0.11 235);
+  --alert-note: oklch(0.75 0.13 250);
+  --alert-tip: oklch(0.78 0.15 150);
+  --alert-important: oklch(0.75 0.15 300);
+  --alert-warning: oklch(0.84 0.15 80);
+  --alert-caution: oklch(0.72 0.19 25);
+  --search-hit: oklch(0.7 0.14 200 / 0.6);
 }
 
 @layer base {
@@ -202,7 +227,7 @@
     font-weight: 700;
   }
   .manual-body a {
-    color: oklch(0.82 0.11 235);
+    color: var(--manual-link);
     text-decoration: underline;
     text-underline-offset: 3px;
     cursor: pointer;
@@ -365,7 +390,7 @@
   }
   /*
    * 表と独立した式の横スクロールバーを、本文の縦スクロール（src/components/ui/scroll-area.tsx）と同じ見た目にする。
-   * 太さ 10px・溝は透明・つまみは --border の丸。つまみの周りの 1px の隙間は、透明な枠と background-clip で作る。
+   * 太さ 10px・溝は透明・つまみは --input の丸（地と 3:1 で見分けられる色）。つまみの周りの 1px の隙間は、透明な枠と background-clip で作る。
    * scrollbar-width / scrollbar-color を指定すると Chromium はこの擬似要素を無視するので、それらは使わない
    */
   .manual-body table::-webkit-scrollbar,
@@ -377,7 +402,7 @@
   .manual-body .manual-math::-webkit-scrollbar-thumb {
     border: 1px solid transparent;
     border-radius: 9999px;
-    background: var(--border) padding-box;
+    background: var(--input) padding-box;
   }
   .manual-body table::-webkit-scrollbar-button,
   .manual-body .manual-math::-webkit-scrollbar-button {
@@ -470,26 +495,26 @@
     font-weight: 700;
   }
   .manual-body .markdown-alert-note {
-    --alert-color: oklch(0.75 0.13 250);
+    --alert-color: var(--alert-note);
   }
   .manual-body .markdown-alert-tip {
-    --alert-color: oklch(0.78 0.15 150);
+    --alert-color: var(--alert-tip);
   }
   .manual-body .markdown-alert-important {
-    --alert-color: oklch(0.75 0.15 300);
+    --alert-color: var(--alert-important);
   }
   .manual-body .markdown-alert-warning {
-    --alert-color: oklch(0.84 0.15 80);
+    --alert-color: var(--alert-warning);
   }
   .manual-body .markdown-alert-caution {
-    --alert-color: oklch(0.72 0.19 25);
+    --alert-color: var(--alert-caution);
   }
 }
 
 /*
  * 検索結果から開いたときの検索語（CSS Custom Highlight API。src/features/search/highlight.ts）。
- * 警告の Alert（黄）と紛れないよう青緑にし、文字の色は変えずに背景だけ付ける。
+ * 警告の Alert（黄）と紛れないよう青緑にし、文字の色は変えずに背景だけ付ける。検索結果のスニペットの印（bg-search-hit）も同じ色。
  */
 ::highlight(search-hit) {
-  background-color: oklch(0.7 0.14 200 / 0.45);
+  background-color: var(--search-hit);
 }

@@ -125,6 +125,7 @@ export const overlayActivate: typeof Desktop.overlayActivate = noop;
 export const mainWindowReady: typeof Desktop.mainWindowReady = noop;
 export const onOverlayMode: typeof Desktop.onOverlayMode = noopUnlisten;
 export const onOpenHref: typeof Desktop.onOpenHref = noopUnlisten;
+export const onSettingsChanged: typeof Desktop.onSettingsChanged = noopUnlisten;
 export const currentWindowLabel: typeof Desktop.currentWindowLabel = () => "main";
 
 export const openExternal: typeof Desktop.openExternal = (url) => {

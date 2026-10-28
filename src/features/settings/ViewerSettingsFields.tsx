@@ -6,11 +6,13 @@ import {
   FONT_SIZES,
   LINE_HEIGHT_LABEL,
   LINE_HEIGHTS,
+  THEME_LABEL,
+  THEMES,
   useViewerSettings,
 } from "@/features/settings/viewer-settings";
 
 /**
- * 文字サイズと行間の操作。変えるとすぐ本文に反映し、settings テーブルに保存する。
+ * テーマ・文字サイズ・行間の操作。変えるとすぐ本文に反映し、settings テーブルに保存する。
  * 設定画面とビューアの「表示」ボタンの両方で使う（読みながらでも変えられるように）。
  */
 export function ViewerSettingsFields(): JSX.Element {
@@ -20,6 +22,27 @@ export function ViewerSettingsFields(): JSX.Element {
 
   return (
     <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-1.5">
+        <span className="text-xs text-muted-foreground">テーマ</span>
+        <ToggleGroup
+          variant="outline"
+          size="sm"
+          aria-label="テーマ"
+          value={[settings.theme]}
+          onValueChange={(values) => {
+            const next = THEMES.find((v) => values.includes(v));
+            if (next !== undefined) {
+              update({ theme: next });
+            }
+          }}
+        >
+          {THEMES.map((v) => (
+            <ToggleGroupItem key={v} value={v}>
+              {THEME_LABEL[v]}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
+      </div>
       <div className="flex flex-col gap-1.5">
         <span className="text-xs text-muted-foreground">文字サイズ</span>
         <ToggleGroup

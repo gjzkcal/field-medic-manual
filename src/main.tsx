@@ -13,10 +13,11 @@ import { syncBundledQuickref } from "@/features/quickref/sync";
 import { loadSearchFilter } from "@/features/search/search-filter";
 import { loadModSettings } from "@/features/settings/mod-settings";
 import { loadOverlaySettings } from "@/features/settings/overlay-settings";
-import { loadViewerSettings } from "@/features/settings/viewer-settings";
+import { startThemeSync } from "@/features/settings/theme";
+import { loadViewerSettings, VIEWER_SETTINGS_KEY } from "@/features/settings/viewer-settings";
 import { syncBundledFlows } from "@/features/triage/sync";
 import { checkForUpdates } from "@/features/updater/update-store";
-import { currentWindowLabel } from "@/lib/tauri";
+import { currentWindowLabel, onSettingsChanged } from "@/lib/tauri";
 
 const rootElement = document.getElementById("root");
 if (rootElement === null) {
@@ -26,11 +27,25 @@ if (rootElement === null) {
 // メインと小窓は同じ index.html を読むので、ウィンドウのラベルで描く画面を分ける
 const isOverlay = currentWindowLabel() === "overlay";
 
+// 既定（システム）のテーマを先に当て、保存した値は読み終えたときに当て直す
+startThemeSync();
+const viewerSettingsLoaded = loadViewerSettings();
+// テーマと文字サイズは、もう一方のウィンドウ（メイン / 小窓）で変えてもすぐ反映する。
+// ほかの設定は小窓を出すたびに読み直すので（OverlayApp）、ここでは追わない
+void onSettingsChanged((key) => {
+  if (key === VIEWER_SETTINGS_KEY) {
+    void loadViewerSettings(true);
+  }
+}).catch(() => {
+  // 受け取れなくても、小窓を出し直せば読み直す
+});
+
 if (isOverlay) {
   // ウィンドウは透明にしてあり、背景は小窓の画面が不透明度を付けて塗る
   document.documentElement.classList.add("overlay-window");
 } else {
-  waitForFirstScreen();
+  // 保存したテーマで描いてから出す（違うテーマの画面を一瞬でも見せない）
+  waitForFirstScreen(viewerSettingsLoaded);
   // 画面の表示を待たせないよう、同梱した原稿の同期は描画と並行して行う。結果は useContentSync で画面に出す。
   // 同期はメインだけで行う（2 つのウィンドウが同時に同じ原稿を書き込まないように）
   void syncBundledManuals();
@@ -42,8 +57,7 @@ if (isOverlay) {
     void checkForUpdates({ manual: false });
   }
 }
-// 表示設定も描画を待たせずに読む。読み終わるまでの一瞬は既定の文字サイズで表示される
-void loadViewerSettings();
+// ほかの設定も描画を待たせずに読む。読み終わるまでの一瞬は既定値で表示される
 void loadSearchFilter();
 void loadOverlaySettings();
 void loadModSettings();

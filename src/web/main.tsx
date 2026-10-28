@@ -8,6 +8,7 @@ import { createRoot } from "react-dom/client";
 import { loadQuickrefSettings } from "@/features/quickref/quickref-settings";
 import { loadSearchFilter } from "@/features/search/search-filter";
 import { loadModSettings } from "@/features/settings/mod-settings";
+import { startThemeSync } from "@/features/settings/theme";
 import { loadViewerSettings } from "@/features/settings/viewer-settings";
 import { isFramed } from "@/web/framed";
 import { FramedNotice } from "@/web/FramedNotice";
@@ -17,6 +18,9 @@ const rootElement = document.getElementById("root");
 if (rootElement === null) {
   throw new Error("#root が見つかりません。index.html を確認してください。");
 }
+
+// <head> のスクリプト（theme-boot.ts）が付けたクラスを、設定を読んだ後も同じ規則で保つ
+startThemeSync();
 
 const framed = isFramed();
 if (!framed) {

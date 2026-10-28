@@ -187,9 +187,10 @@ export async function mainWindowReady(): Promise<void> {
   return invoke<undefined>("main_window_ready");
 }
 
-/** Rust と取り決めたイベント名（src-tauri/src/window/overlay.rs）。 */
+/** Rust と取り決めたイベント名（src-tauri/src/window/overlay.rs・src-tauri/src/commands/settings.rs）。 */
 const OVERLAY_MODE_EVENT = "overlay-mode";
 const OPEN_HREF_EVENT = "open-href";
+const SETTINGS_CHANGED_EVENT = "settings-changed";
 
 /** 小窓が呼び出されたとき（ホットキーやトレイ）。戻り値の関数を呼ぶと購読を解除する。 */
 export async function onOverlayMode(handler: (mode: OverlayMode) => void): Promise<() => void> {
@@ -201,6 +202,13 @@ export async function onOverlayMode(handler: (mode: OverlayMode) => void): Promi
 /** 小窓の「メインで開く」やトレイの「設定」で、メインウィンドウに開かせる画面。 */
 export async function onOpenHref(handler: (href: string) => void): Promise<() => void> {
   return listen<string>(OPEN_HREF_EVENT, (event) => {
+    handler(event.payload);
+  });
+}
+
+/** ほかのウィンドウで設定を保存したとき。payload は設定のキー。 */
+export async function onSettingsChanged(handler: (key: string) => void): Promise<() => void> {
+  return listen<string>(SETTINGS_CHANGED_EVENT, (event) => {
     handler(event.payload);
   });
 }

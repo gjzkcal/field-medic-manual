@@ -23,6 +23,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
+import { STAR_ON_CLASS } from "@/features/prefs/star";
 import { hitKey, searchKind } from "@/features/search/kinds";
 import { PaletteOpenContext } from "@/features/search/palette-open";
 import { toQueryFilter, useSearchFilter } from "@/features/search/search-filter";
@@ -375,7 +376,7 @@ function HitItem({
             <StarIcon
               role="img"
               aria-label="お気に入り"
-              className="size-3.5 shrink-0 fill-amber-400 text-amber-400"
+              className={`size-3.5 shrink-0 ${STAR_ON_CLASS}`}
             />
           )}
           {badge !== null && (
