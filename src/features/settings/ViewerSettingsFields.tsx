@@ -87,7 +87,9 @@ export function ViewerSettingsFields(): JSX.Element {
         </ToggleGroup>
       </div>
       {storageError !== null && (
-        <p className="text-xs text-destructive">設定を保存できませんでした: {storageError}</p>
+        <p role="alert" className="text-xs text-destructive">
+          設定を保存できませんでした: {storageError}
+        </p>
       )}
     </div>
   );

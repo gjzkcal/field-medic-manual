@@ -164,6 +164,22 @@
   html {
     @apply font-sans;
   }
+  /* 画面を移ったときや目次で跳んだときに、スクリプトでフォーカスを置く見出しと本文の領域。
+     押せる部品ではなく Tab でも止まらないので、輪は出さない（読み上げとキーボードの起点にするだけ） */
+  :is(h1, h2, h3, h4, h5, h6, main)[tabindex="-1"]:focus {
+    outline: none;
+  }
+  /* OS の「アニメーション効果」をオフにしている人には、開閉やスライドの動きを止める（結果だけを出す） */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 /*
@@ -441,6 +457,11 @@
     background: var(--muted);
     font-weight: 700;
   }
+  /* 本文の行の先頭のセルは、読み上げのために行の見出し（th）にしてある。見た目は普通のセルのままにする */
+  .manual-body tbody th[scope="row"] {
+    background: transparent;
+    font-weight: inherit;
+  }
   /*
    * 横にスクロールしても行の名前が見えるよう、先頭の列を固定する。
    * 本文が狭いと固定した列が画面の大半を覆うので、本文の幅が 20em（文字の大きさに比例）以上のときだけにする
@@ -451,7 +472,7 @@
       left: 0;
       border-right-width: 2px;
     }
-    .manual-body td:first-child {
+    .manual-body :is(td, tbody th[scope="row"]):first-child {
       background: var(--background);
     }
   }
@@ -471,6 +492,12 @@
     border-left: 4px solid var(--border);
     padding: 0.2em 0 0.2em 1em;
     color: var(--muted-foreground);
+  }
+  /* アプリの外で開くリンクの印。読み上げには SectionBody が文で足すので、記号は読ませない（/ "" は代わりの文が空） */
+  .manual-body .manual-external-link::after {
+    content: "↗" / "";
+    margin-left: 0.1em;
+    font-size: 0.85em;
   }
   .manual-body .manual-missing-image {
     display: inline-block;

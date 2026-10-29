@@ -1,6 +1,6 @@
 import { PauseIcon, PlayIcon, RotateCcwIcon, TimerIcon } from "lucide-react";
 import { cn } from "cn";
-import { useEffect, useEffectEvent, useState, type JSX } from "react";
+import { useEffect, useEffectEvent, useRef, useState, type JSX } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
@@ -24,8 +24,17 @@ function formatSeconds(totalSeconds: number): string {
  * action の timerSec のカウントダウン（CPR のサイクルなど）。勝手に動き出さず、Space か「開始」で始める
  * （処置の準備をしている間に時間が減っていかないため）。ノードが変わったら呼び出し側が key で作り直す。
  */
-export function CountdownTimer({ seconds }: { seconds: number }): JSX.Element {
+export function CountdownTimer({
+  seconds,
+  spaceKey,
+}: {
+  seconds: number;
+  /** Space で開始・一時停止できるか（設定のトリアージのキー操作） */
+  spaceKey: boolean;
+}): JSX.Element {
   const [timer, setTimer] = useState<TimerState>({ status: "idle" });
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const resetRef = useRef<HTMLButtonElement>(null);
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -48,6 +57,14 @@ export function CountdownTimer({ seconds }: { seconds: number }): JSX.Element {
         ? timer.remainingMs
         : totalMs;
   const finished = remainingMs === 0;
+  const timeUp = finished && timer.status !== "idle";
+
+  // 時間が来ると「開始」は押せなくなる。そこにフォーカスがあると body に落ちるので、次に押す「リセット」へ移す
+  useEffect(() => {
+    if (timeUp && document.activeElement === toggleRef.current) {
+      resetRef.current?.focus();
+    }
+  }, [timeUp]);
 
   function toggle(): void {
     const current = Date.now();
@@ -71,6 +88,7 @@ export function CountdownTimer({ seconds }: { seconds: number }): JSX.Element {
   // Space で開始・一時停止する（片手で操作できるように）。ボタンの上の Space はそのボタンが受ける
   const handleKeyDown = useEffectEvent((event: KeyboardEvent) => {
     if (
+      !spaceKey ||
       event.key !== " " ||
       event.defaultPrevented ||
       event.isComposing ||
@@ -98,32 +116,29 @@ export function CountdownTimer({ seconds }: { seconds: number }): JSX.Element {
     <div
       className={cn(
         "flex flex-wrap items-center gap-3 rounded-lg border p-3",
-        finished && timer.status !== "idle" && "border-destructive bg-destructive/10",
+        timeUp && "border-destructive bg-destructive/10",
       )}
     >
       <TimerIcon aria-hidden className="size-5 text-muted-foreground" />
       <span
         role="timer"
         aria-live="off"
-        className={cn(
-          "text-3xl font-semibold tabular-nums",
-          finished && timer.status !== "idle" && "text-destructive",
-        )}
+        className={cn("text-3xl font-semibold tabular-nums", timeUp && "text-destructive")}
       >
         {formatSeconds(Math.ceil(remainingMs / 1000))}
       </span>
-      {finished && timer.status !== "idle" && (
+      {timeUp && (
         <span className="font-semibold text-destructive" role="status">
           時間です
         </span>
       )}
       <div className="ml-auto flex gap-2">
-        <Button variant="outline" onClick={toggle} disabled={finished && timer.status !== "idle"}>
+        <Button ref={toggleRef} variant="outline" onClick={toggle} disabled={timeUp}>
           {running ? <PauseIcon /> : <PlayIcon />}
           {running ? "一時停止" : timer.status === "paused" ? "再開" : "開始"}
-          <Kbd>Space</Kbd>
+          {spaceKey && <Kbd>Space</Kbd>}
         </Button>
-        <Button variant="ghost" onClick={reset} disabled={timer.status === "idle"}>
+        <Button ref={resetRef} variant="ghost" onClick={reset} disabled={timer.status === "idle"}>
           <RotateCcwIcon />
           リセット
         </Button>

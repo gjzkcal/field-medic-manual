@@ -38,23 +38,37 @@ export function ModSectionsBar({
 
 interface SectionLabelProps {
   anchor: string;
+  /** 元の見出しのレベル（1〜6） */
+  level: number;
   conditions: ModConditions;
   register: (anchor: string, el: HTMLElement | null) => (() => void) | undefined;
 }
 
+const HEADING_TAGS = ["h1", "h2", "h3", "h4", "h5", "h6"] as const;
+
 /**
  * 絞り込み中に「〜を入れている場合」の見出しの代わりに出すラベル。
- * アンカーの移り先としてはそのまま使うので、見出しと同じく位置を登録する
+ * アンカーの移り先としてはそのまま使うので、見出しと同じく位置を登録する。
+ * 見た目は小さなラベルにするが、節の区切りであることは変わらないので、元と同じレベルの見出しのままにする
+ * （見出しで節をたどる読み上げの操作から抜けないように。WCAG 1.3.1）
  */
-export function SectionLabel({ anchor, conditions, register }: SectionLabelProps): JSX.Element {
+export function SectionLabel({
+  anchor,
+  level,
+  conditions,
+  register,
+}: SectionLabelProps): JSX.Element {
+  const Tag = HEADING_TAGS[Math.min(Math.max(level, 1), HEADING_TAGS.length) - 1] ?? "h6";
   return (
-    <div
-      ref={(el: HTMLDivElement | null) => register(anchor, el)}
+    <Tag
+      ref={(el: HTMLHeadingElement | null) => register(anchor, el)}
       data-anchor={anchor}
-      className="mt-6 mb-2 leading-normal"
+      tabIndex={-1}
+      // 本文の見出しの大きさ・罫線（index.css の .manual-body h2 など）を打ち消して、ラベルの見た目にする
+      className="mt-6 mb-2 border-0 p-0 text-base leading-normal font-normal outline-none"
     >
       <Badge variant="outline">{conditionLabel(conditions)}</Badge>
-    </div>
+    </Tag>
   );
 }
 
@@ -62,7 +76,8 @@ export function SectionLabel({ anchor, conditions, register }: SectionLabelProps
 export function HiddenSectionNotice({ conditions }: { conditions: ModConditions }): JSX.Element {
   const label = conditionLabel(conditions);
   return (
-    <Alert className="mb-4 text-sm leading-normal">
+    // 開いたときから出ている印。role=alert だと開くたびに読み上げを遮るので、補足（note）にする
+    <Alert role="note" className="mb-4 text-sm leading-normal">
       <EyeOffIcon />
       <AlertDescription>
         今の MOD の設定では表示しない組み合わせです{label === null ? "" : `（${label}）`}。

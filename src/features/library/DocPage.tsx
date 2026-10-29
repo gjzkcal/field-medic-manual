@@ -11,7 +11,9 @@ import {
 } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 
-import { Button } from "@/components/ui/button";
+import { LinkButton } from "@/components/LinkButton";
+import { usePageTitle } from "@/app/use-page-title";
+import { focusTarget } from "@/app/use-route-focus";
 import {
   Empty,
   EmptyContent,
@@ -27,6 +29,7 @@ import { AssetUrlCache } from "@/features/library/viewer/asset-urls";
 import { DocFooter } from "@/features/library/viewer/DocFooter";
 import { DocTitleMeta } from "@/features/library/viewer/DocTitleMeta";
 import { DocToc } from "@/features/library/viewer/DocToc";
+import { DocTocSheet } from "@/features/library/viewer/DocTocSheet";
 import { DocTree } from "@/features/library/viewer/DocTree";
 import { MetaBar } from "@/features/library/viewer/MetaBar";
 import {
@@ -66,6 +69,15 @@ export function DocPage(): JSX.Element {
   const load = useDoc(id);
   const outline = useOutline();
   const now = useNow();
+  usePageTitle(
+    load.status === "ready"
+      ? load.doc.title
+      : load.status === "loading"
+        ? null
+        : load.status === "not_found"
+          ? "マニュアルが見つかりません"
+          : "マニュアルを読み込めませんでした",
+  );
 
   switch (load.status) {
     case "loading":
@@ -98,9 +110,9 @@ function DocMessage({ title, description }: { title: string; description: string
           <EmptyDescription>{description}</EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
-          <Button variant="outline" nativeButton={false} render={<Link to="/library" />}>
+          <LinkButton variant="outline" render={<Link to="/library" />}>
             ライブラリへ戻る
-          </Button>
+          </LinkButton>
         </EmptyContent>
       </Empty>
     </div>
@@ -219,6 +231,19 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
     recordOpen();
   }, [doc.id]);
 
+  // 画面を移ったときは、読み込みの途中で h1 がまだ無いので、枠（useRouteFocus）が本文の領域にフォーカスを置く。
+  // 読み込めたら文書の表題へ移し直す（アンカーで開いたときは、下の処理がその見出しへ移す）
+  const focusTitle = useEffectEvent(() => {
+    const main = articleRef.current?.closest("main") ?? null;
+    const title = articleRef.current?.querySelector<HTMLElement>("h1") ?? null;
+    if (hashAnchor === "" && main !== null && document.activeElement === main && title !== null) {
+      focusTarget(title);
+    }
+  });
+  useEffect(() => {
+    focusTitle();
+  }, [doc.id]);
+
   const activeAnchor = useActiveAnchor(
     viewport,
     anchors,
@@ -247,6 +272,8 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
     if (heading === undefined) {
       return undefined;
     }
+    // 目次やリンクで跳んだ先から読み進められるよう、見出しへフォーカスも移す（押したリンクに残ると、Tab で元の場所に戻る）
+    focusTarget(heading);
     // 画像は後から読み込まれて本文が伸びる。スクロールの上限で途中に止まったままにならないよう、
     // 利用者が自分でスクロールするまで（長くても少しの間）本文の高さが変わるたびに合わせ直す
     const observer = new ResizeObserver(scroll);
@@ -333,7 +360,8 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
   return (
     // ツリーと目次は、ウィンドウではなくこの領域の幅で出し分ける（アプリのサイドバーの開閉で幅が変わるため）
     <div className="@container flex h-full min-h-0">
-      <aside className="hidden w-60 shrink-0 border-r @5xl:block">
+      {/* 中の nav が名前を持つので、ここは領域にしない（名前のない complementary が 2 つ並ぶのを避ける） */}
+      <div className="hidden w-60 shrink-0 border-r @5xl:block">
         <ScrollArea className="h-full">
           <DocTree
             outline={outline}
@@ -342,11 +370,16 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
             currentVisible={tocAnchors}
           />
         </ScrollArea>
-      </aside>
+      </div>
       <div className="flex min-w-0 flex-1 flex-col">
         <MetaBar
           docId={doc.id}
           title={doc.title}
+          toc={
+            tocHeadings.length > 0 && (
+              <DocTocSheet docId={doc.id} headings={tocHeadings} activeAnchor={activeAnchor} />
+            )
+          }
           notice={notice}
           onDismissNotice={() => {
             setNotice(null);
@@ -355,7 +388,7 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
         <ScrollArea ref={setScrollRoot} className="min-h-0 flex-1">
           <article
             ref={articleRef}
-            className="manual-body mx-auto max-w-3xl px-8 py-6"
+            className="manual-body mx-auto max-w-3xl px-4 py-6 @lg:px-8"
             style={{
               fontSize: `${String(FONT_SIZE_PX[settings.fontSize])}px`,
               lineHeight: LINE_HEIGHT_VALUE[settings.lineHeight],
@@ -363,12 +396,15 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
             onClick={handleBodyClick}
             onAuxClick={handleBodyAuxClick}
           >
+            {/* 原稿に h1 が無いときも、画面の見出しは文書の表題にする（上の帯の表題は見出しではない） */}
+            {titleSectionId === null && <h1 className="sr-only">{doc.title}</h1>}
             {titleSectionId === null && titleBlock}
             {shownSections.map((section) => (
               <section key={section.id}>
                 {section.level > 0 && visibility.labeled.has(section.anchor) && (
                   <SectionLabel
                     anchor={section.anchor}
+                    level={section.level}
                     conditions={section}
                     register={registerHeading}
                   />
@@ -398,11 +434,11 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
           </article>
         </ScrollArea>
       </div>
-      <aside className="hidden w-56 shrink-0 border-l @3xl:block">
+      <div className="hidden w-56 shrink-0 border-l @3xl:block">
         <ScrollArea className="h-full">
           <DocToc docId={doc.id} headings={tocHeadings} activeAnchor={activeAnchor} />
         </ScrollArea>
-      </aside>
+      </div>
     </div>
   );
 }
@@ -417,7 +453,12 @@ interface SectionHeadingProps {
 function SectionHeading({ level, anchor, title, register }: SectionHeadingProps): JSX.Element {
   const Tag = HEADING_TAGS[Math.min(Math.max(level, 1), HEADING_TAGS.length) - 1] ?? "h6";
   return (
-    <Tag ref={(el: HTMLHeadingElement | null) => register(anchor, el)} data-anchor={anchor}>
+    <Tag
+      ref={(el: HTMLHeadingElement | null) => register(anchor, el)}
+      data-anchor={anchor}
+      tabIndex={-1}
+      className="outline-none"
+    >
       {title}
     </Tag>
   );

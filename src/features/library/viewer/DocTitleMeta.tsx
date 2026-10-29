@@ -29,7 +29,8 @@ export function DocTitleMeta({ meta, now }: DocTitleMetaProps): JSX.Element {
         <DocTags tags={meta.tags} />
       </div>
       {isStale(verifiedAt, now) && (
-        <Alert variant="destructive">
+        // 開いたときから出ている注意書き。role=alert だと開くたびに読み上げを遮るので、補足（note）にする
+        <Alert variant="destructive" role="note">
           <TriangleAlertIcon />
           <AlertTitle>古い内容の可能性があります</AlertTitle>
           <AlertDescription>

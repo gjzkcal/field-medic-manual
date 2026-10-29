@@ -81,7 +81,11 @@ export function acceleratorFromKey(input: KeyInput): RecordResult {
   }
   const key = keyName(input.code);
   if (key === null) {
-    return { kind: "invalid", reason: "このキーはホットキーに使えません" };
+    return {
+      kind: "invalid",
+      reason:
+        "このキーはホットキーに使えません。英字・数字・F1〜F24・記号・矢印・Space などのキーを使ってください",
+    };
   }
   if (!input.ctrlKey && !input.altKey && !input.metaKey) {
     return {

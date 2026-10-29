@@ -25,7 +25,11 @@ export function SyncStatusCard({
 }: SyncStatusCardProps): JSX.Element | null {
   const state = store((s) => s.state);
   if (state.status === "syncing" && syncingText !== undefined) {
-    return <p className="text-sm text-muted-foreground">{syncingText}</p>;
+    return (
+      <p role="status" className="text-sm text-muted-foreground">
+        {syncingText}
+      </p>
+    );
   }
   if (state.status === "error") {
     return <IssueCard title={errorTitle} detail={state.message} issues={[]} />;

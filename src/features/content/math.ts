@@ -66,6 +66,9 @@ function wrappableBox(math: Element): HTMLElement {
 
   const box = doc.createElement("div");
   box.className = "manual-math";
+  // 塊ごとの <math> に分けると、読み上げでは 1 つの式が別々の式に聞こえるので、式全体を 1 行の文字列で名前にする
+  box.setAttribute("role", "group");
+  box.setAttribute("aria-label", mathToPlainText(math));
   chunks.forEach((chunk, index) => {
     if (index > 0) {
       // flex の箱の中の空白は表示されない。検索用の本文で、塊の境目の語がつながらないようにするためのもの

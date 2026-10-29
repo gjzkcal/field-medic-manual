@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { PendingUpdate } from "@/lib/tauri";
+import { axeViolations } from "@/test/axe";
 
 import { UpdateDialog } from "./UpdateDialog";
 import { useUpdateStore } from "./update-store";
@@ -85,6 +86,30 @@ describe("UpdateDialog", () => {
     expect(screen.getByText("5.0 / 10.0 MB")).toBeTruthy();
     expect(screen.getByRole("button", { name: "今すぐ更新" }).hasAttribute("disabled")).toBe(true);
     expect(screen.getByRole("button", { name: "後で" }).hasAttribute("disabled")).toBe(true);
+  });
+
+  it("お知らせとダウンロード中の画面で、axe の違反がなく、ダウンロード中は進み具合へフォーカスを移す", async () => {
+    useUpdateStore.setState({
+      status: { kind: "available", update: fakeUpdate(), installError: "署名が合いません" },
+      dialogOpen: true,
+    });
+    const { rerender } = render(<UpdateDialog />);
+    await screen.findByRole("dialog");
+    expect(await axeViolations()).toEqual([]);
+
+    useUpdateStore.setState({
+      status: {
+        kind: "installing",
+        update: fakeUpdate(),
+        progress: { downloaded: 5 * 1024 * 1024, total: 10 * 1024 * 1024 },
+      },
+    });
+    rerender(<UpdateDialog />);
+    const status = await screen.findByRole("status");
+    expect(status.textContent).toBe("更新をダウンロードしています");
+    // 押した「今すぐ更新」は押せなくなるので、フォーカスをダイアログの中の進み具合へ移す
+    expect(document.activeElement).toBe(status.parentElement);
+    expect(await axeViolations()).toEqual([]);
   });
 
   it("失敗したときは理由を出す", () => {

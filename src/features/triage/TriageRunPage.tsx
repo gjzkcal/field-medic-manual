@@ -2,8 +2,9 @@ import { ArrowLeftIcon } from "lucide-react";
 import { useEffect, type JSX } from "react";
 import { Link, useParams } from "react-router";
 
+import { LinkButton } from "@/components/LinkButton";
+import { usePageTitle } from "@/app/use-page-title";
 import { IssueCard } from "@/components/IssueCard";
-import { Button } from "@/components/ui/button";
 import {
   Empty,
   EmptyContent,
@@ -22,6 +23,7 @@ export function TriageRunPage(): JSX.Element {
   const load = useFlowTree(id);
   const syncing = useFlowSync((s) => s.state.status === "syncing" || s.state.status === "idle");
   const ready = load.status === "ready";
+  usePageTitle(ready ? load.root.title : "トリアージ");
 
   // 開けたフローを履歴に積む。Ctrl+Shift+T で「直近のフロー」を開くのにも使う
   useEffect(() => {
@@ -62,9 +64,9 @@ export function TriageRunPage(): JSX.Element {
 
 function BackToList(): JSX.Element {
   return (
-    <Button variant="outline" nativeButton={false} render={<Link to="/triage" />} className="w-fit">
+    <LinkButton variant="outline" render={<Link to="/triage" />} className="w-fit">
       <ArrowLeftIcon />
       フローの一覧へ
-    </Button>
+    </LinkButton>
   );
 }

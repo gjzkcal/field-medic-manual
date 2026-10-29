@@ -2,11 +2,14 @@ import { ChevronRightIcon } from "lucide-react";
 import { useId, useMemo, useState, type JSX } from "react";
 import { Link } from "react-router";
 
+import { LinkButton } from "@/components/LinkButton";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { categoryLabel, groupByCategory } from "@/features/library/doc-category";
 import { docHref } from "@/features/library/link";
 import { headingIndent } from "@/features/library/viewer/heading-indent";
+import { nestHeadings } from "@/features/library/viewer/heading-tree";
+import { HeadingList } from "@/features/library/viewer/HeadingList";
 import { sectionVisibility } from "@/features/library/viewer/section-visibility";
 import type { ActiveMods } from "@/features/triage/runner";
 import type { DocOutline } from "@/lib/bindings/DocOutline";
@@ -110,17 +113,17 @@ function DocTreeItem({
             <Button
               variant="ghost"
               size="icon-sm"
-              aria-label={`${doc.title}の見出しを${open ? "閉じる" : "開く"}`}
+              // 開閉は aria-expanded で伝わるので、名前は変えない（変えると状態が二重に読まれる）
+              aria-label={`${doc.title}の見出し`}
               disabled={headings.length === 0}
             />
           }
         >
           <ChevronRightIcon className={cn("transition-transform", open && "rotate-90")} />
         </CollapsibleTrigger>
-        <Button
+        <LinkButton
           variant="ghost"
           size="sm"
-          nativeButton={false}
           render={<Link to={docHref(doc.id, null)} />}
           aria-current={current ? "page" : undefined}
           className={cn(
@@ -129,27 +132,28 @@ function DocTreeItem({
           )}
         >
           {doc.title}
-        </Button>
+        </LinkButton>
       </div>
       <CollapsibleContent>
-        <ul className="ml-3.5 flex flex-col border-l py-0.5">
-          {headings.map((h) => (
-            <li key={h.anchor}>
-              <Button
-                variant="ghost"
-                size="sm"
-                nativeButton={false}
-                render={<Link to={docHref(doc.id, h.anchor)} />}
-                className={cn(
-                  "h-auto min-h-7 w-full justify-start rounded-l-none py-1 text-left font-normal whitespace-normal text-muted-foreground hover:text-foreground",
-                  headingIndent(h.level),
-                )}
-              >
-                {h.title}
-              </Button>
-            </li>
-          ))}
-        </ul>
+        <HeadingList
+          nodes={nestHeadings(headings)}
+          itemKey={(h) => h.anchor}
+          className="ml-3.5 flex flex-col border-l py-0.5"
+          nestedClassName="flex flex-col"
+          renderItem={(h) => (
+            <LinkButton
+              variant="ghost"
+              size="sm"
+              render={<Link to={docHref(doc.id, h.anchor)} />}
+              className={cn(
+                "h-auto min-h-7 w-full justify-start rounded-l-none py-1 text-left font-normal whitespace-normal text-muted-foreground hover:text-foreground",
+                headingIndent(h.level),
+              )}
+            >
+              {h.title}
+            </LinkButton>
+          )}
+        />
       </CollapsibleContent>
     </Collapsible>
   );

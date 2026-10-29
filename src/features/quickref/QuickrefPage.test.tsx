@@ -8,6 +8,7 @@ import { QuickrefPage } from "@/features/quickref/QuickrefPage";
 import { DEFAULT_MOD_SETTINGS, useModSettings } from "@/features/settings/mod-settings";
 import type { QuickrefRow } from "@/lib/bindings/QuickrefRow";
 import type { QuickrefTable } from "@/lib/bindings/QuickrefTable";
+import { axeViolations } from "@/test/axe";
 
 function row(id: string, extra: Partial<QuickrefRow>): QuickrefRow {
   return {
@@ -138,16 +139,18 @@ describe("QuickrefPage", () => {
     expect(router.state.location.search).toBe("?sev=4");
   });
 
-  it("カテゴリのタブとキーワードで絞る", async () => {
+  it("分類のボタンとキーワードで絞り、残った行の数を読み上げる", async () => {
     renderPage();
     await waitFor(() => {
       expect(cards()).toHaveLength(4);
     });
-    fireEvent.click(screen.getByRole("tab", { name: "意識" }));
+    const categories = screen.getByRole("group", { name: "分類" });
+    fireEvent.click(within(categories).getByRole("button", { name: "意識" }));
     await waitFor(() => {
       expect(symptoms()).toEqual(["意識不明"]);
     });
-    fireEvent.click(screen.getByRole("tab", { name: "すべて" }));
+    expect(screen.getByRole("status").textContent).toBe("1 行");
+    fireEvent.click(within(categories).getByRole("button", { name: "すべて" }));
     fireEvent.change(screen.getByRole("textbox", { name: "キーワードで絞り込む" }), {
       target: { value: "ncd" },
     });
@@ -181,5 +184,17 @@ describe("QuickrefPage", () => {
       expect(history).toEqual([{ target: { kind: "quickref", rowId: "wake-core" } }]);
     });
     expect(scrollIntoView).toHaveBeenCalled();
+  });
+
+  it("カードと表の表示で、axe の違反がない（WCAG 2.2 A・AA）", async () => {
+    renderPage();
+    await waitFor(() => {
+      expect(cards()).toHaveLength(4);
+    });
+    expect(await axeViolations()).toEqual([]);
+
+    fireEvent.click(screen.getByRole("button", { name: "表" }));
+    await screen.findByRole("table", { name: "症状ごとの処置" });
+    expect(await axeViolations()).toEqual([]);
   });
 });

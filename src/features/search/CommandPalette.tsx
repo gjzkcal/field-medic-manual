@@ -6,6 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type FocusEvent,
   type JSX,
   type KeyboardEvent,
   type ReactNode,
@@ -15,13 +16,7 @@ import {
 import { StarIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import {
-  Command,
-  CommandEmpty,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+import { Command, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { STAR_ON_CLASS } from "@/features/prefs/star";
 import { hitKey, searchKind } from "@/features/search/kinds";
@@ -58,8 +53,8 @@ export interface CommandPaletteProps {
   onQueryChange?: (query: string) => void;
   /** 結果を選んだとき。開く先の URL を渡すので、置き場所（上部の検索欄、小窓）が遷移する */
   onSelect: (href: string) => void;
-  /** Ctrl+Enter。お気に入りの切り替え。省略時は何もしない */
-  onFavorite?: (hit: SearchHit) => void;
+  /** Ctrl+Enter。お気に入りの切り替え（切り替えた後に入っていれば true）。省略時は何もしない */
+  onFavorite?: (hit: SearchHit) => Promise<boolean>;
   /** 結果に星を付けるか（お気に入りに入っているもの） */
   isFavorite?: (hit: SearchHit) => boolean;
   /**
@@ -95,6 +90,8 @@ export function CommandPalette({
   const setQuery = onQueryChange ?? setOwnQuery;
   const [result, setResult] = useState<ResultState>({ status: "idle" });
   const [selected, setSelected] = useState("");
+  // Ctrl+Enter の結果。画面では星が変わるだけなので、読み上げでも伝える（失敗も含めて）
+  const [favoriteNotice, setFavoriteNotice] = useState("");
   const filter = useSearchFilter((s) => s.filter);
   const queryFilter = useMemo(() => toQueryFilter(filter), [filter]);
   const trimmed = query.trim();
@@ -166,11 +163,6 @@ export function CommandPalette({
     }
   }, [dropdown, showList, input]);
 
-  function collapse(): void {
-    setExpanded(false);
-    input.current?.blur();
-  }
-
   // 空のときの中身にコンテキストで渡すので、描画のたびに作り直さない（中身の再描画を防ぐため）
   const open = useCallback(
     (href: string): void => {
@@ -192,6 +184,17 @@ export function CommandPalette({
     open(searchKind(hit.kind).href(hit));
   }
 
+  // Tab などでパレットの外へフォーカスが出たら閉じる。開いたままだと、重ねて出した一覧がフォーカスの移った先を隠す（WCAG 2.4.11）
+  function handleBlur(event: FocusEvent<HTMLDivElement>): void {
+    const next = event.relatedTarget;
+    if (!dropdown || !(next instanceof Element)) {
+      return;
+    }
+    if (rootRef.current?.contains(next) !== true && next.closest(POPUP_SELECTOR) === null) {
+      setExpanded(false);
+    }
+  }
+
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>): void {
     // ポップオーバーの中のキーも React の木を伝ってここへ届く。一覧の操作や閉じる処理は、パレット本体のキーだけで行う
     if (!(event.target instanceof Node) || rootRef.current?.contains(event.target) !== true) {
@@ -199,7 +202,12 @@ export function CommandPalette({
     }
     if (event.key === "Escape" && dropdown) {
       event.preventDefault();
-      collapse();
+      // 1 回目は一覧だけを閉じ、入力欄に残る（打ち直せるように）。閉じた後の Esc でフォーカスを本文へ返す
+      if (expanded) {
+        setExpanded(false);
+      } else {
+        input.current?.blur();
+      }
       return;
     }
     if (event.key !== "Enter" || !(event.ctrlKey || event.metaKey)) {
@@ -211,14 +219,53 @@ export function CommandPalette({
       return;
     }
     const hit = hits.find((h) => hitKey(h) === selected);
-    if (hit !== undefined) {
-      onFavorite?.(hit);
+    if (hit === undefined || onFavorite === undefined) {
+      return;
     }
+    onFavorite(hit).then(
+      (on) => {
+        setFavoriteNotice(
+          on
+            ? `「${hit.title}」をお気に入りに入れました`
+            : `「${hit.title}」をお気に入りから外しました`,
+        );
+      },
+      (error: unknown) => {
+        setFavoriteNotice(`お気に入りを切り替えられませんでした: ${errorMessage(error)}`);
+      },
+    );
   }
+
+  // listbox の中には選べる項目しか置けないので、案内・エラー・該当なしの文は一覧の外に出す
+  const message =
+    trimmed === "" ? (
+      emptySlot === undefined && <EmptyHint />
+    ) : result.status === "error" ? (
+      <p role="alert" className="px-3 py-6 text-center text-sm text-destructive">
+        検索できませんでした: {result.message}
+      </p>
+    ) : (
+      result.status === "ok" &&
+      hits.length === 0 && (
+        <p className="px-3 py-6 text-center text-sm">「{trimmed}」に一致する項目はありません</p>
+      )
+    );
+  // 一覧は入力欄から離れたところに出て、打つたびに中身が変わる。件数を読み上げて、結果が出たことと数を伝える（WCAG 4.1.3）
+  const announcement =
+    trimmed !== "" && result.status === "ok"
+      ? hits.length === 0
+        ? `「${trimmed}」に一致する項目はありません`
+        : `${String(hits.length)} 件${hits.length >= RESULT_LIMIT ? "（上位のみ）" : ""}`
+      : "";
 
   const list = (
     <>
+      <p role="status" className="sr-only">
+        {favoriteNotice === "" ? announcement : favoriteNotice}
+      </p>
+      {message}
       <CommandList
+        label="検索結果"
         className={cn(
           "pt-1",
           // 上部の検索欄から重ねて出す一覧は、本文を隠しすぎないよう高さを抑える。
@@ -227,15 +274,16 @@ export function CommandPalette({
         )}
       >
         {trimmed === "" ? (
-          <PaletteOpenContext value={open}>{emptySlot ?? <EmptyHint />}</PaletteOpenContext>
+          <PaletteOpenContext value={open}>{emptySlot}</PaletteOpenContext>
         ) : (
-          <SearchResults
-            result={result}
-            hits={hits}
-            query={trimmed}
-            onSelect={select}
-            isFavorite={isFavorite}
-          />
+          hits.map((hit) => (
+            <HitItem
+              key={hitKey(hit)}
+              hit={hit}
+              favorite={isFavorite?.(hit) ?? false}
+              onSelect={select}
+            />
+          ))
         )}
       </CommandList>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t px-3 pt-1.5 text-xs text-muted-foreground">
@@ -260,6 +308,7 @@ export function CommandPalette({
       value={selected}
       onValueChange={setSelected}
       onKeyDown={handleKeyDown}
+      onBlur={handleBlur}
       className={cn(
         "rounded-none!",
         // 一覧を入力欄の下へはみ出させるので、生成コードの overflow-hidden と背景を外す
@@ -279,6 +328,8 @@ export function CommandPalette({
           onValueChange={(value) => {
             setQuery(value);
             setExpanded(true);
+            // 打ち直したら、読み上げを件数に戻す
+            setFavoriteNotice("");
           }}
           onFocus={() => {
             setExpanded(true);
@@ -303,48 +354,6 @@ export function CommandPalette({
         ))}
     </Command>
   );
-}
-
-interface SearchResultsProps {
-  result: ResultState;
-  hits: readonly SearchHit[];
-  query: string;
-  onSelect: (hit: SearchHit) => void;
-  isFavorite: ((hit: SearchHit) => boolean) | undefined;
-}
-
-function SearchResults({
-  result,
-  hits,
-  query,
-  onSelect,
-  isFavorite,
-}: SearchResultsProps): JSX.Element | null {
-  switch (result.status) {
-    // 最初の結果が届くまでは何も出さない（100ms ほどなので「検索中」を出すとかえってちらつく）
-    case "idle":
-      return null;
-    case "error":
-      return (
-        <p className="px-3 py-6 text-center text-sm text-destructive">
-          検索できませんでした: {result.message}
-        </p>
-      );
-    case "ok":
-      return (
-        <>
-          <CommandEmpty>「{query}」に一致する項目はありません</CommandEmpty>
-          {hits.map((hit) => (
-            <HitItem
-              key={hitKey(hit)}
-              hit={hit}
-              favorite={isFavorite?.(hit) ?? false}
-              onSelect={onSelect}
-            />
-          ))}
-        </>
-      );
-  }
 }
 
 function HitItem({

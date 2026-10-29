@@ -1,5 +1,5 @@
 import { FunnelIcon } from "lucide-react";
-import { useEffect, useState, type JSX, type ReactNode } from "react";
+import { useEffect, useId, useState, type JSX, type ReactNode } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -115,14 +115,20 @@ export function SearchFilterPopover(): JSX.Element {
             </ToggleGroup>
           )}
         </FilterRow>
-        {errorText !== null && <p className="text-xs text-destructive">{errorText}</p>}
+        {errorText !== null && (
+          <p role="alert" className="text-xs text-destructive">
+            {errorText}
+          </p>
+        )}
         <Button
           variant="outline"
           size="sm"
           className="self-end"
           disabled={count === 0}
-          onClick={() => {
+          onClick={(event) => {
             update({ modTargets: [], tags: [] });
+            // 解除するとこのボタンは押せなくなりフォーカスを失うので、先頭の選択肢へ移す
+            event.currentTarget.parentElement?.querySelector<HTMLElement>("button")?.focus();
           }}
         >
           すべて解除
@@ -139,11 +145,23 @@ interface FilterRowProps {
 }
 
 function FilterRow({ label, note, children }: FilterRowProps): JSX.Element {
+  const labelId = useId();
+  const noteId = useId();
   return (
-    <div className="flex flex-col gap-1.5">
+    // 見出しの文字を並んだボタンのまとまりの名前に、補足を説明にする（どの条件のボタンかを読み上げで分かるように）
+    <div
+      role="group"
+      aria-labelledby={labelId}
+      aria-describedby={note === undefined ? undefined : noteId}
+      className="flex flex-col gap-1.5"
+    >
       <span className="text-xs font-medium text-muted-foreground">
-        {label}
-        {note !== undefined && <span className="ml-2 font-normal">{note}</span>}
+        <span id={labelId}>{label}</span>
+        {note !== undefined && (
+          <span id={noteId} className="ml-2 font-normal">
+            {note}
+          </span>
+        )}
       </span>
       {children}
     </div>

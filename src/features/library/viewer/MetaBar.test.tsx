@@ -42,9 +42,9 @@ afterEach(() => {
 });
 
 describe("MetaBar", () => {
-  it("最初に開いた画面ではライブラリへのボタンを出す", () => {
+  it("最初に開いた画面ではライブラリへのリンクを出す（画面を移るので、ボタンではなくリンクとして読ませる）", () => {
     renderAt();
-    expect(screen.getByRole("button", { name: /ライブラリ/u })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /ライブラリ/u })).toBeTruthy();
     expect(screen.queryByRole("button", { name: /戻る/u })).toBeNull();
   });
 
@@ -59,7 +59,7 @@ describe("MetaBar", () => {
 
   it("星のボタンで文書をお気に入りに入れる", async () => {
     renderAt();
-    fireEvent.click(screen.getByRole("button", { name: /お気に入りに入れる/u }));
+    fireEvent.click(screen.getByRole("button", { name: "お気に入り（このマニュアル）" }));
     await vi.waitFor(() => {
       expect(toggled).toEqual([{ kind: "document", documentId: "d1" }]);
     });

@@ -77,6 +77,8 @@ export async function convertManual(
   markLongCells(doc.body);
   await markCharts(doc.body, manual.path, readData, warnings);
   markModColumns(doc.body, warnings);
+  // グラフと MOD の列は表のセルの並びを読むので、それが済んでからセルを見出しに変える
+  markTableHeaders(doc.body);
   const result = await sectionsFromBody(doc.body, {
     resolveImage: (src) => readRelativeImage(manual.path, src, readImage),
   });
@@ -197,6 +199,30 @@ function markAlerts(body: HTMLElement): void {
     title.className = "markdown-alert-title";
     title.textContent = ALERT_TITLES[kind] ?? kind;
     quote.prepend(title);
+  }
+}
+
+/**
+ * 表の見出しのセルに、どちら向きの見出しかを付ける。原稿の表は先頭の列が行の名前（程度・設定名・状態など）なので、
+ * 本文の行の先頭のセルを行の見出し（th scope=row）にする。読み上げで値のセルへ移ったときに、どの行・どの列の値かが分かる（WCAG 1.3.1）。
+ * 見た目は CSS で今までのセルのままにする
+ */
+function markTableHeaders(body: HTMLElement): void {
+  for (const th of Array.from(body.querySelectorAll("table > thead > tr > th"))) {
+    th.setAttribute("scope", "col");
+  }
+  for (const row of Array.from(body.querySelectorAll("table > tbody > tr"))) {
+    const first = row.firstElementChild;
+    if (first?.localName !== "td") {
+      continue;
+    }
+    const header = body.ownerDocument.createElement("th");
+    for (const attr of Array.from(first.attributes)) {
+      header.setAttribute(attr.name, attr.value);
+    }
+    header.setAttribute("scope", "row");
+    header.append(...Array.from(first.childNodes));
+    first.replaceWith(header);
   }
 }
 

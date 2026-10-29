@@ -2,6 +2,7 @@ import { TriangleAlertIcon } from "lucide-react";
 import type { JSX } from "react";
 import { Link } from "react-router";
 
+import { usePageTitle } from "@/app/use-page-title";
 import { IssueCard } from "@/components/IssueCard";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +17,7 @@ import { useNow } from "@/hooks/use-now";
 import type { TriageSummary } from "@/lib/bindings/TriageSummary";
 
 export function TriageListPage(): JSX.Element {
+  usePageTitle("トリアージ");
   const state = useFlowList();
   const now = useNow();
   return (
@@ -24,7 +26,7 @@ export function TriageListPage(): JSX.Element {
         <h1 className="text-2xl font-bold">トリアージ</h1>
         <p className="text-sm text-muted-foreground">
           質問に答えていくと、やることにたどり着きます。数字キーで選び、Backspace で戻り、Esc
-          で最初からやり直せます。
+          で最初からやり直せます。数字キーは、設定の「トリアージ」でオフにできます。
         </p>
       </div>
       <SyncStatusCard
@@ -65,7 +67,9 @@ function FlowCard({ flow, now }: { flow: TriageSummary; now: Date }): JSX.Elemen
     <Link to={`/triage/${encodeURIComponent(flow.id)}`} className="block h-full rounded-xl">
       <Card className="h-full transition-colors hover:bg-muted/50">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">{flow.title}</CardTitle>
+          <CardTitle className="text-lg font-semibold">
+            <h2>{flow.title}</h2>
+          </CardTitle>
           {flow.description !== null && <CardDescription>{flow.description}</CardDescription>}
         </CardHeader>
         <CardContent className="flex flex-wrap items-center gap-1.5">

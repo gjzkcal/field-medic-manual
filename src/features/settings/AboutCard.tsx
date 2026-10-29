@@ -20,7 +20,9 @@ export function AboutCard(): JSX.Element {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>このアプリについて</CardTitle>
+        <CardTitle>
+          <h2>このアプリについて</h2>
+        </CardTitle>
         <CardDescription>
           Field Medic Manual — Arma Reforger の ACE Medical 向けの非公式マニュアル
         </CardDescription>
@@ -59,7 +61,7 @@ export function AboutDetails(): JSX.Element {
           Copyright (C) 2026 gjzkcal。GNU General Public License v3.0
           またはそれ以降の版（GPL-3.0-or-later）で、無料・非営利で配布しています。無保証です。
         </p>
-        <div className="flex flex-wrap gap-x-4">
+        <div className="flex flex-wrap gap-x-4 gap-y-1">
           <ExternalLink onOpen={open} url={REPOSITORY_URL}>
             ソースコード（GitHub）
           </ExternalLink>
@@ -78,7 +80,7 @@ export function AboutDetails(): JSX.Element {
           (C) acemod）を作者が読んで要約・解説したものです。ACE の公式のものではなく、ACE
           チームの承認も受けていません。対象の版と確認日は、マニュアル「このマニュアルの読み方」と各マニュアルの末尾にあります。処置の手順はゲーム内の遊び方の参考で、古くなっている場合があります。
         </p>
-        <div className="flex flex-wrap gap-x-4">
+        <div className="flex flex-wrap gap-x-4 gap-y-1">
           <ExternalLink onOpen={open} url={ACE_REPOSITORY_URL}>
             acemod/ACE-Anvil
           </ExternalLink>
@@ -122,7 +124,8 @@ export function AboutSection({
 }): JSX.Element {
   return (
     <section className="flex flex-col gap-1.5">
-      <h2 className="font-medium">{title}</h2>
+      {/* カードの表題（h2）の下の節 */}
+      <h3 className="font-medium">{title}</h3>
       {children}
     </section>
   );
@@ -140,7 +143,8 @@ function ExternalLink({
   return (
     <Button
       variant="link"
-      className="h-auto px-0"
+      // 文字の高さだけだと押せる所が 24px に満たない（WCAG 2.5.8）。折り返した行の間も空ける
+      className="h-auto min-h-6 px-0"
       onClick={() => {
         onOpen(url);
       }}

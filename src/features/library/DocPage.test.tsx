@@ -9,6 +9,7 @@ import { DEFAULT_MOD_SETTINGS, useModSettings } from "@/features/settings/mod-se
 import type { DocDetail } from "@/lib/bindings/DocDetail";
 import type { DocOutline } from "@/lib/bindings/DocOutline";
 import type { Section } from "@/lib/bindings/Section";
+import { axeViolations } from "@/test/axe";
 
 const ASSET_ID = "a".repeat(64);
 
@@ -63,7 +64,7 @@ const HEMORRHAGE: DocDetail = {
         '<p>関連: <a href="cardiac-arrest.md#cpr-%E3%81%AE%E6%89%8B%E9%A0%86">CPR</a></p>',
         '<p><a href="https://anvil.acemod.org/dev/">出典</a></p>',
         "<script>window.__hacked = true</script>",
-        '<img src="x" onerror="window.__hacked = true">',
+        '<img src="x" alt="壊れた画像" onerror="window.__hacked = true">',
       ].join(""),
     ),
     section(
@@ -288,8 +289,11 @@ describe("DocPage", () => {
     expect(footer?.textContent).not.toContain("ソースのコミット");
     expect(footer?.textContent).not.toContain("ゲーム本体");
     expect(article?.lastElementChild).toBe(footer);
-    // 目次にも見出しが並ぶ
-    expect(screen.getByRole("navigation", { name: "目次" }).textContent).toContain("包帯を巻く");
+    // 目次にも見出しが並ぶ。h2 は h1 の下の入れ子のリストにする（字下げだけでなく構造でも階層を伝える）
+    const toc = screen.getByRole("navigation", { name: "目次" });
+    expect(toc.textContent).toContain("包帯を巻く");
+    const nested = within(toc).getByRole("link", { name: "止血帯を使う" }).closest("ul");
+    expect(nested?.parentElement?.closest("li")?.textContent).toContain("止血");
   });
 
   it("フローチャートを SVG で描き、文のリストは残す。形の壊れた印は描かない", async () => {
@@ -371,6 +375,72 @@ describe("DocPage", () => {
 
     expect(router.state.location.pathname).toBe("/doc/d2");
     expect(decodeURIComponent(router.state.location.hash)).toBe("#cpr-の手順");
+  });
+
+  it("表・グラフ・式・フローチャートのある本文で、axe の違反がない（WCAG 2.2 A・AA）", async () => {
+    renderDoc("/doc/d1");
+    await screen.findByRole("heading", { level: 2, name: "止血帯を使う" });
+    await waitFor(() => {
+      expect(document.querySelector(".manual-flowchart svg")).not.toBeNull();
+    });
+    expect(await axeViolations()).toEqual([]);
+  });
+
+  it("読み込みの途中で本文の領域にフォーカスがあれば、読み込めたら表題（h1）へ移す", async () => {
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/doc/:id",
+          element: (
+            <main tabIndex={-1}>
+              <DocPage />
+            </main>
+          ),
+        },
+      ],
+      { initialEntries: ["/doc/d1"] },
+    );
+    render(
+      <TooltipProvider>
+        <RouterProvider router={router} />
+      </TooltipProvider>,
+    );
+    // 画面の枠（useRouteFocus）が、h1 の無い読み込み中に領域へ置いたフォーカス
+    screen.getByRole("main").focus();
+    const title = await screen.findByRole("heading", { level: 1, name: "止血" });
+    await waitFor(() => {
+      expect(document.activeElement).toBe(title);
+    });
+  });
+
+  it("目次で節を押すと、その見出しにフォーカスが移る", async () => {
+    renderDoc("/doc/d1");
+    await screen.findByRole("heading", { level: 2, name: "止血帯を使う" });
+
+    fireEvent.click(
+      within(screen.getByRole("navigation", { name: "目次" })).getByText("止血帯を使う"),
+    );
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole("heading", { level: 2, name: "止血帯を使う" }),
+      );
+    });
+  });
+
+  it("狭い幅の「目次」ボタンからも節へ跳べ、閉じても跳んだ先の見出しにフォーカスが残る", async () => {
+    renderDoc("/doc/d1");
+    await screen.findByRole("heading", { level: 2, name: "止血帯を使う" });
+
+    fireEvent.click(screen.getByRole("button", { name: "目次" }));
+    const sheet = await screen.findByRole("dialog", { name: "目次" });
+    fireEvent.click(within(sheet).getByText("包帯を巻く"));
+
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { name: "目次" })).toBeNull();
+    });
+    expect(document.activeElement).toBe(
+      screen.getByRole("heading", { level: 2, name: "包帯を巻く" }),
+    );
   });
 
   it("検索結果から開いたときは検索語をハイライトし、目次で移ると消す", async () => {
@@ -456,7 +526,7 @@ describe("DocPage", () => {
     await screen.findByRole("heading", { level: 2, name: "止血帯を使う" });
 
     const tree = screen.getByRole("navigation", { name: "マニュアルの見出し" });
-    fireEvent.click(within(tree).getByRole("button", { name: "心停止と CPRの見出しを開く" }));
+    fireEvent.click(within(tree).getByRole("button", { name: "心停止と CPRの見出し" }));
 
     expect(within(tree).getByText("CPR の手順")).toBeDefined();
     expect(within(tree).queryByText("Breathing を入れているとき")).toBeNull();

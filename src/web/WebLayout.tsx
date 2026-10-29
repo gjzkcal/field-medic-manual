@@ -2,8 +2,8 @@ import { DownloadIcon, InfoIcon, LibraryIcon, SettingsIcon, TableIcon } from "lu
 import type { JSX } from "react";
 import { Link } from "react-router";
 
+import { LinkButton } from "@/components/LinkButton";
 import { AppShell, type NavItem } from "@/app/AppShell";
-import { Button } from "@/components/ui/button";
 import { SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 import { version } from "../../package.json";
 import { DOWNLOAD_URL } from "@/web/links";
@@ -27,16 +27,15 @@ export function WebLayout(): JSX.Element {
       navItems={NAV_ITEMS}
       headerEnd={
         // 狭い画面ではこの位置にメニューのボタンが出るので、案内はメニューの中（mobileNavEnd）に移す
-        <Button
+        <LinkButton
           variant="outline"
           size="sm"
           className="mr-3 max-md:hidden"
-          nativeButton={false}
           render={<a href={DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" />}
         >
           <DownloadIcon />
           デスクトップ版
-        </Button>
+        </LinkButton>
       }
       sidebarFooter={<WebFooter />}
       mobileNavEnd={

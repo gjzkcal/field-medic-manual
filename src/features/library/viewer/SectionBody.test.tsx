@@ -1,5 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ChartData, ChartPayload, ChartSpec } from "@/features/content/chart";
 import { SectionBody } from "@/features/library/viewer/SectionBody";
@@ -14,7 +14,25 @@ vi.mock("@/features/library/viewer/ManualChart", () => ({
   ),
 }));
 
-afterEach(cleanup);
+beforeEach(() => {
+  // jsdom には ResizeObserver がない。はみ出しの見直しは、最初の 1 回だけを確かめる
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe(): void {
+        // 何もしない
+      }
+      disconnect(): void {
+        // 何もしない
+      }
+    },
+  );
+});
+
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 const PAYLOAD: ChartPayload = {
   spec: { x: "経過", y: ["SpO2"], y2: [], ref: [85], title: null, data: null, unit: null },
@@ -129,5 +147,53 @@ describe("SectionBody", () => {
 
     const all = render(<SectionBody html={html} resolveAsset={resolveAsset} active={null} />);
     expect(cells(all.container)).toHaveLength(6);
+  });
+
+  it("表の直前の「…:」で終わる段落を、表の名前にする（グラフの figure を挟んでもよい）", () => {
+    const html = [
+      "<p>失血の推移:</p>",
+      `<table data-chart="${JSON.stringify(PAYLOAD).replaceAll('"', "&quot;")}">`,
+      "<thead><tr><th>経過</th><th>SpO2</th></tr></thead><tbody><tr><td>0 s</td><td>97.1%</td></tr></tbody>",
+      "</table>",
+      "<p>名前にしない段落</p>",
+      "<table><tbody><tr><td>a</td></tr></tbody></table>",
+    ].join("");
+    render(<SectionBody html={html} resolveAsset={resolveAsset} active={null} />);
+    const tables = screen.getAllByRole("table");
+    expect(tables[0]?.getAttribute("aria-labelledby")).not.toBeNull();
+    expect(screen.getByRole("table", { name: "失血の推移:" })).toBe(tables[0]);
+    expect(tables[1]?.hasAttribute("aria-labelledby")).toBe(false);
+  });
+
+  it("外部のリンクには、アプリの外で開くことを読み上げ用に足す", () => {
+    render(
+      <SectionBody
+        html='<p><a href="https://example.com/">出典</a> と <a href="other.md#節">別の原稿</a></p>'
+        resolveAsset={resolveAsset}
+        active={null}
+      />,
+    );
+    expect(screen.getByRole("link", { name: "出典（ブラウザで開く）" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "別の原稿" })).toBeDefined();
+  });
+
+  it("横にはみ出している箱だけを Tab で止まるようにし、コードの箱には名前を付ける", () => {
+    // jsdom は大きさを測れないので、表とコードだけがはみ出していることにする（clientWidth は 0）
+    const widths = vi
+      .spyOn(HTMLElement.prototype, "scrollWidth", "get")
+      .mockImplementation(function (this: HTMLElement) {
+        return this.localName === "table" || this.localName === "pre" ? 500 : 0;
+      });
+    render(
+      <SectionBody
+        html="<table><tbody><tr><td>広い表</td></tr></tbody></table><pre>長いコード</pre><p>段落</p>"
+        resolveAsset={resolveAsset}
+        active={null}
+      />,
+    );
+    expect(screen.getByRole("table").tabIndex).toBe(0);
+    expect(screen.getByRole("region", { name: "コード" }).tabIndex).toBe(0);
+    expect(screen.getByText("段落").hasAttribute("tabindex")).toBe(false);
+    widths.mockRestore();
   });
 });

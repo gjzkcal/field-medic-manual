@@ -1,7 +1,8 @@
 import { DownloadIcon } from "lucide-react";
 import type { JSX } from "react";
 
-import { Button } from "@/components/ui/button";
+import { LinkButton } from "@/components/LinkButton";
+import { usePageTitle } from "@/app/use-page-title";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AboutDetails, AboutSection } from "@/features/settings/AboutCard";
 import { version } from "../../package.json";
@@ -9,12 +10,15 @@ import { DOWNLOAD_URL } from "@/web/links";
 
 /** Web 版の「このサイトについて」。デスクトップ版の案内と、ライセンス・出典・免責。 */
 export function WebAboutPage(): JSX.Element {
+  usePageTitle("このサイトについて");
   return (
     <section className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">このサイトについて</h1>
       <Card>
         <CardHeader>
-          <CardTitle>Field Medic Manual（Web 版）</CardTitle>
+          <CardTitle>
+            <h2>Field Medic Manual（Web 版）</h2>
+          </CardTitle>
           <CardDescription>
             Arma Reforger の ACE Medical 向けの非公式マニュアル。Windows
             向けのデスクトップアプリと同じマニュアルを、ブラウザで読めるようにしたものです。
@@ -31,15 +35,14 @@ export function WebAboutPage(): JSX.Element {
               10 / 11）だけにあります。
             </p>
             <div>
-              <Button
+              <LinkButton
                 variant="outline"
                 size="sm"
-                nativeButton={false}
                 render={<a href={DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" />}
               >
                 <DownloadIcon />
                 デスクトップ版をダウンロード（GitHub Releases）
-              </Button>
+              </LinkButton>
             </div>
           </AboutSection>
           <AboutDetails />

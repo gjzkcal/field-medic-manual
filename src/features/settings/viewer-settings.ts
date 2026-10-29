@@ -1,4 +1,4 @@
-// 表示設定（テーマ・本文の文字サイズ・行間）。settings テーブルのキー `viewer` に保存し、再起動しても残す。
+// 表示設定（テーマ・本文の文字サイズ・行間と、トリアージのキー操作）。settings テーブルのキー `viewer` に保存し、再起動しても残す。
 import { create } from "zustand";
 
 import { errorMessage, settingsGet, settingsSet } from "@/lib/tauri";
@@ -15,6 +15,12 @@ export interface ViewerSettings {
   fontSize: FontSize;
   lineHeight: LineHeight;
   theme: Theme;
+  /**
+   * トリアージの実行画面で、修飾キーなしの数字キー（選ぶ）と Space（タイマー）を受けるか。
+   * 文字のキーだけのショートカットは、音声入力や押し間違いで意図せず進むことがあるので切れるようにする（WCAG 2.1.4）。
+   * 小窓でも同じ値を使うので、小窓と同期しているこのキーに置く
+   */
+  triageKeys: boolean;
 }
 
 // ゲームの横で目を離しながら読むので、既定でも一般的な本文（16px）より大きくする
@@ -22,6 +28,7 @@ export const DEFAULT_VIEWER_SETTINGS: ViewerSettings = {
   fontSize: "m",
   lineHeight: "relaxed",
   theme: "system",
+  triageKeys: true,
 };
 
 export const FONT_SIZE_PX: Record<FontSize, number> = { s: 16, m: 18, l: 20, xl: 24 };
@@ -56,6 +63,10 @@ export function parseViewerSettings(value: unknown): ViewerSettings {
     fontSize: oneOf(FONT_SIZES, record["fontSize"]) ?? DEFAULT_VIEWER_SETTINGS.fontSize,
     lineHeight: oneOf(LINE_HEIGHTS, record["lineHeight"]) ?? DEFAULT_VIEWER_SETTINGS.lineHeight,
     theme: oneOf(THEMES, record["theme"]) ?? DEFAULT_VIEWER_SETTINGS.theme,
+    triageKeys:
+      typeof record["triageKeys"] === "boolean"
+        ? record["triageKeys"]
+        : DEFAULT_VIEWER_SETTINGS.triageKeys,
   };
 }
 

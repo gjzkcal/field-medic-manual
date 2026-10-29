@@ -23,6 +23,9 @@ $$`,
     expect(warnings).toEqual([]);
     const box = new DOMParser().parseFromString(html, "text/html").querySelector(".manual-math");
     expect(box?.querySelector("math mfrac")).not.toBeNull();
+    // 塊に分けても 1 つの式として読めるよう、式全体を名前にする
+    expect(box?.getAttribute("role")).toBe("group");
+    expect(box?.getAttribute("aria-label")).toBe("成功率 = (b − 0.2) ÷ (0.7 − 0.2)");
     expect(html).not.toContain("<pre");
     expect(plainText).toBe("成功率 = (b − 0.2) ÷ (0.7 − 0.2)");
   });
@@ -75,7 +78,8 @@ $$`,
     const body = new DOMParser().parseFromString(html, "text/html").body;
     expect(body.querySelector("p > math:not([display])")).not.toBeNull();
     expect(body.querySelectorAll("li math")).toHaveLength(4);
-    expect(body.querySelector("td > math msqrt")).not.toBeNull();
+    // 表の先頭の列は行の見出し（th）になる
+    expect(body.querySelector("th[scope=row] > math msqrt")).not.toBeNull();
     expect(body.querySelector(".manual-math")).toBeNull();
     expect(plainText).toContain("濃度は x = (C ÷ 100)^2 で決まる。");
     expect(plainText).toContain("e^(−kt) と C_mor");

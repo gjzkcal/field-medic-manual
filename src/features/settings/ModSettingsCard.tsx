@@ -26,7 +26,9 @@ export function ModSettingsCard(): JSX.Element {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>使っている MOD</CardTitle>
+        <CardTitle>
+          <h2>使っている MOD</h2>
+        </CardTitle>
         <CardDescription>
           遊んでいるサーバーに入っている ACE Medical の MOD。
           {IS_WEB

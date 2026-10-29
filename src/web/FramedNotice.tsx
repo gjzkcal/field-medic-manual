@@ -2,19 +2,18 @@
 import { ExternalLinkIcon } from "lucide-react";
 import type { JSX } from "react";
 
-import { Button } from "@/components/ui/button";
+import { LinkButton } from "@/components/LinkButton";
 
 export function FramedNotice(): JSX.Element {
   return (
     <main className="flex min-h-svh flex-col items-center justify-center gap-4 px-4 text-center">
       <p>このマニュアルは、ほかのページの中では表示しません。</p>
-      <Button
-        nativeButton={false}
+      <LinkButton
         render={<a href={window.location.href} target="_blank" rel="noopener noreferrer" />}
       >
         <ExternalLinkIcon />
         新しいタブで開く
-      </Button>
+      </LinkButton>
     </main>
   );
 }

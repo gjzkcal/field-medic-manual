@@ -2,13 +2,13 @@ import { SearchIcon, TriangleAlertIcon } from "lucide-react";
 import { useEffect, useMemo, type JSX } from "react";
 import { useSearchParams } from "react-router";
 
+import { usePageTitle } from "@/app/use-page-title";
 import { IssueCard } from "@/components/IssueCard";
 import { Badge } from "@/components/ui/badge";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { isStale } from "@/features/library/stale";
 import { recordHistory } from "@/features/prefs/prefs-store";
@@ -45,9 +45,12 @@ interface QuickrefPageProps {
 
 /** 症状→処置のクイック表。絞り込みは URL のクエリに持つ（filter.ts）。 */
 export function QuickrefPage({ compact = false }: QuickrefPageProps): JSX.Element {
+  usePageTitle("クイック表");
   const load = useQuickrefTable();
   return (
     <section className="mx-auto flex w-full max-w-5xl flex-col gap-4">
+      {/* 小窓は見出しの分の高さを惜しんで見せないが、画面の名前は読み上げで分かるようにする */}
+      {compact && <h1 className="sr-only">クイック表</h1>}
       {!compact && (
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold">クイック表</h1>
@@ -198,22 +201,33 @@ function QuickrefBody({ table, compact }: { table: QuickrefTable; compact: boole
           </label>
         </span>
       </div>
-      <Tabs
-        value={target === undefined ? (filters.category ?? ALL_CATEGORIES) : ALL_CATEGORIES}
-        onValueChange={(value: unknown) => {
-          const category = categories.find((c) => c === value) ?? null;
-          update({ category });
+      {/* 分類は一覧を絞り込むだけで、切り替わる中身（タブのパネル）を持たないので、タブではなく選択のボタンにする */}
+      <ToggleGroup
+        variant="outline"
+        size="sm"
+        className="flex-wrap"
+        aria-label="分類"
+        value={[target === undefined ? (filters.category ?? ALL_CATEGORIES) : ALL_CATEGORIES]}
+        onValueChange={(values) => {
+          // 選択中の項目をもう一度押すと空になるので、そのときは今の分類のままにする
+          const [value] = values;
+          if (value === undefined) {
+            return;
+          }
+          update({ category: categories.find((c) => c === value) ?? null });
         }}
       >
-        <TabsList className="h-auto flex-wrap">
-          <TabsTrigger value={ALL_CATEGORIES}>すべて</TabsTrigger>
-          {categories.map((category) => (
-            <TabsTrigger key={category} value={category}>
-              {category}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
+        <ToggleGroupItem value={ALL_CATEGORIES}>すべて</ToggleGroupItem>
+        {categories.map((category) => (
+          <ToggleGroupItem key={category} value={category}>
+            {category}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+      {/* 打つたび・押すたびに一覧が変わるので、残った行の数を読み上げで伝える（WCAG 4.1.3） */}
+      <p role="status" className="sr-only">
+        {shown.length === 0 ? "当てはまる行がありません" : `${String(shown.length)} 行`}
+      </p>
       {shown.length === 0 ? (
         <Empty className="border">
           <EmptyHeader>

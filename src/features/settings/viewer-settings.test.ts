@@ -19,10 +19,18 @@ afterEach(() => {
 
 describe("parseViewerSettings", () => {
   it("正しい値はそのまま読む", () => {
-    expect(parseViewerSettings({ fontSize: "xl", lineHeight: "loose", theme: "dark" })).toEqual({
+    expect(
+      parseViewerSettings({
+        fontSize: "xl",
+        lineHeight: "loose",
+        theme: "dark",
+        triageKeys: false,
+      }),
+    ).toEqual({
       fontSize: "xl",
       lineHeight: "loose",
       theme: "dark",
+      triageKeys: false,
     });
   });
 
@@ -33,7 +41,14 @@ describe("parseViewerSettings", () => {
       fontSize: DEFAULT_VIEWER_SETTINGS.fontSize,
       lineHeight: "loose",
       theme: "light",
+      triageKeys: true,
     });
+  });
+
+  it("トリアージのキー操作が保存されていない（前の版で保存した値）・不正ならオン", () => {
+    expect(DEFAULT_VIEWER_SETTINGS.triageKeys).toBe(true);
+    expect(parseViewerSettings({ fontSize: "l" }).triageKeys).toBe(true);
+    expect(parseViewerSettings({ triageKeys: "no" }).triageKeys).toBe(true);
   });
 
   it("テーマが保存されていない（前の版で保存した値）・不正ならシステム", () => {
@@ -71,6 +86,7 @@ describe("useViewerSettings", () => {
       fontSize: "xl",
       lineHeight: "normal",
       theme: "system",
+      triageKeys: true,
     });
 
     useViewerSettings.setState({ settings: DEFAULT_VIEWER_SETTINGS, changed: true });

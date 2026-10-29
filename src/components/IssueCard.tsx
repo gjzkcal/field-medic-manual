@@ -12,9 +12,12 @@ interface IssueCardProps {
 /** 起動時の同期や読み込みの失敗を、どの原稿の何が問題かと一緒に出す（ライブラリとトリアージの一覧で共通）。 */
 export function IssueCard({ title, detail, issues }: IssueCardProps): JSX.Element {
   return (
-    <Card>
+    // 読み込みの後から出るので、画面を見ていない人にも失敗を伝える（WCAG 4.1.3）
+    <Card role="alert">
       <CardHeader>
-        <CardTitle className="text-destructive">{title}</CardTitle>
+        <CardTitle className="text-destructive">
+          <h2>{title}</h2>
+        </CardTitle>
         {detail !== "" && <CardDescription>{detail}</CardDescription>}
       </CardHeader>
       {issues.length > 0 && (

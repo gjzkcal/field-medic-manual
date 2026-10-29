@@ -19,6 +19,7 @@ import { RelatedLinks } from "@/features/content/RelatedLinks";
 import { daysSinceVerified, isStale } from "@/features/library/stale";
 import { FavoriteButton } from "@/features/prefs/FavoriteButton";
 import { modSummary, useModSettings } from "@/features/settings/mod-settings";
+import { useViewerSettings } from "@/features/settings/viewer-settings";
 import { hasModifier, isActivatable, isTextEntry } from "@/features/triage/keyboard";
 import {
   formatPath,
@@ -47,6 +48,7 @@ interface FlowRunnerProps {
  */
 export function FlowRunner({ root, lookup }: FlowRunnerProps): JSX.Element {
   const { state, choose, back, restart, jumpTo } = useTriageRunner(root, lookup);
+  const digitKeys = useViewerSettings((s) => s.settings.triageKeys);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const pathKey = formatPath(state.path);
 
@@ -65,7 +67,8 @@ export function FlowRunner({ root, lookup }: FlowRunnerProps): JSX.Element {
       return;
     }
     const digit = /^[1-9]$/.test(event.key) ? Number(event.key) : null;
-    if (digit !== null && digit <= MAX_KEY_CHOICES) {
+    // 設定でオフにしたときは数字を素通しする（Enter・Backspace・Esc は文字のキーではないので残す）
+    if (digit !== null && digit <= MAX_KEY_CHOICES && digitKeys) {
       if (digit <= state.options.length) {
         event.preventDefault();
         choose(digit - 1);
@@ -146,6 +149,7 @@ export function FlowRunner({ root, lookup }: FlowRunnerProps): JSX.Element {
         state={state}
         lookup={lookup}
         headingRef={headingRef}
+        digitKeys={digitKeys}
         onChoose={choose}
         onRestart={restart}
       />
@@ -170,7 +174,8 @@ function StaleAlert({ flow, now }: { flow: Flow; now: Date }): JSX.Element {
   const verifiedAt = flow.verifiedAt ?? null;
   const days = verifiedAt === null ? null : daysSinceVerified(verifiedAt, now);
   return (
-    <Alert variant="destructive">
+    // フローを開いたときから出ている注意書き。role=alert だと開くたびに読み上げを遮るので、補足（note）にする
+    <Alert variant="destructive" role="note">
       <TriangleAlertIcon />
       <AlertTitle>内容が古い可能性があります</AlertTitle>
       <AlertDescription>
@@ -187,11 +192,20 @@ interface NodeViewProps {
   state: RunnerState;
   lookup: FlowLookup;
   headingRef: RefObject<HTMLHeadingElement | null>;
+  /** 数字キーで選べるか。オフなら選択肢の番号の印を出さない */
+  digitKeys: boolean;
   onChoose: (index: number) => void;
   onRestart: () => void;
 }
 
-function NodeView({ state, lookup, headingRef, onChoose, onRestart }: NodeViewProps): JSX.Element {
+function NodeView({
+  state,
+  lookup,
+  headingRef,
+  digitKeys,
+  onChoose,
+  onRestart,
+}: NodeViewProps): JSX.Element {
   const { node, options } = state;
   const heading = (
     <h2
@@ -209,7 +223,7 @@ function NodeView({ state, lookup, headingRef, onChoose, onRestart }: NodeViewPr
         <section className="flex flex-col gap-4">
           {heading}
           {node.help !== undefined && <HelpText help={node.help} />}
-          <ChoiceButtons options={options} onChoose={onChoose} />
+          <ChoiceButtons options={options} digitKeys={digitKeys} onChoose={onChoose} />
         </section>
       );
     case "action":
@@ -230,12 +244,14 @@ function NodeView({ state, lookup, headingRef, onChoose, onRestart }: NodeViewPr
               ))}
             </ul>
           )}
-          {node.timerSec !== undefined && <CountdownTimer seconds={node.timerSec} />}
+          {node.timerSec !== undefined && (
+            <CountdownTimer seconds={node.timerSec} spaceKey={digitKeys} />
+          )}
           {node.help !== undefined && <HelpText help={node.help} />}
           {node.links !== undefined && (
             <RelatedLinks links={node.links} flowTitle={(id) => lookup(id)?.title} />
           )}
-          <ChoiceButtons options={options} onChoose={onChoose} primary />
+          <ChoiceButtons options={options} digitKeys={digitKeys} onChoose={onChoose} primary />
         </section>
       );
     case "end":
@@ -258,7 +274,7 @@ function NodeView({ state, lookup, headingRef, onChoose, onRestart }: NodeViewPr
             <RelatedLinks links={node.links} flowTitle={(id) => lookup(id)?.title} />
           )}
           {options.length > 0 ? (
-            <ChoiceButtons options={options} onChoose={onChoose} primary />
+            <ChoiceButtons options={options} digitKeys={digitKeys} onChoose={onChoose} primary />
           ) : (
             <Button size="lg" className="h-14 text-lg" onClick={onRestart}>
               <RotateCcwIcon />
@@ -273,6 +289,7 @@ function NodeView({ state, lookup, headingRef, onChoose, onRestart }: NodeViewPr
 
 interface ChoiceButtonsProps {
   options: readonly RunnerOption[];
+  digitKeys: boolean;
   onChoose: (index: number) => void;
   /**
    * 先頭（「次へ」「元のフローへ戻る」）を塗りつぶしのボタンにし、押す場所がすぐ分かるようにする。
@@ -281,7 +298,12 @@ interface ChoiceButtonsProps {
   primary?: boolean;
 }
 
-function ChoiceButtons({ options, onChoose, primary = false }: ChoiceButtonsProps): JSX.Element {
+function ChoiceButtons({
+  options,
+  digitKeys,
+  onChoose,
+  primary = false,
+}: ChoiceButtonsProps): JSX.Element {
   return (
     <div className="grid gap-3">
       {options.map((option, i) => {
@@ -298,8 +320,18 @@ function ChoiceButtons({ options, onChoose, primary = false }: ChoiceButtonsProp
               onChoose(i);
             }}
           >
-            <Kbd className="h-6 min-w-6 text-sm">{i + 1}</Kbd>
+            {digitKeys && <Kbd className="h-6 min-w-6 text-sm">{i + 1}</Kbd>}
             <span className="flex-1">{option.label}</span>
+            {/* 色だけに頼らず、危ない選択肢だと形と読み上げでも分かるようにする（WCAG 1.4.1） */}
+            {option.tone === "danger" && (
+              <>
+                <OctagonAlertIcon
+                  aria-hidden
+                  className={cn(!filled && "text-red-700 dark:text-red-300")}
+                />
+                <span className="sr-only">（危険）</span>
+              </>
+            )}
             {filled && <ChevronRightIcon />}
           </Button>
         );

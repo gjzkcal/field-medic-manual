@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { LibraryPage } from "@/features/library/LibraryPage";
 import type { DocSummary } from "@/lib/bindings/DocSummary";
+import { axeViolations } from "@/test/axe";
 
 afterEach(() => {
   cleanup();
@@ -113,9 +114,12 @@ describe("LibraryPage", () => {
     render(<RouterProvider router={router} />);
 
     await screen.findByText("止血");
-    const headings = (): (string | null)[] =>
-      screen.queryAllByRole("heading", { level: 2 }).map((h) => h.textContent);
+    // 分類ごとの領域の見出し
+    const headings = (): (string | null | undefined)[] =>
+      screen.queryAllByRole("region").map((r) => r.querySelector("h2")?.textContent);
     expect(headings()).toEqual(["はじめに", "症状/処置", "その他"]);
+    // 分類の見出し（h2）の下のカードの表題は、その次の段
+    expect(screen.getByRole("heading", { level: 3, name: "止血" })).toBeDefined();
     const group = screen.getByRole("region", { name: "症状/処置" });
     expect(group.textContent).toContain("止血");
     expect(group.textContent).toContain("心停止と CPR");
@@ -127,6 +131,31 @@ describe("LibraryPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Circulation" }));
     fireEvent.click(screen.getByRole("button", { name: "タイトル" }));
     expect(headings()).toEqual([]);
-    expect(screen.getByText("止血")).toBeDefined();
+    expect(screen.getByRole("heading", { level: 2, name: "止血" })).toBeDefined();
+  });
+
+  it("カードとリストの表示、絞り込みで 0 件のときに、axe の違反がない（WCAG 2.2 A・AA）", async () => {
+    mockIPC((cmd) =>
+      cmd === "doc_list"
+        ? [
+            doc("hemorrhage", "止血", { modTarget: "core", tags: ["出血"], category: "症状/処置" }),
+            doc("cardiac", "心停止と CPR", { modTarget: "circulation", verifiedAt: null }),
+          ]
+        : null,
+    );
+    const router = createMemoryRouter([{ path: "/library", element: <LibraryPage /> }], {
+      initialEntries: ["/library"],
+    });
+    render(<RouterProvider router={router} />);
+    await screen.findByText("止血");
+    expect(await axeViolations()).toEqual([]);
+
+    fireEvent.click(screen.getByRole("button", { name: "リスト表示" }));
+    expect(await axeViolations()).toEqual([]);
+
+    fireEvent.click(screen.getByRole("button", { name: "古い内容だけ（90 日超・確認日なし）" }));
+    fireEvent.click(screen.getByRole("button", { name: "Core" }));
+    await screen.findByText("条件に合うマニュアルがありません");
+    expect(await axeViolations()).toEqual([]);
   });
 });
