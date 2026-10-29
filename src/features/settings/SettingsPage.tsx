@@ -1,5 +1,6 @@
 import type { JSX } from "react";
 
+import { usePageTitle } from "@/app/use-page-title";
 import { AboutCard } from "@/features/settings/AboutCard";
 import { DebugPanel } from "@/features/settings/debug/DebugPanel";
 import { HotkeySettings } from "@/features/settings/HotkeySettings";
@@ -8,6 +9,7 @@ import { OverlaySettingsCard } from "@/features/settings/OverlaySettingsCard";
 import { ViewerSettingsCard } from "@/features/settings/ViewerSettingsCard";
 
 export function SettingsPage(): JSX.Element {
+  usePageTitle("設定");
   return (
     <section className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">設定</h1>

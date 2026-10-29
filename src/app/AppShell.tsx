@@ -1,8 +1,9 @@
 import { HeartPulseIcon, type LibraryIcon, MenuIcon } from "lucide-react";
-import type { JSX, ReactNode } from "react";
-import { matchPath, NavLink, Outlet, useLocation } from "react-router";
+import { useRef, type JSX, type ReactNode, type RefObject } from "react";
+import { Link, matchPath, Outlet, useLocation } from "react-router";
 
 import { useUiStore } from "@/app/store";
+import { focusPageStart, useRouteFocus } from "@/app/use-route-focus";
 import { Button } from "@/components/ui/button";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -54,6 +55,8 @@ export function AppShell({
   const { pathname } = useLocation();
   const sidebarOpen = useUiStore((state) => state.sidebarOpen);
   const setSidebarOpen = useUiStore((state) => state.setSidebarOpen);
+  const mainRef = useRef<HTMLElement>(null);
+  useRouteFocus(mainRef);
 
   return (
     // ヘッダーのメニューボタンからサイドバーを開けるよう、Provider でヘッダーごと包む。
@@ -63,6 +66,7 @@ export function AppShell({
       onOpenChange={setSidebarOpen}
       className="h-svh flex-col [--header-height:--spacing(12)]"
     >
+      <SkipLink main={mainRef} />
       {/* ウィンドウ全幅のヘッダーがタイトルバーを兼ねる。data-tauri-drag-region は付けた要素そのものにしか効かないため、
           アプリ名はクリックを透過させてヘッダーで受け、余白用の div にも付ける */}
       <header
@@ -89,13 +93,14 @@ export function AppShell({
           mobileNavEnd={mobileNavEnd}
           open={sidebarOpen}
         />
-        <SidebarInset className="min-h-0 min-w-0">
+        <SidebarInset ref={mainRef} id={MAIN_ID} className="min-h-0 min-w-0">
           {FULL_HEIGHT_PATTERNS.some((pattern) => matchPath(pattern, pathname) !== null) ? (
             <div className="min-h-0 flex-1">
               <Outlet />
             </div>
           ) : (
-            <ScrollArea className="min-h-0 flex-1">
+            // 画面ごとに作り直し、前の画面のスクロールの位置を持ち越さない
+            <ScrollArea key={pathname} className="min-h-0 flex-1">
               <div className="p-6 max-sm:p-4">
                 <Outlet />
               </div>
@@ -107,12 +112,42 @@ export function AppShell({
   );
 }
 
+const MAIN_ID = "main-content";
+
+/**
+ * キーボードで最初に届く「本文へスキップ」（WCAG 2.4.1）。ヘッダーの検索とサイドバーの項目を毎回たどらずに済むようにする。
+ * フォーカスが来たときだけ見せる。ページ内リンクとして URL のアンカーを変えると原稿の見出しへの移動と混ざるので、押したら直接移す
+ */
+function SkipLink({ main }: { main: RefObject<HTMLElement | null> }): JSX.Element {
+  return (
+    <div className="fixed top-2 left-2 z-50 not-focus-within:sr-only">
+      <Button
+        variant="outline"
+        nativeButton={false}
+        render={
+          <a
+            href={`#${MAIN_ID}`}
+            onClick={(event) => {
+              event.preventDefault();
+              if (main.current !== null) {
+                focusPageStart(main.current);
+              }
+            }}
+          />
+        }
+      >
+        本文へスキップ
+      </Button>
+    </div>
+  );
+}
+
 /**
  * 狭い画面（md 未満。shadcn のサイドバーが引き出しになる幅）でヘッダーの右端に出す、引き出しを開くボタン。
- * デスクトップ版のウィンドウは最小幅がそれより広いので、これが出るのはスマホなどで開いた Web 版だけ。
+ * スマホなどで開いた Web 版のほか、デスクトップ版でもウィンドウを狭めたときや Ctrl+± で拡大したときに出る。
  */
 function MobileMenuTrigger(): JSX.Element | null {
-  const { isMobile, toggleSidebar } = useSidebar();
+  const { isMobile, openMobile, toggleSidebar } = useSidebar();
   if (!isMobile) {
     return null;
   }
@@ -122,6 +157,7 @@ function MobileMenuTrigger(): JSX.Element | null {
       size="icon-sm"
       className="mr-3"
       aria-label="メニューを開く"
+      aria-expanded={openMobile}
       onClick={toggleSidebar}
     >
       <MenuIcon />
@@ -179,27 +215,35 @@ function NavMenu({
 }): JSX.Element {
   const { isMobile, setOpenMobile } = useSidebar();
   return (
-    <SidebarMenu>
-      {items.map((item) => (
-        <SidebarMenuItem key={item.to}>
-          <SidebarMenuButton
-            isActive={item.activePatterns.some((pattern) => matchPath(pattern, pathname) !== null)}
-            render={<NavLink to={item.to} />}
-            tooltip={item.label}
-            onClick={() => {
-              // 引き出し（狭い画面の Web 版）は項目を選んでも開いたままなので、移った先の画面が見えるように閉じる
-              if (isMobile) {
-                setOpenMobile(false);
-              }
-            }}
-          >
-            <item.icon />
-            <span>{item.label}</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      ))}
-      {end}
-    </SidebarMenu>
+    // 原稿を開いているときもライブラリを今の画面として伝える（NavLink は URL が完全に一致するときしか aria-current を付けない）
+    <nav aria-label="メイン">
+      <SidebarMenu>
+        {items.map((item) => {
+          const active = item.activePatterns.some(
+            (pattern) => matchPath(pattern, pathname) !== null,
+          );
+          return (
+            <SidebarMenuItem key={item.to}>
+              <SidebarMenuButton
+                isActive={active}
+                render={<Link to={item.to} aria-current={active ? "page" : undefined} />}
+                tooltip={item.label}
+                onClick={() => {
+                  // 引き出し（狭い画面の Web 版）は項目を選んでも開いたままなので、移った先の画面が見えるように閉じる
+                  if (isMobile) {
+                    setOpenMobile(false);
+                  }
+                }}
+              >
+                <item.icon />
+                <span>{item.label}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          );
+        })}
+        {end}
+      </SidebarMenu>
+    </nav>
   );
 }
 

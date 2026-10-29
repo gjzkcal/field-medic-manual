@@ -2,6 +2,7 @@ import { LayoutGridIcon, ListIcon } from "lucide-react";
 import { useEffect, useId, useMemo, useState, type JSX } from "react";
 import { Link } from "react-router";
 
+import { usePageTitle } from "@/app/use-page-title";
 import { revealMainWindow } from "@/app/reveal";
 import { IssueCard } from "@/components/IssueCard";
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,7 @@ function useDocList(): LoadState {
 }
 
 export function LibraryPage(): JSX.Element {
+  usePageTitle("ライブラリ");
   const state = useDocList();
   const now = useNow();
   const [filter, setFilter] = useState<LibraryFilter>(EMPTY_FILTER);

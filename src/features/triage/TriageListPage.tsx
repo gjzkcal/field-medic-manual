@@ -2,6 +2,7 @@ import { TriangleAlertIcon } from "lucide-react";
 import type { JSX } from "react";
 import { Link } from "react-router";
 
+import { usePageTitle } from "@/app/use-page-title";
 import { IssueCard } from "@/components/IssueCard";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +17,7 @@ import { useNow } from "@/hooks/use-now";
 import type { TriageSummary } from "@/lib/bindings/TriageSummary";
 
 export function TriageListPage(): JSX.Element {
+  usePageTitle("トリアージ");
   const state = useFlowList();
   const now = useNow();
   return (

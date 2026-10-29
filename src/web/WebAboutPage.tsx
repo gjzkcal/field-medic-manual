@@ -1,6 +1,7 @@
 import { DownloadIcon } from "lucide-react";
 import type { JSX } from "react";
 
+import { usePageTitle } from "@/app/use-page-title";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AboutDetails, AboutSection } from "@/features/settings/AboutCard";
@@ -9,6 +10,7 @@ import { DOWNLOAD_URL } from "@/web/links";
 
 /** Web 版の「このサイトについて」。デスクトップ版の案内と、ライセンス・出典・免責。 */
 export function WebAboutPage(): JSX.Element {
+  usePageTitle("このサイトについて");
   return (
     <section className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">このサイトについて</h1>

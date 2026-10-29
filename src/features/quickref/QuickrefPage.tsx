@@ -2,6 +2,7 @@ import { SearchIcon, TriangleAlertIcon } from "lucide-react";
 import { useEffect, useMemo, type JSX } from "react";
 import { useSearchParams } from "react-router";
 
+import { usePageTitle } from "@/app/use-page-title";
 import { IssueCard } from "@/components/IssueCard";
 import { Badge } from "@/components/ui/badge";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
@@ -45,9 +46,12 @@ interface QuickrefPageProps {
 
 /** 症状→処置のクイック表。絞り込みは URL のクエリに持つ（filter.ts）。 */
 export function QuickrefPage({ compact = false }: QuickrefPageProps): JSX.Element {
+  usePageTitle("クイック表");
   const load = useQuickrefTable();
   return (
     <section className="mx-auto flex w-full max-w-5xl flex-col gap-4">
+      {/* 小窓は見出しの分の高さを惜しんで見せないが、画面の名前は読み上げで分かるようにする */}
+      {compact && <h1 className="sr-only">クイック表</h1>}
       {!compact && (
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold">クイック表</h1>

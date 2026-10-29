@@ -1,6 +1,7 @@
 import { useEffect, type JSX } from "react";
 import { Link } from "react-router";
 
+import { usePageTitle } from "@/app/use-page-title";
 import { IssueCard } from "@/components/IssueCard";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
@@ -11,6 +12,17 @@ import { PREF_KIND_LABELS, prefHref, prefKey } from "@/features/prefs/targets";
 
 /** 小窓の ★ タブ。お気に入りを開く・外す。 */
 export function OverlayFavoritesPage(): JSX.Element {
+  usePageTitle("お気に入り");
+  return (
+    <>
+      {/* 小窓は高さを惜しんで見出しを見せないが、画面の名前は読み上げで分かるようにする */}
+      <h1 className="sr-only">お気に入り</h1>
+      <FavoritesBody />
+    </>
+  );
+}
+
+function FavoritesBody(): JSX.Element {
   const favorites = usePrefs((s) => s.favorites);
   const error = usePrefs((s) => s.error);
 

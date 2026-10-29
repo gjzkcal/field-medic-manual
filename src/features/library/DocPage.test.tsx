@@ -373,6 +373,36 @@ describe("DocPage", () => {
     expect(decodeURIComponent(router.state.location.hash)).toBe("#cpr-の手順");
   });
 
+  it("目次で節を押すと、その見出しにフォーカスが移る", async () => {
+    renderDoc("/doc/d1");
+    await screen.findByRole("heading", { level: 2, name: "止血帯を使う" });
+
+    fireEvent.click(
+      within(screen.getByRole("navigation", { name: "目次" })).getByText("止血帯を使う"),
+    );
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole("heading", { level: 2, name: "止血帯を使う" }),
+      );
+    });
+  });
+
+  it("狭い幅の「目次」ボタンからも節へ跳べ、閉じても跳んだ先の見出しにフォーカスが残る", async () => {
+    renderDoc("/doc/d1");
+    await screen.findByRole("heading", { level: 2, name: "止血帯を使う" });
+
+    fireEvent.click(screen.getByRole("button", { name: "目次" }));
+    const sheet = await screen.findByRole("dialog", { name: "目次" });
+    fireEvent.click(within(sheet).getByText("包帯を巻く"));
+
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { name: "目次" })).toBeNull();
+    });
+    expect(document.activeElement).toBe(
+      screen.getByRole("heading", { level: 2, name: "包帯を巻く" }),
+    );
+  });
+
   it("検索結果から開いたときは検索語をハイライトし、目次で移ると消す", async () => {
     // jsdom には CSS Custom Highlight API がないので、登録された範囲だけを見られる代わりを置く
     const highlights = new Map<string, { ranges: Range[] }>();

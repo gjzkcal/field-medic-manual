@@ -1,6 +1,7 @@
 import { useEffect, useRef, type JSX } from "react";
 import { useNavigate } from "react-router";
 
+import { usePageTitle } from "@/app/use-page-title";
 import { useOverlayUi } from "@/features/overlay/overlay-mode";
 import { PrefsCommandGroups } from "@/features/prefs/PrefsCommandGroups";
 import { usePalettePrefs } from "@/features/prefs/use-palette-prefs";
@@ -13,6 +14,7 @@ export function OverlaySearchPage(): JSX.Element {
   const focusRequest = useOverlayUi((s) => s.searchFocusRequest);
   const query = useOverlayUi((s) => s.searchQuery);
   const { onFavorite, isFavorite } = usePalettePrefs();
+  usePageTitle("検索");
 
   // Ctrl+Shift+F で呼ばれたら入力欄へ。前の語は選択しておき、そのまま打てば置き換わるようにする
   useEffect(() => {
@@ -23,20 +25,24 @@ export function OverlaySearchPage(): JSX.Element {
   }, [focusRequest]);
 
   return (
-    <CommandPalette
-      variant="inline"
-      inputRef={inputRef}
-      query={query}
-      onQueryChange={(searchQuery) => {
-        useOverlayUi.setState({ searchQuery });
-      }}
-      className="h-full bg-transparent"
-      onSelect={(href) => {
-        void navigate(href);
-      }}
-      onFavorite={onFavorite}
-      isFavorite={isFavorite}
-      emptySlot={<PrefsCommandGroups />}
-    />
+    <>
+      {/* 入力欄がすぐ上にあるので見出しは見せず、画面の名前を読み上げで分かるようにする */}
+      <h1 className="sr-only">検索</h1>
+      <CommandPalette
+        variant="inline"
+        inputRef={inputRef}
+        query={query}
+        onQueryChange={(searchQuery) => {
+          useOverlayUi.setState({ searchQuery });
+        }}
+        className="h-full bg-transparent"
+        onSelect={(href) => {
+          void navigate(href);
+        }}
+        onFavorite={onFavorite}
+        isFavorite={isFavorite}
+        emptySlot={<PrefsCommandGroups />}
+      />
+    </>
   );
 }

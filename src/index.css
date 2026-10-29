@@ -164,6 +164,22 @@
   html {
     @apply font-sans;
   }
+  /* 画面を移ったときや目次で跳んだときに、スクリプトでフォーカスを置く見出しと本文の領域。
+     押せる部品ではなく Tab でも止まらないので、輪は出さない（読み上げとキーボードの起点にするだけ） */
+  :is(h1, h2, h3, h4, h5, h6, main)[tabindex="-1"]:focus {
+    outline: none;
+  }
+  /* OS の「アニメーション効果」をオフにしている人には、開閉やスライドの動きを止める（結果だけを出す） */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 /*

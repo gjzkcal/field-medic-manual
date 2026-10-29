@@ -16,7 +16,8 @@ export function ViewerSettingsCard(): JSX.Element {
         <CardTitle>表示</CardTitle>
         <CardDescription>
           テーマと、マニュアルの本文の文字サイズ・行間。マニュアルを読んでいる画面の「表示」ボタンからも変えられます。システムを選ぶと
-          OS の設定（ライト / ダーク）に合わせます。
+          OS の設定（ライト / ダーク）に合わせます。画面全体は Ctrl+＋ / Ctrl+−（または
+          Ctrl+ホイール）で拡大・縮小でき、Ctrl+0 で元に戻ります。
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-wrap items-start gap-6">
@@ -31,7 +32,9 @@ export function ViewerSettingsCard(): JSX.Element {
 function Preview(): JSX.Element {
   const settings = useViewerSettings((s) => s.settings);
   return (
+    // 名前を読ませるには役割が要る（役割のない div の aria-label は読まれない）
     <div
+      role="group"
       aria-label="表示の見本"
       className="manual-body min-w-60 flex-1 rounded-lg border p-4"
       style={{
