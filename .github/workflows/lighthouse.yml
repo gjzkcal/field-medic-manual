@@ -23,12 +23,33 @@ on:
       - ".github/workflows/pages.yml"
       - "README.md"
       - "CHANGELOG.md"
+  # マージの前に崩れに気づくため（main で初めて落ちたことがある）。除外は push と同じものに、
+  # 依存だけの PR（Renovate）を足す。依存の更新は週 1 回まとめて来るので、main に入ってから測る
+  pull_request:
+    paths-ignore:
+      - "src-tauri/src/**/*.rs"
+      - "src-tauri/build.rs"
+      - "src-tauri/.cargo/**"
+      - "src-tauri/rust-toolchain.toml"
+      - ".github/ISSUE_TEMPLATE/**"
+      - ".github/pull_request_template.md"
+      - ".github/renovate.json5"
+      - ".github/workflows/ci.yml"
+      - ".github/workflows/release.yml"
+      - ".github/workflows/pages.yml"
+      - "README.md"
+      - "CHANGELOG.md"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "src-tauri/Cargo.toml"
+      - "src-tauri/Cargo.lock"
+      - "THIRD_PARTY_LICENSES.txt"
   workflow_dispatch:
 
 permissions:
   contents: read
 
-# 続けて push したら、古い回を止めて最新の main だけを測る
+# 続けて push したら、古い回を止めて最新の main（PR は最新のコミット）だけを測る
 concurrency:
   group: lighthouse-${{ github.ref }}
   cancel-in-progress: true
