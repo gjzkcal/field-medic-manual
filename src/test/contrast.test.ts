@@ -1,7 +1,7 @@
 // 画面の色が、ライト・ダークの両方で WCAG 2.2 AA のコントラストを満たすことを確かめる。
 // 文字は 1.4.3（4.5:1）、入力欄の枠・フォーカスの輪・グラフの線・状態を示す色は 1.4.11（3:1）。
 // 色は index.css の :root（ライト）と .dark、Tailwind の色は tailwindcss/theme.css から読む
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -181,6 +181,29 @@ describe.each(["light", "dark"] as const)("%s のコントラスト（WCAG 2.2 A
       .filter((p) => p.ratio < p.min)
       .map((p) => `${p.label}: ${p.ratio.toFixed(2)} < ${String(p.min)}`);
     expect(failures).toEqual([]);
+  });
+});
+
+describe("文字色の不透明度", () => {
+  // 上の組み合わせは CSS 変数の色そのものしか見ないので、text-foreground/60 のように薄めた文字色は
+  // 検査から漏れる（クイック表のタブがライトで 4.4:1 になり、Lighthouse で初めて見つかった）。
+  // 薄い文字が要るときは、検査に入っている muted-foreground などの変数を使う
+  it("部品の文字色に不透明度を付けない", () => {
+    const fontSizes = new Set(["xs", "sm", "base", "lg", "xl"]);
+    const src = resolve(REPO_ROOT, "src");
+    const found = readdirSync(src, { recursive: true, encoding: "utf8" })
+      .filter((file) => /\.tsx?$/.test(file) && !file.includes(".test."))
+      .flatMap((file) =>
+        [
+          ...readFileSync(resolve(src, file), "utf8").matchAll(
+            /\btext-([a-z][\w-]*)\/(?:\d+|\[[^\]]*\])/g,
+          ),
+        ]
+          // text-sm/6 は文字の大きさと行の高さで、色ではない
+          .filter((m) => m[1] !== undefined && !fontSizes.has(m[1]))
+          .map((m) => `${file}: ${m[0]}`),
+      );
+    expect(found).toEqual([]);
   });
 });
 
