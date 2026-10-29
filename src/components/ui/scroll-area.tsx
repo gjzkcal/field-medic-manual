@@ -14,7 +14,9 @@ function ScrollArea({
     >
       <ScrollAreaPrimitive.Viewport
         data-slot="scroll-area-viewport"
-        className="size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1"
+        // 中の sr-only（読み上げ用に隠した absolute の要素）の基準をここにする。外枠が基準だと、スクロールで切り取られずに
+        // 外枠の下へはみ出し、ページ全体が縦に伸びて二重にスクロールする（狭いウィンドウで目立つ）
+        className="relative size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1"
       >
         {children}
       </ScrollAreaPrimitive.Viewport>

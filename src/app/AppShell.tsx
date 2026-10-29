@@ -82,8 +82,10 @@ export function AppShell({
         <div data-tauri-drag-region className="h-full min-w-8 flex-1 max-sm:min-w-2" />
         <HeaderSearch />
         <div data-tauri-drag-region className="h-full min-w-8 flex-1 max-sm:min-w-2" />
-        {headerEnd}
+        {/* デスクトップ版は閉じる（×）を右端に保つため、メニューはウィンドウの操作の左に置く。
+            Web 版は狭い幅で右端の案内（headerEnd）を隠すので、メニューが右端になる */}
         <MobileMenuTrigger />
+        {headerEnd}
       </header>
       {/* Sidebar と SidebarInset は兄弟のまま置く（本文の余白をサイドバーの開閉に合わせる peer の指定が効くように） */}
       <div className="flex min-h-0 flex-1">
