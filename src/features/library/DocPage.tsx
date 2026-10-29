@@ -11,9 +11,9 @@ import {
 } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 
+import { LinkButton } from "@/components/LinkButton";
 import { usePageTitle } from "@/app/use-page-title";
 import { focusTarget } from "@/app/use-route-focus";
-import { Button } from "@/components/ui/button";
 import {
   Empty,
   EmptyContent,
@@ -110,9 +110,9 @@ function DocMessage({ title, description }: { title: string; description: string
           <EmptyDescription>{description}</EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
-          <Button variant="outline" nativeButton={false} render={<Link to="/library" />}>
+          <LinkButton variant="outline" render={<Link to="/library" />}>
             ライブラリへ戻る
-          </Button>
+          </LinkButton>
         </EmptyContent>
       </Empty>
     </div>
@@ -391,6 +391,7 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
                 {section.level > 0 && visibility.labeled.has(section.anchor) && (
                   <SectionLabel
                     anchor={section.anchor}
+                    level={section.level}
                     conditions={section}
                     register={registerHeading}
                   />

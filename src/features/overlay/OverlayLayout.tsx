@@ -9,6 +9,7 @@ import {
 import { useRef, type JSX } from "react";
 import { matchPath, NavLink, Outlet, useLocation } from "react-router";
 
+import { LinkButton } from "@/components/LinkButton";
 import { useRouteFocus } from "@/app/use-route-focus";
 
 import { Button } from "@/components/ui/button";
@@ -83,18 +84,17 @@ export function OverlayLayout(): JSX.Element {
               (pattern) => matchPath(pattern, location.pathname) !== null,
             );
             return (
-              <Button
+              <LinkButton
                 key={tab.to}
                 variant={active ? "secondary" : "ghost"}
                 size="sm"
-                nativeButton={false}
                 render={<NavLink to={tab.to} />}
                 aria-current={active ? "page" : undefined}
               >
                 <tab.icon />
                 {/* 小窓は幅 320px まで縮められる。狭いと帯に収まらないので、文字は読み上げ用にだけ残してアイコンにする */}
                 <span className="@max-[26rem]:sr-only">{tab.label}</span>
-              </Button>
+              </LinkButton>
             );
           })}
         </nav>

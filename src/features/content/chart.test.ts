@@ -6,8 +6,10 @@ import {
   parseChartCell,
   parseChartSpec,
   chartFromCsv,
+  chartSummary,
   chartWithoutTable,
   readChartPayload,
+  type ChartData,
   type ChartSpec,
 } from "@/features/content/chart";
 
@@ -268,3 +270,35 @@ function fromTableData(): ReturnType<typeof chartFromTable>["data"] {
     spec("x=経過; y=SpO2"),
   ).data;
 }
+
+describe("chartSummary", () => {
+  const data: ChartData = {
+    xLabel: "経過",
+    xUnit: "s",
+    series: [
+      { key: "s0", label: "濃度", panel: "y", unit: "nM" },
+      { key: "s1", label: "痛み", panel: "y", unit: null },
+    ],
+    points: [
+      { x: 0, values: { s0: 0, s1: 0.8 } },
+      { x: 23.5, values: { s0: 245.123456, s1: 0.5 } },
+      { x: 60, values: { s0: 120, s1: 0.2 } },
+      { x: 164, values: { s0: 0, s1: 0.2 } },
+    ],
+  };
+
+  it("線ごとに始め・最大・最小・終わりを、横軸の値と一緒に文にする", () => {
+    expect(chartSummary(data)).toBe(
+      [
+        "濃度（nM）: 経過 0 s で 0 nM、最大 245.1 nM（経過 23.5 s）、経過 164 s で 0 nM",
+        "痛み: 経過 0 s で 0.8、最小 0.2（経過 60 s）、経過 164 s で 0.2。",
+      ].join("。"),
+    );
+  });
+
+  it("値のない線はそう書く", () => {
+    expect(
+      chartSummary({ ...data, series: [{ key: "s9", label: "空", panel: "y", unit: null }] }),
+    ).toBe("空: 値なし。");
+  });
+});

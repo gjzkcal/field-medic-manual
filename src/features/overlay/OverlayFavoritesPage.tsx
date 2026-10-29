@@ -1,10 +1,10 @@
 import { useEffect, useRef, type JSX, type RefObject } from "react";
 import { Link } from "react-router";
 
+import { LinkButton } from "@/components/LinkButton";
 import { usePageTitle } from "@/app/use-page-title";
 import { focusTarget } from "@/app/use-route-focus";
 import { IssueCard } from "@/components/IssueCard";
-import { Button } from "@/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { FavoriteButton } from "@/features/prefs/FavoriteButton";
 import { PrefIcon } from "@/features/prefs/PrefIcon";
@@ -73,9 +73,8 @@ function FavoritesBody({
     <ul ref={listRef} className="flex flex-col gap-1">
       {favorites.map((item, index) => (
         <li key={prefKey(item.target)} className="flex items-center gap-1">
-          <Button
+          <LinkButton
             variant="ghost"
-            nativeButton={false}
             render={<Link to={prefHref(item.target)} />}
             className="h-auto min-w-0 flex-1 justify-start gap-3 py-2 text-left"
           >
@@ -87,7 +86,7 @@ function FavoritesBody({
                 <span className="truncate text-xs text-muted-foreground">{item.context}</span>
               )}
             </span>
-          </Button>
+          </LinkButton>
           <span
             className="contents"
             onClickCapture={() => {

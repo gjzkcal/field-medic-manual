@@ -288,8 +288,11 @@ describe("DocPage", () => {
     expect(footer?.textContent).not.toContain("ソースのコミット");
     expect(footer?.textContent).not.toContain("ゲーム本体");
     expect(article?.lastElementChild).toBe(footer);
-    // 目次にも見出しが並ぶ
-    expect(screen.getByRole("navigation", { name: "目次" }).textContent).toContain("包帯を巻く");
+    // 目次にも見出しが並ぶ。h2 は h1 の下の入れ子のリストにする（字下げだけでなく構造でも階層を伝える）
+    const toc = screen.getByRole("navigation", { name: "目次" });
+    expect(toc.textContent).toContain("包帯を巻く");
+    const nested = within(toc).getByRole("link", { name: "止血帯を使う" }).closest("ul");
+    expect(nested?.parentElement?.closest("li")?.textContent).toContain("止血");
   });
 
   it("フローチャートを SVG で描き、文のリストは残す。形の壊れた印は描かない", async () => {

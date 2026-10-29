@@ -1,8 +1,8 @@
 import { DownloadIcon } from "lucide-react";
 import type { JSX } from "react";
 
+import { LinkButton } from "@/components/LinkButton";
 import { usePageTitle } from "@/app/use-page-title";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AboutDetails, AboutSection } from "@/features/settings/AboutCard";
 import { version } from "../../package.json";
@@ -35,15 +35,14 @@ export function WebAboutPage(): JSX.Element {
               10 / 11）だけにあります。
             </p>
             <div>
-              <Button
+              <LinkButton
                 variant="outline"
                 size="sm"
-                nativeButton={false}
                 render={<a href={DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" />}
               >
                 <DownloadIcon />
                 デスクトップ版をダウンロード（GitHub Releases）
-              </Button>
+              </LinkButton>
             </div>
           </AboutSection>
           <AboutDetails />

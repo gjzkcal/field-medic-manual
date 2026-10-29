@@ -2,6 +2,7 @@ import { HeartPulseIcon, type LibraryIcon, MenuIcon } from "lucide-react";
 import { useRef, type JSX, type ReactNode, type RefObject } from "react";
 import { Link, matchPath, Outlet, useLocation } from "react-router";
 
+import { LinkButton } from "@/components/LinkButton";
 import { useUiStore } from "@/app/store";
 import { focusPageStart, useRouteFocus } from "@/app/use-route-focus";
 import { Button } from "@/components/ui/button";
@@ -121,9 +122,8 @@ const MAIN_ID = "main-content";
 function SkipLink({ main }: { main: RefObject<HTMLElement | null> }): JSX.Element {
   return (
     <div className="fixed top-2 left-2 z-50 not-focus-within:sr-only">
-      <Button
+      <LinkButton
         variant="outline"
-        nativeButton={false}
         render={
           <a
             href={`#${MAIN_ID}`}
@@ -137,7 +137,7 @@ function SkipLink({ main }: { main: RefObject<HTMLElement | null> }): JSX.Elemen
         }
       >
         本文へスキップ
-      </Button>
+      </LinkButton>
     </div>
   );
 }

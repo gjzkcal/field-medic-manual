@@ -2,6 +2,7 @@ import { ArrowLeftIcon, InfoIcon } from "lucide-react";
 import type { JSX, ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 
+import { LinkButton } from "@/components/LinkButton";
 import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ViewerSettingsPopover } from "@/features/library/viewer/ViewerSettingsPopover";
@@ -55,10 +56,10 @@ function BackButton(): JSX.Element {
   const navigate = useNavigate();
   if (location.key === "default") {
     return (
-      <Button variant="ghost" size="sm" nativeButton={false} render={<Link to="/library" />}>
+      <LinkButton variant="ghost" size="sm" render={<Link to="/library" />}>
         <ArrowLeftIcon />
         ライブラリ
-      </Button>
+      </LinkButton>
     );
   }
   return (

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -23,6 +24,8 @@ import { toSeverity } from "@/features/quickref/severity";
 export function QuickrefTableView({ rows }: { rows: readonly VisibleRow[] }): JSX.Element {
   return (
     <Table>
+      {/* 見出し（h1）は表の外にあるので、読み上げで表へ跳んだときにも何の表かが分かるようにする */}
+      <TableCaption className="sr-only">症状ごとの処置</TableCaption>
       <TableHeader>
         <TableRow>
           <TableHead className="w-24">重症度</TableHead>
@@ -39,7 +42,8 @@ export function QuickrefTableView({ rows }: { rows: readonly VisibleRow[] }): JS
               <TableCell>
                 <SeverityBadge severity={toSeverity(row.severity)} />
               </TableCell>
-              <TableCell className="whitespace-normal">
+              {/* 症状が行の名前。処置・物品のセルを読むときに、どの症状の行かが分かるよう行の見出しにする（見た目はセルのまま） */}
+              <TableHead scope="row" className="h-auto p-2 align-top font-normal whitespace-normal">
                 <Link
                   to={quickrefHref(row.id)}
                   className="font-medium underline-offset-4 hover:underline"
@@ -50,7 +54,7 @@ export function QuickrefTableView({ rows }: { rows: readonly VisibleRow[] }): JS
                   <Badge variant="outline">{row.category}</Badge>
                   {condition !== null && <Badge variant="secondary">{condition}</Badge>}
                 </div>
-              </TableCell>
+              </TableHead>
               <TableCell className="whitespace-normal">
                 <ol className="list-decimal pl-5">
                   {row.treatment.map((step, i) => (

@@ -122,9 +122,19 @@ describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
       noData,
     );
     const html = doc.sections[0]?.html ?? "";
-    expect(html).toContain("<td>心拍数</td>");
+    // 本文の行の先頭のセルは行の見出し、ヘッダーの行は列の見出しにする（読み上げでどの行・列の値か分かるように）
+    expect(html).toContain('<th scope="row">心拍数</th>');
     expect(html).toContain('<td class="manual-cell-long">心拍数がこれ未満で移る。');
-    expect(html).toContain("<th>意味</th>");
+    expect(html).toContain('<th scope="col">意味</th>');
+  });
+
+  it("先頭のセルが長文でも、行の見出しにしたときにクラスを引き継ぐ", async () => {
+    const { doc } = await convertManual(
+      manual("| 項目 |\n|---|\n| 心拍数がこれ未満で移る。Critical の値は蘇生直後にも使う |"),
+      noImages,
+      noData,
+    );
+    expect(doc.sections[0]?.html).toContain('<th class="manual-cell-long" scope="row">');
   });
 
   it("グラフの印を読み、直後の表に data-chart を付けて印を消す", async () => {
