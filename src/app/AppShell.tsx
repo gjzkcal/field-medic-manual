@@ -122,8 +122,9 @@ const MAIN_ID = "main-content";
 function SkipLink({ main }: { main: RefObject<HTMLElement | null> }): JSX.Element {
   return (
     <div className="fixed top-2 left-2 z-50 not-focus-within:sr-only">
+      {/* 下のヘッダーに重ねて出すので、地が不透明な既定の見た目にする（outline はダークで地が半透け、文字が重なる） */}
       <LinkButton
-        variant="outline"
+        className="shadow-md"
         render={
           <a
             href={`#${MAIN_ID}`}

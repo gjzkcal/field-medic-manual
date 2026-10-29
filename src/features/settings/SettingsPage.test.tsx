@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { DEFAULT_MOD_SETTINGS, useModSettings } from "@/features/settings/mod-settings";
 import { SettingsPage } from "@/features/settings/SettingsPage";
 import { DEFAULT_VIEWER_SETTINGS, useViewerSettings } from "@/features/settings/viewer-settings";
+import { axeViolations } from "@/test/axe";
 
 afterEach(() => {
   cleanup();
@@ -130,5 +131,30 @@ describe("SettingsPage", () => {
     await waitFor(() => {
       expect(screen.getByText("「小窓で検索」を Ctrl + Alt + G にしました")).toBeDefined();
     });
+  });
+
+  it("ホットキーのエラーを含めて、axe の違反がない（WCAG 2.2 A・AA）", async () => {
+    mockIPC((cmd) => {
+      switch (cmd) {
+        case "hotkey_list":
+          return [
+            {
+              action: "toggle",
+              accelerator: "Ctrl+Shift+M",
+              defaultAccelerator: "Ctrl+Shift+M",
+              error: "ほかのアプリが使っています",
+            },
+          ];
+        case "app_version":
+          return "0.0.1";
+        default:
+          // 開発ビルドだけのデバッグの欄が一覧を読むので、空の一覧を返す
+          return [];
+      }
+    });
+    render(<SettingsPage />);
+    await screen.findByText("ほかのアプリが使っています");
+    await screen.findByText("v0.0.1");
+    expect(await axeViolations()).toEqual([]);
   });
 });

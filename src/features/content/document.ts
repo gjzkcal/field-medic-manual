@@ -238,6 +238,12 @@ async function importImages(
     }
 
     if (asset !== null) {
+      // 読み上げでは画像の代わりに alt を読む（WCAG 1.1.1）。無いとファイル名などが読まれるので、書き忘れを原稿の検査で見つける
+      if (alt === "") {
+        warnings.push(
+          `画像に代替テキスト（alt）がありません: ${src.startsWith("data:") ? "data URI の画像" : src}`,
+        );
+      }
       assets.set(asset.id, asset);
       img.removeAttribute("src");
       img.removeAttribute("srcset");

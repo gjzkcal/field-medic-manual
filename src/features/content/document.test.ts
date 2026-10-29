@@ -117,7 +117,7 @@ describe("sectionsFromHtml", () => {
     expect(html).toContain('<a href="https://example.com">安全</a>');
   });
 
-  it("data URI の画像はアセットにし、外部の画像はリンク、読めない画像は消して警告する", async () => {
+  it("data URI の画像はアセットにし、外部の画像はリンク、読めない画像と alt のない画像は警告する", async () => {
     const png = "data:image/png;base64,iVBORw0KGgo=";
     const { sections, assets, warnings } = await sectionsFromHtml(
       `<h2>図</h2><p><img src="${png}" alt="図1"><img src="${png}"><img src="https://example.com/a/b.png" alt="外部"><img src="missing.png"></p>`,
@@ -128,7 +128,10 @@ describe("sectionsFromHtml", () => {
     expect(html).toContain(`<img alt="図1" data-asset-id="${assets[0]?.id ?? ""}">`);
     expect(html).not.toContain("src=");
     expect(html).toContain('<a href="https://example.com/a/b.png">[画像: 外部]</a>');
-    expect(warnings).toEqual(["画像を読み込めませんでした: missing.png"]);
+    expect(warnings).toEqual([
+      "画像に代替テキスト（alt）がありません: data URI の画像",
+      "画像を読み込めませんでした: missing.png",
+    ]);
   });
 
   it("相対パスの画像は resolveImage で読む", async () => {

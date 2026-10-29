@@ -9,6 +9,7 @@ import { usePaletteOpen } from "@/features/search/palette-open";
 import { EMPTY_SEARCH_FILTER, useSearchFilter } from "@/features/search/search-filter";
 import { MARK_END, MARK_START } from "@/features/search/snippet";
 import type { SearchHit } from "@/lib/bindings/SearchHit";
+import { axeViolations } from "@/test/axe";
 
 function hit(id: number, title: string, matchedTerms: string[], synonymOnly = false): SearchHit {
   return {
@@ -187,6 +188,20 @@ describe("CommandPalette（上部の検索欄）", () => {
     expect(list()).not.toBeNull();
     fireEvent.keyDown(input(), { key: "Escape" });
     expect(list()).toBeNull();
+  });
+
+  it("結果の一覧と絞り込みを開いた状態で、axe の違反がない（WCAG 2.2 A・AA）", async () => {
+    render(<CommandPalette variant="dropdown" onSelect={vi.fn()} />);
+    fireEvent.focus(input());
+    expect(await axeViolations()).toEqual([]);
+
+    fireEvent.change(input(), { target: { value: "止血" } });
+    await screen.findByText("止血帯を使う");
+    expect(await axeViolations()).toEqual([]);
+
+    fireEvent.click(screen.getByRole("button", { name: "絞り込み" }));
+    await screen.findByRole("dialog", { name: "絞り込み" });
+    expect(await axeViolations()).toEqual([]);
   });
 
   it("1 回目の Esc では入力欄にフォーカスを残し、閉じた後の Esc で外す", () => {

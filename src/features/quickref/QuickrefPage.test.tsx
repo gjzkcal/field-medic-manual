@@ -8,6 +8,7 @@ import { QuickrefPage } from "@/features/quickref/QuickrefPage";
 import { DEFAULT_MOD_SETTINGS, useModSettings } from "@/features/settings/mod-settings";
 import type { QuickrefRow } from "@/lib/bindings/QuickrefRow";
 import type { QuickrefTable } from "@/lib/bindings/QuickrefTable";
+import { axeViolations } from "@/test/axe";
 
 function row(id: string, extra: Partial<QuickrefRow>): QuickrefRow {
   return {
@@ -183,5 +184,17 @@ describe("QuickrefPage", () => {
       expect(history).toEqual([{ target: { kind: "quickref", rowId: "wake-core" } }]);
     });
     expect(scrollIntoView).toHaveBeenCalled();
+  });
+
+  it("カードと表の表示で、axe の違反がない（WCAG 2.2 A・AA）", async () => {
+    renderPage();
+    await waitFor(() => {
+      expect(cards()).toHaveLength(4);
+    });
+    expect(await axeViolations()).toEqual([]);
+
+    fireEvent.click(screen.getByRole("button", { name: "表" }));
+    await screen.findByRole("table", { name: "症状ごとの処置" });
+    expect(await axeViolations()).toEqual([]);
   });
 });

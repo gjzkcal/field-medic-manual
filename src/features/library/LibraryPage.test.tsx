@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { LibraryPage } from "@/features/library/LibraryPage";
 import type { DocSummary } from "@/lib/bindings/DocSummary";
+import { axeViolations } from "@/test/axe";
 
 afterEach(() => {
   cleanup();
@@ -131,5 +132,30 @@ describe("LibraryPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "タイトル" }));
     expect(headings()).toEqual([]);
     expect(screen.getByRole("heading", { level: 2, name: "止血" })).toBeDefined();
+  });
+
+  it("カードとリストの表示、絞り込みで 0 件のときに、axe の違反がない（WCAG 2.2 A・AA）", async () => {
+    mockIPC((cmd) =>
+      cmd === "doc_list"
+        ? [
+            doc("hemorrhage", "止血", { modTarget: "core", tags: ["出血"], category: "症状/処置" }),
+            doc("cardiac", "心停止と CPR", { modTarget: "circulation", verifiedAt: null }),
+          ]
+        : null,
+    );
+    const router = createMemoryRouter([{ path: "/library", element: <LibraryPage /> }], {
+      initialEntries: ["/library"],
+    });
+    render(<RouterProvider router={router} />);
+    await screen.findByText("止血");
+    expect(await axeViolations()).toEqual([]);
+
+    fireEvent.click(screen.getByRole("button", { name: "リスト表示" }));
+    expect(await axeViolations()).toEqual([]);
+
+    fireEvent.click(screen.getByRole("button", { name: "古い内容だけ（90 日超・確認日なし）" }));
+    fireEvent.click(screen.getByRole("button", { name: "Core" }));
+    await screen.findByText("条件に合うマニュアルがありません");
+    expect(await axeViolations()).toEqual([]);
   });
 });

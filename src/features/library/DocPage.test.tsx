@@ -9,6 +9,7 @@ import { DEFAULT_MOD_SETTINGS, useModSettings } from "@/features/settings/mod-se
 import type { DocDetail } from "@/lib/bindings/DocDetail";
 import type { DocOutline } from "@/lib/bindings/DocOutline";
 import type { Section } from "@/lib/bindings/Section";
+import { axeViolations } from "@/test/axe";
 
 const ASSET_ID = "a".repeat(64);
 
@@ -63,7 +64,7 @@ const HEMORRHAGE: DocDetail = {
         '<p>関連: <a href="cardiac-arrest.md#cpr-%E3%81%AE%E6%89%8B%E9%A0%86">CPR</a></p>',
         '<p><a href="https://anvil.acemod.org/dev/">出典</a></p>',
         "<script>window.__hacked = true</script>",
-        '<img src="x" onerror="window.__hacked = true">',
+        '<img src="x" alt="壊れた画像" onerror="window.__hacked = true">',
       ].join(""),
     ),
     section(
@@ -374,6 +375,42 @@ describe("DocPage", () => {
 
     expect(router.state.location.pathname).toBe("/doc/d2");
     expect(decodeURIComponent(router.state.location.hash)).toBe("#cpr-の手順");
+  });
+
+  it("表・グラフ・式・フローチャートのある本文で、axe の違反がない（WCAG 2.2 A・AA）", async () => {
+    renderDoc("/doc/d1");
+    await screen.findByRole("heading", { level: 2, name: "止血帯を使う" });
+    await waitFor(() => {
+      expect(document.querySelector(".manual-flowchart svg")).not.toBeNull();
+    });
+    expect(await axeViolations()).toEqual([]);
+  });
+
+  it("読み込みの途中で本文の領域にフォーカスがあれば、読み込めたら表題（h1）へ移す", async () => {
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/doc/:id",
+          element: (
+            <main tabIndex={-1}>
+              <DocPage />
+            </main>
+          ),
+        },
+      ],
+      { initialEntries: ["/doc/d1"] },
+    );
+    render(
+      <TooltipProvider>
+        <RouterProvider router={router} />
+      </TooltipProvider>,
+    );
+    // 画面の枠（useRouteFocus）が、h1 の無い読み込み中に領域へ置いたフォーカス
+    screen.getByRole("main").focus();
+    const title = await screen.findByRole("heading", { level: 1, name: "止血" });
+    await waitFor(() => {
+      expect(document.activeElement).toBe(title);
+    });
   });
 
   it("目次で節を押すと、その見出しにフォーカスが移る", async () => {

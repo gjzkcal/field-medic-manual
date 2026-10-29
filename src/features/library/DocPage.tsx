@@ -231,6 +231,19 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
     recordOpen();
   }, [doc.id]);
 
+  // 画面を移ったときは、読み込みの途中で h1 がまだ無いので、枠（useRouteFocus）が本文の領域にフォーカスを置く。
+  // 読み込めたら文書の表題へ移し直す（アンカーで開いたときは、下の処理がその見出しへ移す）
+  const focusTitle = useEffectEvent(() => {
+    const main = articleRef.current?.closest("main") ?? null;
+    const title = articleRef.current?.querySelector<HTMLElement>("h1") ?? null;
+    if (hashAnchor === "" && main !== null && document.activeElement === main && title !== null) {
+      focusTarget(title);
+    }
+  });
+  useEffect(() => {
+    focusTitle();
+  }, [doc.id]);
+
   const activeAnchor = useActiveAnchor(
     viewport,
     anchors,

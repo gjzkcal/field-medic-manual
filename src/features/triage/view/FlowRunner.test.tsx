@@ -10,6 +10,7 @@ import type { FlowLookup } from "@/features/triage/runner";
 import type { Flow } from "@/features/triage/schema";
 import { FlowRunner } from "@/features/triage/view/FlowRunner";
 import type { DocOutline } from "@/lib/bindings/DocOutline";
+import { axeViolations } from "@/test/axe";
 import { action, branch, end, makeFlow, question, subflow } from "@/test/flows";
 
 const CHILD = makeFlow("child", "cq", {
@@ -261,5 +262,20 @@ describe("FlowRunner", () => {
     renderRunner("/triage/root", flow);
     expect(heading()).toBe("Core のエピネフリン");
     expect(screen.getByText(/Core \+ Breathing/)).toBeDefined();
+  });
+
+  it("質問・タイマーのある処置・終わりの画面で、axe の違反がない（WCAG 2.2 A・AA）", async () => {
+    renderRunner();
+    expect(await axeViolations()).toEqual([]);
+
+    press("1");
+    expect(heading()).toBe("止血帯で止血する");
+    await screen.findByRole("button", { name: /止血帯を使う/ });
+    expect(await axeViolations()).toEqual([]);
+
+    cleanup();
+    renderRunner("/triage/root?path=0.0.1.0");
+    expect(heading()).toBe("安定。定期的に再評価する");
+    expect(await axeViolations()).toEqual([]);
   });
 });
