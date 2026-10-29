@@ -138,16 +138,18 @@ describe("QuickrefPage", () => {
     expect(router.state.location.search).toBe("?sev=4");
   });
 
-  it("カテゴリのタブとキーワードで絞る", async () => {
+  it("分類のボタンとキーワードで絞り、残った行の数を読み上げる", async () => {
     renderPage();
     await waitFor(() => {
       expect(cards()).toHaveLength(4);
     });
-    fireEvent.click(screen.getByRole("tab", { name: "意識" }));
+    const categories = screen.getByRole("group", { name: "分類" });
+    fireEvent.click(within(categories).getByRole("button", { name: "意識" }));
     await waitFor(() => {
       expect(symptoms()).toEqual(["意識不明"]);
     });
-    fireEvent.click(screen.getByRole("tab", { name: "すべて" }));
+    expect(screen.getByRole("status").textContent).toBe("1 行");
+    fireEvent.click(within(categories).getByRole("button", { name: "すべて" }));
     fireEvent.change(screen.getByRole("textbox", { name: "キーワードで絞り込む" }), {
       target: { value: "ncd" },
     });

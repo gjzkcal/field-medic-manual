@@ -110,7 +110,8 @@ function DocTreeItem({
             <Button
               variant="ghost"
               size="icon-sm"
-              aria-label={`${doc.title}の見出しを${open ? "閉じる" : "開く"}`}
+              // 開閉は aria-expanded で伝わるので、名前は変えない（変えると状態が二重に読まれる）
+              aria-label={`${doc.title}の見出し`}
               disabled={headings.length === 0}
             />
           }

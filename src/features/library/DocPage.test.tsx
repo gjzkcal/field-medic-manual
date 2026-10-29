@@ -486,7 +486,7 @@ describe("DocPage", () => {
     await screen.findByRole("heading", { level: 2, name: "止血帯を使う" });
 
     const tree = screen.getByRole("navigation", { name: "マニュアルの見出し" });
-    fireEvent.click(within(tree).getByRole("button", { name: "心停止と CPRの見出しを開く" }));
+    fireEvent.click(within(tree).getByRole("button", { name: "心停止と CPRの見出し" }));
 
     expect(within(tree).getByText("CPR の手順")).toBeDefined();
     expect(within(tree).queryByText("Breathing を入れているとき")).toBeNull();

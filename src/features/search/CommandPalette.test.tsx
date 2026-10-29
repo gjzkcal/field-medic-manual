@@ -125,7 +125,7 @@ describe("CommandPalette", () => {
 
   it("変換中の Enter と Ctrl+Enter では開かない。Ctrl+Enter はお気に入りに渡す", async () => {
     const onSelect = vi.fn();
-    const onFavorite = vi.fn();
+    const onFavorite = vi.fn(() => Promise.resolve(true));
     render(<CommandPalette onSelect={onSelect} onFavorite={onFavorite} />);
     fireEvent.change(input(), { target: { value: "止血" } });
     await screen.findByText("止血帯を使う");
@@ -133,12 +133,33 @@ describe("CommandPalette", () => {
     fireEvent.keyDown(input(), { key: "Enter", ctrlKey: true });
     expect(onSelect).not.toHaveBeenCalled();
     expect(onFavorite).toHaveBeenCalledWith(HITS[0]);
+    // 画面では星が変わるだけなので、結果を読み上げる
+    await waitFor(() => {
+      expect(screen.getByRole("status").textContent).toBe(
+        "「止血帯を使う」をお気に入りに入れました",
+      );
+    });
   });
 
-  it("該当がなければそう伝える", async () => {
+  it("該当がなければそう伝える。文は一覧（listbox）の外に出し、読み上げにも流す", async () => {
     render(<CommandPalette onSelect={vi.fn()} />);
     fireEvent.change(input(), { target: { value: "なし" } });
-    await screen.findByText("「なし」に一致する項目はありません");
+    await waitFor(() => {
+      expect(screen.getByRole("status").textContent).toBe("「なし」に一致する項目はありません");
+    });
+    const shown = screen
+      .getAllByText("「なし」に一致する項目はありません")
+      .filter((el) => el.getAttribute("role") !== "status");
+    expect(shown).toHaveLength(1);
+    expect(shown[0]?.closest("[role=listbox]")).toBeNull();
+  });
+
+  it("結果の件数を読み上げ、一覧には名前を付ける", async () => {
+    render(<CommandPalette onSelect={vi.fn()} />);
+    fireEvent.change(input(), { target: { value: "止血" } });
+    await screen.findByText("止血帯を使う");
+    expect(screen.getByRole("status").textContent).toBe(`${String(HITS.length)} 件`);
+    expect(screen.getByRole("listbox", { name: "検索結果" })).toBeTruthy();
   });
 
   it("保存した絞り込みで検索し、絞り込み中の数を出す", async () => {
@@ -165,6 +186,32 @@ describe("CommandPalette（上部の検索欄）", () => {
     fireEvent.focus(input());
     expect(list()).not.toBeNull();
     fireEvent.keyDown(input(), { key: "Escape" });
+    expect(list()).toBeNull();
+  });
+
+  it("1 回目の Esc では入力欄にフォーカスを残し、閉じた後の Esc で外す", () => {
+    render(<CommandPalette variant="dropdown" onSelect={vi.fn()} />);
+    input().focus();
+    fireEvent.focus(input());
+    fireEvent.keyDown(input(), { key: "Escape" });
+    expect(list()).toBeNull();
+    expect(document.activeElement).toBe(input());
+    fireEvent.keyDown(input(), { key: "Escape" });
+    expect(document.activeElement).not.toBe(input());
+  });
+
+  it("フォーカスがパレットの外へ出たら閉じる（重ねた一覧で移った先を隠さない）", () => {
+    render(
+      <>
+        <CommandPalette variant="dropdown" onSelect={vi.fn()} />
+        <button type="button">本文のボタン</button>
+      </>,
+    );
+    fireEvent.focus(input());
+    expect(list()).not.toBeNull();
+    fireEvent.blur(input(), {
+      relatedTarget: screen.getByRole("button", { name: "本文のボタン" }),
+    });
     expect(list()).toBeNull();
   });
 

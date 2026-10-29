@@ -16,7 +16,9 @@ export function WebAboutPage(): JSX.Element {
       <h1 className="text-2xl font-bold">このサイトについて</h1>
       <Card>
         <CardHeader>
-          <CardTitle>Field Medic Manual（Web 版）</CardTitle>
+          <CardTitle>
+            <h2>Field Medic Manual（Web 版）</h2>
+          </CardTitle>
           <CardDescription>
             Arma Reforger の ACE Medical 向けの非公式マニュアル。Windows
             向けのデスクトップアプリと同じマニュアルを、ブラウザで読めるようにしたものです。

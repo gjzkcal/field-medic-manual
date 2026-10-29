@@ -25,32 +25,39 @@ function FavoriteToggle({ target, label }: FavoriteButtonProps): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const text = on ? `${label}をお気に入りから外す` : `${label}をお気に入りに入れる`;
   return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-pressed={on}
-            aria-label={text}
-            onClick={() => {
-              toggleFavorite(target).then(
-                () => {
-                  setError(null);
-                },
-                (e: unknown) => {
-                  setError(errorMessage(e));
-                },
-              );
-            }}
-          />
-        }
-      >
-        <StarIcon className={on ? STAR_ON_CLASS : undefined} />
-      </TooltipTrigger>
-      <TooltipContent>
-        {error === null ? text : `切り替えられませんでした: ${error}`}
-      </TooltipContent>
-    </Tooltip>
+    <>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-pressed={on}
+              // 状態は aria-pressed で伝わるので、名前は変えない（変えると「外す、押されている」のように二重に読まれる）
+              aria-label={`お気に入り（${label}）`}
+              onClick={() => {
+                toggleFavorite(target).then(
+                  () => {
+                    setError(null);
+                  },
+                  (e: unknown) => {
+                    setError(errorMessage(e));
+                  },
+                );
+              }}
+            />
+          }
+        >
+          <StarIcon className={on ? STAR_ON_CLASS : undefined} />
+        </TooltipTrigger>
+        <TooltipContent>
+          {error === null ? text : `切り替えられませんでした: ${error}`}
+        </TooltipContent>
+      </Tooltip>
+      {/* 失敗はツールチップに出すだけでは、マウスを載せない人に届かない */}
+      <span role="alert" className="sr-only">
+        {error === null ? "" : `お気に入りを切り替えられませんでした: ${error}`}
+      </span>
+    </>
   );
 }

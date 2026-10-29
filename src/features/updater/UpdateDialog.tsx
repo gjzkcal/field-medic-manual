@@ -1,5 +1,7 @@
 import { CircleAlertIcon } from "lucide-react";
-import type { JSX } from "react";
+import { useEffect, useRef, type JSX } from "react";
+
+import { focusTarget } from "@/app/use-route-focus";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -92,8 +94,18 @@ export function UpdateDialog(): JSX.Element | null {
 function InstallProgress({ progress }: { progress: DownloadProgress | null }): JSX.Element {
   const total = progress?.total ?? null;
   const downloaded = progress?.downloaded ?? 0;
+  // 押した「今すぐ更新」は押せなくなりフォーカスを失うので、ここへ移す（ダイアログの中に留め、始まったことも読み上げる）
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (ref.current !== null) {
+      focusTarget(ref.current);
+    }
+  }, []);
   return (
-    <div className="flex flex-col gap-2 text-sm">
+    <div ref={ref} className="flex flex-col gap-2 text-sm outline-none">
+      <p role="status" className="font-medium">
+        更新をダウンロードしています
+      </p>
       {/* 大きさが分からないときは null で「進行中」の表示にする */}
       <Progress
         aria-label="ダウンロードの進み具合"

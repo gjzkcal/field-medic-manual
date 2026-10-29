@@ -1,5 +1,5 @@
 import { ChevronRightIcon } from "lucide-react";
-import { useState, type JSX } from "react";
+import { useEffect, useRef, useState, type JSX } from "react";
 
 import { Button } from "@/components/ui/button";
 import type { TrailStep } from "@/features/triage/runner";
@@ -19,6 +19,15 @@ interface TrailNavProps {
  */
 export function TrailNav({ trail, onJump }: TrailNavProps): JSX.Element {
   const [expanded, setExpanded] = useState(false);
+  // 「…ほか N 歩」は押すと消えるので、フォーカスを広げた先頭の歩へ移す（body に落とさない）
+  const firstStepRef = useRef<HTMLButtonElement>(null);
+  const focusFirstRef = useRef(false);
+  useEffect(() => {
+    if (expanded && focusFirstRef.current) {
+      focusFirstRef.current = false;
+      firstStepRef.current?.focus();
+    }
+  }, [expanded]);
   // 1 歩だけ畳んでも短くならないので、畳むのは 2 歩以上隠れるときだけ
   const hidden = expanded || trail.length <= RECENT_STEPS + 1 ? 0 : trail.length - RECENT_STEPS;
   return (
@@ -29,8 +38,9 @@ export function TrailNav({ trail, onJump }: TrailNavProps): JSX.Element {
             <Button
               variant="ghost"
               size="sm"
-              className="h-auto py-0.5 text-muted-foreground"
+              className="h-auto min-h-6 py-0.5 text-muted-foreground"
               onClick={() => {
+                focusFirstRef.current = true;
                 setExpanded(true);
               }}
             >
@@ -48,16 +58,24 @@ export function TrailNav({ trail, onJump }: TrailNavProps): JSX.Element {
                 <ChevronRightIcon aria-hidden className="size-3.5 shrink-0 text-muted-foreground" />
               )}
               <Button
+                ref={i === 0 ? firstStepRef : undefined}
                 variant="ghost"
                 size="sm"
-                className="h-auto max-w-64 min-w-0 py-0.5 text-left whitespace-normal"
+                // 押せる大きさを 24px 以上にする（WCAG 2.5.8）
+                className="h-auto min-h-6 max-w-64 min-w-0 py-0.5 text-left whitespace-normal"
                 title={`${step.text}（${step.answer}）に戻る`}
                 onClick={() => {
                   onJump(i);
                 }}
               >
                 <span className="line-clamp-1 min-w-0 text-muted-foreground">
-                  {step.depth > 0 && <span aria-label="サブフロー">↳ </span>}
+                  {/* 役割のない span の aria-label は読まれないので、記号は隠して文で伝える */}
+                  {step.depth > 0 && (
+                    <>
+                      <span aria-hidden>↳ </span>
+                      <span className="sr-only">サブフロー: </span>
+                    </>
+                  )}
                   {step.text}
                 </span>
                 <span className="shrink-0 font-medium">{step.answer}</span>

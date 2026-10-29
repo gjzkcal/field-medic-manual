@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { todayJst } from "@/features/library/stale";
 import { DEFAULT_MOD_SETTINGS, useModSettings } from "@/features/settings/mod-settings";
+import { DEFAULT_VIEWER_SETTINGS, useViewerSettings } from "@/features/settings/viewer-settings";
 import type { FlowLookup } from "@/features/triage/runner";
 import type { Flow } from "@/features/triage/schema";
 import { FlowRunner } from "@/features/triage/view/FlowRunner";
@@ -113,6 +114,11 @@ afterEach(() => {
   cleanup();
   clearMocks();
   useModSettings.setState({ settings: DEFAULT_MOD_SETTINGS, storageError: null });
+  useViewerSettings.setState({
+    settings: DEFAULT_VIEWER_SETTINGS,
+    changed: false,
+    storageError: null,
+  });
 });
 
 describe("FlowRunner", () => {
@@ -181,6 +187,32 @@ describe("FlowRunner", () => {
     expect(screen.queryAllByRole("button", { name: /周囲は安全？/ })).toHaveLength(3);
     fireEvent.click(screen.getByRole("button", { name: "…ほか 3 歩" }));
     expect(screen.queryAllByRole("button", { name: /周囲は安全？/ })).toHaveLength(6);
+    // 押したボタンは消えるので、広げた先頭の歩へフォーカスを移す
+    expect(document.activeElement).toBe(screen.getAllByRole("button", { name: /周囲は安全？/ })[0]);
+  });
+
+  it("設定でキー操作をオフにすると、数字キーと Space を受けず、番号の印も出さない", () => {
+    useViewerSettings.setState({ settings: { ...DEFAULT_VIEWER_SETTINGS, triageKeys: false } });
+    renderRunner();
+    expect(screen.queryByText("1")).toBeNull();
+    press("1");
+    expect(heading()).toBe("周囲は安全？");
+
+    // Enter・Backspace・Esc は文字のキーではないので残す。ボタンでも進める
+    fireEvent.click(screen.getByRole("button", { name: /はい/ }));
+    expect(heading()).toBe("止血帯で止血する");
+    expect(screen.queryByText("Space")).toBeNull();
+    press(" ");
+    expect(screen.getByRole("button", { name: /開始/ })).toBeDefined();
+    press("Backspace");
+    expect(heading()).toBe("周囲は安全？");
+  });
+
+  it("危ない選択肢は、色だけでなく読み上げでも分かる", () => {
+    renderRunner("/triage/root?path=0.0");
+    expect(heading()).toBe("気道がふさがっている？");
+    expect(screen.getByRole("button", { name: /はい（危険）/ })).toBeDefined();
+    expect(screen.getByRole("button", { name: /いいえ/ }).textContent).not.toContain("危険");
   });
 
   it("URL の経路から続きを表示し、無効な部分は捨てる", () => {

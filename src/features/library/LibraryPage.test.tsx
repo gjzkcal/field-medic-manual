@@ -113,9 +113,12 @@ describe("LibraryPage", () => {
     render(<RouterProvider router={router} />);
 
     await screen.findByText("止血");
-    const headings = (): (string | null)[] =>
-      screen.queryAllByRole("heading", { level: 2 }).map((h) => h.textContent);
+    // 分類ごとの領域の見出し
+    const headings = (): (string | null | undefined)[] =>
+      screen.queryAllByRole("region").map((r) => r.querySelector("h2")?.textContent);
     expect(headings()).toEqual(["はじめに", "症状/処置", "その他"]);
+    // 分類の見出し（h2）の下のカードの表題は、その次の段
+    expect(screen.getByRole("heading", { level: 3, name: "止血" })).toBeDefined();
     const group = screen.getByRole("region", { name: "症状/処置" });
     expect(group.textContent).toContain("止血");
     expect(group.textContent).toContain("心停止と CPR");
@@ -127,6 +130,6 @@ describe("LibraryPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Circulation" }));
     fireEvent.click(screen.getByRole("button", { name: "タイトル" }));
     expect(headings()).toEqual([]);
-    expect(screen.getByText("止血")).toBeDefined();
+    expect(screen.getByRole("heading", { level: 2, name: "止血" })).toBeDefined();
   });
 });

@@ -10,10 +10,11 @@ export function focusPageStart(root: HTMLElement): void {
   focusTarget(root.querySelector<HTMLElement>("h1") ?? root);
 }
 
-/** 見出しなどの押せない要素へフォーカスを移す。スクロールは呼び出し側が決める（ビューアは余白を空けて合わせる） */
+/** 見出しやリンクへフォーカスを移す。スクロールは呼び出し側が決める（ビューアは余白を空けて合わせる） */
 export function focusTarget(target: HTMLElement): void {
-  if (!target.hasAttribute("tabindex")) {
-    // Tab の順には入れず、スクリプトからだけフォーカスできるようにする
+  // 見出しのようにもともとフォーカスできない要素だけ、Tab の順に入れずスクリプトからフォーカスできるようにする。
+  // リンクやボタンに付けると Tab で止まらなくなるので付けない
+  if (target.tabIndex < 0 && !target.hasAttribute("tabindex")) {
     target.tabIndex = -1;
   }
   target.focus({ preventScroll: true });

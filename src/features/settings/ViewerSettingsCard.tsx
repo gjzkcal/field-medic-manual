@@ -13,7 +13,9 @@ export function ViewerSettingsCard(): JSX.Element {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>表示</CardTitle>
+        <CardTitle>
+          <h2>表示</h2>
+        </CardTitle>
         <CardDescription>
           テーマと、マニュアルの本文の文字サイズ・行間。マニュアルを読んでいる画面の「表示」ボタンからも変えられます。システムを選ぶと
           OS の設定（ライト / ダーク）に合わせます。画面全体は Ctrl+＋ / Ctrl+−（または

@@ -6,6 +6,7 @@ import { DebugPanel } from "@/features/settings/debug/DebugPanel";
 import { HotkeySettings } from "@/features/settings/HotkeySettings";
 import { ModSettingsCard } from "@/features/settings/ModSettingsCard";
 import { OverlaySettingsCard } from "@/features/settings/OverlaySettingsCard";
+import { TriageSettingsCard } from "@/features/settings/TriageSettingsCard";
 import { ViewerSettingsCard } from "@/features/settings/ViewerSettingsCard";
 
 export function SettingsPage(): JSX.Element {
@@ -15,6 +16,7 @@ export function SettingsPage(): JSX.Element {
       <h1 className="text-2xl font-bold">設定</h1>
       <ViewerSettingsCard />
       <ModSettingsCard />
+      <TriageSettingsCard />
       <HotkeySettings />
       <OverlaySettingsCard />
       <AboutCard />

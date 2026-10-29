@@ -1,5 +1,5 @@
 import { LayoutGridIcon, ListIcon } from "lucide-react";
-import { useEffect, useId, useMemo, useState, type JSX } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type JSX, type RefObject } from "react";
 import { Link } from "react-router";
 
 import { usePageTitle } from "@/app/use-page-title";
@@ -72,6 +72,7 @@ export function LibraryPage(): JSX.Element {
   const [filter, setFilter] = useState<LibraryFilter>(EMPTY_FILTER);
   const [sort, setSort] = useState<LibrarySort>("order");
   const [view, setView] = useState<ViewMode>("card");
+  const filterBarRef = useRef<HTMLDivElement>(null);
 
   const loaded = state.status !== "loading";
   // 起動時はこの一覧が最初の画面なので、描き終えてからメインを出す
@@ -92,6 +93,7 @@ export function LibraryPage(): JSX.Element {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">ライブラリ</h1>
         <ToggleGroup
+          aria-label="表示の形"
           variant="outline"
           size="sm"
           value={[view]}
@@ -127,13 +129,15 @@ export function LibraryPage(): JSX.Element {
       {state.status === "ready" && (
         <>
           <FilterBar
+            containerRef={filterBarRef}
             docs={docs}
             filter={filter}
             onFilterChange={setFilter}
             sort={sort}
             onSortChange={setSort}
           />
-          <p className="text-sm text-muted-foreground">
+          {/* 絞り込みを変えると件数が変わる。一覧は離れた所で変わるので、件数を読み上げで伝える */}
+          <p role="status" className="text-sm text-muted-foreground">
             {shown.length} 件{isFiltering(filter) && `（全 ${String(docs.length)} 件）`}
           </p>
           {shown.length === 0 ? (
@@ -156,6 +160,8 @@ export function LibraryPage(): JSX.Element {
                     variant="outline"
                     onClick={() => {
                       setFilter(EMPTY_FILTER);
+                      // このボタンは解除すると消えるので、フォーカスを絞り込みの先頭へ移す
+                      filterBarRef.current?.querySelector<HTMLElement>("button")?.focus();
                     }}
                   >
                     絞り込みを解除
@@ -168,12 +174,12 @@ export function LibraryPage(): JSX.Element {
             <div className="flex flex-col gap-8">
               {groupByCategory(shown).map((group) => (
                 <CategorySection key={group.category ?? ""} category={group.category}>
-                  <DocList docs={group.items} now={now} view={view} />
+                  <DocList docs={group.items} now={now} view={view} grouped />
                 </CategorySection>
               ))}
             </div>
           ) : (
-            <DocList docs={shown} now={now} view={view} />
+            <DocList docs={shown} now={now} view={view} grouped={false} />
           )}
         </>
       )}
@@ -182,6 +188,7 @@ export function LibraryPage(): JSX.Element {
 }
 
 interface FilterBarProps {
+  containerRef: RefObject<HTMLDivElement | null>;
   docs: readonly DocSummary[];
   filter: LibraryFilter;
   onFilterChange: (filter: LibraryFilter) => void;
@@ -190,6 +197,7 @@ interface FilterBarProps {
 }
 
 function FilterBar({
+  containerRef,
   docs,
   filter,
   onFilterChange,
@@ -203,7 +211,7 @@ function FilterBar({
   );
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border p-4">
+    <div ref={containerRef} className="flex flex-col gap-3 rounded-xl border p-4">
       <FilterRow label="モジュール">
         <ToggleGroup
           multiple
@@ -279,9 +287,13 @@ function FilterBar({
 }
 
 function FilterRow({ label, children }: { label: string; children: React.ReactNode }): JSX.Element {
+  const labelId = useId();
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="w-20 shrink-0 text-sm text-muted-foreground">{label}</span>
+    // 左の見出しの文字を、並んだボタンのまとまりの名前にする（どの条件のボタンかを読み上げで分かるように）
+    <div role="group" aria-labelledby={labelId} className="flex flex-wrap items-center gap-2">
+      <span id={labelId} className="w-20 shrink-0 text-sm text-muted-foreground">
+        {label}
+      </span>
       {children}
     </div>
   );
@@ -309,15 +321,31 @@ function DocList({
   docs,
   now,
   view,
+  grouped,
 }: {
   docs: readonly DocSummary[];
   now: Date;
   view: ViewMode;
+  /** 分類の見出し（h2）の下に並べるか。カードの表題の見出しの段を、その下にする */
+  grouped: boolean;
 }): JSX.Element {
-  return view === "card" ? <DocCards docs={docs} now={now} /> : <DocRows docs={docs} now={now} />;
+  return view === "card" ? (
+    <DocCards docs={docs} now={now} headingLevel={grouped ? 3 : 2} />
+  ) : (
+    <DocRows docs={docs} now={now} />
+  );
 }
 
-function DocCards({ docs, now }: { docs: readonly DocSummary[]; now: Date }): JSX.Element {
+function DocCards({
+  docs,
+  now,
+  headingLevel,
+}: {
+  docs: readonly DocSummary[];
+  now: Date;
+  headingLevel: 2 | 3;
+}): JSX.Element {
+  const Heading = headingLevel === 2 ? "h2" : "h3";
   return (
     <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {docs.map((doc) => (
@@ -328,7 +356,9 @@ function DocCards({ docs, now }: { docs: readonly DocSummary[]; now: Date }): JS
           >
             <Card className="h-full transition-colors hover:bg-muted/50">
               <CardHeader>
-                <CardTitle className="text-lg font-semibold">{doc.title}</CardTitle>
+                <CardTitle className="text-lg font-semibold">
+                  <Heading>{doc.title}</Heading>
+                </CardTitle>
                 <CardDescription>{doc.sectionCount} 節</CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col gap-2">

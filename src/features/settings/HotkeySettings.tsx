@@ -1,5 +1,5 @@
 import { KeyboardIcon, RotateCcwIcon } from "lucide-react";
-import { useCallback, useEffect, useState, type JSX, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type JSX, type KeyboardEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,7 +52,9 @@ export function HotkeySettings(): JSX.Element {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>ホットキー</CardTitle>
+        <CardTitle>
+          <h2>ホットキー</h2>
+        </CardTitle>
         <CardDescription>
           ゲーム中でも効くキーです。欄を押してから、新しい組み合わせを押してください（Esc
           で取り消し）。いま割り当てているキーや、ほかのアプリが使っているキーは、押しても欄に入りません。
@@ -84,12 +86,21 @@ function HotkeyRow({
   const text = ACTION_TEXT[binding.action];
   const [recording, setRecording] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  // 変えられたことを読み上げで伝える（欄の値が変わるだけでは気づけない）
+  const [done, setDone] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  // スクリプトで欄へ戻したときは記録を始めない（「既定に戻す」の後など）
+  const skipRecordRef = useRef(false);
   const inputId = `hotkey-${binding.action}`;
+  const descriptionId = `${inputId}-description`;
+  const errorId = `${inputId}-error`;
 
   function apply(accelerator: string): void {
+    setDone("");
     hotkeySet(binding.action, accelerator).then(
       () => {
         setMessage(null);
+        setDone(`「${text.label}」を ${displayAccelerator(accelerator)} にしました`);
         onChanged();
       },
       (error: unknown) => {
@@ -104,9 +115,18 @@ function HotkeyRow({
       // フォーカスの移動はそのまま通す（キーボードだけで設定画面を操作できるように）
       return;
     }
+    if (!recording) {
+      // 記録を終えた後も欄に残るので、Enter か Space で記録し直せるようにする
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        setRecording(true);
+      }
+      return;
+    }
     event.preventDefault();
+    // 記録を終えても欄からフォーカスを外さない（外すと body に落ち、Tab で先頭からたどり直すことになる）
     if (event.key === "Escape") {
-      event.currentTarget.blur();
+      setRecording(false);
       return;
     }
     const result = acceleratorFromKey(event.nativeEvent);
@@ -117,7 +137,7 @@ function HotkeyRow({
         setMessage(result.reason);
         return;
       case "ok":
-        event.currentTarget.blur();
+        setRecording(false);
         if (result.accelerator !== binding.accelerator) {
           apply(result.accelerator);
         }
@@ -132,18 +152,30 @@ function HotkeyRow({
       <label htmlFor={inputId} className="text-sm font-medium">
         {text.label}
       </label>
-      <p className="text-xs text-muted-foreground">{text.description}</p>
+      <p id={descriptionId} className="text-xs text-muted-foreground">
+        {text.description}
+        {/* 読み取り専用の欄に見えるので、押した組み合わせを記録する欄だと読み上げで伝える */}
+        <span className="sr-only">
+          欄で組み合わせを押すと記録します。Esc で取り消し、Enter で記録し直します。
+        </span>
+      </p>
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative w-64 max-w-full">
           <KeyboardIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
+            ref={inputRef}
             id={inputId}
             readOnly
+            aria-describedby={error === null ? descriptionId : `${descriptionId} ${errorId}`}
             className="pl-8 font-mono"
             value={recording ? "" : displayAccelerator(binding.accelerator)}
             placeholder="組み合わせを押してください"
             aria-invalid={error !== null}
             onFocus={() => {
+              if (skipRecordRef.current) {
+                skipRecordRef.current = false;
+                return;
+              }
               setRecording(true);
             }}
             onBlur={() => {
@@ -158,6 +190,9 @@ function HotkeyRow({
             size="sm"
             onClick={() => {
               apply(binding.defaultAccelerator);
+              // このボタンは既定に戻ると消えるので、フォーカスを欄へ移す
+              skipRecordRef.current = true;
+              inputRef.current?.focus();
             }}
           >
             <RotateCcwIcon />
@@ -166,10 +201,13 @@ function HotkeyRow({
         )}
       </div>
       {error !== null && (
-        <p role="alert" className="text-sm text-destructive">
+        <p id={errorId} role="alert" className="text-sm text-destructive">
           {error}
         </p>
       )}
+      <p role="status" className="sr-only">
+        {done}
+      </p>
     </div>
   );
 }

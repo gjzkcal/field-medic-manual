@@ -18,13 +18,16 @@ export function OverlaySettingsCard(): JSX.Element {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>小窓</CardTitle>
+        <CardTitle>
+          <h2>小窓</h2>
+        </CardTitle>
         <CardDescription>
           ゲームの上に重ねて出す、常に最前面の小さなウィンドウ。位置と大きさは次に起動したときも残ります。
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
-        <Alert>
+        {/* 設定画面に常に出ている案内なので、読み上げを遮らない補足（note）にする */}
+        <Alert role="note">
           <MonitorIcon />
           <AlertTitle>ゲームは「ボーダーレス」で動かしてください</AlertTitle>
           <AlertDescription>
@@ -45,6 +48,8 @@ export function OverlaySettingsCard(): JSX.Element {
             max={OPACITY_MAX}
             step={5}
             value={[opacity]}
+            // 数だけでなく「%」まで読み上げる（画面の横の表示と同じ）
+            format={{ style: "unit", unit: "percent" }}
             onValueChange={(value) => {
               // Array.isArray は readonly の配列を any[] に絞ってしまうので、数かどうかで分ける
               const next = typeof value === "number" ? value : value[0];

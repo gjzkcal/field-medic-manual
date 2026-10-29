@@ -9,7 +9,8 @@ import { ViewerSettingsFields } from "@/features/settings/ViewerSettingsFields";
 export function ViewerSettingsPopover(): JSX.Element {
   return (
     <Popover>
-      <PopoverTrigger render={<Button variant="outline" size="sm" />}>
+      {/* 見える文字は短く「表示」のまま、何を開くかを名前で補う（名前は見える文字から始める） */}
+      <PopoverTrigger render={<Button variant="outline" size="sm" aria-label="表示の設定" />}>
         <TypeIcon />
         表示
       </PopoverTrigger>

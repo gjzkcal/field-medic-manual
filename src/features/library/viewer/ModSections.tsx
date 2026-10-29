@@ -62,7 +62,8 @@ export function SectionLabel({ anchor, conditions, register }: SectionLabelProps
 export function HiddenSectionNotice({ conditions }: { conditions: ModConditions }): JSX.Element {
   const label = conditionLabel(conditions);
   return (
-    <Alert className="mb-4 text-sm leading-normal">
+    // 開いたときから出ている印。role=alert だと開くたびに読み上げを遮るので、補足（note）にする
+    <Alert role="note" className="mb-4 text-sm leading-normal">
       <EyeOffIcon />
       <AlertDescription>
         今の MOD の設定では表示しない組み合わせです{label === null ? "" : `（${label}）`}。

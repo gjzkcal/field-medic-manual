@@ -82,7 +82,9 @@ export function DebugPanel(): JSX.Element {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>デバッグ（開発ビルドのみ）</CardTitle>
+        <CardTitle>
+          <h2>デバッグ（開発ビルドのみ）</h2>
+        </CardTitle>
         <CardDescription>
           データ層と検索の動作確認用。同梱の原稿（content/manuals）は起動時に同期される。
         </CardDescription>

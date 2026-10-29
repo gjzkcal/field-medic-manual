@@ -59,7 +59,7 @@ describe("MetaBar", () => {
 
   it("星のボタンで文書をお気に入りに入れる", async () => {
     renderAt();
-    fireEvent.click(screen.getByRole("button", { name: /お気に入りに入れる/u }));
+    fireEvent.click(screen.getByRole("button", { name: "お気に入り（このマニュアル）" }));
     await vi.waitFor(() => {
       expect(toggled).toEqual([{ kind: "document", documentId: "d1" }]);
     });
