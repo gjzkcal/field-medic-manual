@@ -1,12 +1,33 @@
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { OverlayLayout } from "@/features/overlay/OverlayLayout";
 import { axeViolations } from "@/test/axe";
 
-afterEach(cleanup);
+/** jsdom には matchMedia がない。窓が狭い（タブが絵だけ）かどうかを決めて返す */
+function stubNarrow(narrow: boolean): void {
+  vi.stubGlobal("matchMedia", (query: string) => ({
+    matches: narrow,
+    media: query,
+    addEventListener: (): void => {
+      // 幅は変わらない
+    },
+    removeEventListener: (): void => {
+      // 幅は変わらない
+    },
+  }));
+}
+
+beforeEach(() => {
+  stubNarrow(false);
+});
+
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 function renderOverlay(): ReturnType<typeof createMemoryRouter> {
   const router = createMemoryRouter(
@@ -45,6 +66,30 @@ describe("OverlayLayout", () => {
       await router.navigate("/favorites");
     });
     expect(document.activeElement).toBe(screen.getByRole("heading", { name: "お気に入り" }));
+  });
+
+  it("タブが絵だけの幅では、マウスを載せると名前を出す。文字が見える幅では出さない", async () => {
+    const hover = (): void => {
+      const tab = screen.getByRole("link", { name: "お気に入り" });
+      fireEvent.pointerEnter(tab, { pointerType: "mouse" });
+      fireEvent.mouseEnter(tab);
+      fireEvent.mouseMove(tab);
+    };
+    const tooltip = (): Element | null => document.querySelector("[data-slot=tooltip-content]");
+
+    stubNarrow(true);
+    renderOverlay();
+    hover();
+    await waitFor(() => {
+      expect(tooltip()?.textContent).toBe("お気に入り");
+    });
+
+    cleanup();
+    stubNarrow(false);
+    renderOverlay();
+    hover();
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    expect(tooltip()).toBeNull();
   });
 
   it("axe の違反がない（WCAG 2.2 A・AA）", async () => {

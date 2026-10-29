@@ -6,7 +6,7 @@ import {
   TableIcon,
   WorkflowIcon,
 } from "lucide-react";
-import { useRef, type JSX } from "react";
+import { useRef, useSyncExternalStore, type JSX } from "react";
 import { matchPath, NavLink, Outlet, useLocation } from "react-router";
 
 import { LinkButton } from "@/components/LinkButton";
@@ -59,6 +59,22 @@ const TABS: readonly OverlayTab[] = [
   },
 ];
 
+// 上部のタブを絵だけにする幅。タブの文字の @max-[26rem]:sr-only と同じ値にする（帯は窓の全幅なので、窓の幅で判定できる）
+const ICON_ONLY_QUERY = "(width < 26rem)";
+
+function subscribeIconOnly(onChange: () => void): () => void {
+  const mql = window.matchMedia(ICON_ONLY_QUERY);
+  mql.addEventListener("change", onChange);
+  return () => {
+    mql.removeEventListener("change", onChange);
+  };
+}
+
+/** タブが絵だけになっているか。窓の幅は React の外の状態なので、useSyncExternalStore で購読する */
+function useIconOnlyTabs(): boolean {
+  return useSyncExternalStore(subscribeIconOnly, () => window.matchMedia(ICON_ONLY_QUERY).matches);
+}
+
 // 自分でスクロールを持つ画面。ビューアは本文だけを、検索は結果の一覧だけをスクロールさせる
 const FULL_HEIGHT_PATTERNS: readonly string[] = ["/doc/:id", OVERLAY_SEARCH_PATH];
 
@@ -70,6 +86,7 @@ export function OverlayLayout(): JSX.Element {
   );
   const mainRef = useRef<HTMLElement>(null);
   useRouteFocus(mainRef);
+  const iconOnly = useIconOnlyTabs();
 
   return (
     <div className="flex h-svh flex-col">
@@ -84,17 +101,24 @@ export function OverlayLayout(): JSX.Element {
               (pattern) => matchPath(pattern, location.pathname) !== null,
             );
             return (
-              <LinkButton
-                key={tab.to}
-                variant={active ? "secondary" : "ghost"}
-                size="sm"
-                render={<NavLink to={tab.to} />}
-                aria-current={active ? "page" : undefined}
-              >
-                <tab.icon />
-                {/* 小窓は幅 320px まで縮められる。狭いと帯に収まらないので、文字は読み上げ用にだけ残してアイコンにする */}
-                <span className="@max-[26rem]:sr-only">{tab.label}</span>
-              </LinkButton>
+              // 絵だけのときは、押す前に何のタブかを確かめられるよう名前を出す。文字が見えている幅では同じ文字を重ねないよう止める
+              <Tooltip key={tab.to} disabled={!iconOnly}>
+                <TooltipTrigger
+                  render={
+                    <LinkButton
+                      variant={active ? "secondary" : "ghost"}
+                      size="sm"
+                      render={<NavLink to={tab.to} />}
+                      aria-current={active ? "page" : undefined}
+                    />
+                  }
+                >
+                  <tab.icon />
+                  {/* 小窓は幅 320px まで縮められる。狭いと帯に収まらないので、文字は読み上げ用にだけ残してアイコンにする */}
+                  <span className="@max-[26rem]:sr-only">{tab.label}</span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">{tab.label}</TooltipContent>
+              </Tooltip>
             );
           })}
         </nav>
