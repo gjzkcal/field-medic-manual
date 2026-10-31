@@ -20,6 +20,7 @@ import { Command, CommandInput, CommandItem, CommandList } from "@/components/ui
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { STAR_ON_CLASS } from "@/features/prefs/star";
 import { hitKey, searchKind } from "@/features/search/kinds";
+import { MAX_QUERY_CHARS } from "@/features/search/limits";
 import { PaletteOpenContext } from "@/features/search/palette-open";
 import { toQueryFilter, useSearchFilter } from "@/features/search/search-filter";
 import { SearchFilterPopover } from "@/features/search/SearchFilterPopover";
@@ -325,6 +326,7 @@ export function CommandPalette({
         <CommandInput
           ref={input}
           value={query}
+          maxLength={MAX_QUERY_CHARS}
           onValueChange={(value) => {
             setQuery(value);
             setExpanded(true);

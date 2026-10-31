@@ -218,9 +218,9 @@ export function currentWindowLabel(): string {
   return getCurrentWindow().label;
 }
 
-/** 既定のブラウザ（mailto はメールソフト）で開く。WebView の中では開かない。 */
+/** 既定のブラウザで開く。WebView の中では開かない。 */
 export async function openExternal(url: string): Promise<void> {
-  // opener の権限の範囲（http・https・mailto・tel）より狭く、本文のリンクで開く種類だけにする
+  // Rust 側の opener のスコープと同じ種類だけを通す。スコープの拒否より分かる文面で止まる
   if (!isExternalUrl(url)) {
     throw new Error(`外部で開けない URL です: ${url}`);
   }

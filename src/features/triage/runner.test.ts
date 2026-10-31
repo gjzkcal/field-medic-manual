@@ -188,6 +188,10 @@ describe("parsePath / formatPath", () => {
     expect(parsePath("0.1.5")).toEqual([0, 1, 5]);
     expect(parsePath("0.1e3")).toEqual([0]);
   });
+
+  it("長すぎる経路は先頭だけを読む", () => {
+    expect(parsePath(Array.from({ length: 2000 }, () => "0").join("."))).toHaveLength(1024);
+  });
 });
 
 // 動作確認用のループの例: 処置のあと最初の質問に戻れる

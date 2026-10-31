@@ -12,13 +12,21 @@ pub const SETTINGS_CHANGED_EVENT: &str = "settings-changed";
 /// 常に最前面で開いている小窓から、×ボタンの動作（`window`）・使っている MOD・小窓の透明度を変えられないようにするため（最小権限）。
 const OVERLAY_WRITABLE_KEYS: [&str; 3] = ["viewer", "search", "quickref"];
 
-/// 設定の値（任意の JSON）を返す。保存されていなければ `null`。
+/// 画面から読み書きする設定のキー。`hotkeys` は `hotkey_list` / `hotkey_set` だけで扱うので含めない。
+/// 画面で新しい設定を保存するようにしたら、ここにも足す。
+const KNOWN_KEYS: [&str; 6] = ["viewer", "search", "quickref", "mods", "overlay", "window"];
+
+/// 設定の値の大きさの上限（JSON のバイト数）。どの設定も数百バイトなので、桁違いに大きいものは不正な値とみなす
+const MAX_VALUE_LEN: usize = 64 * 1024;
+
+/// 設定の値（JSON オブジェクト）を返す。保存されていなければ `null`。
 ///
 /// # Errors
 ///
 /// キーが不正なら `InvalidInput`。
 #[tauri::command]
 pub async fn settings_get(db: State<'_, Db>, key: String) -> Result<Option<Value>, AppError> {
+    check_known(&key)?;
     db.run(move |conn, _| settings::get(conn, &key)).await
 }
 
@@ -27,7 +35,7 @@ pub async fn settings_get(db: State<'_, Db>, key: String) -> Result<Option<Value
 ///
 /// # Errors
 ///
-/// キーが不正な場合と、呼んだウィンドウがそのキーを書けない場合は `InvalidInput`。
+/// キーか値が不正な場合と、呼んだウィンドウがそのキーを書けない場合は `InvalidInput`。
 #[tauri::command]
 pub async fn settings_set(
     window: WebviewWindow,
@@ -36,6 +44,7 @@ pub async fn settings_set(
     value: Value,
 ) -> Result<(), AppError> {
     check_writable(window.label(), &key)?;
+    check_value(&value)?;
     let key = key.trim().to_owned();
     let saved_key = key.clone();
     db.run(move |conn, _| settings::set(conn, &saved_key, &value))
@@ -62,6 +71,7 @@ fn check_writable(window_label: &str, key: &str) -> Result<(), AppError> {
             "設定 {key} はホットキーの設定から変えてください"
         )));
     }
+    check_known(key)?;
     if window_label == overlay::OVERLAY && !OVERLAY_WRITABLE_KEYS.contains(&key) {
         return Err(AppError::InvalidInput(format!(
             "小窓からは設定 {key} を変えられません"
@@ -70,8 +80,33 @@ fn check_writable(window_label: &str, key: &str) -> Result<(), AppError> {
     Ok(())
 }
 
+fn check_known(key: &str) -> Result<(), AppError> {
+    if KNOWN_KEYS.contains(&key.trim()) {
+        Ok(())
+    } else {
+        Err(AppError::InvalidInput(format!("知らない設定です: {key}")))
+    }
+}
+
+/// 値の形の全体は読む側（画面）が検査し、不正なら既定値に戻す。ここでは DB に入れてよい最低限を確かめる。
+fn check_value(value: &Value) -> Result<(), AppError> {
+    if !value.is_object() {
+        return Err(AppError::InvalidInput(
+            "設定の値は JSON のオブジェクトにしてください".to_owned(),
+        ));
+    }
+    if value.to_string().len() > MAX_VALUE_LEN {
+        return Err(AppError::InvalidInput(format!(
+            "設定の値は {MAX_VALUE_LEN} バイトまでです"
+        )));
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
+    use serde_json::json;
+
     use super::*;
 
     #[test]
@@ -103,6 +138,39 @@ mod tests {
     fn main_writes_other_keys() {
         for key in ["viewer", "window", "mods", "overlay"] {
             assert!(check_writable(overlay::MAIN, key).is_ok());
+        }
+    }
+
+    #[test]
+    fn unknown_keys_are_rejected_from_any_window() {
+        for label in [overlay::MAIN, overlay::OVERLAY] {
+            for key in ["secret", "", "Viewer"] {
+                assert!(matches!(
+                    check_writable(label, key),
+                    Err(AppError::InvalidInput(_))
+                ));
+            }
+        }
+        assert!(check_known(" viewer ").is_ok());
+        assert!(matches!(
+            check_known(hotkey::SETTINGS_KEY),
+            Err(AppError::InvalidInput(_))
+        ));
+    }
+
+    #[test]
+    fn value_must_be_a_small_object() {
+        assert!(check_value(&json!({ "closeToTray": true })).is_ok());
+        for value in [
+            json!(null),
+            json!("text"),
+            json!([1, 2]),
+            json!({ "long": "a".repeat(MAX_VALUE_LEN) }),
+        ] {
+            assert!(matches!(
+                check_value(&value),
+                Err(AppError::InvalidInput(_))
+            ));
         }
     }
 }

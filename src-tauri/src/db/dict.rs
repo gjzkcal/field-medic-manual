@@ -4,9 +4,12 @@ use std::collections::HashMap;
 
 use rusqlite::{Connection, OptionalExtension, params};
 
-use super::text::normalize_terms;
+use super::text::{MAX_SHORT_TEXT, check_count, check_len, normalize_terms};
 use crate::error::AppError;
 use crate::model::{SynonymGroup, SynonymGroupInput, TagCount};
+
+const MAX_SYNONYM_TERMS: usize = 32;
+const MAX_SYNONYM_TERM_LEN: usize = 256;
 
 /// タグと、それを使っているドキュメント・セクションの数（名前順）。
 ///
@@ -77,11 +80,19 @@ pub fn synonym_save(
             "同義語は 2 語以上で登録してください".to_owned(),
         ));
     }
+    // 語は検索のたびに LIKE の条件に広がるので、1 グループの語の数と長さを抑える
+    check_count("同義語", terms.len(), MAX_SYNONYM_TERMS)?;
+    for term in &terms {
+        check_len("同義語の語", term, MAX_SYNONYM_TERM_LEN)?;
+    }
     let note = input
         .note
         .as_deref()
         .map(str::trim)
         .filter(|n| !n.is_empty());
+    if let Some(note) = note {
+        check_len("同義語のメモ", note, MAX_SHORT_TEXT)?;
+    }
 
     let tx = conn.transaction()?;
     let now = super::now(&tx)?;
@@ -243,6 +254,27 @@ mod tests {
             synonym_save(&mut conn, &missing),
             Err(AppError::NotFound(_))
         ));
+        let too_many = SynonymGroupInput {
+            id: None,
+            terms: (0..=MAX_SYNONYM_TERMS).map(|i| i.to_string()).collect(),
+            note: None,
+        };
+        let too_long = SynonymGroupInput {
+            id: None,
+            terms: vec!["a".to_owned(), "b".repeat(MAX_SYNONYM_TERM_LEN + 1)],
+            note: None,
+        };
+        let long_note = SynonymGroupInput {
+            id: None,
+            terms: vec!["a".to_owned(), "b".to_owned()],
+            note: Some("c".repeat(MAX_SHORT_TEXT + 1)),
+        };
+        for group in [too_many, too_long, long_note] {
+            assert!(matches!(
+                synonym_save(&mut conn, &group),
+                Err(AppError::InvalidInput(_))
+            ));
+        }
     }
 
     #[test]

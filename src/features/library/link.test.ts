@@ -3,13 +3,13 @@ import { describe, expect, it } from "vitest";
 import { decodeAnchor, docHref, highlightTermsOf, resolveLink } from "@/features/library/link";
 
 describe("resolveLink", () => {
-  it("http / https / mailto は外部リンク", () => {
+  it("http / https は外部リンク", () => {
     expect(resolveLink("https://anvil.acemod.org/dev/")).toEqual({
       kind: "external",
       url: "https://anvil.acemod.org/dev/",
     });
     expect(resolveLink("HTTP://example.com").kind).toBe("external");
-    expect(resolveLink("mailto:a@example.com").kind).toBe("external");
+    expect(resolveLink("mailto:a@example.com").kind).toBe("unknown");
   });
 
   it("# だけは同じ文書のアンカー。% エンコードを戻す", () => {
@@ -63,5 +63,11 @@ describe("docHref", () => {
   it("空の語は読み出さない", () => {
     expect(highlightTermsOf("?hl=&hl=%20&hl=TQ")).toEqual(["TQ"]);
     expect(highlightTermsOf("")).toEqual([]);
+  });
+
+  it("多すぎる語と長すぎる語は読み出さない", () => {
+    const many = Array.from({ length: 20 }, (_, i) => `hl=${String(i)}`).join("&");
+    expect(highlightTermsOf(`?${many}`)).toHaveLength(16);
+    expect(highlightTermsOf(`?hl=${"a".repeat(257)}&hl=TQ`)).toEqual(["TQ"]);
   });
 });

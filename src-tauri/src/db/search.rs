@@ -8,14 +8,15 @@ use rusqlite::types::Value;
 use rusqlite::{Connection, params_from_iter};
 
 use super::text::{
-    TRIGRAM_MIN_CHARS, char_len, contains_ci, fts_quote, like_pattern, make_snippet,
-    normalize_tags, split_terms,
+    MAX_SHORT_TEXT, TRIGRAM_MIN_CHARS, char_len, check_count, check_len, contains_ci, fts_quote,
+    like_pattern, make_snippet, normalize_tags, split_terms,
 };
 use crate::error::AppError;
 use crate::model::{FlowHit, ModTarget, QuickrefHit, SearchFilter, SearchHit, SectionHit};
 
 pub const DEFAULT_LIMIT: u32 = 20;
 pub const MAX_LIMIT: u32 = 100;
+const MAX_FILTER_ITEMS: usize = 64;
 
 /// 同義語でだけヒットした行のスコアに掛ける係数。
 /// 並び順は別に「元の語でヒットした行が先」と決めているので順位には効かず、返す score を元の語の行より低く見せるだけ。
@@ -64,6 +65,18 @@ struct Candidate {
     fts: Option<(String, f64)>,
 }
 
+/// 絞り込みの条件はそれぞれ SQL の変数になるので、`SQLite` の上限に当たらないよう数を抑える。
+fn check_filter(filter: &SearchFilter) -> Result<(), AppError> {
+    let mods = filter.mod_targets.as_ref().map_or(0, Vec::len);
+    check_count("絞り込みの MOD", mods, MAX_FILTER_ITEMS)?;
+    let tags = filter.tags.as_deref().unwrap_or_default();
+    check_count("絞り込みのタグ", tags.len(), MAX_FILTER_ITEMS)?;
+    for tag in tags {
+        check_len("絞り込みのタグ", tag, MAX_SHORT_TEXT)?;
+    }
+    Ok(())
+}
+
 /// セクション・フロー・クイック表を検索する。
 ///
 /// 並びは「症状に当たったクイック表の行 → タイトルに当たったフロー → 節 → 本文だけに当たった行 → ノードの文だけに当たったフロー」。
@@ -78,6 +91,7 @@ pub fn search(
     limit: Option<u32>,
     filter: &SearchFilter,
 ) -> Result<Vec<SearchHit>, AppError> {
+    check_filter(filter)?;
     let terms = split_terms(query);
     if terms.is_empty() {
         return Ok(Vec::new());
@@ -1021,5 +1035,28 @@ mod tests {
             anchors(&hits_with(&conn, "要確認", &both)),
             ["bleeding-signs"]
         );
+    }
+
+    #[test]
+    fn rejects_filters_with_too_many_items() {
+        let conn = test_conn();
+        let tags = SearchFilter {
+            tags: Some(vec!["a".to_owned(); MAX_FILTER_ITEMS + 1]),
+            ..SearchFilter::default()
+        };
+        let long_tag = SearchFilter {
+            tags: Some(vec!["a".repeat(MAX_SHORT_TEXT + 1)]),
+            ..SearchFilter::default()
+        };
+        let mods = SearchFilter {
+            mod_targets: Some(vec![ModTarget::Core; MAX_FILTER_ITEMS + 1]),
+            ..SearchFilter::default()
+        };
+        for filter in [tags, long_tag, mods] {
+            assert!(matches!(
+                search(&conn, "出血", None, &filter),
+                Err(AppError::InvalidInput(_))
+            ));
+        }
     }
 }

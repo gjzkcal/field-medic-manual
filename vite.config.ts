@@ -58,7 +58,7 @@ const WEB_CSP = [
   "font-src 'self' data:",
   "connect-src 'self' data:",
   "object-src 'none'",
-  "base-uri 'self'",
+  "base-uri 'none'",
   "form-action 'none'",
   "frame-src 'none'",
 ].join("; ");

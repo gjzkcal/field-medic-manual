@@ -37,7 +37,9 @@ pub async fn history_push(db: State<'_, Db>, target: PrefTarget) -> Result<(), A
 /// DB の読み取りに失敗した場合。
 #[tauri::command]
 pub async fn history_list(db: State<'_, Db>, limit: u32) -> Result<Vec<PrefItem>, AppError> {
-    let limit = usize::try_from(limit).unwrap_or(prefs::HISTORY_LIMIT);
+    let limit = usize::try_from(limit)
+        .unwrap_or(prefs::HISTORY_LIMIT)
+        .min(prefs::HISTORY_LIMIT);
     db.run(move |conn, _| prefs::history_list(conn, limit))
         .await
 }

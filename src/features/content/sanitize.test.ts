@@ -52,4 +52,35 @@ describe("sanitizeHtml", () => {
   it("SVG は許さない", () => {
     expect(sanitizeHtml('<p>a<svg><circle r="1"></circle></svg></p>').html).toBe("<p>a</p>");
   });
+
+  it("リンクは http・https と相対パスだけを残す", () => {
+    for (const href of [
+      "https://example.com/",
+      "http://example.com/",
+      "hemorrhage.md#止血帯を使う",
+      "./airway-breathing2.md",
+      "#節",
+    ]) {
+      expect(sanitizeHtml(`<a href="${href}">x</a>`).html).toBe(`<a href="${href}">x</a>`);
+    }
+    for (const href of [
+      "javascript:alert(1)",
+      " JaVaScRiPt:alert(1)",
+      "data:text/html,x",
+      "vbscript:x",
+      "file:///C:/a",
+      "mailto:a@example.com",
+      "tel:0",
+      "sms:0",
+      "ftp://example.com/",
+    ]) {
+      expect(sanitizeHtml(`<a href="${href}">x</a>`).html).toBe("<a>x</a>");
+    }
+  });
+
+  it("map と area は許さない", () => {
+    expect(
+      sanitizeHtml('<map name="m"><area href="https://example.com/"></map><p>本文</p>').html,
+    ).toBe("<p>本文</p>");
+  });
 });

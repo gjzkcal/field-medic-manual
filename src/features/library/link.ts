@@ -41,6 +41,10 @@ export function decodeAnchor(raw: string): string {
 
 export const HIGHLIGHT_PARAM = "hl";
 
+/** URL で渡すハイライトの上限。検索語の上限（16 語）に合わせ、手で書き換えた URL で本文の走査を増やさない */
+const MAX_HIGHLIGHT_TERMS = 16;
+const MAX_HIGHLIGHT_TERM_LENGTH = 256;
+
 /**
  * ビューアの URL。アンカーは日本語を含むので % エンコードする（読むときは decodeAnchor で戻す）。
  * highlight を渡すと、開いた先でその語をハイライトする（検索結果から開いたとき）。
@@ -58,5 +62,8 @@ export function docHref(
 
 /** URL の検索部分（location.search）から、ハイライトする語を取り出す。 */
 export function highlightTermsOf(search: string): string[] {
-  return new URLSearchParams(search).getAll(HIGHLIGHT_PARAM).filter((term) => term.trim() !== "");
+  return new URLSearchParams(search)
+    .getAll(HIGHLIGHT_PARAM)
+    .filter((term) => term.trim() !== "" && term.length <= MAX_HIGHLIGHT_TERM_LENGTH)
+    .slice(0, MAX_HIGHLIGHT_TERMS);
 }

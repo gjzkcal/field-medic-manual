@@ -4,7 +4,9 @@
 use rusqlite::{Connection, OptionalExtension, Row, params};
 
 use super::docs::{is_iso_date, non_empty};
-use super::text::{is_slug, strip_marks};
+use super::text::{
+    MAX_BODY_TEXT, MAX_MEDIUM_TEXT, MAX_SHORT_TEXT, check_len, is_slug, strip_marks,
+};
 use crate::error::AppError;
 use crate::model::{ModTarget, TriageDetail, TriageSummary, TriageUpsertInput};
 
@@ -47,6 +49,17 @@ pub fn upsert(conn: &Connection, input: &TriageUpsertInput) -> Result<(), AppErr
 
 fn validate(input: &TriageUpsertInput) -> Result<TriageUpsertInput, AppError> {
     let mut input = input.clone();
+    // 文面に id を出す検査より先に長さを止める
+    check_len("フローの id", &input.id, MAX_SHORT_TEXT)?;
+    check_len("フローのタイトル", &input.title, MAX_SHORT_TEXT)?;
+    check_len(
+        "フローの説明",
+        input.description.as_deref().unwrap_or(""),
+        MAX_MEDIUM_TEXT,
+    )?;
+    check_len("フローの JSON", &input.json, MAX_BODY_TEXT)?;
+    check_len("フローの検索用の本文", &input.search_text, MAX_BODY_TEXT)?;
+    check_len("source_hash", &input.source_hash, MAX_SHORT_TEXT)?;
     if !is_slug(&input.id) {
         return Err(AppError::InvalidInput(format!(
             "フローの id は英小文字・数字・ハイフンにしてください: {}",
@@ -251,6 +264,12 @@ mod tests {
         bad_date.verified_at = Some("2026/09/26".to_owned());
         assert!(matches!(
             upsert(&conn, &bad_date),
+            Err(AppError::InvalidInput(_))
+        ));
+        let mut long_json = flow("a", "t", "");
+        long_json.json = format!("\"{}\"", "a".repeat(MAX_BODY_TEXT));
+        assert!(matches!(
+            upsert(&conn, &long_json),
             Err(AppError::InvalidInput(_))
         ));
     }

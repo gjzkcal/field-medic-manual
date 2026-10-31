@@ -8,8 +8,10 @@
     "core:window:allow-hide",
     "core:event:allow-listen",
     "core:event:allow-unlisten",
-    "opener:allow-open-url",
-    "opener:allow-default-urls",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "https://*" }, { "url": "http://*" }]
+    },
     "allow-search-query",
     "allow-tag-list",
     "allow-doc-get",
