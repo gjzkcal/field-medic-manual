@@ -64,4 +64,10 @@ describe("docHref", () => {
     expect(highlightTermsOf("?hl=&hl=%20&hl=TQ")).toEqual(["TQ"]);
     expect(highlightTermsOf("")).toEqual([]);
   });
+
+  it("多すぎる語と長すぎる語は読み出さない", () => {
+    const many = Array.from({ length: 20 }, (_, i) => `hl=${String(i)}`).join("&");
+    expect(highlightTermsOf(`?${many}`)).toHaveLength(16);
+    expect(highlightTermsOf(`?hl=${"a".repeat(257)}&hl=TQ`)).toEqual(["TQ"]);
+  });
 });

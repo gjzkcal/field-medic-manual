@@ -48,7 +48,7 @@
         "font-src": "'self' data:",
         "connect-src": "'self' ipc: http://ipc.localhost data:",
         "object-src": "'none'",
-        "base-uri": "'self'",
+        "base-uri": "'none'",
         "form-action": "'none'",
         "frame-src": "'none'"
       }

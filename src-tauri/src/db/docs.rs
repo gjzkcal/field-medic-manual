@@ -3,15 +3,22 @@ use std::collections::{HashMap, HashSet};
 use rusqlite::{Connection, OptionalExtension, Row, Transaction, params};
 
 use super::quickref::{dedup, from_json, to_json};
-use super::text::{normalize_tags, strip_marks};
+use super::text::{
+    MAX_BODY_TEXT, MAX_SHORT_TEXT, check_count, check_len, normalize_tags, strip_marks,
+};
 use crate::error::AppError;
 use crate::model::{
     AssetMeta, DocDetail, DocMeta, DocOutline, DocSummary, DocUpsertInput, OutlineHeading, Section,
+    SectionInput,
 };
 
 const MAX_LEVEL: u8 = 6;
 /// 原稿は h1〜h3 で節に分けるので、ツリーもそこまでにする
 const OUTLINE_MAX_LEVEL: u8 = 3;
+/// 1 つのドキュメントの件数の上限。同梱の原稿の最大（見出し 21 個）より十分に大きい
+const MAX_SECTIONS: usize = 2000;
+const MAX_TAGS: usize = 64;
+const MAX_DOC_ASSETS: usize = 256;
 
 /// ドキュメントを保存する。同じ `source_path` のドキュメントがあれば置き換える。
 ///
@@ -187,9 +194,11 @@ fn validate(input: &DocUpsertInput) -> Result<DocUpsertInput, AppError> {
         )));
     }
     input.meta.tags = normalize_tags(&input.meta.tags);
+    check_doc_limits(&input)?;
 
     let mut anchors = HashSet::new();
     for section in &mut input.sections {
+        check_section_limits(section)?;
         if section.level > MAX_LEVEL {
             return Err(AppError::InvalidInput(format!(
                 "見出しレベルは 0〜{MAX_LEVEL} です: {}",
@@ -217,6 +226,40 @@ fn validate(input: &DocUpsertInput) -> Result<DocUpsertInput, AppError> {
         section.without_mods = dedup(&section.without_mods);
     }
     Ok(input)
+}
+
+fn check_doc_limits(input: &DocUpsertInput) -> Result<(), AppError> {
+    check_len("タイトル", &input.title, MAX_SHORT_TEXT)?;
+    check_len("source_hash", &input.source_hash, MAX_SHORT_TEXT)?;
+    let meta = &input.meta;
+    for (name, value) in [
+        ("source_path", &input.source_path),
+        ("mod_version", &meta.mod_version),
+        ("category", &meta.category),
+        ("game_version", &meta.game_version),
+        ("original_asset_id", &input.original_asset_id),
+    ] {
+        check_len(name, value.as_deref().unwrap_or(""), MAX_SHORT_TEXT)?;
+    }
+    check_count("セクション", input.sections.len(), MAX_SECTIONS)?;
+    check_count("アセット", input.asset_ids.len(), MAX_DOC_ASSETS)?;
+    check_tags(&meta.tags)
+}
+
+fn check_section_limits(section: &SectionInput) -> Result<(), AppError> {
+    check_len("見出し", &section.title, MAX_SHORT_TEXT)?;
+    check_len("anchor", &section.anchor, MAX_SHORT_TEXT)?;
+    check_len("本文の HTML", &section.html, MAX_BODY_TEXT)?;
+    check_len("本文のテキスト", &section.plain_text, MAX_BODY_TEXT)?;
+    check_tags(&section.tags)
+}
+
+fn check_tags(tags: &[String]) -> Result<(), AppError> {
+    check_count("タグ", tags.len(), MAX_TAGS)?;
+    for tag in tags {
+        check_len("タグ", tag, MAX_SHORT_TEXT)?;
+    }
+    Ok(())
 }
 
 pub(super) fn non_empty(value: Option<&str>) -> Option<String> {
@@ -282,6 +325,8 @@ const SUMMARY_COLUMNS: &str =
     "d.id, d.title, d.source_type, d.source_path, d.mod_target, d.mod_channel,
        d.mod_version, d.verified_at, d.created_at, d.updated_at,
        (SELECT COUNT(*) FROM sections s WHERE s.document_id = d.id), d.source_hash, d.sort_order, d.category, d.ace_commit, d.game_version";
+/// `get` が `SUMMARY_COLUMNS` の後ろに足す `d.original_asset_id` の位置
+const ORIGINAL_ASSET_COLUMN: usize = 16;
 
 fn read_summary(row: &Row<'_>) -> rusqlite::Result<DocSummary> {
     Ok(DocSummary {
@@ -390,7 +435,7 @@ pub fn get(conn: &Connection, id: &str) -> Result<DocDetail, AppError> {
                  FROM documents d WHERE d.id = ?1"
             ),
             [id],
-            |r| Ok((read_summary(r)?, r.get(13)?)),
+            |r| Ok((read_summary(r)?, r.get(ORIGINAL_ASSET_COLUMN)?)),
         )
         .optional()?
         .ok_or_else(|| AppError::NotFound(format!("ドキュメント {id}")))?;
@@ -521,6 +566,24 @@ mod tests {
     }
 
     #[test]
+    fn original_asset_id_is_not_mixed_up_with_category() {
+        let mut conn = test_conn();
+        conn.execute(
+            "INSERT INTO assets (id, mime, file_name, rel_path, size)
+             VALUES ('asset-1', 'image/png', 'a.png', 'assets/a.png', 1)",
+            [],
+        )
+        .expect("目録を入れられる");
+        let mut input = fixtures::cpr();
+        input.meta.category = Some("処置".to_owned());
+        input.original_asset_id = Some("asset-1".to_owned());
+        let id = upsert(&mut conn, &input).expect("保存できる");
+        let doc = get(&conn, &id).expect("取得できる");
+        assert_eq!(doc.original_asset_id.as_deref(), Some("asset-1"));
+        assert_eq!(doc.summary.meta.category.as_deref(), Some("処置"));
+    }
+
+    #[test]
     fn ace_commit_and_game_version_roundtrip() {
         let mut conn = test_conn();
         let mut input = fixtures::cpr();
@@ -634,6 +697,26 @@ mod tests {
             (
                 "存在しないアセット",
                 Box::new(|d| d.asset_ids = vec!["0".repeat(64)]),
+            ),
+            (
+                "長すぎるタイトル",
+                Box::new(|d| d.title = "a".repeat(MAX_SHORT_TEXT + 1)),
+            ),
+            (
+                "長すぎる本文",
+                Box::new(|d| d.sections[0].html = "a".repeat(MAX_BODY_TEXT + 1)),
+            ),
+            (
+                "多すぎるセクション",
+                Box::new(|d| {
+                    d.sections = (0..=MAX_SECTIONS)
+                        .map(|i| section(1, "節", &i.to_string(), "", &[]))
+                        .collect();
+                }),
+            ),
+            (
+                "多すぎるタグ",
+                Box::new(|d| d.meta.tags = (0..=MAX_TAGS).map(|i| i.to_string()).collect()),
             ),
         ];
         for (name, mutate) in cases {

@@ -1,5 +1,41 @@
 //! 検索とタグで使う文字列の処理。
 
+use crate::error::AppError;
+
+/// IPC で受け取る文字列の長さの上限（バイト）。WebView の検査だけに頼らず、DB に入れる前にここで止める。
+/// どれも同梱の原稿の最大（本文 1 本で約 20 KB）より十分に大きく、普段の同期では当たらない。
+pub const MAX_SHORT_TEXT: usize = 1024;
+pub const MAX_MEDIUM_TEXT: usize = 16 * 1024;
+pub const MAX_BODY_TEXT: usize = 2 * 1024 * 1024;
+
+/// 文字列が `max` バイト以下か確かめる。
+///
+/// # Errors
+///
+/// 長すぎれば `InvalidInput`。
+pub fn check_len(name: &str, value: &str, max: usize) -> Result<(), AppError> {
+    if value.len() > max {
+        return Err(AppError::InvalidInput(format!(
+            "{name} は {max} バイトまでです"
+        )));
+    }
+    Ok(())
+}
+
+/// 件数が `max` 以下か確かめる。
+///
+/// # Errors
+///
+/// 多すぎれば `InvalidInput`。
+pub fn check_count(name: &str, count: usize, max: usize) -> Result<(), AppError> {
+    if count > max {
+        return Err(AppError::InvalidInput(format!(
+            "{name} は {max} 個までです"
+        )));
+    }
+    Ok(())
+}
+
 /// スニペットで強調部分の開始・終了を表す文字（Unicode の私用領域）。
 /// HTML タグで囲むと、本文由来の文字列を TS 側で innerHTML に入れることになるため使わない。
 /// TS 側の `src/features/search/snippet.ts` と同じ値にする。
@@ -16,14 +52,22 @@ pub fn char_len(s: &str) -> usize {
 }
 
 /// 1 回の検索で使う語の数の上限。語ごとに同義語と列の数だけ LIKE の条件が増え、
-/// 語を大量に入れると SQLite の式の深さ・変数の数の上限に当たって検索そのものが失敗するため。
+/// 語を大量に入れると `SQLite` の式の深さ・変数の数の上限に当たって検索そのものが失敗するため。
 /// TS 側の `src/web/backend/text.ts` と同じ値にする。
 pub const MAX_TERMS: usize = 16;
 
+/// 検索クエリのうち読む文字数の上限。語の数を絞っても 1 語が長いと、LIKE と強調の処理が本文全体を長い語で走査するため。
+/// TS 側の `src/web/backend/text.ts` と同じ値にする。
+pub const MAX_QUERY_CHARS: usize = 512;
+
 /// 検索クエリを語に分ける。全角スペースも区切りにする（`char::is_whitespace` は U+3000 を含む）。
-/// 語は先頭から `MAX_TERMS` 個までにする。
+/// 先頭の `MAX_QUERY_CHARS` 文字だけを読み、語は先頭から `MAX_TERMS` 個までにする。
 #[must_use]
 pub fn split_terms(query: &str) -> Vec<String> {
+    let query = query
+        .char_indices()
+        .nth(MAX_QUERY_CHARS)
+        .map_or(query, |(end, _)| &query[..end]);
     let mut terms: Vec<String> = Vec::new();
     for term in query.split_whitespace() {
         if terms.len() == MAX_TERMS {
@@ -178,6 +222,28 @@ mod tests {
             ["止血帯", "出血", "cpr"]
         );
         assert_eq!(split_terms(" \u{3000} "), Vec::<String>::new());
+    }
+
+    #[test]
+    fn reads_only_the_head_of_a_long_query() {
+        let query = "あ".repeat(MAX_QUERY_CHARS + 10);
+        let terms = split_terms(&query);
+        assert_eq!(terms.len(), 1);
+        assert_eq!(char_len(&terms[0]), MAX_QUERY_CHARS);
+    }
+
+    #[test]
+    fn limits_report_invalid_input() {
+        assert!(check_len("値", "abc", 3).is_ok());
+        assert!(matches!(
+            check_len("値", "abcd", 3),
+            Err(AppError::InvalidInput(_))
+        ));
+        assert!(check_count("値", 3, 3).is_ok());
+        assert!(matches!(
+            check_count("値", 4, 3),
+            Err(AppError::InvalidInput(_))
+        ));
     }
 
     #[test]

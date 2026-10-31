@@ -8,9 +8,13 @@ use serde::Serialize;
 use serde::de::DeserializeOwned;
 
 use super::docs::{is_iso_date, non_empty};
-use super::text::{is_slug, strip_marks};
+use super::text::{MAX_MEDIUM_TEXT, MAX_SHORT_TEXT, check_count, check_len, is_slug, strip_marks};
 use crate::error::AppError;
 use crate::model::{ModTarget, QuickrefReplaceInput, QuickrefRow, QuickrefTable};
+
+/// 件数の上限。同梱の表（30 行ほど）より十分に大きい
+const MAX_ROWS: usize = 1000;
+const MAX_ROW_ITEMS: usize = 64;
 
 /// 全行と同梱ファイルの情報を置き換える。1 つのトランザクションで行い、失敗したら前の内容を残す。
 ///
@@ -68,6 +72,8 @@ pub fn replace_all(conn: &mut Connection, input: &QuickrefReplaceInput) -> Resul
 
 fn validate(input: &QuickrefReplaceInput) -> Result<QuickrefReplaceInput, AppError> {
     let mut input = input.clone();
+    check_count("クイック表の行", input.rows.len(), MAX_ROWS)?;
+    check_len("source_hash", &input.source_hash, MAX_SHORT_TEXT)?;
     if input.source_hash.trim().is_empty() {
         return Err(AppError::InvalidInput("source_hash が空です".to_owned()));
     }
@@ -81,6 +87,7 @@ fn validate(input: &QuickrefReplaceInput) -> Result<QuickrefReplaceInput, AppErr
     }
     let mut seen = HashSet::new();
     for row in &mut input.rows {
+        check_row_limits(row)?;
         if !is_slug(&row.id) {
             return Err(AppError::InvalidInput(format!(
                 "クイック表の id は英小文字・数字・ハイフンにしてください: {}",
@@ -117,6 +124,24 @@ fn validate(input: &QuickrefReplaceInput) -> Result<QuickrefReplaceInput, AppErr
         row.without_mods = dedup(&row.without_mods);
     }
     Ok(input)
+}
+
+fn check_row_limits(row: &QuickrefRow) -> Result<(), AppError> {
+    check_len("クイック表の id", &row.id, MAX_SHORT_TEXT)?;
+    check_len("カテゴリ", &row.category, MAX_SHORT_TEXT)?;
+    check_len("症状", &row.symptom, MAX_SHORT_TEXT)?;
+    check_len("注記", row.notes.as_deref().unwrap_or(""), MAX_MEDIUM_TEXT)?;
+    for (name, list) in [
+        ("手順", &row.treatment),
+        ("物品", &row.items),
+        ("リンク", &row.links),
+    ] {
+        check_count(name, list.len(), MAX_ROW_ITEMS)?;
+        for value in list {
+            check_len(name, value, MAX_MEDIUM_TEXT)?;
+        }
+    }
+    Ok(())
 }
 
 fn required(value: &str, id: &str, name: &str) -> Result<String, AppError> {
@@ -350,6 +375,9 @@ mod tests {
             |t| t.rows[0].treatment = vec![" ".to_owned()],
             |t| t.source_hash = String::new(),
             |t| t.verified_at = Some("2026/09/28".to_owned()),
+            |t| t.rows[0].symptom = "a".repeat(MAX_SHORT_TEXT + 1),
+            |t| t.rows[0].treatment = vec!["a".to_owned(); MAX_ROW_ITEMS + 1],
+            |t| t.rows[0].links = vec!["a".repeat(MAX_MEDIUM_TEXT + 1)],
         ];
         for (i, change) in invalid.iter().enumerate() {
             let mut input = table("hash-2");

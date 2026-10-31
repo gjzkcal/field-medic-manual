@@ -9,12 +9,14 @@ use crate::model::{PrefItem, PrefTarget};
 /// 履歴に残す件数。「最近見たもの」に出すには十分で、表が際限なく伸びない数
 pub const HISTORY_LIMIT: usize = 200;
 const MAX_ID_LEN: usize = 512;
+/// お気に入りの件数の上限。一覧を読むたびに全件の対象を引くので、表が際限なく伸びないようにする
+const MAX_FAVORITES: i64 = 1000;
 
 /// お気に入りに入れる / 外す。入れたら true、外したら false。
 ///
 /// # Errors
 ///
-/// 対象の id が空か長すぎれば `InvalidInput`。
+/// 対象の id が空か長すぎる、お気に入りが上限に達していれば `InvalidInput`。
 pub fn fav_toggle(conn: &Connection, target: &PrefTarget) -> Result<bool, AppError> {
     let (kind, id) = encode(target)?;
     let removed = conn.execute(
@@ -23,6 +25,12 @@ pub fn fav_toggle(conn: &Connection, target: &PrefTarget) -> Result<bool, AppErr
     )?;
     if removed > 0 {
         return Ok(false);
+    }
+    let count: i64 = conn.query_row("SELECT COUNT(*) FROM favorites", [], |r| r.get(0))?;
+    if count >= MAX_FAVORITES {
+        return Err(AppError::InvalidInput(format!(
+            "お気に入りは {MAX_FAVORITES} 件までです"
+        )));
     }
     conn.execute(
         "INSERT INTO favorites (target_type, target_id, created_at) VALUES (?1, ?2, ?3)",
@@ -342,6 +350,24 @@ mod tests {
             .query_row("SELECT COUNT(*) FROM favorites", [], |r| r.get(0))
             .expect("数えられる");
         assert_eq!(rows, 3, "消えた対象の行も残す");
+    }
+
+    #[test]
+    fn favorites_stop_at_the_limit_but_can_still_be_removed() {
+        let conn = test_conn();
+        for i in 0..MAX_FAVORITES {
+            conn.execute(
+                "INSERT INTO favorites (target_type, target_id, created_at) VALUES ('flow', ?1, 't')",
+                [i.to_string()],
+            )
+            .expect("入れられる");
+        }
+        assert!(matches!(
+            fav_toggle(&conn, &flow_target("new")),
+            Err(AppError::InvalidInput(_))
+        ));
+        assert!(!fav_toggle(&conn, &flow_target("0")).expect("外せる"));
+        assert!(fav_toggle(&conn, &flow_target("new")).expect("空きができれば入れられる"));
     }
 
     #[test]

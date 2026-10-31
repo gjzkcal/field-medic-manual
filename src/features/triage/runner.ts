@@ -221,13 +221,16 @@ export function replay(
   };
 }
 
+/** 経路の選択の数の上限。ループのあるフローでも足り、手で書き換えた URL で再生を長引かせない */
+const MAX_PATH_STEPS = 1024;
+
 /** URL の `?path=0.1.0` を番号の列にする。数でない部分から先は捨てる（手で書き換えられた URL でも落ちないため）。 */
 export function parsePath(text: string | null): number[] {
   const path: number[] = [];
   if (text === null || text === "") {
     return path;
   }
-  for (const part of text.split(".")) {
+  for (const part of text.split(".", MAX_PATH_STEPS)) {
     if (!/^\d+$/.test(part)) {
       break;
     }

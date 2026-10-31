@@ -5,6 +5,7 @@ import { useNavigate } from "react-router";
 import { AppShell, type NavItem } from "@/app/AppShell";
 import { AppVersion } from "@/app/AppVersion";
 import { WindowControls } from "@/app/WindowControls";
+import { isAppPath } from "@/lib/app-path";
 import { onOpenHref } from "@/lib/tauri";
 
 const NAV_ITEMS: readonly NavItem[] = [
@@ -27,7 +28,9 @@ function useOpenHrefFromRust(): void {
     let cancelled = false;
     let unlisten: (() => void) | undefined;
     onOpenHref((href) => {
-      void navigate(href);
+      if (isAppPath(href)) {
+        void navigate(href);
+      }
     })
       .then((fn) => {
         if (cancelled) {

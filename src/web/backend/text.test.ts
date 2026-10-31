@@ -1,6 +1,7 @@
 // デスクトップ版の src-tauri/src/db/text.rs のテストを移したもの。
 import { describe, expect, it } from "vitest";
 
+import { MAX_QUERY_CHARS } from "@/features/search/limits";
 import { MARK_END, MARK_START } from "@/features/search/snippet";
 import {
   compareNoCase,
@@ -26,6 +27,12 @@ describe("splitTerms", () => {
     const terms = splitTerms(query);
     expect(terms).toHaveLength(MAX_TERMS);
     expect(terms[0]).toBe("語0");
+  });
+
+  it("先頭の MAX_QUERY_CHARS 文字だけを読む", () => {
+    const terms = splitTerms("𠮷".repeat(MAX_QUERY_CHARS + 10));
+    expect(terms).toHaveLength(1);
+    expect(Array.from(terms[0] ?? "")).toHaveLength(MAX_QUERY_CHARS);
   });
 });
 

@@ -1,5 +1,6 @@
 // 検索とタグで使う文字列の処理。デスクトップ版の Rust（src-tauri/src/db/text.rs）を移したもの。
 // 同じ語で同じ節が当たるよう、大文字小文字の扱い（ASCII だけ区別しない）と文字数の数え方（コードポイント）をそろえる。
+import { MAX_QUERY_CHARS } from "@/features/search/limits";
 import { MARK_END, MARK_START } from "@/features/search/snippet";
 
 const ELLIPSIS = "…";
@@ -25,9 +26,10 @@ export function stripMarks(s: string): string {
  */
 export const MAX_TERMS = 16;
 
-/** 検索クエリを語に分ける。全角スペースも区切りにする。大文字小文字だけ違う語は 1 つにまとめる。語は先頭から MAX_TERMS 個まで。 */
+/** 検索クエリを語に分ける。全角スペースも区切りにする。大文字小文字だけ違う語は 1 つにまとめる。先頭の MAX_QUERY_CHARS 文字を読み、語は先頭から MAX_TERMS 個まで。 */
 export function splitTerms(query: string): string[] {
-  return normalizeTerms(query.split(/\s+/)).slice(0, MAX_TERMS);
+  const head = Array.from(query).slice(0, MAX_QUERY_CHARS).join("");
+  return normalizeTerms(head.split(/\s+/)).slice(0, MAX_TERMS);
 }
 
 /** 語の並びを正規化する。前後の空白を除き、空は捨て、大文字小文字だけ違う重複をまとめる。 */

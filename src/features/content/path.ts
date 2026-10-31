@@ -66,15 +66,13 @@ function decodeUriSafe(text: string): string {
   }
 }
 
+// 保存する側（src-tauri/src/db/assets.rs）が受け付ける種類と同じにする。SVG はスクリプトを含められるので使わない
 const IMAGE_MIME: Record<string, string> = {
   ".png": "image/png",
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
   ".gif": "image/gif",
   ".webp": "image/webp",
-  ".svg": "image/svg+xml",
-  ".bmp": "image/bmp",
-  ".avif": "image/avif",
 };
 
 /** 画像の拡張子から MIME を返す。画像でなければ null。 */
