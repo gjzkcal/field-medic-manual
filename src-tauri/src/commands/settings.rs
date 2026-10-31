@@ -67,13 +67,13 @@ fn check_writable(window_label: &str, key: &str) -> Result<(), AppError> {
     let key = key.trim();
     // ホットキーは hotkey_set だけが書く。そこで組み合わせを検査して登録し直すので、値だけを書き換えさせない
     if key == hotkey::SETTINGS_KEY {
-        return Err(AppError::InvalidInput(format!(
+        return Err(AppError::Forbidden(format!(
             "設定 {key} はホットキーの設定から変えてください"
         )));
     }
     check_known(key)?;
     if window_label == overlay::OVERLAY && !OVERLAY_WRITABLE_KEYS.contains(&key) {
-        return Err(AppError::InvalidInput(format!(
+        return Err(AppError::Forbidden(format!(
             "小窓からは設定 {key} を変えられません"
         )));
     }
@@ -115,7 +115,7 @@ mod tests {
             for key in [hotkey::SETTINGS_KEY, " hotkeys "] {
                 assert!(matches!(
                     check_writable(label, key),
-                    Err(AppError::InvalidInput(_))
+                    Err(AppError::Forbidden(_))
                 ));
             }
         }
@@ -129,7 +129,7 @@ mod tests {
         for key in ["window", "mods", "overlay"] {
             assert!(matches!(
                 check_writable(overlay::OVERLAY, key),
-                Err(AppError::InvalidInput(_))
+                Err(AppError::Forbidden(_))
             ));
         }
     }

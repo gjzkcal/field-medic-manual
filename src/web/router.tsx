@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate } from "react-router";
 
+import { RouteErrorPage } from "@/components/RouteErrorPage";
 import { DocPage } from "@/features/library/DocPage";
 import { LibraryPage } from "@/features/library/LibraryPage";
 import { QuickrefPage } from "@/features/quickref/QuickrefPage";
@@ -15,15 +16,22 @@ export const webRouter = createBrowserRouter(
   [
     {
       element: <WebLayout />,
+      errorElement: <RouteErrorPage />,
       children: [
-        { index: true, element: <Navigate to="/library" replace /> },
-        { path: "library", element: <LibraryPage /> },
-        { path: "doc/:id", element: <DocPage /> },
-        { path: "quickref", element: <QuickrefPage /> },
-        { path: "settings", element: <WebSettingsPage /> },
-        { path: "about", element: <WebAboutPage /> },
-        // デスクトップ版の URL（/triage/… など）を共有されたときも、一覧から始められるようにする
-        { path: "*", element: <Navigate to="/library" replace /> },
+        {
+          // ページの失敗は画面の枠を残して受ける
+          errorElement: <RouteErrorPage />,
+          children: [
+            { index: true, element: <Navigate to="/library" replace /> },
+            { path: "library", element: <LibraryPage /> },
+            { path: "doc/:id", element: <DocPage /> },
+            { path: "quickref", element: <QuickrefPage /> },
+            { path: "settings", element: <WebSettingsPage /> },
+            { path: "about", element: <WebAboutPage /> },
+            // デスクトップ版の URL（/triage/… など）を共有されたときも、一覧から始められるようにする
+            { path: "*", element: <Navigate to="/library" replace /> },
+          ],
+        },
       ],
     },
   ],

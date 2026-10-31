@@ -10,6 +10,8 @@ pub enum AppError {
     NotFound(String),
     #[error("入力が不正です: {0}")]
     InvalidInput(String),
+    #[error("権限がありません: {0}")]
+    Forbidden(String),
     #[error("内部エラー: {0}")]
     Internal(String),
     #[error("データベースエラー: {0}")]
@@ -24,6 +26,7 @@ pub enum ErrorKind {
     Io,
     NotFound,
     InvalidInput,
+    Forbidden,
     Internal,
 }
 
@@ -42,28 +45,44 @@ impl AppError {
             Self::Io(_) => ErrorKind::Io,
             Self::NotFound(_) => ErrorKind::NotFound,
             Self::InvalidInput(_) => ErrorKind::InvalidInput,
+            Self::Forbidden(_) => ErrorKind::Forbidden,
             // DB の失敗は利用者が対処できる種類のエラーではないため、TS 側では内部エラーとして扱う
             Self::Internal(_) | Self::Db(_) => ErrorKind::Internal,
         }
     }
 
-    /// 画面に送る文面。`detailed` が false なら、DB のエラーは決まった文面にする。
-    /// rusqlite の文面は表・列の名前を含み、prepare の失敗では SQL 文を丸ごと含むため、配布版では内部の作りを画面に出さない。
+    /// 画面に送る文面。`detailed` が false なら、利用者が対処できない種類のエラーは決まった文面にする。
+    /// rusqlite の文面は表・列の名前や SQL 文を、`Io` の文面はパスを含むため、配布版では内部の作りを画面に出さず、ログにだけ残す。
     fn message(&self, detailed: bool) -> String {
         match self {
             Self::Db(_) if !detailed => DB_ERROR_MESSAGE.to_owned(),
+            Self::Io(_) if !detailed => IO_ERROR_MESSAGE.to_owned(),
+            Self::Internal(_) if !detailed => INTERNAL_ERROR_MESSAGE.to_owned(),
             _ => self.to_string(),
+        }
+    }
+
+    /// ログに書く。`NotFound` は消した文書を開いたときなど普段の操作でも起きるので書かない。
+    fn report(&self) {
+        match self {
+            Self::NotFound(_) => {}
+            Self::InvalidInput(_) | Self::Forbidden(_) => log::warn!("{self}"),
+            Self::Io(_) | Self::Internal(_) | Self::Db(_) => log::error!("{self}"),
         }
     }
 }
 
 const DB_ERROR_MESSAGE: &str = "データベースの処理に失敗しました";
+const IO_ERROR_MESSAGE: &str = "ファイルの読み書きに失敗しました";
+const INTERNAL_ERROR_MESSAGE: &str = "アプリの内部で問題が起きました";
 
 impl Serialize for AppError {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        // コマンドが返すエラーはすべてここを通る。コマンドごとに書かなくて済み、書き漏らしも起きない
+        self.report();
         ErrorPayload {
             kind: self.kind(),
-            // 開発中は原因を追えるよう、DB のエラーも詳しく出す
+            // 開発中は原因を追えるよう、詳しい文面も画面に出す
             message: self.message(cfg!(debug_assertions)),
         }
         .serialize(serializer)
@@ -96,9 +115,32 @@ mod tests {
     }
 
     #[test]
-    fn non_db_errors_keep_their_message() {
+    fn io_and_internal_errors_hide_details_unless_detailed() {
+        let err = AppError::from(std::io::Error::other(r"C:\Users\name\secret"));
+        assert_eq!(err.message(false), IO_ERROR_MESSAGE);
+        assert!(err.message(true).contains("secret"));
+
+        let err = AppError::Internal("設定 viewer の値を読めません: expected".to_owned());
+        assert_eq!(err.message(false), INTERNAL_ERROR_MESSAGE);
+        assert!(err.message(true).contains("viewer"));
+    }
+
+    #[test]
+    fn errors_the_user_can_act_on_keep_their_message() {
         let err = AppError::InvalidInput("キーが長すぎます".to_owned());
         assert_eq!(err.message(false), "入力が不正です: キーが長すぎます");
+        let err = AppError::NotFound("doc 42".to_owned());
+        assert_eq!(err.message(false), "見つかりません: doc 42");
+    }
+
+    #[test]
+    fn forbidden_has_its_own_kind_and_message() {
+        let err = AppError::Forbidden("小窓からは変えられません".to_owned());
+        assert_eq!(err.kind(), ErrorKind::Forbidden);
+        assert_eq!(
+            err.message(false),
+            "権限がありません: 小窓からは変えられません"
+        );
     }
 
     #[test]
