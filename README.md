@@ -77,6 +77,12 @@ Medical procedures shown in the app are for gameplay only and may be outdated. A
 
 The bundled manuals, quick reference and triage flows are the author's summaries of the ACE Medical source code and documentation (acemod/ACE-Anvil, GPL-2.0-or-later, Copyright (C) acemod).
 
+## Security / セキュリティ
+
+脆弱性は公開の Issue ではなく、[SECURITY.md](SECURITY.md) の手順で非公開で報告してください。通信先、保存するデータ、ログ、鍵の扱いも同じファイルにあります。
+
+Please report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
+
 ## License / ライセンス
 
 Copyright (C) 2026 gjzkcal
@@ -117,5 +123,5 @@ cd src-tauri && cargo clippy --all-targets -- -D warnings && cargo test
 6. GitHub Actions（`.github/workflows/release.yml`）が確認（`.github/workflows/ci.yml`。main への push と PR でも走る）を通してから、ビルド・署名をして Releases に公開し、`latest.json` を置く。
 7. Releases への公開が成功すると、同じ版の Web 版を GitHub Pages に公開する（`.github/workflows/pages.yml`）。公開し直すときは、Actions の「Pages」を版のタグを選んで手で実行する。
 
-リリースには、GitHub の Secrets に更新用の署名鍵（`TAURI_SIGNING_PRIVATE_KEY`・`TAURI_SIGNING_PRIVATE_KEY_PASSWORD`）が要ります。
+リリースには、GitHub の Environment `release` の Secrets に更新用の署名鍵（`TAURI_SIGNING_PRIVATE_KEY`・`TAURI_SIGNING_PRIVATE_KEY_PASSWORD`）が要ります。Environment はタグのルール `v*` に限ります。
 Web 版の公開には、リポジトリの Settings → Pages の Source を「GitHub Actions」にし、Settings → Environments → github-pages の「Deployment branches and tags」に、タグのルール `v*` を足しておきます（既定は main だけなので、足さないとタグからの公開が失敗します）。

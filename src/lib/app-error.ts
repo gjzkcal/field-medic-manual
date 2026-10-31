@@ -7,6 +7,7 @@ const ERROR_KINDS: Record<ErrorKind, true> = {
   io: true,
   not_found: true,
   invalid_input: true,
+  forbidden: true,
   internal: true,
 };
 

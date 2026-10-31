@@ -34,6 +34,11 @@ export async function appVersion(): Promise<string> {
   return invoke<string>("app_version");
 }
 
+/** 画面で起きた例外をログに書く。ログのプラグインを JS に開けず、書ける内容をこのコマンドに限る。 */
+export async function clientLog(message: string): Promise<void> {
+  return invoke("client_log", { message });
+}
+
 /** 保存したドキュメントの id を返す。同じ sourcePath のドキュメントがあれば、id を引き継いで置き換える。 */
 export async function docUpsert(input: DocUpsertInput): Promise<string> {
   return invoke<string>("doc_upsert", { input });

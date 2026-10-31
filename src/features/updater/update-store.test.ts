@@ -45,14 +45,20 @@ describe("checkForUpdates", () => {
     expect(useUpdateStore.getState().dialogOpen).toBe(false);
   });
 
-  it("起動時の確認の失敗（オフラインなど）は画面に出さない", async () => {
-    mockIPC(() => {
+  it("起動時の確認の失敗（オフラインなど）は画面に出さず、ログに残す", async () => {
+    const logged: unknown[] = [];
+    mockIPC((cmd, payload) => {
+      if (cmd === "client_log") {
+        logged.push(payload);
+        return null;
+      }
       throw new Error("error sending request");
     });
 
     await checkForUpdates({ manual: false });
 
     expect(useUpdateStore.getState().status.kind).toBe("idle");
+    expect(JSON.stringify(logged)).toContain("更新の確認に失敗");
   });
 
   it("手動の確認の失敗は理由を出す", async () => {

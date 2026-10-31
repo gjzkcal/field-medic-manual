@@ -4,6 +4,7 @@
 // コマンドを足したら、ここと capabilities/*.json の両方に足す。
 const COMMANDS: &[&str] = &[
     "app_version",
+    "client_log",
     "doc_upsert",
     "doc_list",
     "doc_get",

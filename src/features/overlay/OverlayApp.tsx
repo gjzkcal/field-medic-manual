@@ -2,6 +2,7 @@ import { useEffect, type JSX, type PointerEvent } from "react";
 import { createMemoryRouter, Navigate } from "react-router";
 import { RouterProvider } from "react-router/dom";
 
+import { RouteErrorPage } from "@/components/RouteErrorPage";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DocPage } from "@/features/library/DocPage";
 import {
@@ -33,16 +34,23 @@ const overlayRouter = createMemoryRouter(
   [
     {
       element: <OverlayLayout />,
+      errorElement: <RouteErrorPage />,
       children: [
-        { index: true, element: <Navigate to={OVERLAY_SEARCH_PATH} replace /> },
-        { path: "search", element: <OverlaySearchPage /> },
-        { path: "doc/:id", element: <DocPage /> },
-        { path: "triage", element: <TriageListPage /> },
-        { path: "triage/:id", element: <TriageRunPage /> },
-        { path: "quickref", element: <QuickrefPage compact /> },
-        { path: "favorites", element: <OverlayFavoritesPage /> },
-        // メインの画面へのリンク（ビューアの「ライブラリ」など）は、小窓では検索に置き換える
-        { path: "*", element: <Navigate to={OVERLAY_SEARCH_PATH} replace /> },
+        {
+          // ページの失敗はタブと閉じるボタンを残して受ける
+          errorElement: <RouteErrorPage />,
+          children: [
+            { index: true, element: <Navigate to={OVERLAY_SEARCH_PATH} replace /> },
+            { path: "search", element: <OverlaySearchPage /> },
+            { path: "doc/:id", element: <DocPage /> },
+            { path: "triage", element: <TriageListPage /> },
+            { path: "triage/:id", element: <TriageRunPage /> },
+            { path: "quickref", element: <QuickrefPage compact /> },
+            { path: "favorites", element: <OverlayFavoritesPage /> },
+            // メインの画面へのリンク（ビューアの「ライブラリ」など）は、小窓では検索に置き換える
+            { path: "*", element: <Navigate to={OVERLAY_SEARCH_PATH} replace /> },
+          ],
+        },
       ],
     },
   ],

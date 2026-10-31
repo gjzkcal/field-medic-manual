@@ -55,6 +55,8 @@ const noopUnlisten = (): Promise<() => void> =>
   });
 
 export const appVersion: typeof Desktop.appVersion = () => Promise.resolve(version);
+// ブラウザには読み返せる保存先がなく、外へは送らない
+export const clientLog: typeof Desktop.clientLog = noop;
 
 export const docUpsert: typeof Desktop.docUpsert = () => unsupported("原稿の保存");
 
