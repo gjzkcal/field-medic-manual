@@ -42,7 +42,6 @@ describe.each(["main.json", "overlay.json"])("%s", (file) => {
     expect(typeof opener === "string" ? [] : opener?.allow.map((a) => a.url)).toEqual([
       "https://*",
       "http://*",
-      "mailto:*",
     ]);
   });
 });

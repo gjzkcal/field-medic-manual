@@ -10,7 +10,7 @@
     "core:event:allow-unlisten",
     {
       "identifier": "opener:allow-open-url",
-      "allow": [{ "url": "https://*" }, { "url": "http://*" }, { "url": "mailto:*" }]
+      "allow": [{ "url": "https://*" }, { "url": "http://*" }]
     },
     "allow-search-query",
     "allow-tag-list",

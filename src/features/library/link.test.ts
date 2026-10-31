@@ -3,13 +3,13 @@ import { describe, expect, it } from "vitest";
 import { decodeAnchor, docHref, highlightTermsOf, resolveLink } from "@/features/library/link";
 
 describe("resolveLink", () => {
-  it("http / https / mailto は外部リンク", () => {
+  it("http / https は外部リンク", () => {
     expect(resolveLink("https://anvil.acemod.org/dev/")).toEqual({
       kind: "external",
       url: "https://anvil.acemod.org/dev/",
     });
     expect(resolveLink("HTTP://example.com").kind).toBe("external");
-    expect(resolveLink("mailto:a@example.com").kind).toBe("external");
+    expect(resolveLink("mailto:a@example.com").kind).toBe("unknown");
   });
 
   it("# だけは同じ文書のアンカー。% エンコードを戻す", () => {

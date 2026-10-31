@@ -53,11 +53,10 @@ describe("sanitizeHtml", () => {
     expect(sanitizeHtml('<p>a<svg><circle r="1"></circle></svg></p>').html).toBe("<p>a</p>");
   });
 
-  it("リンクは http・https・mailto と相対パスだけを残す", () => {
+  it("リンクは http・https と相対パスだけを残す", () => {
     for (const href of [
       "https://example.com/",
       "http://example.com/",
-      "mailto:a@example.com",
       "hemorrhage.md#止血帯を使う",
       "./airway-breathing2.md",
       "#節",
@@ -70,6 +69,7 @@ describe("sanitizeHtml", () => {
       "data:text/html,x",
       "vbscript:x",
       "file:///C:/a",
+      "mailto:a@example.com",
       "tel:0",
       "sms:0",
       "ftp://example.com/",

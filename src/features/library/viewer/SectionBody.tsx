@@ -178,7 +178,7 @@ export function SectionBody({ html, resolveAsset, active }: SectionBodyProps): J
  */
 function markExternalLinks(fragment: DocumentFragment): void {
   for (const link of Array.from(fragment.querySelectorAll("a[href]"))) {
-    // mailto はブラウザで開かないので外す（本文の外部リンクはウェブのページだけ）
+    // 相対パスのリンクはアプリの中で開くので印を付けない
     if (!/^https?:/i.test(link.getAttribute("href") ?? "")) {
       continue;
     }

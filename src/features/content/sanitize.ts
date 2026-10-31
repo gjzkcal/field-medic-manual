@@ -29,7 +29,7 @@ const CONFIG: Config = {
   // src / srcset を残すと閲覧時に外部やローカルのファイルを読みに行く。画像は data-asset-id で参照する
   FORBID_ATTR: ["style", "src", "srcset"],
   // 既定は ftp・tel・sms なども通す。本文のリンクは openExternal で開ける種類（src/lib/external-url.ts）と相対パスだけにする
-  ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto):|[^a-z]|[a-z+.-]+(?:[^a-z+.:-]|$))/i,
+  ALLOWED_URI_REGEXP: /^(?:https?:|[^a-z]|[a-z+.-]+(?:[^a-z+.:-]|$))/i,
   ALLOW_DATA_ATTR: false,
   // data-chart はグラフにする表の印、data-flowchart はフローチャートの中身（どちらも JSON）。ビューアは形を確かめてから使い、HTML としては扱わない
   ADD_ATTR: ["data-asset-id", "data-chart", "data-flowchart", "data-mod-columns"],

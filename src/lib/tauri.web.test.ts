@@ -65,10 +65,15 @@ describe("tauri.web.ts", () => {
     expect(isAppError(error) && error.kind).toBe("invalid_input");
   });
 
-  it("外部で開くのは http・https・mailto だけにする", async () => {
+  it("外部で開くのは http・https だけにする", async () => {
     const open = vi.spyOn(window, "open").mockReturnValue(null);
     try {
-      for (const url of ["javascript:alert(1)", "file:///C:/Windows", "data:text/html,x"]) {
+      for (const url of [
+        "javascript:alert(1)",
+        "file:///C:/Windows",
+        "data:text/html,x",
+        "mailto:a@example.com",
+      ]) {
         const error: unknown = await web.openExternal(url).catch((e: unknown) => e);
         expect(isAppError(error) && error.kind, url).toBe("invalid_input");
       }
