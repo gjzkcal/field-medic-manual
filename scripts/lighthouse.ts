@@ -35,7 +35,7 @@ import {
 } from "./lib/lighthouse.ts";
 
 // 手元と PageSpeed Insights の点数と比べられるよう、版を固定する（Renovate が .github/renovate.json5 の正規表現で追う）
-const LIGHTHOUSE = "lighthouse@13.5.0";
+const LIGHTHOUSE = "lighthouse@13.6.0";
 const ROOT = join(import.meta.dirname, "..");
 const DIST = join(ROOT, "dist-web");
 // vite.config.ts の WEB_BASE と同じ
