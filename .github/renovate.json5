@@ -17,7 +17,7 @@
   // CI の pnpm install --frozen-lockfile で落ちることがある。メジャー版はワークフローの版と同じ PR で上がる
   constraints: {
     pnpm: "11.x",
-    node: "24.x",
+    node: "26.x",
   },
   // OSV は RustSec も見るので、cargo の脆弱性も拾える
   osvVulnerabilityAlerts: true,
