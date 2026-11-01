@@ -12,6 +12,9 @@ concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
+# 既定は権限なし。必要な権限はジョブごとに書く
+permissions: {}
+
 jobs:
   # 壊れた版を配らないよう、普段の push・PR と同じ確認を通す
   check:
@@ -25,13 +28,19 @@ jobs:
   release:
     needs: check
     runs-on: windows-latest
+    # 署名鍵はこの Environment の Secret に置き、タグのワークフローからだけ読めるようにする
+    environment: release
     # Releases の作成とアセットのアップロードに書き込みの権限が要る
     permissions:
       contents: write
     # 署名鍵と書き込みの権限を持つジョブなので、付け替えられるタグではなくコミットの SHA で
     # 外部のアクションを固定し、版はコメントに書く（Renovate が ci.yml・pages.yml とそろえて SHA とコメントを両方更新する）
+    # キャッシュは使わない。ほかのブランチのワークフローが作ったキャッシュを、署名する成果物に混ぜないため
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # このジョブは git で push しない。トークンをディスクに残さない
+          persist-credentials: false
 
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
         with:
@@ -40,15 +49,10 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
-          cache: pnpm
 
-      # src-tauri/rust-toolchain.toml の版を入れる。rust-cache がキーに rustc の版を使うので、その前に入れる
+      # src-tauri/rust-toolchain.toml の版を入れる
       - run: rustup toolchain install
         working-directory: src-tauri
-
-      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
-        with:
-          workspaces: "./src-tauri -> target"
 
       # 依存のライセンス表記（THIRD_PARTY_LICENSES.txt）の生成に使う
       - uses: taiki-e/install-action@a4d3f3f761dcd95cce1b72cb61cb6d1963438177 # v2.87.30
@@ -68,6 +72,13 @@ jobs:
             echo "RELEASE_NOTES_EOF"
           } >> "$GITHUB_OUTPUT"
 
+      # 取れないまま公開が進まないよう、公開の前に取る。依存グラフはデフォルトブランチの内容を返す
+      - name: Fetch the SBOM
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh api "repos/${GITHUB_REPOSITORY}/dependency-graph/sbom" --jq .sbom > "field-medic-manual-${GITHUB_REF_NAME}.spdx.json"
+
       # beforeBuildCommand がライセンス表記の生成と画面のビルドを行う（tauri.conf.json）
       - uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # action-v1.0.0
         env:
@@ -84,6 +95,13 @@ jobs:
           uploadUpdaterJson: true
           # README は管理者権限の要らない -setup.exe（NSIS）で案内しているので、自動更新も NSIS にそろえる
           updaterJsonPreferNsis: true
+
+      - name: Attach the SBOM
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release upload "${GITHUB_REF_NAME}" "field-medic-manual-${GITHUB_REF_NAME}.spdx.json" --clobber
 
   # マニュアルの Web 版（GitHub Pages）を、配った版と同じ原稿で公開する。
   # Releases への公開が失敗したら出さない（アプリと Web で中身が食い違わないように）

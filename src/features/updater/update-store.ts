@@ -2,6 +2,7 @@
 // 起動時の確認（main.tsx）と、設定画面の About の「更新を確認」が同じ状態を使う。
 import { create } from "zustand";
 
+import { logClientError } from "@/lib/client-error-log";
 import {
   checkForUpdate,
   type DownloadProgress,
@@ -50,6 +51,8 @@ export async function checkForUpdates({ manual }: { manual: boolean }): Promise<
       dialogOpen: true,
     });
   } catch (error: unknown) {
+    // 起動時の失敗は画面に出さないので、署名の不一致などに気づけるようログには残す
+    logClientError("更新の確認に失敗", error);
     useUpdateStore.setState({
       status: manual ? { kind: "error", message: errorMessage(error) } : { kind: "idle" },
     });
@@ -81,6 +84,7 @@ export async function installUpdate(): Promise<void> {
     });
     await relaunchApp();
   } catch (error: unknown) {
+    logClientError("更新のインストールに失敗", error);
     useUpdateStore.setState({
       status: { kind: "available", update, installError: errorMessage(error) },
     });

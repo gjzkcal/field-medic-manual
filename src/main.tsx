@@ -4,6 +4,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { App } from "@/app/App";
+import { startClientErrorLog } from "@/lib/client-error-log";
 import { waitForFirstScreen } from "@/app/reveal";
 import { syncBundledManuals } from "@/features/content/sync";
 import { OverlayApp } from "@/features/overlay/OverlayApp";
@@ -18,6 +19,9 @@ import { loadViewerSettings, VIEWER_SETTINGS_KEY } from "@/features/settings/vie
 import { syncBundledFlows } from "@/features/triage/sync";
 import { checkForUpdates } from "@/features/updater/update-store";
 import { currentWindowLabel, onSettingsChanged } from "@/lib/tauri";
+
+// 起動の処理の例外も拾えるよう、最初に始める
+startClientErrorLog();
 
 const rootElement = document.getElementById("root");
 if (rootElement === null) {

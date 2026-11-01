@@ -1,6 +1,7 @@
 pub mod commands;
 pub mod db;
 pub mod error;
+pub mod logging;
 pub mod model;
 pub mod window;
 
@@ -19,11 +20,14 @@ const MAIN_REVEAL_TIMEOUT: Duration = Duration::from_secs(5);
 /// Tauri の初期化に失敗した場合（WebView2 がない、DB を開けないなど）。起動できない状態なので続行しない。
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    logging::install_panic_hook();
     tauri::Builder::default()
         // 2 つ目の起動を最初に止めるため、ほかのプラグインより先に登録する
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             let _ = overlay::show_main(app, None);
         }))
+        // single-instance の後に置く。2 つ目の起動がログのファイルを開かずに終わるように
+        .plugin(logging::plugin())
         .plugin(
             tauri_plugin_window_state::Builder::new()
                 // 表示状態まで戻すと、隠していた小窓やトレイに格納したメインが起動時に出てしまう
@@ -52,6 +56,7 @@ pub fn run() {
         .manage(hotkey::HotkeyState::default())
         .manage(overlay::MainRevealed::default())
         .setup(|app| {
+            log::info!("起動しました: 版 {}", app.package_info().version);
             // updater のクレートはデスクトップだけの依存にしてある（Cargo.toml）
             #[cfg(desktop)]
             app.handle()
@@ -78,6 +83,7 @@ pub fn run() {
         .on_window_event(window::on_window_event)
         .invoke_handler(tauri::generate_handler![
             commands::app::app_version,
+            commands::log::client_log,
             commands::docs::doc_upsert,
             commands::docs::doc_list,
             commands::docs::doc_get,

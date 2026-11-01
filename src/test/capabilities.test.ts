@@ -35,6 +35,12 @@ describe.each(["main.json", "overlay.json"])("%s", (file) => {
     expect(names).not.toContain("opener:allow-reveal-item-in-dir");
   });
 
+  it("ログは client_log だけで書き、ログのプラグインを画面に開けない", () => {
+    const names = permissions.map((p) => (typeof p === "string" ? p : p.identifier));
+    expect(names).toContain("allow-client-log");
+    expect(names.filter((name) => name.startsWith("log:"))).toEqual([]);
+  });
+
   it("外部で開ける URL を src/lib/external-url.ts と同じ種類に絞る", () => {
     const opener = permissions.find(
       (p) => typeof p !== "string" && p.identifier === "opener:allow-open-url",

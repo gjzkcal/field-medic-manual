@@ -23,6 +23,9 @@ src-tauri/target/
 .env.*
 *.local
 *.key
+*.pem
+*.pfx
+*.p12
 
 # Logs
 logs/
