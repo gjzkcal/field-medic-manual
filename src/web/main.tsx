@@ -5,6 +5,7 @@ import "@/index.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
+import { startCasualtySync } from "@/features/casualties/casualty-store";
 import { loadQuickrefSettings } from "@/features/quickref/quickref-settings";
 import { loadSearchFilter } from "@/features/search/search-filter";
 import { loadModSettings } from "@/features/settings/mod-settings";
@@ -29,6 +30,7 @@ if (!framed) {
   void loadSearchFilter();
   void loadModSettings();
   void loadQuickrefSettings();
+  startCasualtySync();
 }
 
 createRoot(rootElement).render(<StrictMode>{framed ? <FramedNotice /> : <WebApp />}</StrictMode>);

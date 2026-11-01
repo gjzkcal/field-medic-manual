@@ -1,0 +1,66 @@
+# 負傷者の画面で使う薬の数値。値は ACE Medical Circulation の既定の設定（Configs/ACE/Settings.conf と各物品の prefab）。
+# 直したら pnpm test で確かめる。原稿の表（drug-effects.md など）と突き合わせるので、片方だけを直すとテストで気づける。
+# ミッションの設定 m_ACE_Medical_Medication で差し替えたサーバーでは、この値とずれる。
+$schema: ./medication.v1.schema.json
+modChannel: dev
+verifiedAt: 2026-11-02
+# 既定の血管抵抗。血管抵抗の補正を % で出すときの分母
+baseVascularResistance: 0.0016372
+salineSeconds: 90
+# Circulation なしで、効果が続いている間は次を打てない時間
+coreLockSeconds:
+  epinephrine: 30
+  morphine: 60
+drugs:
+  - id: epinephrine
+    doseNm: 550
+    activationRate: 0.05193617
+    deactivationRate: 0.03441518
+    primaryEffect: heartRate
+  - id: metoprolol
+    doseNm: 480
+    activationRate: 0.03872958
+    deactivationRate: 0.03872936
+    primaryEffect: heartRate
+  - id: morphine
+    doseNm: 600
+    activationRate: 0.03090123
+    deactivationRate: 0.0009
+    primaryEffect: analgesia
+  - id: naloxone
+    doseNm: 600
+    activationRate: 0.02911635
+    deactivationRate: 0.0022
+    primaryEffect: antagonism
+  - id: phenylephrine
+    doseNm: 650
+    activationRate: 0.03007057
+    deactivationRate: 0.0386053
+    primaryEffect: bleedingRate
+effects:
+  - id: heartRate
+    kind: linear
+    drugs:
+      - { drug: epinephrine, ec50: 9.724 }
+      - { drug: metoprolol, ec50: -10.674 }
+      - { drug: morphine, ec50: -41.337, antagonists: [{ drug: naloxone, ec50: 120 }] }
+  - id: vascularResistance
+    kind: linear
+    drugs:
+      - { drug: morphine, ec50: -6747324, antagonists: [{ drug: naloxone, ec50: 120 }] }
+      - { drug: phenylephrine, ec50: 273140.375 }
+  - id: analgesia
+    kind: hill
+    maxEffect: 1
+    drugs:
+      - { drug: morphine, ec50: 300.964, gamma: 2.7, antagonists: [{ drug: naloxone, ec50: 120 }] }
+  - id: bleedingRate
+    kind: hill
+    maxEffect: 0.55
+    drugs:
+      - { drug: phenylephrine, ec50: 156.231 }
+  - id: reviveFrequency
+    kind: hill
+    maxEffect: 0.5
+    drugs:
+      - { drug: epinephrine, ec50: 100, gamma: 2 }

@@ -54,8 +54,10 @@ fn handle_menu(app: &AppHandle, event: &MenuEvent) {
         OVERLAY_ID => overlay::show(app, OverlayMode::View),
         SETTINGS_ID => overlay::show_main(app, Some("/settings")),
         QUIT_ID => {
-            // exit で終わらせると window-state がウィンドウの位置を保存する
-            app.exit(0);
+            let app = app.clone();
+            tauri::async_runtime::spawn(async move {
+                super::quit(&app).await;
+            });
             Ok(())
         }
         _ => Ok(()),

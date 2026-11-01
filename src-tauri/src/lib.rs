@@ -108,6 +108,8 @@ pub fn run() {
             commands::prefs::fav_list,
             commands::prefs::history_push,
             commands::prefs::history_list,
+            commands::casualties::casualty_list,
+            commands::casualties::casualty_apply,
             commands::window::hotkey_list,
             commands::window::hotkey_set,
             commands::window::window_open_in_main,

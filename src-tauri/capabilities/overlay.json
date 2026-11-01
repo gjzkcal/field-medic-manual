@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "overlay",
-  "description": "Capability for the always-on-top overlay window (least privilege: read, search, favorites, history, settings)",
+  "description": "Capability for the always-on-top overlay window (least privilege: read, search, favorites, history, casualty log, settings)",
   "windows": ["overlay"],
   "permissions": [
     "core:window:allow-start-dragging",
@@ -27,6 +27,8 @@
     "allow-fav-list",
     "allow-history-push",
     "allow-history-list",
+    "allow-casualty-list",
+    "allow-casualty-apply",
     "allow-window-open-in-main",
     "allow-overlay-activate"
   ]

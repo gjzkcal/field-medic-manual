@@ -73,6 +73,12 @@ pub fn show(app: &AppHandle, mode: OverlayMode) -> tauri::Result<()> {
     app.emit_to(OVERLAY, OVERLAY_MODE_EVENT, mode)
 }
 
+/// メインなら小窓、小窓ならメインのラベル。片方の変更をもう片方に知らせるときに使う。
+#[must_use]
+pub fn other_window(label: &str) -> &'static str {
+    if label == MAIN { OVERLAY } else { MAIN }
+}
+
 /// 閲覧モードの小窓で入力欄を押したとき。キー入力は前面のアプリに届くので、打つときだけフォーカスを移す。
 ///
 /// # Errors
