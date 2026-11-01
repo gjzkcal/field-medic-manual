@@ -1220,7 +1220,7 @@ THIS SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: ISC
-Used by: lucide-react 1.61.0
+Used by: lucide-react 1.65.0
 ------------------------------------------------------------------------------
 
 ISC License
@@ -1288,7 +1288,7 @@ THIS SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: @babel/runtime 7.29.7
+Used by: @babel/runtime 8.0.10
 ------------------------------------------------------------------------------
 
 MIT License
@@ -1343,7 +1343,7 @@ SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: @dagrejs/dagre 3.1.1, @dagrejs/graphlib 4.0.5
+Used by: @dagrejs/dagre 3.1.3, @dagrejs/graphlib 4.0.6
 ------------------------------------------------------------------------------
 
 Copyright (c) 2012-2014 Chris Pettitt
@@ -1394,7 +1394,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: @radix-ui/primitive 1.1.7, @radix-ui/react-compose-refs 1.1.5, @radix-ui/react-context 1.2.2, @radix-ui/react-dialog 1.1.23, @radix-ui/react-dismissable-layer 1.1.19, @radix-ui/react-focus-guards 1.1.6, @radix-ui/react-focus-scope 1.1.16, @radix-ui/react-id 1.1.4, @radix-ui/react-portal 1.1.17, @radix-ui/react-presence 1.1.10, @radix-ui/react-primitive 2.1.10, @radix-ui/react-slot 1.3.3, @radix-ui/react-use-callback-ref 1.1.4, @radix-ui/react-use-controllable-state 1.2.6, @radix-ui/react-use-effect-event 0.0.5, @radix-ui/react-use-layout-effect 1.1.4
+Used by: @radix-ui/primitive 1.2.0, @radix-ui/react-compose-refs 1.1.5, @radix-ui/react-context 1.3.0, @radix-ui/react-dialog 1.3.1, @radix-ui/react-dismissable-layer 1.2.1, @radix-ui/react-focus-guards 1.2.0, @radix-ui/react-focus-scope 1.3.1, @radix-ui/react-id 1.1.4, @radix-ui/react-portal 1.2.0, @radix-ui/react-presence 1.1.11, @radix-ui/react-primitive 2.2.0, @radix-ui/react-slot 1.5.0, @radix-ui/react-use-callback-ref 1.1.5, @radix-ui/react-use-controllable-state 1.3.0, @radix-ui/react-use-effect-event 0.0.5, @radix-ui/react-use-layout-effect 1.1.4
 ------------------------------------------------------------------------------
 
 MIT License
@@ -1583,7 +1583,7 @@ SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: bail 2.0.2, ccount 2.0.1, character-entities 2.0.2, character-entities-html4 2.1.0, character-entities-legacy 3.0.0, mdast-util-to-string 4.0.0, unist-util-position 5.0.0, unist-util-visit 5.1.0
+Used by: bail 2.0.2, ccount 2.0.1, character-entities 2.0.2, character-entities-html4 2.1.0, character-entities-legacy 3.0.0, mdast-util-to-string 4.0.0, unist-util-position 5.0.0
 ------------------------------------------------------------------------------
 
 (The MIT License)
@@ -1653,7 +1653,7 @@ SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: cn 0.5.0
+Used by: cn 0.5.1
 ------------------------------------------------------------------------------
 
 MIT License
@@ -1680,7 +1680,7 @@ SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: comma-separated-tokens 2.0.3, hast-util-parse-selector 4.0.0, hast-util-whitespace 3.0.0, html-void-elements 3.0.0, mdast-util-to-hast 13.2.1, rehype-raw 7.0.0, space-separated-tokens 2.0.2, unist-util-remove-position 5.0.0, unist-util-stringify-position 4.0.0, unist-util-visit-parents 6.0.2, vfile-location 5.0.3, web-namespaces 2.0.1, zwitch 2.0.4
+Used by: comma-separated-tokens 2.0.3, hast-util-parse-selector 4.0.0, hast-util-whitespace 3.0.0, html-void-elements 3.0.0, mdast-util-to-hast 13.2.1, rehype-raw 7.0.0, space-separated-tokens 2.0.2, unist-util-remove-position 5.0.0, unist-util-stringify-position 4.0.0, vfile-location 5.0.3, web-namespaces 2.0.1, zwitch 2.0.4
 ------------------------------------------------------------------------------
 
 (The MIT License)
@@ -1823,7 +1823,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: decode-named-character-reference 1.3.0, hast-util-from-parse5 8.0.3, hast-util-raw 9.1.0, hast-util-to-html 9.0.5, hast-util-to-parse5 8.0.1, hastscript 9.0.1, markdown-table 3.0.4, mdast-util-find-and-replace 3.0.2, mdast-util-from-markdown 2.0.3, mdast-util-gfm 3.1.0, mdast-util-gfm-footnote 2.1.0, mdast-util-to-markdown 2.1.2, micromark 4.0.2, micromark-core-commonmark 2.0.3, micromark-extension-gfm-table 2.1.2, micromark-factory-destination 2.0.1, micromark-factory-label 2.0.1, micromark-factory-space 2.0.1, micromark-factory-title 2.0.1, micromark-factory-whitespace 2.0.1, micromark-util-character 2.1.1, micromark-util-chunked 2.0.1, micromark-util-classify-character 2.0.1, micromark-util-combine-extensions 2.0.1, micromark-util-decode-numeric-character-reference 2.0.2, micromark-util-decode-string 2.0.1, micromark-util-encode 2.0.1, micromark-util-html-tag-name 2.0.1, micromark-util-normalize-identifier 2.0.1, micromark-util-resolve-all 2.0.1, micromark-util-sanitize-uri 2.0.1, micromark-util-subtokenize 2.1.0, micromark-util-symbol 2.0.1, micromark-util-types 2.0.2, remark-gfm 4.0.1, remark-rehype 11.1.2, vfile-message 4.0.3
+Used by: decode-named-character-reference 1.3.0, hast-util-from-parse5 8.0.4, hast-util-raw 9.1.0, hast-util-to-html 9.0.6, hast-util-to-parse5 8.0.1, hastscript 9.0.3, markdown-table 3.0.4, mdast-util-find-and-replace 3.0.4, mdast-util-from-markdown 2.1.0, mdast-util-gfm 3.1.0, mdast-util-gfm-footnote 2.1.0, mdast-util-gfm-strikethrough 2.0.1, mdast-util-to-markdown 2.2.1, micromark 4.0.3, micromark-core-commonmark 2.0.4, micromark-extension-gfm-table 2.1.2, micromark-factory-destination 2.0.1, micromark-factory-label 2.0.1, micromark-factory-space 2.1.0, micromark-factory-title 2.0.1, micromark-factory-whitespace 2.0.1, micromark-util-character 2.1.1, micromark-util-chunked 2.0.1, micromark-util-classify-character 2.0.1, micromark-util-combine-extensions 2.0.1, micromark-util-decode-numeric-character-reference 2.0.2, micromark-util-decode-string 2.0.1, micromark-util-edit-map 1.0.0, micromark-util-encode 2.0.1, micromark-util-html-tag-name 2.0.1, micromark-util-normalize-identifier 2.0.1, micromark-util-resolve-all 2.0.1, micromark-util-sanitize-uri 2.0.1, micromark-util-subtokenize 2.1.0, micromark-util-symbol 2.0.1, micromark-util-types 2.0.3, remark-gfm 4.0.1, remark-rehype 11.1.2, unist-util-visit 5.2.0, unist-util-visit-parents 6.1.0, vfile-message 4.0.3
 ------------------------------------------------------------------------------
 
 (The MIT License)
@@ -1933,7 +1933,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: es-toolkit 1.52.0
+Used by: es-toolkit 1.53.1
 ------------------------------------------------------------------------------
 
 MIT License
@@ -2098,7 +2098,7 @@ SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: immer 11.1.18
+Used by: immer 11.2.9
 ------------------------------------------------------------------------------
 
 MIT License
@@ -2180,7 +2180,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: mdast-util-gfm-autolink-literal 2.0.1, mdast-util-gfm-strikethrough 2.0.0, mdast-util-gfm-table 2.0.0, mdast-util-gfm-task-list-item 2.0.0, mdast-util-math 3.0.0, micromark-extension-gfm 3.0.0, micromark-extension-gfm-autolink-literal 2.1.0, micromark-extension-gfm-strikethrough 2.1.0, micromark-extension-gfm-tagfilter 2.0.0, micromark-extension-gfm-task-list-item 2.1.0, micromark-extension-math 3.1.0
+Used by: mdast-util-gfm-autolink-literal 2.0.1, mdast-util-gfm-table 2.0.0, mdast-util-gfm-task-list-item 2.0.0, mdast-util-math 3.0.0, micromark-extension-gfm 3.0.0, micromark-extension-gfm-autolink-literal 2.1.0, micromark-extension-gfm-strikethrough 2.1.0, micromark-extension-gfm-tagfilter 2.0.0, micromark-extension-gfm-task-list-item 2.1.0, micromark-extension-math 3.1.0
 ------------------------------------------------------------------------------
 
 (The MIT License)
@@ -2399,7 +2399,7 @@ SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: react-redux 9.3.0, redux 5.0.1, redux-thunk 3.1.0
+Used by: react-redux 9.3.1, redux 5.0.1, redux-thunk 3.1.0
 ------------------------------------------------------------------------------
 
 The MIT License (MIT)
@@ -2433,7 +2433,7 @@ Used by: react-remove-scroll-bar 2.3.8, remark-math 6.0.0
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: react-router 8.5.0
+Used by: react-router 8.5.1
 ------------------------------------------------------------------------------
 
 MIT License
@@ -2570,7 +2570,7 @@ SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: shadcn 4.22.1
+Used by: shadcn 4.23.0
 ------------------------------------------------------------------------------
 
 MIT License
@@ -2840,15 +2840,164 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ------------------------------------------------------------------------------
-License: MIT AND ISC
-Used by: victory-vendor 37.3.6
+License: MIT AND ISC AND BSD-3-Clause
+Used by: victory-vendor 37.4.1
 ------------------------------------------------------------------------------
 
-（このパッケージにはライセンス文のファイルが含まれていません。ライセンスは上の識別子のとおりです）
+The MIT License (MIT)
+
+Copyright (c) 2015-2026 Nearform.
+
+Copyright (c) 2016-2020 Alexey Svetliakov <https://github.com/asvetliakov>,
+snerks <https://github.com/snerks>, Krzysztof Cebula <https://github.com
+Havret>, Vitaliy Polyanskiy <https://github.com/alreadyExisted>, James Lismore
+<https://github.com/jlismore>, Stack Builders <https://github.com
+stackbuilders>, Esteban Ibarra <https://github.com/ibarrae>, Dominic Lee
+<https://github.com/dominictwlee>, Dave Vedder <https://github.com
+veddermatic>, Alec Flett <https://github.com/alecf> and potentially other
+DefinitelyTyped contributors.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+================================================================================
+Third-party software
+================================================================================
+
+`victory-vendor` bundles transpiled copies of the following libraries in
+`lib-vendor/` (used by the CommonJS build). Their licenses are reproduced
+below. The original license file for each library is also available at
+`lib-vendor/<library>/LICENSE`.
+
+--------------------------------------------------------------------------------
+d3-array (ISC), d3-color (ISC), d3-format (ISC), d3-interpolate (ISC),
+d3-path (ISC), d3-scale (ISC), d3-shape (ISC), d3-time (ISC),
+d3-time-format (ISC), d3-timer (ISC), internmap (ISC)
+--------------------------------------------------------------------------------
+
+Copyright 2010-2022 Mike Bostock
+Copyright 2010-2021 Mike Bostock
+Copyright 2015-2021 Mike Bostock
+Copyright 2021 Mike Bostock
+
+Permission to use, copy, modify, and/or distribute this software for any purpose
+with or without fee is hereby granted, provided that the above copyright notice
+and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
+OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
+THIS SOFTWARE.
+
+--------------------------------------------------------------------------------
+d3-ease (BSD-3-Clause)
+--------------------------------------------------------------------------------
+
+Copyright 2010-2021 Mike Bostock
+Copyright 2001 Robert Penner
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the author nor the names of contributors may be used to
+  endorse or promote products derived from this software without specific prior
+  written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+--------------------------------------------------------------------------------
+d3-voronoi (BSD-3-Clause)
+--------------------------------------------------------------------------------
+
+Copyright 2010-2016 Mike Bostock
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the author nor the names of contributors may be used to
+  endorse or promote products derived from this software without specific prior
+  written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Copyright (C) 2010-2013 Raymond Hill
+https://github.com/gorhill/Javascript-Voronoi
+
+Licensed under The MIT License
+http://en.wikipedia.org/wiki/MIT_License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT OR Apache-2.0
-Used by: @tauri-apps/plugin-opener 2.7.2, @tauri-apps/plugin-process 2.4.0, @tauri-apps/plugin-updater 2.14.0
+Used by: @tauri-apps/plugin-opener 2.7.2, @tauri-apps/plugin-process 2.4.0, @tauri-apps/plugin-updater 2.14.1
 ------------------------------------------------------------------------------
 
 SPDXVersion: SPDX-2.1
@@ -2977,7 +3126,7 @@ Rust crates / アプリの本体（Rust）
 
 ------------------------------------------------------------------------------
 License: Apache-2.0
-Used by: dpi 0.1.2, tao 0.37.1
+Used by: dpi 0.1.2, tao 0.37.2
 ------------------------------------------------------------------------------
 
 Apache License
@@ -3747,7 +3896,7 @@ limitations under the License.
 
 ------------------------------------------------------------------------------
 License: BSD-3-Clause
-Used by: alloc-no-stdlib 3.0.0, brotli 9.0.0
+Used by: alloc-no-stdlib 3.0.0, brotli 9.1.1
 ------------------------------------------------------------------------------
 
 Copyright (c) 2016 Dropbox, Inc.
@@ -4349,7 +4498,7 @@ Used by: untrusted 0.9.0
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: adler2 2.0.1, anyhow 1.0.104, atomic-waker 1.1.2, camino 1.2.6, cargo_metadata 0.19.2, cargo-platform 0.1.9, displaydoc 0.2.7, dtoa 1.0.11, dyn-clone 1.0.20, erased-serde 0.4.10, fastrand 2.5.0, itoa 1.0.18, once_cell 1.21.4, pin-project-lite 0.2.17, proc-macro2 1.0.107, quote 1.0.47, semver 1.0.28, serde 1.0.229, serde_core 1.0.229, serde_derive 1.0.229, serde_derive_internals 0.29.1, serde_json 1.0.154, serde_repr 0.1.21, serde-untagged 0.1.9, servo_arc 0.4.3, syn 2.0.119, syn 3.0.6, thiserror 2.0.21, thiserror-impl 2.0.21, typeid 1.0.3, unicode-ident 1.0.26, zmij 1.0.23
+Used by: adler2 2.0.1, anyhow 1.0.104, atomic-waker 1.1.2, camino 1.2.6, cargo_metadata 0.19.2, cargo-platform 0.1.9, displaydoc 0.2.7, dtoa 1.0.11, dyn-clone 1.0.20, erased-serde 0.4.11, fastrand 2.5.0, itoa 1.0.18, once_cell 1.21.4, pin-project-lite 0.2.17, proc-macro2 1.0.107, quote 1.0.47, semver 1.0.28, serde 1.0.229, serde_core 1.0.229, serde_derive 1.0.229, serde_derive_internals 0.29.1, serde_json 1.0.154, serde_repr 0.1.21, serde-untagged 0.1.9, servo_arc 0.4.3, syn 2.0.119, syn 3.0.9, thiserror 2.0.21, thiserror-impl 2.0.21, typeid 1.0.3, unicode-ident 1.0.27, zmij 1.0.23
 ------------------------------------------------------------------------------
 
 Permission is hereby granted, free of charge, to any
@@ -4456,33 +4605,6 @@ DEALINGS IN THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: base64 0.22.1
-------------------------------------------------------------------------------
-
-The MIT License (MIT)
-
-Copyright (c) 2015 Alice Maz
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
-------------------------------------------------------------------------------
-License: MIT
 Used by: base64 0.23.1
 ------------------------------------------------------------------------------
 
@@ -4541,7 +4663,7 @@ DEALINGS IN THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: bitflags 2.13.2, glob 0.3.4, log 0.4.34, regex 1.13.1, regex-automata 0.4.18, regex-syntax 0.8.11
+Used by: bitflags 2.13.2, glob 0.3.4, log 0.4.35, regex 1.13.1, regex-automata 0.4.18, regex-syntax 0.8.11
 ------------------------------------------------------------------------------
 
 Copyright (c) 2014 The Rust Project Developers
@@ -4634,7 +4756,7 @@ DEALINGS IN THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: brotli 9.0.0
+Used by: brotli 9.1.1
 ------------------------------------------------------------------------------
 
 Copyright (c) 2009, 2010, 2013-2016 by the Brotli Authors.
@@ -4659,7 +4781,7 @@ THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: brotli-decompressor 6.0.1, dpi 0.1.2, minisign-verify 0.3.0, siphasher 1.0.3, tauri-plugin-global-shortcut 2.4.1, tauri-plugin-log 2.10.1, tauri-plugin-opener 2.7.2, tauri-plugin-process 2.4.0, tauri-plugin-single-instance 2.5.4, tauri-plugin-updater 2.14.0, tauri-plugin-window-state 2.5.0, ts-rs 12.0.1, ts-rs-macros 12.0.1, webview2-com 0.39.1, webview2-com-macros 0.8.1, webview2-com-sys 0.39.1, windows 0.62.2, windows_x86_64_msvc 0.52.6, windows-collections 0.3.2, windows-core 0.62.2, windows-future 0.3.2, windows-implement 0.60.2, windows-interface 0.59.3, windows-link 0.2.1, windows-numerics 0.3.1, windows-registry 0.6.1, windows-result 0.4.1, windows-strings 0.5.1, windows-sys 0.59.0, windows-sys 0.61.2, windows-targets 0.52.6, windows-threading 0.2.1, windows-version 0.1.7
+Used by: brotli-decompressor 6.2.0, dpi 0.1.2, minisign-verify 0.3.0, tauri-plugin-global-shortcut 2.4.1, tauri-plugin-log 2.10.1, tauri-plugin-opener 2.7.2, tauri-plugin-process 2.4.0, tauri-plugin-single-instance 2.5.5, tauri-plugin-updater 2.14.1, tauri-plugin-window-state 2.5.0, ts-rs 12.0.1, ts-rs-macros 12.0.1, webview2-com 0.39.1, webview2-com-macros 0.8.1, webview2-com-sys 0.39.1, windows 0.62.2, windows_x86_64_msvc 0.52.6, windows-collections 0.3.2, windows-core 0.62.2, windows-future 0.3.2, windows-implement 0.60.2, windows-interface 0.59.3, windows-link 0.2.1, windows-numerics 0.3.1, windows-registry 0.6.1, windows-result 0.4.1, windows-strings 0.5.1, windows-sys 0.59.0, windows-sys 0.61.2, windows-targets 0.52.6, windows-threading 0.2.1, windows-version 0.1.7
 ------------------------------------------------------------------------------
 
 MIT License
@@ -4866,7 +4988,7 @@ DEALINGS IN THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: crc32fast 1.5.2
+Used by: crc32fast 1.5.3
 ------------------------------------------------------------------------------
 
 MIT License
@@ -5026,7 +5148,7 @@ SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: deranged 0.5.8
+Used by: deranged 0.5.9
 ------------------------------------------------------------------------------
 
 Copyright (c) 2024 Jacob Pratt et al.
@@ -5199,7 +5321,7 @@ developed by Chen Jiaju, licensed under the MIT License and the Apache License 2
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: equivalent 1.0.2
+Used by: equivalent 1.0.3
 ------------------------------------------------------------------------------
 
 Copyright (c) 2016--2023
@@ -5868,7 +5990,7 @@ DEALINGS IN THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: hyper 1.11.1
+Used by: hyper 1.12.0
 ------------------------------------------------------------------------------
 
 Copyright (c) 2014-2026 Sean McArthur
@@ -6213,7 +6335,7 @@ THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: libc 0.2.189
+Used by: libc 0.2.191
 ------------------------------------------------------------------------------
 
 Copyright (c) The Rust Project Developers
@@ -6386,7 +6508,7 @@ SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: mio 1.2.3
+Used by: mio 1.2.4
 ------------------------------------------------------------------------------
 
 Copyright (c) 2014 Carl Lerche and other MIO contributors
@@ -6467,7 +6589,7 @@ SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: open 5.4.4
+Used by: open 5.4.5
 ------------------------------------------------------------------------------
 
 The MIT License (MIT)
@@ -6524,7 +6646,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: plist 1.10.1
+Used by: plist 1.10.3
 ------------------------------------------------------------------------------
 
 Copyright (c) 2015 Edward Barnard
@@ -6580,7 +6702,7 @@ DEALINGS IN THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: powerfmt 0.2.0
+Used by: powerfmt 0.2.1
 ------------------------------------------------------------------------------
 
 Copyright (c) 2023 Jacob Pratt et al.
@@ -6944,7 +7066,7 @@ DEALINGS IN THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: serde_spanned 1.1.1, toml 1.1.6+spec-1.1.0, toml_datetime 1.1.1+spec-1.1.0, toml_parser 1.1.3+spec-1.1.0, toml_writer 1.1.2+spec-1.1.0
+Used by: serde_spanned 1.1.2, toml 1.1.8+spec-1.1.0, toml_datetime 1.1.2+spec-1.1.0, toml_parser 1.1.5+spec-1.1.0, toml_writer 1.1.3+spec-1.1.0
 ------------------------------------------------------------------------------
 
 Copyright (c) Individual contributors
@@ -6969,7 +7091,7 @@ SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: serde_with 3.23.0, serde_with_macros 3.23.0
+Used by: serde_with 3.24.0, serde_with_macros 3.24.0
 ------------------------------------------------------------------------------
 
 Copyright (c) 2015
@@ -7121,6 +7243,29 @@ SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
+Used by: siphasher 1.0.4
+------------------------------------------------------------------------------
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+------------------------------------------------------------------------------
+License: MIT
 Used by: slab 0.4.12
 ------------------------------------------------------------------------------
 
@@ -7152,7 +7297,7 @@ DEALINGS IN THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: smallvec 1.16.2
+Used by: smallvec 1.16.4
 ------------------------------------------------------------------------------
 
 Copyright (c) 2018 The Servo Project Developers
@@ -7426,7 +7571,7 @@ SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: tokio 1.53.1, tokio-util 0.7.19
+Used by: tokio 1.54.1, tokio-util 0.7.20
 ------------------------------------------------------------------------------
 
 MIT License
@@ -7684,7 +7829,7 @@ SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: utf8_iter 1.0.4
+Used by: utf_types 1.0.0, utf8_iter 1.1.0
 ------------------------------------------------------------------------------
 
 Copyright Mozilla Foundation
@@ -7715,7 +7860,7 @@ DEALINGS IN THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: uuid 1.28.0
+Used by: uuid 1.29.0
 ------------------------------------------------------------------------------
 
 Copyright (c) 2014 The Rust Project Developers
@@ -7747,7 +7892,7 @@ DEALINGS IN THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: want 0.3.1
+Used by: want 0.3.2
 ------------------------------------------------------------------------------
 
 Copyright (c) 2018-2019 Sean McArthur
@@ -7850,7 +7995,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: wry 0.57.0
+Used by: wry 0.57.1
 ------------------------------------------------------------------------------
 
 MIT License
@@ -7877,7 +8022,7 @@ SOFTWARE.
 
 ------------------------------------------------------------------------------
 License: MIT
-Used by: zeroize 1.9.0
+Used by: zeroize 1.9.1
 ------------------------------------------------------------------------------
 
 Copyright (c) 2018-2026 The RustCrypto Project Developers
@@ -9045,7 +9190,7 @@ Exhibit B - "Incompatible With Secondary Licenses" Notice
 
 ------------------------------------------------------------------------------
 License: Unicode-3.0
-Used by: icu_collections 2.3.0, icu_locale_core 2.3.0, icu_normalizer 2.3.0, icu_normalizer_data 2.3.0, icu_properties 2.3.0, icu_properties_data 2.3.0, icu_provider 2.3.1, litemap 0.8.3, potential_utf 0.1.6, tinystr 0.8.4, writeable 0.6.4, yoke 0.8.3, yoke-derive 0.8.4, zerofrom 0.1.8, zerofrom-derive 0.1.8, zerotrie 0.2.5, zerovec 0.11.8, zerovec-derive 0.11.6
+Used by: icu_collections 2.4.0, icu_locale_core 2.4.0, icu_normalizer 2.4.0, icu_normalizer_data 2.4.0, icu_properties 2.4.0, icu_properties_data 2.4.0, icu_provider 2.4.0, litemap 0.8.3, potential_utf 0.1.6, tinystr 0.8.5, writeable 0.6.4, yoke 0.8.4, yoke-derive 0.8.4, zerofrom 0.1.8, zerofrom-derive 0.1.8, zerotrie 0.2.5, zerovec 0.11.9, zerovec-derive 0.11.7
 ------------------------------------------------------------------------------
 
 UNICODE LICENSE V3
@@ -9097,7 +9242,7 @@ ICU 1.8.1 to ICU 57.1 © 1995-2016 International Business Machines Corporation a
 
 ------------------------------------------------------------------------------
 License: Unicode-3.0
-Used by: unicode-ident 1.0.26
+Used by: unicode-ident 1.0.27
 ------------------------------------------------------------------------------
 
 UNICODE LICENSE V3
