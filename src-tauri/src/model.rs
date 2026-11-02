@@ -556,3 +556,87 @@ pub enum OverlayMode {
     Search,
     Triage,
 }
+
+/// 負傷者に打つ薬。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+pub enum CasualtyDrug {
+    Epinephrine,
+    Morphine,
+    Metoprolol,
+    Naloxone,
+    Phenylephrine,
+    AmmoniumCarbonate,
+}
+
+/// 止血帯を巻ける腕と脚。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+pub enum TourniquetSite {
+    LeftArm,
+    RightArm,
+    LeftLeg,
+    RightLeg,
+}
+
+/// 記録の中身。
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+#[ts(export)]
+pub enum CasualtyEntry {
+    Drug { drug: CasualtyDrug },
+    Saline,
+    TourniquetOn { site: TourniquetSite },
+    TourniquetOff { site: TourniquetSite },
+    Note { text: String },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct CasualtyRecord {
+    pub id: String,
+    /// 押した時刻（Unix ミリ秒）
+    #[ts(type = "number")]
+    pub at_ms: i64,
+    pub entry: CasualtyEntry,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct Casualty {
+    pub id: String,
+    pub name: String,
+    #[ts(type = "number")]
+    pub created_at_ms: i64,
+    /// 古い順
+    pub records: Vec<CasualtyRecord>,
+}
+
+/// 負傷者の記録への操作。画面が全体を書き戻さず 1 件ずつ送ることで、メインと小窓から続けて書いても失われないようにする。
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, TS)]
+#[serde(tag = "op", rename_all = "snake_case")]
+#[ts(export)]
+pub enum CasualtyOp {
+    AddCasualty {
+        name: String,
+    },
+    #[serde(rename_all = "camelCase")]
+    RemoveCasualty {
+        casualty_id: String,
+    },
+    ClearAll,
+    #[serde(rename_all = "camelCase")]
+    AddRecord {
+        casualty_id: String,
+        entry: CasualtyEntry,
+    },
+    #[serde(rename_all = "camelCase")]
+    RemoveRecord {
+        casualty_id: String,
+        record_id: String,
+    },
+}

@@ -52,13 +52,12 @@ pub async fn settings_set(
     if key == theme::VIEWER_KEY {
         theme::apply_main_background(window.app_handle()).await;
     }
-    let other = if window.label() == overlay::MAIN {
-        overlay::OVERLAY
-    } else {
-        overlay::MAIN
-    };
     // 届かなくても、小窓は出すたびに読み直すので保存は成功にする
-    let _ = window.emit_to(other, SETTINGS_CHANGED_EVENT, &key);
+    let _ = window.emit_to(
+        overlay::other_window(window.label()),
+        SETTINGS_CHANGED_EVENT,
+        &key,
+    );
     Ok(())
 }
 

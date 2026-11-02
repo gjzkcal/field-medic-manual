@@ -1,0 +1,218 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "const": "./medication.v1.schema.json"
+    },
+    "modChannel": {
+      "type": "string",
+      "enum": [
+        "release",
+        "dev"
+      ],
+      "description": "ACE の版"
+    },
+    "verifiedAt": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "内容を確認した日（YYYY-MM-DD）"
+    },
+    "baseVascularResistance": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "description": "既定の血管抵抗"
+    },
+    "salineSeconds": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "description": "生理食塩水を入れ終わるまでの秒数"
+    },
+    "coreLockSeconds": {
+      "type": "object",
+      "properties": {
+        "epinephrine": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "morphine": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      },
+      "required": [
+        "epinephrine",
+        "morphine"
+      ],
+      "additionalProperties": false,
+      "description": "Circulation なしで次を打てない秒数"
+    },
+    "drugs": {
+      "minItems": 5,
+      "maxItems": 5,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "epinephrine",
+              "metoprolol",
+              "morphine",
+              "naloxone",
+              "phenylephrine"
+            ]
+          },
+          "doseNm": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "1 本の量 C0（nM）"
+          },
+          "activationRate": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "吸収の速さ ka（1/s）"
+          },
+          "deactivationRate": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "消える速さ kd（1/s）"
+          },
+          "primaryEffect": {
+            "type": "string",
+            "enum": [
+              "heartRate",
+              "vascularResistance",
+              "analgesia",
+              "bleedingRate",
+              "reviveFrequency",
+              "antagonism"
+            ],
+            "description": "タイマーとグラフに使う効能。antagonism はほかの薬を弱める割合"
+          }
+        },
+        "required": [
+          "id",
+          "doseNm",
+          "activationRate",
+          "deactivationRate",
+          "primaryEffect"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "effects": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "heartRate",
+              "vascularResistance",
+              "analgesia",
+              "bleedingRate",
+              "reviveFrequency"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "linear",
+              "hill"
+            ],
+            "description": "linear = χ の和 / hill = 頭打ち"
+          },
+          "maxEffect": {
+            "description": "頭打ちの効果の最大",
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "drugs": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "drug": {
+                  "type": "string",
+                  "enum": [
+                    "epinephrine",
+                    "metoprolol",
+                    "morphine",
+                    "naloxone",
+                    "phenylephrine"
+                  ]
+                },
+                "ec50": {
+                  "type": "number",
+                  "description": "EC50（nM）。効果を下げる薬は負の値"
+                },
+                "gamma": {
+                  "description": "Hill 係数。省略 = 1",
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "antagonists": {
+                  "description": "この効果を弱める薬",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "drug": {
+                        "type": "string",
+                        "enum": [
+                          "epinephrine",
+                          "metoprolol",
+                          "morphine",
+                          "naloxone",
+                          "phenylephrine"
+                        ]
+                      },
+                      "ec50": {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                      }
+                    },
+                    "required": [
+                      "drug",
+                      "ec50"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "drug",
+                "ec50"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "drugs"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "$schema",
+    "modChannel",
+    "verifiedAt",
+    "baseVascularResistance",
+    "salineSeconds",
+    "coreLockSeconds",
+    "drugs",
+    "effects"
+  ],
+  "additionalProperties": false,
+  "title": "薬の数値（Field Medic Manual）"
+}

@@ -8,7 +8,7 @@ pub mod tray;
 use serde_json::Value;
 use tauri::{AppHandle, Manager, Window, WindowEvent};
 
-use crate::db::{Db, settings};
+use crate::db::{Db, casualties, settings};
 
 /// ×ボタンの動作などの設定（キー `window`）。値の形は TS の window-settings.ts と合わせる。
 pub const SETTINGS_KEY: &str = "window";
@@ -33,6 +33,10 @@ pub fn on_window_event(window: &Window, event: &WindowEvent) {
                 theme::apply_main_background(&app).await;
             });
         }
+        return;
+    }
+    if matches!(event, WindowEvent::Focused(false)) && window.label() == overlay::OVERLAY {
+        overlay::on_focus_lost(window);
         return;
     }
     let WindowEvent::CloseRequested { api, .. } = event else {
@@ -65,8 +69,20 @@ async fn close_main(app: &AppHandle) {
             let _ = main.hide();
         }
     } else {
-        app.exit(0);
+        quit(app).await;
     }
+}
+
+/// アプリを完全に終了する。負傷者の記録はこの時に消す（トレイにしまうだけなら残す）。
+/// 消すのを終了の操作に限るのは、更新の再起動やクラッシュでは記録を失わないようにするため。
+/// exit で終わらせると window-state がウィンドウの位置を保存する。
+pub async fn quit(app: &AppHandle) {
+    // 消せなくても終了を止めない
+    let _ = app
+        .state::<Db>()
+        .run(|conn, _| casualties::clear_all(conn))
+        .await;
+    app.exit(0);
 }
 
 #[cfg(test)]
