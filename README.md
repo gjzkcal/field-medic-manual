@@ -95,7 +95,7 @@ GNU General Public License v3.0 またはそれ以降のバージョン（GPL-3.
 
 ## 開発 / Development
 
-必要なもの: Rust（stable）、Node.js 24、pnpm 11、WebView2、[cargo-about](https://github.com/EmbarkStudios/cargo-about)（配布用のビルドだけで使う）
+必要なもの: Rust（stable）、Node.js 26、pnpm 11、WebView2、[cargo-about](https://github.com/EmbarkStudios/cargo-about)（配布用のビルドだけで使う）
 
 ```sh
 pnpm install
