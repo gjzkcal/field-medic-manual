@@ -13,11 +13,11 @@
   // pnpm 11 は既定で公開から 1 日たっていない版を入れないので、それより若い版を選ぶとロックファイルの更新が失敗する。
   // 公開直後に乗っ取りが見つかって取り下げられる版も避けたいので、3 日待つ
   minimumReleaseAge: "3 days",
-  // CI（pnpm/action-setup の version: 11、setup-node の node-version: 24）と同じ版でロックファイルを作らないと、
+  // CI（pnpm/action-setup の version: 11、setup-node の node-version: 26）と同じ版でロックファイルを作らないと、
   // CI の pnpm install --frozen-lockfile で落ちることがある。メジャー版はワークフローの版と同じ PR で上がる
   constraints: {
     pnpm: "11.x",
-    node: "24.x",
+    node: "26.x",
   },
   // OSV は RustSec も見るので、cargo の脆弱性も拾える
   osvVulnerabilityAlerts: true,
@@ -178,9 +178,9 @@
       allowedVersions: "<6.1",
     },
     {
-      // CI とリリースで使う Node（setup-node の node-version）の型に合わせる。Node を上げるときに一緒に外す
+      // CI とリリースで使う Node（setup-node の node-version）の型に合わせる。Node を上げるときに一緒に上げる
       matchPackageNames: ["@types/node"],
-      allowedVersions: "<25",
+      allowedVersions: "<27",
     },
   ],
 }
