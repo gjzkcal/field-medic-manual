@@ -91,6 +91,57 @@
               "antagonism"
             ],
             "description": "タイマーとグラフに使う効能。antagonism はほかの薬を弱める割合"
+          },
+          "overdoseDoses": {
+            "description": "同時に打って意識喪失・心停止になる最小の本数（血液 100%）。過量投与のない薬は省略",
+            "type": "object",
+            "properties": {
+              "unconscious": {
+                "type": "object",
+                "properties": {
+                  "noPain": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "description": "痛みなし"
+                  },
+                  "severePain": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "description": "激痛（痛みの HP 30%）"
+                  }
+                },
+                "required": [
+                  "noPain",
+                  "severePain"
+                ],
+                "additionalProperties": false
+              },
+              "arrest": {
+                "type": "object",
+                "properties": {
+                  "noPain": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "description": "痛みなし"
+                  },
+                  "severePain": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "description": "激痛（痛みの HP 30%）"
+                  }
+                },
+                "required": [
+                  "noPain",
+                  "severePain"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "unconscious",
+              "arrest"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [

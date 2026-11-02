@@ -1,6 +1,7 @@
-// 表示設定（テーマ・本文の文字サイズ・行間と、トリアージのキー操作）。settings テーブルのキー `viewer` に保存し、再起動しても残す。
+// 表示設定（テーマ・本文の文字サイズ・行間と、トリアージのキー操作・負傷者の過量投与の線）。settings テーブルのキー `viewer` に保存し、再起動しても残す。
 import { create } from "zustand";
 
+import { OVERDOSE_LINES, type OverdoseLine } from "@/features/medication/overdose-line";
 import { errorMessage, settingsGet, settingsSet } from "@/lib/tauri";
 
 export const FONT_SIZES = ["s", "m", "l", "xl"] as const;
@@ -21,6 +22,11 @@ export interface ViewerSettings {
    * 小窓でも同じ値を使うので、小窓と同期しているこのキーに置く
    */
   triageKeys: boolean;
+  /**
+   * 負傷者のカードの「N 本まで OK まで」を、意識喪失と心停止のどちらの本数で出すか。
+   * 小窓のカードの上でも切り替えるので、小窓と同期しているこのキーに置く
+   */
+  overdoseLine: OverdoseLine;
 }
 
 // ゲームの横で目を離しながら読むので、既定でも一般的な本文（16px）より大きくする
@@ -29,6 +35,8 @@ export const DEFAULT_VIEWER_SETTINGS: ViewerSettings = {
   lineHeight: "relaxed",
   theme: "system",
   triageKeys: true,
+  // 意識喪失は心停止と同じか少ない本数で起きるので、既定はこちら（安全な側）
+  overdoseLine: "unconscious",
 };
 
 export const FONT_SIZE_PX: Record<FontSize, number> = { s: 16, m: 18, l: 20, xl: 24 };
@@ -67,6 +75,8 @@ export function parseViewerSettings(value: unknown): ViewerSettings {
       typeof record["triageKeys"] === "boolean"
         ? record["triageKeys"]
         : DEFAULT_VIEWER_SETTINGS.triageKeys,
+    overdoseLine:
+      oneOf(OVERDOSE_LINES, record["overdoseLine"]) ?? DEFAULT_VIEWER_SETTINGS.overdoseLine,
   };
 }
 

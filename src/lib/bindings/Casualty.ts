@@ -3,6 +3,10 @@ import type { CasualtyRecord } from "./CasualtyRecord";
 
 export type Casualty = { id: string, name: string, createdAtMs: number, 
 /**
+ * 痛み・気胸あり。過量投与の本数を、痛みがあってもなくても大丈夫な側で出す
+ */
+inPain: boolean, 
+/**
  * 古い順
  */
 records: Array<CasualtyRecord>, };

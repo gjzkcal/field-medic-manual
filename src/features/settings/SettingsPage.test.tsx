@@ -42,7 +42,12 @@ describe("SettingsPage", () => {
       .poll(() => saved.at(-1))
       .toEqual({
         key: "viewer",
-        value: { fontSize: "xl", lineHeight: "loose", theme: "dark", triageKeys: true },
+        value: {
+          ...DEFAULT_VIEWER_SETTINGS,
+          fontSize: "xl",
+          lineHeight: "loose",
+          theme: "dark",
+        },
       });
   });
 
@@ -91,6 +96,25 @@ describe("SettingsPage", () => {
     await expect
       .poll(() => saved.at(-1))
       .toEqual({ key: "viewer", value: { ...DEFAULT_VIEWER_SETTINGS, triageKeys: false } });
+  });
+
+  it("負傷者の危ない線を心停止に変え、viewer に保存する", async () => {
+    const saved: unknown[] = [];
+    mockIPC((cmd, args) => {
+      if (cmd === "settings_set") {
+        saved.push(args);
+        return null;
+      }
+      return [];
+    });
+    render(<SettingsPage />);
+
+    const group = screen.getByRole("group", { name: "危ない線" });
+    expect(group).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "心停止" }));
+    await expect
+      .poll(() => saved.at(-1))
+      .toEqual({ key: "viewer", value: { ...DEFAULT_VIEWER_SETTINGS, overdoseLine: "arrest" } });
   });
 
   it("ホットキーの欄は、記録を終えてもフォーカスを外さず、変えたことを読み上げる", async () => {

@@ -48,6 +48,7 @@ const opSchema: z.ZodType<CasualtyOp> = z.discriminatedUnion("op", [
   z.strictObject({ op: z.literal("clear_all") }),
   z.strictObject({ op: z.literal("add_record"), casualtyId: id, entry: entrySchema }),
   z.strictObject({ op: z.literal("remove_record"), casualtyId: id, recordId: id }),
+  z.strictObject({ op: z.literal("set_pain"), casualtyId: id, inPain: z.boolean() }),
 ]);
 
 const storedSchema: z.ZodType<Casualty[]> = z
@@ -56,6 +57,8 @@ const storedSchema: z.ZodType<Casualty[]> = z
       id,
       name: textOf(MAX_NAME_CHARS),
       createdAtMs: z.number().int().nonnegative(),
+      // 痛み・気胸を足す前に保存した記録にはないので、デスクトップ版の列と同じ既定（あり）にする
+      inPain: z.boolean().default(true),
       records: z
         .array(
           z.strictObject({
@@ -104,7 +107,10 @@ export function applyOp(
       if (list.length >= MAX_CASUALTIES) {
         throw invalid(`負傷者は ${String(MAX_CASUALTIES)} 人までです`);
       }
-      return [...list, { id: newId(), name: op.name.trim(), createdAtMs: nowMs, records: [] }];
+      return [
+        ...list,
+        { id: newId(), name: op.name.trim(), createdAtMs: nowMs, inPain: true, records: [] },
+      ];
     case "remove_casualty":
       return list.filter((c) => c.id !== op.casualtyId);
     case "clear_all":
@@ -123,6 +129,10 @@ export function applyOp(
           ? { ...c, records: c.records.filter((r) => r.id !== op.recordId) }
           : c,
       );
+    case "set_pain": {
+      const casualty = requireCasualty(list, op.casualtyId);
+      return list.map((c) => (c.id === casualty.id ? { ...c, inPain: op.inPain } : c));
+    }
   }
 }
 

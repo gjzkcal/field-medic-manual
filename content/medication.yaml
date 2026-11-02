@@ -11,22 +11,33 @@ salineSeconds: 90
 coreLockSeconds:
   epinephrine: 30
   morphine: 60
+# overdoseDoses は、同時に打ったときに意識喪失・心停止になる最小の本数（血液 100%。severePain は痛みの HP 30%）。
+# drug-effects.md の過量投与の表と同じ値。ナロキソンは 20 本でも過量投与にならないので書かない。
 drugs:
   - id: epinephrine
     doseNm: 550
     activationRate: 0.05193617
     deactivationRate: 0.03441518
     primaryEffect: heartRate
+    overdoseDoses:
+      unconscious: { noPain: 4.36, severePain: 2.37 }
+      arrest: { noPain: 4.36, severePain: 2.37 }
   - id: metoprolol
     doseNm: 480
     activationRate: 0.03872958
     deactivationRate: 0.03872936
     primaryEffect: heartRate
+    overdoseDoses:
+      unconscious: { noPain: 2.82, severePain: 5.84 }
+      arrest: { noPain: 3.03, severePain: 6.05 }
   - id: morphine
     doseNm: 600
     activationRate: 0.03090123
     deactivationRate: 0.0009
     primaryEffect: analgesia
+    overdoseDoses:
+      unconscious: { noPain: 3.1, severePain: 3.1 }
+      arrest: { noPain: 3.83, severePain: 3.83 }
   - id: naloxone
     doseNm: 600
     activationRate: 0.02911635
@@ -37,6 +48,9 @@ drugs:
     activationRate: 0.03007057
     deactivationRate: 0.0386053
     primaryEffect: bleedingRate
+    overdoseDoses:
+      unconscious: { noPain: 2.92, severePain: 0.98 }
+      arrest: { noPain: 2.92, severePain: 0.98 }
 effects:
   - id: heartRate
     kind: linear

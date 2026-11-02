@@ -6,6 +6,7 @@ import { CasualtiesPage } from "@/features/casualties/CasualtiesPage";
 import { useCasualties } from "@/features/casualties/casualty-store";
 import { setClockPaused } from "@/features/casualties/clock";
 import { DEFAULT_MOD_SETTINGS, useModSettings } from "@/features/settings/mod-settings";
+import { DEFAULT_VIEWER_SETTINGS, useViewerSettings } from "@/features/settings/viewer-settings";
 import type { Casualty } from "@/lib/bindings/Casualty";
 import type { CasualtyEntry } from "@/lib/bindings/CasualtyEntry";
 import { axeViolations } from "@/test/axe";
@@ -29,8 +30,18 @@ function fakeBackend(): { casualties: Casualty[] } {
     if (op.op === "add_casualty") {
       state.casualties = [
         ...state.casualties,
-        { id: nextId(), name: String(op["name"]), createdAtMs: Date.now(), records: [] },
+        {
+          id: nextId(),
+          name: String(op["name"]),
+          createdAtMs: Date.now(),
+          inPain: true,
+          records: [],
+        },
       ];
+    } else if (op.op === "set_pain") {
+      state.casualties = state.casualties.map((c) =>
+        c.id === op["casualtyId"] ? { ...c, inPain: op["inPain"] === true } : c,
+      );
     } else if (op.op === "add_record") {
       state.casualties = state.casualties.map((c) =>
         c.id === op["casualtyId"]
@@ -71,6 +82,7 @@ beforeEach(() => {
   fakeBackend();
   useCasualties.setState({ casualties: [], loaded: false, error: null });
   useModSettings.setState({ settings: DEFAULT_MOD_SETTINGS });
+  useViewerSettings.setState({ settings: DEFAULT_VIEWER_SETTINGS, changed: false });
 });
 
 afterEach(() => {
@@ -187,6 +199,36 @@ describe("CasualtiesPage", () => {
     press("エピネフリン");
     await screen.findByRole("heading", { level: 3, name: "エピネフリン" });
     expect(screen.getByText("30 s")).toBeDefined();
+  });
+
+  it("薬のカードに何本まで打てるかを出し、トグルで本数が変わる", async () => {
+    render(<CasualtiesPage />);
+    await addCasualty();
+    // 既定は痛み・気胸ありで、激痛のフェニレフリンは 1 本でも危ない
+    expect(screen.getByText("フェニレフリンは 1 本でも危険です。")).toBeDefined();
+    press("エピネフリン");
+    await screen.findByText("2 本まで OK まで");
+    fireEvent.click(screen.getByRole("switch", { name: "痛み・気胸あり" }));
+    await screen.findByText("4 本まで OK まで");
+    expect(screen.queryByText("フェニレフリンは 1 本でも危険です。")).toBeNull();
+  });
+
+  it("意識喪失と心停止を切り替えると、設定に保存して本数が変わる", async () => {
+    render(<CasualtiesPage />);
+    await addCasualty();
+    fireEvent.click(screen.getByRole("switch", { name: "痛み・気胸あり" }));
+    press("メトプロロール");
+    await screen.findByText("2 本まで OK まで");
+    fireEvent.click(screen.getByRole("button", { name: "心停止" }));
+    await screen.findByText("3 本まで OK まで");
+    expect(useViewerSettings.getState().settings.overdoseLine).toBe("arrest");
+  });
+
+  it("Circulation がなければ、何本まで打てるかの帯を出さない", async () => {
+    useModSettings.setState({ settings: { enabled: [] } });
+    render(<CasualtiesPage />);
+    await addCasualty();
+    expect(screen.queryByRole("switch", { name: "痛み・気胸あり" })).toBeNull();
   });
 
   it("全部消すは確かめてから消す", async () => {
