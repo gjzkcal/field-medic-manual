@@ -13,6 +13,12 @@
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-11-02
+
+### Fixed
+
+- 0.7.0 の Web 版が公開されなかったので、公開の前の検査を直して公開し直しました。デスクトップ版の中身は 0.7.0 と同じです。
+
 ## [0.7.0] - 2026-11-02
 
 ### Added
@@ -251,7 +257,8 @@
 - 設定の「使っている MOD」に合わせて、フローとクイック表の内容が切り替わります。
 - 起動時に新しい版を確かめ、自動で更新できます。
 
-[Unreleased]: https://github.com/gjzkcal/field-medic-manual/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/gjzkcal/field-medic-manual/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/gjzkcal/field-medic-manual/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/gjzkcal/field-medic-manual/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/gjzkcal/field-medic-manual/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/gjzkcal/field-medic-manual/compare/v0.5.0...v0.5.1
