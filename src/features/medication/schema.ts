@@ -27,6 +27,11 @@ export type EffectId = (typeof EFFECT_IDS)[number];
 const drugId = z.enum(DRUG_IDS);
 const positive = z.number().positive();
 
+const overdosePairSchema = z.strictObject({
+  noPain: positive.meta({ description: "痛みなし" }),
+  severePain: positive.meta({ description: "激痛（痛みの HP 30%）" }),
+});
+
 const drugSchema = z.strictObject({
   id: drugId,
   doseNm: positive.meta({ description: "1 本の量 C0（nM）" }),
@@ -35,6 +40,13 @@ const drugSchema = z.strictObject({
   primaryEffect: z.enum([...EFFECT_IDS, "antagonism"]).meta({
     description: "タイマーとグラフに使う効能。antagonism はほかの薬を弱める割合",
   }),
+  overdoseDoses: z
+    .strictObject({ unconscious: overdosePairSchema, arrest: overdosePairSchema })
+    .optional()
+    .meta({
+      description:
+        "同時に打って意識喪失・心停止になる最小の本数（血液 100%）。過量投与のない薬は省略",
+    }),
 });
 
 const effectDrugSchema = z.strictObject({

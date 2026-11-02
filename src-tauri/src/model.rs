@@ -612,6 +612,8 @@ pub struct Casualty {
     pub name: String,
     #[ts(type = "number")]
     pub created_at_ms: i64,
+    /// 痛み・気胸あり。過量投与の本数を、痛みがあってもなくても大丈夫な側で出す
+    pub in_pain: bool,
     /// 古い順
     pub records: Vec<CasualtyRecord>,
 }
@@ -638,5 +640,10 @@ pub enum CasualtyOp {
     RemoveRecord {
         casualty_id: String,
         record_id: String,
+    },
+    #[serde(rename_all = "camelCase")]
+    SetPain {
+        casualty_id: String,
+        in_pain: bool,
     },
 }

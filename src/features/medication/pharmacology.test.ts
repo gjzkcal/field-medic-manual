@@ -147,6 +147,28 @@ describe("1 本のピークでの効果の表", () => {
   });
 });
 
+describe("過量投与の表", () => {
+  const rows = drugRows("過量投与");
+
+  it("5 つの薬がすべて表にある", () => {
+    expect(rows.map(([drug]) => drug).toSorted()).toEqual(
+      medication.drugs.map((d) => d.id).toSorted(),
+    );
+  });
+
+  it.each(rows)("%s: 意識喪失・心停止の本数が原稿と同じ", (id, cells) => {
+    const doses = drugConfig(medication, id).overdoseDoses;
+    if (cells.slice(0, 4).every((cell) => cell === "20 本超")) {
+      expect(doses).toBeUndefined();
+      return;
+    }
+    expect(doses).toEqual({
+      unconscious: { noPain: cellNumber(cells[0]), severePain: cellNumber(cells[2]) },
+      arrest: { noPain: cellNumber(cells[1]), severePain: cellNumber(cells[3]) },
+    });
+  });
+});
+
 describe("原稿の別の場所にある値", () => {
   it("ナロキソンの効き方の 120 が原稿と同じ", () => {
     const value = medication.effects

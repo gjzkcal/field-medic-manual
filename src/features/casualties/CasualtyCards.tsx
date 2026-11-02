@@ -15,6 +15,7 @@ import {
 import { useClock } from "@/features/casualties/clock";
 import { primaryText, secondaryTexts } from "@/features/casualties/drug-display";
 import { drugTimers, effectAt, type DrugForecast } from "@/features/casualties/forecast";
+import { overdoseTimer, type OverdoseTimer } from "@/features/casualties/overdose";
 import {
   chartStartMs,
   forecastChartData,
@@ -27,6 +28,7 @@ import {
   SITE_LABELS,
 } from "@/features/casualties/labels";
 import { chartSummary } from "@/features/content/chart";
+import type { OverdoseLine } from "@/features/medication/overdose-line";
 import { singleDosePeak } from "@/features/medication/pharmacology";
 import type { DrugId, MedicationFile } from "@/features/medication/schema";
 import type { CasualtyRecord } from "@/lib/bindings/CasualtyRecord";
@@ -68,12 +70,34 @@ function ElapsedSince({ label, sinceMs }: { label: string; sinceMs: number }): J
   );
 }
 
+function OverdoseRow({ timer, now }: { timer: OverdoseTimer; now: number }): JSX.Element | null {
+  switch (timer.kind) {
+    case "none":
+      return null;
+    case "danger":
+      return <p className="m-0 text-sm font-medium text-destructive">1 本でも危険</p>;
+    case "limit": {
+      const label = `${String(timer.doses)} 本まで OK`;
+      return timer.safeAtMs > now ? (
+        <Timer label={`${label} まで`} atMs={timer.safeAtMs} now={now} />
+      ) : (
+        <div className="flex items-baseline justify-between gap-2 text-sm">
+          <span className="text-muted-foreground">{label}</span>
+          <span>OK</span>
+        </div>
+      );
+    }
+  }
+}
+
 function DrugReadout({
   medication,
   forecast,
+  overdose,
 }: {
   medication: MedicationFile;
   forecast: DrugForecast;
+  overdose: OverdoseTimer;
 }): JSX.Element {
   const now = useClock();
   const timers = drugTimers(forecast, now);
@@ -102,6 +126,7 @@ function DrugReadout({
         large={timers.focus === "clear"}
         now={now}
       />
+      <OverdoseRow timer={overdose} now={now} />
     </>
   );
 }
@@ -140,10 +165,23 @@ const ChartPreview = memo(function ChartPreview({ forecast, onOpen }: ChartPrevi
 interface DrugCardProps {
   medication: MedicationFile;
   forecast: DrugForecast;
+  overdoseLine: OverdoseLine;
+  inPain: boolean;
   onOpenChart: (drug: DrugId) => void;
 }
 
-const DrugCard = memo(function DrugCard({ medication, forecast, onOpenChart }: DrugCardProps) {
+const DrugCard = memo(function DrugCard({
+  medication,
+  forecast,
+  overdoseLine,
+  inPain,
+  onOpenChart,
+}: DrugCardProps) {
+  // モルヒネは数千秒を探すので、毎秒の描き直しでは計算せず、記録かトグルが変わったときだけにする
+  const overdose = useMemo(
+    () => overdoseTimer(medication, forecast.drug, forecast.doses, overdoseLine, inPain),
+    [medication, forecast, overdoseLine, inPain],
+  );
   return (
     <Card size="sm">
       <CardHeader>
@@ -152,7 +190,7 @@ const DrugCard = memo(function DrugCard({ medication, forecast, onOpenChart }: D
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
-        <DrugReadout medication={medication} forecast={forecast} />
+        <DrugReadout medication={medication} forecast={forecast} overdose={overdose} />
         <div className="flex items-baseline justify-between gap-2 text-sm">
           <span className="text-muted-foreground">打った本数</span>
           <span className="tabular-nums">{forecast.doseCount} 本</span>
@@ -205,6 +243,8 @@ interface CasualtyCardsProps {
   records: readonly CasualtyRecord[];
   forecasts: readonly DrugForecast[];
   circulation: boolean;
+  overdoseLine: OverdoseLine;
+  inPain: boolean;
   onOpenChart: (drug: DrugId) => void;
 }
 
@@ -214,6 +254,8 @@ export function CasualtyCards({
   records,
   forecasts,
   circulation,
+  overdoseLine,
+  inPain,
   onOpenChart,
 }: CasualtyCardsProps): JSX.Element {
   const now = useClock();
@@ -241,6 +283,8 @@ export function CasualtyCards({
             key={forecast.drug}
             medication={medication}
             forecast={forecast}
+            overdoseLine={overdoseLine}
+            inPain={inPain}
             onOpenChart={onOpenChart}
           />
         ))}

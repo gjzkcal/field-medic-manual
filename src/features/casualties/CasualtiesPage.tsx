@@ -49,9 +49,13 @@ import {
   SITE_LABELS,
   SITES,
 } from "@/features/casualties/labels";
+import { overdoseLimit } from "@/features/casualties/overdose";
+import { OverdoseLineToggle } from "@/features/casualties/OverdoseLineToggle";
 import { loadMedication } from "@/features/medication/bundle";
-import type { DrugId, MedicationFile } from "@/features/medication/schema";
+import type { OverdoseLine } from "@/features/medication/overdose-line";
+import { DRUG_IDS, type DrugId, type MedicationFile } from "@/features/medication/schema";
 import { activeMods, useModSettings } from "@/features/settings/mod-settings";
+import { useViewerSettings } from "@/features/settings/viewer-settings";
 import { modsActive } from "@/features/triage/runner";
 import type { Casualty } from "@/lib/bindings/Casualty";
 import type { CasualtyEntry } from "@/lib/bindings/CasualtyEntry";
@@ -108,6 +112,12 @@ function NoticeList({ circulation }: { circulation: boolean }): JSX.Element {
             タイマーとバーは効能が基準です（1 本のピークを 100
             とします）。マニュアルの濃度の時刻とは違うことがあります。
           </li>
+          <li>
+            「N 本まで OK まで」は、何も打っていないときと同じ本数を同時に打てるまでの時間です。血液
+            100% で、薬の組み合わせ（エピネフリンとフェニレフリンなど）と血液の減りは含みません。10
+            s 長めに出します。
+          </li>
+          <li>痛み・気胸ありは、痛みがあってもなくても大丈夫な本数で出します。</li>
         </>
       )}
       <li>
@@ -420,6 +430,41 @@ function History({
   );
 }
 
+interface OverdoseBandProps {
+  casualty: Casualty;
+  medication: MedicationFile;
+  overdoseLine: OverdoseLine;
+}
+
+/** カードの上の帯。「N 本まで OK まで」の前提（痛み・気胸と、危ない線）を切り替える */
+function OverdoseBand({ casualty, medication, overdoseLine }: OverdoseBandProps): JSX.Element {
+  // まだ打っていない薬でも、1 本で危ないなら打つ前に気づけるよう帯に書く
+  const dangerous = DRUG_IDS.filter(
+    (drug) => overdoseLimit(medication, drug, overdoseLine, casualty.inPain).kind === "danger",
+  );
+  return (
+    <div className="flex flex-col gap-1.5 rounded-lg border px-3 py-2">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <label className="flex items-center gap-2 text-sm">
+          <Switch
+            checked={casualty.inPain}
+            onCheckedChange={(checked) => {
+              void applyCasualtyOp({ op: "set_pain", casualtyId: casualty.id, inPain: checked });
+            }}
+          />
+          痛み・気胸あり
+        </label>
+        <OverdoseLineToggle />
+      </div>
+      {dangerous.length > 0 && (
+        <p className="m-0 text-sm font-medium text-destructive">
+          {dangerous.map((drug) => DRUG_LABELS[drug]).join("・")}は 1 本でも危険です。
+        </p>
+      )}
+    </div>
+  );
+}
+
 interface CasualtyPanelProps {
   casualty: Casualty;
   medication: MedicationFile;
@@ -442,6 +487,7 @@ function CasualtyPanel({
   );
   const [chartDrugs, setChartDrugs] = useState<readonly DrugId[]>([]);
   const shownForecasts = forecasts.filter((f) => chartDrugs.includes(f.drug));
+  const overdoseLine = useViewerSettings((s) => s.settings.overdoseLine);
 
   function record(entry: CasualtyEntry): void {
     void applyCasualtyOp({ op: "add_record", casualtyId: casualty.id, entry });
@@ -476,11 +522,16 @@ function CasualtyPanel({
           }
         }}
       />
+      {circulation && (
+        <OverdoseBand casualty={casualty} medication={medication} overdoseLine={overdoseLine} />
+      )}
       <CasualtyCards
         medication={medication}
         records={records}
         forecasts={forecasts}
         circulation={circulation}
+        overdoseLine={overdoseLine}
+        inPain={casualty.inPain}
         onOpenChart={(drug) => {
           setChartDrugs([drug]);
         }}

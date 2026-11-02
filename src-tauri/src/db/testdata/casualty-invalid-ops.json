@@ -21,5 +21,9 @@
   },
   { "op": "add_record", "casualtyId": "$CASUALTY", "entry": { "kind": "note", "text": "" } },
   { "op": "add_record", "casualtyId": "none", "entry": { "kind": "saline" } },
-  { "op": "remove_record", "casualtyId": "$CASUALTY", "recordId": "" }
+  { "op": "remove_record", "casualtyId": "$CASUALTY", "recordId": "" },
+  { "op": "set_pain", "casualtyId": "$CASUALTY" },
+  { "op": "set_pain", "casualtyId": "$CASUALTY", "inPain": "yes" },
+  { "op": "set_pain", "casualtyId": "", "inPain": true },
+  { "op": "set_pain", "casualtyId": "none", "inPain": true }
 ]

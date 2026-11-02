@@ -4,4 +4,4 @@ import type { CasualtyEntry } from "./CasualtyEntry";
 /**
  * 負傷者の記録への操作。画面が全体を書き戻さず 1 件ずつ送ることで、メインと小窓から続けて書いても失われないようにする。
  */
-export type CasualtyOp = { "op": "add_casualty", name: string, } | { "op": "remove_casualty", casualtyId: string, } | { "op": "clear_all" } | { "op": "add_record", casualtyId: string, entry: CasualtyEntry, } | { "op": "remove_record", casualtyId: string, recordId: string, };
+export type CasualtyOp = { "op": "add_casualty", name: string, } | { "op": "remove_casualty", casualtyId: string, } | { "op": "clear_all" } | { "op": "add_record", casualtyId: string, entry: CasualtyEntry, } | { "op": "remove_record", casualtyId: string, recordId: string, } | { "op": "set_pain", casualtyId: string, inPain: boolean, };

@@ -21,16 +21,17 @@ const MAX_ID_LEN: usize = 64;
 ///
 /// DB の読み取りに失敗した場合。
 pub fn list(conn: &Connection) -> Result<Vec<Casualty>, AppError> {
-    let mut people = conn
-        .prepare("SELECT id, name, created_at_ms FROM casualties ORDER BY created_at_ms, rowid")?;
+    let mut people = conn.prepare(
+        "SELECT id, name, created_at_ms, in_pain FROM casualties ORDER BY created_at_ms, rowid",
+    )?;
     let mut records = conn.prepare(
         "SELECT id, at_ms, entry FROM casualty_records WHERE casualty_id = ?1 ORDER BY at_ms, rowid",
     )?;
     let rows = people
-        .query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?
-        .collect::<Result<Vec<(String, String, i64)>, _>>()?;
+        .query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)))?
+        .collect::<Result<Vec<(String, String, i64, bool)>, _>>()?;
     let mut casualties = Vec::with_capacity(rows.len());
-    for (id, name, created_at_ms) in rows {
+    for (id, name, created_at_ms, in_pain) in rows {
         let rows = records
             .query_map([&id], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?
             .collect::<Result<Vec<(String, i64, String)>, _>>()?;
@@ -49,6 +50,7 @@ pub fn list(conn: &Connection) -> Result<Vec<Casualty>, AppError> {
             id,
             name,
             created_at_ms,
+            in_pain,
             records,
         });
     }
@@ -82,6 +84,19 @@ pub fn apply(conn: &Connection, op: &CasualtyOp, now_ms: i64) -> Result<Vec<Casu
                 "DELETE FROM casualty_records WHERE id = ?1 AND casualty_id = ?2",
                 [record_id, casualty_id],
             )?;
+        }
+        CasualtyOp::SetPain {
+            casualty_id,
+            in_pain,
+        } => {
+            check_id(casualty_id)?;
+            let changed = conn.execute(
+                "UPDATE casualties SET in_pain = ?1 WHERE id = ?2",
+                params![in_pain, casualty_id],
+            )?;
+            if changed == 0 {
+                return Err(AppError::NotFound("負傷者が見つかりません".to_owned()));
+            }
         }
     }
     list(conn)
@@ -261,6 +276,26 @@ mod tests {
         apply(&conn, &drug(&id), NOW).expect("書ける");
         clear_all(&conn).expect("消せる");
         assert_eq!(list(&conn).expect("読める"), Vec::new());
+    }
+
+    #[test]
+    fn pain_defaults_to_on_and_can_be_switched() {
+        let conn = test_conn();
+        let id = add_person(&conn, "負傷者 1");
+        assert!(list(&conn).expect("読める")[0].in_pain);
+        let op = CasualtyOp::SetPain {
+            casualty_id: id,
+            in_pain: false,
+        };
+        assert!(!apply(&conn, &op, NOW).expect("変えられる")[0].in_pain);
+        let missing = CasualtyOp::SetPain {
+            casualty_id: "none".to_owned(),
+            in_pain: true,
+        };
+        assert!(matches!(
+            apply(&conn, &missing, NOW),
+            Err(AppError::NotFound(_))
+        ));
     }
 
     #[test]

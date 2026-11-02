@@ -2,6 +2,7 @@ import type { JSX } from "react";
 
 import { usePageTitle } from "@/app/use-page-title";
 import { AboutCard } from "@/features/settings/AboutCard";
+import { CasualtySettingsCard } from "@/features/settings/CasualtySettingsCard";
 import { DebugPanel } from "@/features/settings/debug/DebugPanel";
 import { HotkeySettings } from "@/features/settings/HotkeySettings";
 import { ModSettingsCard } from "@/features/settings/ModSettingsCard";
@@ -16,6 +17,7 @@ export function SettingsPage(): JSX.Element {
       <h1 className="text-2xl font-bold">設定</h1>
       <ViewerSettingsCard />
       <ModSettingsCard />
+      <CasualtySettingsCard />
       <TriageSettingsCard />
       <HotkeySettings />
       <OverlaySettingsCard />

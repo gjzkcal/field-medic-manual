@@ -37,7 +37,7 @@ function memoryStorage(): () => Storage {
 }
 
 function person(id: string, records: Casualty["records"] = []): Casualty {
-  return { id, name: id, createdAtMs: NOW, records };
+  return { id, name: id, createdAtMs: NOW, inPain: true, records };
 }
 
 describe("applyOp", () => {
@@ -57,6 +57,15 @@ describe("applyOp", () => {
     list = applyOp(list, { op: "remove_record", casualtyId, recordId }, NOW, ids);
     expect(list[0]?.records).toEqual([]);
     expect(applyOp(list, { op: "clear_all" }, NOW, ids)).toEqual([]);
+  });
+
+  it("痛み・気胸は、足したときはありで、切り替えられる", () => {
+    const ids = counter();
+    let list = applyOp([], { op: "add_casualty", name: "田中" }, NOW, ids);
+    expect(list[0]?.inPain).toBe(true);
+    const casualtyId = list[0]?.id ?? "";
+    list = applyOp(list, { op: "set_pain", casualtyId, inPain: false }, NOW, ids);
+    expect(list[0]?.inPain).toBe(false);
   });
 
   it("人数と記録の上限を超えるものは受け付けない", () => {
@@ -103,6 +112,12 @@ describe("保存した記録の読み込み", () => {
   it("正しい形はそのまま読む", () => {
     const list = [person("p", [{ id: "r", atMs: NOW, entry: { kind: "saline" } }])];
     expect(parseStoredCasualties(list)).toEqual(list);
+  });
+
+  it("痛み・気胸を足す前に保存した記録は、ありとして読む", () => {
+    const old = { id: "p", name: "p", createdAtMs: NOW, records: [] };
+    expect(parseStoredCasualties([old])).toEqual([person("p")]);
+    expect(parseStoredCasualties([{ ...old, inPain: "yes" }])).toEqual([]);
   });
 
   it.each([

@@ -25,12 +25,14 @@ describe("parseViewerSettings", () => {
         lineHeight: "loose",
         theme: "dark",
         triageKeys: false,
+        overdoseLine: "arrest",
       }),
     ).toEqual({
       fontSize: "xl",
       lineHeight: "loose",
       theme: "dark",
       triageKeys: false,
+      overdoseLine: "arrest",
     });
   });
 
@@ -42,7 +44,14 @@ describe("parseViewerSettings", () => {
       lineHeight: "loose",
       theme: "light",
       triageKeys: true,
+      overdoseLine: "unconscious",
     });
+  });
+
+  it("過量投与の線が保存されていない（前の版で保存した値）・不正なら意識喪失", () => {
+    expect(DEFAULT_VIEWER_SETTINGS.overdoseLine).toBe("unconscious");
+    expect(parseViewerSettings({ fontSize: "l" }).overdoseLine).toBe("unconscious");
+    expect(parseViewerSettings({ overdoseLine: "death" }).overdoseLine).toBe("unconscious");
   });
 
   it("トリアージのキー操作が保存されていない（前の版で保存した値）・不正ならオン", () => {
@@ -87,6 +96,7 @@ describe("useViewerSettings", () => {
       lineHeight: "normal",
       theme: "system",
       triageKeys: true,
+      overdoseLine: "unconscious",
     });
 
     useViewerSettings.setState({ settings: DEFAULT_VIEWER_SETTINGS, changed: true });
