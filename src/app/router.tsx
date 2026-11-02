@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router";
 
 import { Layout } from "@/app/Layout";
 import { RouteErrorPage } from "@/components/RouteErrorPage";
+import { LazyCasualtiesPage } from "@/features/casualties/LazyCasualtiesPage";
 import { DocPage } from "@/features/library/DocPage";
 import { LibraryPage } from "@/features/library/LibraryPage";
 import { QuickrefPage } from "@/features/quickref/QuickrefPage";
@@ -24,6 +25,7 @@ export const router = createBrowserRouter([
           { path: "quickref", element: <QuickrefPage /> },
           { path: "triage", element: <TriageListPage /> },
           { path: "triage/:id", element: <TriageRunPage /> },
+          { path: "casualties", element: <LazyCasualtiesPage /> },
           { path: "settings", element: <SettingsPage /> },
           { path: "*", element: <Navigate to="/library" replace /> },
         ],

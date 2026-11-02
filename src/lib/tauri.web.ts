@@ -2,6 +2,7 @@
 // （各関数に `typeof Desktop.xxx` の型を付け、足し忘れはテストの型の突き合わせで見つける）。
 // 画面は同じものを使い、Rust の代わりに、同梱した原稿をブラウザで変換したメモリの表から返す。
 // Web 版にない機能（トリアージ・お気に入り・履歴・ホットキー・小窓・更新）は、空の結果か何もしない関数にする。
+// 負傷者の記録は localStorage に置く。
 import { version } from "../../package.json";
 import type * as Desktop from "./tauri";
 
@@ -10,6 +11,7 @@ import { fromPrebuilt } from "@/web/backend/prebuilt";
 import { searchStore } from "@/web/backend/search";
 import { findDoc, listDocs, outlineDocs, tagCounts, type WebStore } from "@/web/backend/store";
 import { readLocalSetting, writeLocalSetting } from "@/web/local-settings";
+import { LOCAL_CASUALTIES_KEY } from "@/web/storage-keys";
 import { WebAppError } from "@/web/web-error";
 
 export { errorMessage, isAppError } from "@/lib/app-error";
@@ -119,6 +121,12 @@ export const favList: typeof Desktop.favList = () => Promise.resolve([]);
 export const historyPush: typeof Desktop.historyPush = noop;
 export const historyList: typeof Desktop.historyList = () => Promise.resolve([]);
 
+// 記録の検査に zod を使うので、閲覧だけの人に読ませないよう、使うときに読み込む
+export const casualtyList: typeof Desktop.casualtyList = async () =>
+  (await import("@/web/casualty-storage")).readCasualties();
+export const casualtyApply: typeof Desktop.casualtyApply = async (op) =>
+  (await import("@/web/casualty-storage")).applyAndSave(op);
+
 export const hotkeyList: typeof Desktop.hotkeyList = () => Promise.resolve([]);
 export const hotkeySet: typeof Desktop.hotkeySet = () => unsupported("ホットキー");
 
@@ -128,6 +136,19 @@ export const mainWindowReady: typeof Desktop.mainWindowReady = noop;
 export const onOverlayMode: typeof Desktop.onOverlayMode = noopUnlisten;
 export const onOpenHref: typeof Desktop.onOpenHref = noopUnlisten;
 export const onSettingsChanged: typeof Desktop.onSettingsChanged = noopUnlisten;
+// 同じブラウザの別のタブが書いたとき。storage イベントは書いたタブには届かない
+export const onCasualtiesChanged: typeof Desktop.onCasualtiesChanged = (handler) => {
+  const listener = (event: StorageEvent): void => {
+    // 全部消した（key が null）ときも読み直す
+    if (event.key === null || event.key === LOCAL_CASUALTIES_KEY) {
+      handler();
+    }
+  };
+  window.addEventListener("storage", listener);
+  return Promise.resolve(() => {
+    window.removeEventListener("storage", listener);
+  });
+};
 export const currentWindowLabel: typeof Desktop.currentWindowLabel = () => "main";
 
 export const openExternal: typeof Desktop.openExternal = (url) => {

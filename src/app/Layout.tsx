@@ -1,4 +1,4 @@
-import { LibraryIcon, SettingsIcon, TableIcon, WorkflowIcon } from "lucide-react";
+import { LibraryIcon, SettingsIcon, TableIcon, UsersIcon, WorkflowIcon } from "lucide-react";
 import { useEffect, type JSX } from "react";
 import { useNavigate } from "react-router";
 
@@ -17,6 +17,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   },
   { to: "/quickref", label: "クイック表", icon: TableIcon, activePatterns: ["/quickref"] },
   { to: "/triage", label: "トリアージ", icon: WorkflowIcon, activePatterns: ["/triage/*"] },
+  { to: "/casualties", label: "負傷者", icon: UsersIcon, activePatterns: ["/casualties"] },
   { to: "/settings", label: "設定", icon: SettingsIcon, activePatterns: ["/settings"] },
 ];
 

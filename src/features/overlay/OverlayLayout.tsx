@@ -4,6 +4,7 @@ import {
   SearchIcon,
   StarIcon,
   TableIcon,
+  UsersIcon,
   WorkflowIcon,
 } from "lucide-react";
 import { useRef, useSyncExternalStore, type JSX } from "react";
@@ -17,6 +18,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   mainHrefOf,
+  OVERLAY_CASUALTIES_PATH,
   OVERLAY_FAVORITES_PATH,
   OVERLAY_QUICKREF_PATH,
   OVERLAY_SEARCH_PATH,
@@ -52,6 +54,12 @@ const TABS: readonly OverlayTab[] = [
     activePatterns: [OVERLAY_QUICKREF_PATH],
   },
   {
+    to: OVERLAY_CASUALTIES_PATH,
+    label: "負傷者",
+    icon: UsersIcon,
+    activePatterns: [OVERLAY_CASUALTIES_PATH],
+  },
+  {
     to: OVERLAY_FAVORITES_PATH,
     label: "お気に入り",
     icon: StarIcon,
@@ -59,8 +67,8 @@ const TABS: readonly OverlayTab[] = [
   },
 ];
 
-// 上部のタブを絵だけにする幅。タブの文字の @max-[26rem]:sr-only と同じ値にする（帯は窓の全幅なので、窓の幅で判定できる）
-const ICON_ONLY_QUERY = "(width < 26rem)";
+// 上部のタブを絵だけにする幅。タブの文字の @max-[34rem]:sr-only と同じ値にする（帯は窓の全幅なので、窓の幅で判定できる）
+const ICON_ONLY_QUERY = "(width < 34rem)";
 
 function subscribeIconOnly(onChange: () => void): () => void {
   const mql = window.matchMedia(ICON_ONLY_QUERY);
@@ -115,7 +123,7 @@ export function OverlayLayout(): JSX.Element {
                 >
                   <tab.icon />
                   {/* 小窓は幅 320px まで縮められる。狭いと帯に収まらないので、文字は読み上げ用にだけ残してアイコンにする */}
-                  <span className="@max-[26rem]:sr-only">{tab.label}</span>
+                  <span className="@max-[34rem]:sr-only">{tab.label}</span>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">{tab.label}</TooltipContent>
               </Tooltip>

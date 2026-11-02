@@ -6,6 +6,7 @@ import { createRoot } from "react-dom/client";
 import { App } from "@/app/App";
 import { startClientErrorLog } from "@/lib/client-error-log";
 import { waitForFirstScreen } from "@/app/reveal";
+import { startCasualtySync } from "@/features/casualties/casualty-store";
 import { syncBundledManuals } from "@/features/content/sync";
 import { OverlayApp } from "@/features/overlay/OverlayApp";
 import { refreshPrefs } from "@/features/prefs/prefs-store";
@@ -35,7 +36,7 @@ const isOverlay = currentWindowLabel() === "overlay";
 startThemeSync();
 const viewerSettingsLoaded = loadViewerSettings();
 // テーマと文字サイズは、もう一方のウィンドウ（メイン / 小窓）で変えてもすぐ反映する。
-// ほかの設定は小窓を出すたびに読み直すので（OverlayApp）、ここでは追わない
+// 使っている MOD は startCasualtySync が追う。ほかの設定は小窓を出すたびに読み直すので（OverlayApp）、ここでは追わない
 void onSettingsChanged((key) => {
   if (key === VIEWER_SETTINGS_KEY) {
     void loadViewerSettings(true);
@@ -67,5 +68,6 @@ void loadOverlaySettings();
 void loadModSettings();
 void loadQuickrefSettings();
 void refreshPrefs();
+startCasualtySync();
 
 createRoot(rootElement).render(<StrictMode>{isOverlay ? <OverlayApp /> : <App />}</StrictMode>);

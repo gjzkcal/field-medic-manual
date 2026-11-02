@@ -5,7 +5,7 @@
 
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Emitter, Manager, Window};
 
 use crate::model::OverlayMode;
 
@@ -19,6 +19,10 @@ pub const OPEN_HREF_EVENT: &str = "open-href";
 /// メインを一度でも出したか。メインは非表示で起動し、最初の画面を描き終えてから出す。
 #[derive(Default)]
 pub struct MainRevealed(AtomicBool);
+
+/// 小窓を閲覧モードで出しているか。フォーカスを失ったときに元へ戻すかどうかの判断に使う。
+#[derive(Default)]
+pub struct ViewMode(AtomicBool);
 
 /// 起動時にメインを出す。画面の準備ができたときと、JS が動かないときの保険の両方から呼ばれるので、2 回目以降は何もしない。
 ///
@@ -59,6 +63,11 @@ pub fn show(app: &AppHandle, mode: OverlayMode) -> tauri::Result<()> {
     let Some(overlay) = app.get_webview_window(OVERLAY) else {
         return Ok(());
     };
+    if let Some(view_mode) = app.try_state::<ViewMode>() {
+        view_mode
+            .0
+            .store(matches!(mode, OverlayMode::View), Ordering::SeqCst);
+    }
     match mode {
         OverlayMode::View => {
             overlay.set_focusable(false)?;
@@ -73,6 +82,12 @@ pub fn show(app: &AppHandle, mode: OverlayMode) -> tauri::Result<()> {
     app.emit_to(OVERLAY, OVERLAY_MODE_EVENT, mode)
 }
 
+/// メインなら小窓、小窓ならメインのラベル。片方の変更をもう片方に知らせるときに使う。
+#[must_use]
+pub fn other_window(label: &str) -> &'static str {
+    if label == MAIN { OVERLAY } else { MAIN }
+}
+
 /// 閲覧モードの小窓で入力欄を押したとき。キー入力は前面のアプリに届くので、打つときだけフォーカスを移す。
 ///
 /// # Errors
@@ -84,6 +99,18 @@ pub fn activate(app: &AppHandle) -> tauri::Result<()> {
     };
     overlay.set_focusable(true)?;
     overlay.set_focus()
+}
+
+/// 閲覧モードの小窓がフォーカスを失ったら、フォーカスできない状態に戻す。
+/// メモを打つと focusable のままになり、以後ボタンを押すたびにゲームのフォーカスを奪うため。
+/// 検索とトリアージは戻さない。キーで操作するので、小窓を押してフォーカスを取り戻せる必要がある。
+pub fn on_focus_lost(window: &Window) {
+    let viewing = window
+        .try_state::<ViewMode>()
+        .is_some_and(|view_mode| view_mode.0.load(Ordering::SeqCst));
+    if viewing {
+        let _ = window.set_focusable(false);
+    }
 }
 
 /// メインウィンドウを前面に出す。`href` があれば、その画面へ移らせる。

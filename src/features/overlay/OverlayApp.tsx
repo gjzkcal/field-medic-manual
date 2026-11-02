@@ -4,6 +4,7 @@ import { RouterProvider } from "react-router/dom";
 
 import { RouteErrorPage } from "@/components/RouteErrorPage";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { LazyCasualtiesPage } from "@/features/casualties/LazyCasualtiesPage";
 import { DocPage } from "@/features/library/DocPage";
 import {
   hrefForMode,
@@ -46,6 +47,7 @@ const overlayRouter = createMemoryRouter(
             { path: "triage", element: <TriageListPage /> },
             { path: "triage/:id", element: <TriageRunPage /> },
             { path: "quickref", element: <QuickrefPage compact /> },
+            { path: "casualties", element: <LazyCasualtiesPage compact /> },
             { path: "favorites", element: <OverlayFavoritesPage /> },
             // メインの画面へのリンク（ビューアの「ライブラリ」など）は、小窓では検索に置き換える
             { path: "*", element: <Navigate to={OVERLAY_SEARCH_PATH} replace /> },

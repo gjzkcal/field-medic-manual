@@ -1,5 +1,6 @@
 // 原稿の表から作った折れ線グラフ。Recharts を含むので、ビューアからは遅延読み込みで使う（起動を遅くしないため）。
-import { useId, type JSX } from "react";
+// 負傷者のカードの小さなグラフと大きなグラフにも使う。
+import { useId, type JSX, type ReactNode } from "react";
 import { CartesianGrid, Line, LineChart, ReferenceLine, XAxis, YAxis } from "recharts";
 
 import {
@@ -21,6 +22,12 @@ interface ManualChartProps {
   data: ChartData;
   /** すぐ後に同じ値の表があるか（読み上げの要約で、表へ案内する） */
   withTable: boolean;
+  /** 線の形だけを小さく描く。軸・凡例・説明を省くので、要約は呼び出し側が出す */
+  compact?: boolean;
+  /** 色と線の種類を、並びではなく系列の key（s0 なら 1 色目）で決める。線を出し入れしても別の線の色が変わらないように */
+  stableColors?: boolean;
+  /** グラフの中に重ねて描くもの（Recharts の部品） */
+  children?: ReactNode;
 }
 
 // 5 色を超える線は色が回り、同じ色の線ができる。原稿で 1 つのグラフに 5 本を超えて載せない前提
@@ -30,13 +37,30 @@ const MAX_DOTS = 30;
 // 同じグラフの線は、色に加えて線の種類でも見分けられるようにする（色だけに頼らない。WCAG 1.4.1）
 const DASHES = ["", "6 3", "2 3", "8 3 2 3", "12 4"];
 
+/** key（s0, s1…）の番号。 */
+function keyIndex(key: string): number {
+  return Number(key.slice(1));
+}
+
 /** 同じグラフ（y / y2）の中での順番の線の種類。上下のグラフでは同じ種類が繰り返してよい（凡例はグラフごと） */
-function dashOf(series: readonly ChartSeries[], key: string): string | undefined {
-  const dash = DASHES[series.findIndex((s) => s.key === key) % DASHES.length] ?? "";
+function dashOf(
+  series: readonly ChartSeries[],
+  key: string,
+  stableColors: boolean,
+): string | undefined {
+  const index = stableColors ? keyIndex(key) : series.findIndex((s) => s.key === key);
+  const dash = DASHES[index % DASHES.length] ?? "";
   return dash === "" ? undefined : dash;
 }
 
-export function ManualChart({ spec, data, withTable }: ManualChartProps): JSX.Element {
+export function ManualChart({
+  spec,
+  data,
+  withTable,
+  compact = false,
+  stableColors = false,
+  children,
+}: ManualChartProps): JSX.Element {
   const syncId = useId();
   // 色は線ごとに通しで割り当てる。上下のグラフで同じ色が別の列を指さないようにするため
   const config: ChartConfig = Object.fromEntries(
@@ -44,7 +68,7 @@ export function ManualChart({ spec, data, withTable }: ManualChartProps): JSX.El
       s.key,
       {
         label: s.unit === null ? s.label : `${s.label}（${s.unit}）`,
-        color: `var(--chart-${String((i % COLOR_COUNT) + 1)})`,
+        color: `var(--chart-${String(((stableColors ? keyIndex(s.key) : i) % COLOR_COUNT) + 1)})`,
       },
     ]),
   );
@@ -64,40 +88,44 @@ export function ManualChart({ spec, data, withTable }: ManualChartProps): JSX.El
   // 図の SVG は読み上げから隠し、代わりに要約を図の説明にする（線の点を 1 つずつ読んでも形は分からないため）
   const summary = `グラフ: ${chartSummary(data)}${withTable ? "値は続く表にもあります。" : ""}`;
 
-  return (
+  const plot = (
     <>
-      <figcaption className={spec.title === null ? "sr-only" : "mb-1 text-sm font-bold"}>
-        {spec.title}
-        <span className="sr-only">{summary}</span>
-      </figcaption>
-      <div aria-hidden>
-        {panels.map(({ panel, refs }) => {
-          const series = data.series.filter((s) => s.panel === panel);
-          if (series.length === 0) {
-            return null;
-          }
-          return (
-            <div key={panel} className="mb-2">
-              <Legend series={series} config={config} />
-              <ChartContainer config={config} className="aspect-auto h-44 w-full">
-                {/* キーボードで点をたどる層は、名前がなく値も読み上げられないので使わない（要約で伝える） */}
-                <LineChart
-                  data={rows}
-                  syncId={syncId}
-                  margin={{ top: 8, right: 36, left: 0 }}
-                  accessibilityLayer={false}
-                >
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey="x"
-                    type="number"
-                    domain={["dataMin", "dataMax"]}
-                    {...xTicks}
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={6}
-                  />
-                  <YAxis width={40} tickLine={false} axisLine={false} tickMargin={4} />
+      {panels.map(({ panel, refs }) => {
+        const series = data.series.filter((s) => s.panel === panel);
+        if (series.length === 0) {
+          return null;
+        }
+        return (
+          <div key={panel} className={compact ? undefined : "mb-2"}>
+            {!compact && <Legend series={series} config={config} stableColors={stableColors} />}
+            <ChartContainer
+              config={config}
+              className={compact ? "aspect-auto h-14 w-full" : "aspect-auto h-44 w-full"}
+            >
+              {/* キーボードで点をたどる層は、名前がなく値も読み上げられないので使わない（要約で伝える） */}
+              <LineChart
+                data={rows}
+                syncId={syncId}
+                margin={
+                  compact
+                    ? { top: 2, right: 2, bottom: 2, left: 2 }
+                    : { top: 8, right: 36, left: 0 }
+                }
+                accessibilityLayer={false}
+              >
+                {!compact && <CartesianGrid vertical={false} />}
+                <XAxis
+                  dataKey="x"
+                  type="number"
+                  domain={["dataMin", "dataMax"]}
+                  hide={compact}
+                  {...xTicks}
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={6}
+                />
+                <YAxis hide={compact} width={40} tickLine={false} axisLine={false} tickMargin={4} />
+                {!compact && (
                   <ChartTooltip
                     content={
                       <ChartTooltipContent
@@ -109,52 +137,70 @@ export function ManualChart({ spec, data, withTable }: ManualChartProps): JSX.El
                       />
                     }
                   />
-                  {refs.map((value) => (
-                    <ReferenceLine
-                      key={value}
-                      y={value}
-                      ifOverflow="extendDomain"
-                      stroke="var(--muted-foreground)"
-                      strokeDasharray="4 4"
-                      label={{
-                        value: String(value),
-                        position: "right",
-                        fill: "var(--muted-foreground)",
-                        fontSize: 11,
-                      }}
-                    />
-                  ))}
-                  {series.map((s) => {
-                    const dash = dashOf(series, s.key);
-                    return (
-                      <Line
-                        key={s.key}
-                        dataKey={s.key}
-                        name={s.key}
-                        type="linear"
-                        stroke={`var(--color-${s.key})`}
-                        strokeWidth={2}
-                        dot={
-                          showDots && {
-                            r: 4,
-                            strokeWidth: 2,
-                            stroke: "var(--background)",
-                            fill: `var(--color-${s.key})`,
-                          }
+                )}
+                {refs.map((value) => (
+                  <ReferenceLine
+                    key={value}
+                    y={value}
+                    ifOverflow="extendDomain"
+                    stroke="var(--muted-foreground)"
+                    strokeDasharray="4 4"
+                    {...(compact
+                      ? {}
+                      : {
+                          label: {
+                            value: String(value),
+                            position: "right",
+                            fill: "var(--muted-foreground)",
+                            fontSize: 11,
+                          },
+                        })}
+                  />
+                ))}
+                {series.map((s) => {
+                  const dash = dashOf(series, s.key, stableColors);
+                  return (
+                    <Line
+                      key={s.key}
+                      dataKey={s.key}
+                      name={s.key}
+                      type="linear"
+                      stroke={`var(--color-${s.key})`}
+                      strokeWidth={2}
+                      dot={
+                        showDots && {
+                          r: 4,
+                          strokeWidth: 2,
+                          stroke: "var(--background)",
+                          fill: `var(--color-${s.key})`,
                         }
-                        activeDot={{ r: 5, strokeWidth: 2, stroke: "var(--background)" }}
-                        connectNulls
-                        isAnimationActive={false}
-                        {...(dash === undefined ? {} : { strokeDasharray: dash })}
-                      />
-                    );
-                  })}
-                </LineChart>
-              </ChartContainer>
-            </div>
-          );
-        })}
-      </div>
+                      }
+                      activeDot={{ r: 5, strokeWidth: 2, stroke: "var(--background)" }}
+                      connectNulls
+                      isAnimationActive={false}
+                      {...(dash === undefined ? {} : { strokeDasharray: dash })}
+                    />
+                  );
+                })}
+                {children}
+              </LineChart>
+            </ChartContainer>
+          </div>
+        );
+      })}
+    </>
+  );
+
+  if (compact) {
+    return <div aria-hidden>{plot}</div>;
+  }
+  return (
+    <>
+      <figcaption className={spec.title === null ? "sr-only" : "mb-1 text-sm font-bold"}>
+        {spec.title}
+        <span className="sr-only">{summary}</span>
+      </figcaption>
+      <div aria-hidden>{plot}</div>
     </>
   );
 }
@@ -163,7 +209,15 @@ export function ManualChart({ spec, data, withTable }: ManualChartProps): JSX.El
  * グラフの上に並べる線の名前。色だけで区別させないため、線が 1 本でも名前を出す（上下のどちらが何のグラフか分かるように）。
  * 見本は線と同じ色と線の種類で描く
  */
-function Legend({ series, config }: { series: ChartSeries[]; config: ChartConfig }): JSX.Element {
+function Legend({
+  series,
+  config,
+  stableColors,
+}: {
+  series: ChartSeries[];
+  config: ChartConfig;
+  stableColors: boolean;
+}): JSX.Element {
   return (
     <ul className="m-0 flex list-none flex-wrap gap-x-4 gap-y-1 p-0 text-xs text-muted-foreground">
       {series.map((s) => (
@@ -176,7 +230,7 @@ function Legend({ series, config }: { series: ChartSeries[]; config: ChartConfig
               y2="2"
               stroke={config[s.key]?.color}
               strokeWidth="2"
-              strokeDasharray={dashOf(series, s.key)}
+              strokeDasharray={dashOf(series, s.key, stableColors)}
             />
           </svg>
           {config[s.key]?.label}

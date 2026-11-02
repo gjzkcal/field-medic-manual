@@ -8,6 +8,7 @@ export const OVERLAY_SEARCH_PATH = "/search";
 export const OVERLAY_TRIAGE_PATH = "/triage";
 export const OVERLAY_FAVORITES_PATH = "/favorites";
 export const OVERLAY_QUICKREF_PATH = "/quickref";
+export const OVERLAY_CASUALTIES_PATH = "/casualties";
 
 /** モードで移る先。閲覧（Ctrl+Shift+M）は前に見ていた画面をそのまま出すので null。 */
 export function hrefForMode(mode: OverlayMode, history: readonly PrefItem[]): string | null {
@@ -38,7 +39,8 @@ export function mainHrefOf(location: LocationLike): string {
   if (
     pathname.startsWith("/doc/") ||
     pathname.startsWith(OVERLAY_TRIAGE_PATH) ||
-    pathname === OVERLAY_QUICKREF_PATH
+    pathname === OVERLAY_QUICKREF_PATH ||
+    pathname === OVERLAY_CASUALTIES_PATH
   ) {
     return `${pathname}${search}${hash}`;
   }

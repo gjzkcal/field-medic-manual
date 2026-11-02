@@ -1,0 +1,25 @@
+[
+  { "op": "unknown_op" },
+  { "op": "add_casualty" },
+  { "op": "add_casualty", "name": "" },
+  { "op": "add_casualty", "name": "   " },
+  {
+    "op": "add_casualty",
+    "name": "あいうえおかきくけこあいうえおかきくけこあいうえおかきくけこあいうえおかきくけこあ"
+  },
+  { "op": "remove_casualty", "casualtyId": "" },
+  { "op": "add_record", "casualtyId": "$CASUALTY", "entry": { "kind": "unknown" } },
+  {
+    "op": "add_record",
+    "casualtyId": "$CASUALTY",
+    "entry": { "kind": "drug", "drug": "aspirin" }
+  },
+  {
+    "op": "add_record",
+    "casualtyId": "$CASUALTY",
+    "entry": { "kind": "tourniquet_on", "site": "neck" }
+  },
+  { "op": "add_record", "casualtyId": "$CASUALTY", "entry": { "kind": "note", "text": "" } },
+  { "op": "add_record", "casualtyId": "none", "entry": { "kind": "saline" } },
+  { "op": "remove_record", "casualtyId": "$CASUALTY", "recordId": "" }
+]

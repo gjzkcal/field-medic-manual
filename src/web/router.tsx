@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from "react-router";
 
 import { RouteErrorPage } from "@/components/RouteErrorPage";
+import { LazyCasualtiesPage } from "@/features/casualties/LazyCasualtiesPage";
 import { DocPage } from "@/features/library/DocPage";
 import { LibraryPage } from "@/features/library/LibraryPage";
 import { QuickrefPage } from "@/features/quickref/QuickrefPage";
@@ -26,6 +27,7 @@ export const webRouter = createBrowserRouter(
             { path: "library", element: <LibraryPage /> },
             { path: "doc/:id", element: <DocPage /> },
             { path: "quickref", element: <QuickrefPage /> },
+            { path: "casualties", element: <LazyCasualtiesPage /> },
             { path: "settings", element: <WebSettingsPage /> },
             { path: "about", element: <WebAboutPage /> },
             // デスクトップ版の URL（/triage/… など）を共有されたときも、一覧から始められるようにする
