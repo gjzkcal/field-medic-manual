@@ -1,6 +1,15 @@
 // 負傷者の記録。メイン・小窓・Web 版で同じ画面を使う。
 import { ChevronDownIcon, PlusIcon, Trash2Icon, Undo2Icon } from "lucide-react";
-import { useEffect, useMemo, useState, type JSX, type SyntheticEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type JSX,
+  type ReactNode,
+  type RefObject,
+  type SyntheticEvent,
+} from "react";
 
 import { usePageTitle } from "@/app/use-page-title";
 import { IssueCard } from "@/components/IssueCard";
@@ -54,6 +63,9 @@ const NOTE_MAX = 100;
 // 記録のボタンはプレイ中に素早く押すので、指やマウスで外しにくい大きさ（44 px）にし、幅をそろえて並べる
 const RECORD_BUTTON = "h-11 text-sm";
 const RECORD_GRID = "grid grid-cols-[repeat(auto-fill,minmax(min(8.5rem,100%),1fr))] gap-2";
+// 小窓は既定の幅で 3 列にする。ボタンの高さは変えず、列を増やして 1 枚目のカードを画面に収める
+const COMPACT_RECORD_GRID = "grid grid-cols-[repeat(auto-fill,minmax(min(7rem,100%),1fr))] gap-2";
+const NOTICE_LEAD = "目安です。ゲームの診察を優先してください。";
 
 type MedicationLoad =
   | { status: "loading" }
@@ -83,10 +95,34 @@ function useMedication(): MedicationLoad {
   return load;
 }
 
+function NoticeList({ circulation }: { circulation: boolean }): JSX.Element {
+  return (
+    <ul className="m-0 flex list-disc flex-col gap-1 pl-5 text-sm text-muted-foreground">
+      <li>AI や仲間が打った分は入りません。</li>
+      <li>記録を押す時刻は、実際に打った時刻と数秒ずれます。</li>
+      <li>人の多いサーバーでは、全体が 1〜2 割遅く進むことがあります。</li>
+      {circulation && (
+        <>
+          <li>ミッションの設定で薬の数値を変えたサーバーでは、ずれます。</li>
+          <li>
+            タイマーとバーは効能が基準です（1 本のピークを 100
+            とします）。マニュアルの濃度の時刻とは違うことがあります。
+          </li>
+        </>
+      )}
+      <li>
+        {IS_WEB
+          ? "記録はこのブラウザにだけ残ります。「全部消す」で消せます。"
+          : "トレイにしまっても記録は残ります。アプリを終了すると消えます。"}
+      </li>
+    </ul>
+  );
+}
+
 function Notice({ circulation }: { circulation: boolean }): JSX.Element {
   return (
     <Collapsible>
-      <p className="m-0 text-sm font-medium">目安です。ゲームの診察を優先してください。</p>
+      <p className="m-0 text-sm font-medium">{NOTICE_LEAD}</p>
       <CollapsibleTrigger
         render={<Button variant="link" size="sm" className="h-auto px-0" />}
         className="group/notice"
@@ -95,25 +131,50 @@ function Notice({ circulation }: { circulation: boolean }): JSX.Element {
         <ChevronDownIcon className="transition-transform group-data-panel-open/notice:rotate-180" />
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <ul className="m-0 flex list-disc flex-col gap-1 pl-5 text-sm text-muted-foreground">
-          <li>AI や仲間が打った分は入りません。</li>
-          <li>記録を押す時刻は、実際に打った時刻と数秒ずれます。</li>
-          <li>人の多いサーバーでは、全体が 1〜2 割遅く進むことがあります。</li>
-          {circulation && (
-            <>
-              <li>ミッションの設定で薬の数値を変えたサーバーでは、ずれます。</li>
-              <li>
-                タイマーとバーは効能が基準です（1 本のピークを 100
-                とします）。マニュアルの濃度の時刻とは違うことがあります。
-              </li>
-            </>
-          )}
-          <li>
-            {IS_WEB
-              ? "記録はこのブラウザにだけ残ります。「全部消す」で消せます。"
-              : "トレイにしまっても記録は残ります。アプリを終了すると消えます。"}
-          </li>
-        </ul>
+        <NoticeList circulation={circulation} />
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+interface CompactNoticeProps {
+  circulation: boolean;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  triggerRef: RefObject<HTMLButtonElement | null>;
+  children: ReactNode;
+}
+
+/** 小窓の注意書き。プレイ中に毎回は使わない操作もここへ畳み、カードの場所を空ける */
+function CompactNotice({
+  circulation,
+  open,
+  onOpenChange,
+  triggerRef,
+  children,
+}: CompactNoticeProps): JSX.Element {
+  return (
+    <Collapsible
+      open={open}
+      onOpenChange={(next) => {
+        onOpenChange(next);
+      }}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-x-2">
+        <p className="m-0 text-sm font-medium">{NOTICE_LEAD}</p>
+        <CollapsibleTrigger
+          render={<Button ref={triggerRef} variant="link" size="sm" className="h-auto px-0" />}
+          className="group/notice"
+        >
+          前提と操作
+          <ChevronDownIcon className="transition-transform group-data-panel-open/notice:rotate-180" />
+        </CollapsibleTrigger>
+      </div>
+      <CollapsibleContent>
+        <div className="flex flex-col gap-3 pt-2">
+          {children}
+          <NoticeList circulation={circulation} />
+        </div>
       </CollapsibleContent>
     </Collapsible>
   );
@@ -175,9 +236,31 @@ function ConfirmButton({
   );
 }
 
+function RemoveCasualtyButton({
+  casualty,
+  onAnnounce,
+}: {
+  casualty: Casualty;
+  onAnnounce: (message: string) => void;
+}): JSX.Element {
+  return (
+    <ConfirmButton
+      title={`${casualty.name}を消しますか？`}
+      description="この負傷者の記録もすべて消えます。元に戻せません。"
+      confirmLabel="消す"
+      triggerLabel="この負傷者を消す"
+      onConfirm={() => {
+        void applyCasualtyOp({ op: "remove_casualty", casualtyId: casualty.id });
+        onAnnounce(`${casualty.name}を消しました`);
+      }}
+    />
+  );
+}
+
 interface RecordControlsProps {
   casualty: Casualty;
   circulation: boolean;
+  compact: boolean;
   onRecord: (entry: CasualtyEntry) => void;
   onUndoLast: () => void;
 }
@@ -185,6 +268,7 @@ interface RecordControlsProps {
 function RecordControls({
   casualty,
   circulation,
+  compact,
   onRecord,
   onUndoLast,
 }: RecordControlsProps): JSX.Element {
@@ -203,7 +287,11 @@ function RecordControls({
 
   return (
     <div className="flex flex-col gap-2">
-      <div role="group" aria-label="薬と生理食塩水を記録する" className={RECORD_GRID}>
+      <div
+        role="group"
+        aria-label="薬と生理食塩水を記録する"
+        className={compact ? COMPACT_RECORD_GRID : RECORD_GRID}
+      >
         {drugs.map((drug) => (
           <Button
             key={drug}
@@ -226,8 +314,20 @@ function RecordControls({
           生理食塩水
         </Button>
       </div>
-      <div role="group" aria-label="止血帯を記録する" className="grid grid-cols-4 gap-2">
-        <span className="col-span-full text-sm text-muted-foreground">止血帯</span>
+      <div
+        role="group"
+        aria-label="止血帯を記録する"
+        className={compact ? "grid grid-cols-5 items-center gap-2" : "grid grid-cols-4 gap-2"}
+      >
+        <span
+          className={
+            compact
+              ? "text-sm text-muted-foreground"
+              : "col-span-full text-sm text-muted-foreground"
+          }
+        >
+          止血帯
+        </span>
         {SITES.map((site) => (
           <Toggle
             key={site}
@@ -243,29 +343,30 @@ function RecordControls({
           </Toggle>
         ))}
       </div>
-      <form onSubmit={submitNote} className="flex items-center gap-1.5">
-        <Input
-          aria-label="メモ"
-          placeholder="メモ"
-          maxLength={NOTE_MAX}
-          value={note}
-          onChange={(event) => {
-            setNote(event.target.value);
-          }}
-        />
-        <Button type="submit" variant="outline" size="sm" disabled={note.trim() === ""}>
-          残す
-        </Button>
-      </form>
-      <div>
+      <div className={compact ? "flex items-center gap-1.5" : "flex flex-col items-start gap-2"}>
+        <form onSubmit={submitNote} className="flex w-full min-w-0 items-center gap-1.5">
+          <Input
+            aria-label="メモ"
+            placeholder="メモ"
+            maxLength={NOTE_MAX}
+            value={note}
+            onChange={(event) => {
+              setNote(event.target.value);
+            }}
+          />
+          <Button type="submit" variant="outline" size="sm" disabled={note.trim() === ""}>
+            残す
+          </Button>
+        </form>
         <Button
           variant="ghost"
           size="sm"
+          aria-label="直前の記録を取り消す"
           disabled={casualty.records.length === 0}
           onClick={onUndoLast}
         >
           <Undo2Icon />
-          直前の記録を取り消す
+          {compact ? "取り消す" : "直前の記録を取り消す"}
         </Button>
       </div>
     </div>
@@ -323,6 +424,7 @@ interface CasualtyPanelProps {
   casualty: Casualty;
   medication: MedicationFile;
   circulation: boolean;
+  compact: boolean;
   onAnnounce: (message: string) => void;
 }
 
@@ -330,6 +432,7 @@ function CasualtyPanel({
   casualty,
   medication,
   circulation,
+  compact,
   onAnnounce,
 }: CasualtyPanelProps): JSX.Element {
   const { records } = casualty;
@@ -354,22 +457,18 @@ function CasualtyPanel({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-lg font-bold">{casualty.name}</h2>
-        <ConfirmButton
-          title={`${casualty.name}を消しますか？`}
-          description="この負傷者の記録もすべて消えます。元に戻せません。"
-          confirmLabel="消す"
-          triggerLabel="この負傷者を消す"
-          onConfirm={() => {
-            void applyCasualtyOp({ op: "remove_casualty", casualtyId: casualty.id });
-            onAnnounce(`${casualty.name}を消しました`);
-          }}
-        />
-      </div>
+      {compact ? (
+        <h2 className="sr-only">{casualty.name}</h2>
+      ) : (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-bold">{casualty.name}</h2>
+          <RemoveCasualtyButton casualty={casualty} onAnnounce={onAnnounce} />
+        </div>
+      )}
       <RecordControls
         casualty={casualty}
         circulation={circulation}
+        compact={compact}
         onRecord={record}
         onUndoLast={() => {
           if (last !== undefined) {
@@ -465,15 +564,19 @@ function AddCasualtyForm({ onAdded }: { onAdded: (id: string | null) => void }):
 function PageBody({
   medication,
   circulation,
+  compact,
 }: {
   medication: MedicationFile;
   circulation: boolean;
+  compact: boolean;
 }): JSX.Element {
   const casualties = useCasualties((s) => s.casualties);
   const error = useCasualties((s) => s.error);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState("");
   const [paused, setPaused] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const toolsTriggerRef = useRef<HTMLButtonElement>(null);
   const selected = casualties.find((c) => c.id === selectedId) ?? casualties[0];
 
   // 画面を離れた後も止まったままにしない
@@ -483,18 +586,18 @@ function PageBody({
     };
   }, []);
 
-  return (
+  function handleAdded(id: string | null): void {
+    setSelectedId(id);
+    // 1 人目を足すと畳まれて「足す」が消えるので、フォーカスを見失わないよう開閉のボタンへ移す
+    if (compact && !toolsOpen) {
+      toolsTriggerRef.current?.focus();
+    }
+  }
+
+  const tools = (
     <>
-      <p role="status" className="sr-only">
-        {announcement}
-      </p>
-      {error !== null && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
       <div className="flex flex-wrap items-center gap-2">
-        <AddCasualtyForm onAdded={setSelectedId} />
+        <AddCasualtyForm onAdded={handleAdded} />
         <ConfirmButton
           title="全員の記録を消しますか？"
           description="すべての負傷者と記録が消えます。元に戻せません。"
@@ -517,6 +620,37 @@ function PageBody({
         />
         残り時間の自動更新を止める
       </label>
+    </>
+  );
+
+  return (
+    <>
+      <p role="status" className="sr-only">
+        {announcement}
+      </p>
+      {error !== null && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      {compact ? (
+        // 誰もいないときは「足す」が要るので、畳まない
+        <CompactNotice
+          circulation={circulation}
+          open={toolsOpen || selected === undefined}
+          onOpenChange={setToolsOpen}
+          triggerRef={toolsTriggerRef}
+        >
+          {tools}
+          {selected !== undefined && (
+            <div>
+              <RemoveCasualtyButton casualty={selected} onAnnounce={setAnnouncement} />
+            </div>
+          )}
+        </CompactNotice>
+      ) : (
+        tools
+      )}
       {selected === undefined ? (
         <Empty className="border">
           <EmptyHeader>
@@ -544,6 +678,7 @@ function PageBody({
               casualty={selected}
               medication={medication}
               circulation={circulation}
+              compact={compact}
               onAnnounce={setAnnouncement}
             />
           </TabsContent>
@@ -554,7 +689,7 @@ function PageBody({
 }
 
 interface CasualtiesPageProps {
-  /** 小窓。見出しの分の高さを惜しむ */
+  /** 小窓。既定の大きさでカードまで見えるよう、見出しと毎回は使わない操作を畳む */
   compact?: boolean;
 }
 
@@ -572,10 +707,12 @@ export function CasualtiesPage({ compact = false }: CasualtiesPageProps): JSX.El
     void loadCasualties();
   }, []);
 
+  const ready = load.status === "ready" && loaded;
+
   return (
     <section className="mx-auto flex w-full max-w-5xl flex-col gap-3">
       <h1 className={compact ? "sr-only" : "text-2xl font-bold"}>負傷者</h1>
-      <Notice circulation={circulation} />
+      {!(compact && ready) && <Notice circulation={circulation} />}
       {load.status === "error" && (
         <IssueCard title="薬の数値を読み込めませんでした" detail={load.message} issues={[]} />
       )}
@@ -583,7 +720,7 @@ export function CasualtiesPage({ compact = false }: CasualtiesPageProps): JSX.El
         <Skeleton className="h-40 w-full" />
       )}
       {load.status === "ready" && loaded && (
-        <PageBody medication={load.medication} circulation={circulation} />
+        <PageBody medication={load.medication} circulation={circulation} compact={compact} />
       )}
     </section>
   );

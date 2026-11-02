@@ -48,6 +48,8 @@ function fakeBackend(): { casualties: Casualty[] } {
         ...c,
         records: c.records.filter((r) => r.id !== op["recordId"]),
       }));
+    } else if (op.op === "remove_casualty") {
+      state.casualties = state.casualties.filter((c) => c.id !== op["casualtyId"]);
     } else if (op.op === "clear_all") {
       state.casualties = [];
     }
@@ -209,5 +211,35 @@ describe("CasualtiesPage", () => {
     const removal = await screen.findByRole("button", { name: /メモ: 右胸を取り消す/ });
     fireEvent.click(removal);
     await screen.findByRole("button", { name: /記録（1 件）/ });
+  });
+
+  it("小窓では、足した後は操作を畳み、誰もいなくなると開く", async () => {
+    render(<CasualtiesPage compact />);
+    await addCasualty();
+
+    const trigger = await screen.findByRole("button", { name: "前提と操作" });
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: "足す" })).toBeNull();
+    });
+    expect(document.activeElement).toBe(trigger);
+    expect(screen.getByRole("button", { name: "モルヒネ" })).toBeTruthy();
+
+    fireEvent.click(trigger);
+    press("この負傷者を消す");
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "消す" }));
+    await screen.findByText("負傷者はいません");
+    expect(screen.getByRole("button", { name: "足す" })).toBeTruthy();
+  });
+
+  it("小窓でも直前の記録を取り消せる", async () => {
+    render(<CasualtiesPage compact />);
+    await addCasualty();
+    press("モルヒネ");
+    await screen.findByRole("button", { name: /記録（1 件）/ });
+    press("直前の記録を取り消す");
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: /記録（1 件）/ })).toBeNull();
+    });
   });
 });

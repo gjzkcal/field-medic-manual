@@ -35,10 +35,8 @@ pub fn on_window_event(window: &Window, event: &WindowEvent) {
         }
         return;
     }
-    // メモを打つと小窓は focusable のままになり、以後ボタンを押すたびにゲームのフォーカスを奪う。
-    // ゲームへ戻ったら閲覧モードと同じ状態に戻す
     if matches!(event, WindowEvent::Focused(false)) && window.label() == overlay::OVERLAY {
-        let _ = window.set_focusable(false);
+        overlay::on_focus_lost(window);
         return;
     }
     let WindowEvent::CloseRequested { api, .. } = event else {

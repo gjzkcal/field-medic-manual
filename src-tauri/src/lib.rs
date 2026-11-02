@@ -55,6 +55,7 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .manage(hotkey::HotkeyState::default())
         .manage(overlay::MainRevealed::default())
+        .manage(overlay::ViewMode::default())
         .setup(|app| {
             log::info!("起動しました: 版 {}", app.package_info().version);
             // updater のクレートはデスクトップだけの依存にしてある（Cargo.toml）
