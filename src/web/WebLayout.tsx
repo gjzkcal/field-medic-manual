@@ -1,4 +1,11 @@
-import { DownloadIcon, InfoIcon, LibraryIcon, SettingsIcon, TableIcon } from "lucide-react";
+import {
+  DownloadIcon,
+  InfoIcon,
+  LibraryIcon,
+  SettingsIcon,
+  TableIcon,
+  UsersIcon,
+} from "lucide-react";
 import type { JSX } from "react";
 import { Link } from "react-router";
 
@@ -16,6 +23,7 @@ const NAV_ITEMS: readonly NavItem[] = [
     activePatterns: ["/library", "/doc/*"],
   },
   { to: "/quickref", label: "クイック表", icon: TableIcon, activePatterns: ["/quickref"] },
+  { to: "/casualties", label: "負傷者", icon: UsersIcon, activePatterns: ["/casualties"] },
   { to: "/settings", label: "設定", icon: SettingsIcon, activePatterns: ["/settings"] },
   { to: "/about", label: "このサイトについて", icon: InfoIcon, activePatterns: ["/about"] },
 ];

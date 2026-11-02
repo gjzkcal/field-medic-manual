@@ -39,6 +39,8 @@
     "allow-triage-upsert",
     "allow-triage-delete",
     "allow-quickref-list",
+    "allow-casualty-list",
+    "allow-casualty-apply",
     "allow-quickref-replace-all",
     "allow-fav-toggle",
     "allow-fav-list",

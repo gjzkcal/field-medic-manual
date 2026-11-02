@@ -47,6 +47,10 @@ describe("mainHrefOf", () => {
     );
   });
 
+  it("負傷者の画面はメインで同じ画面を開く", () => {
+    expect(mainHrefOf({ pathname: "/casualties", search: "", hash: "" })).toBe("/casualties");
+  });
+
   it("小窓にしかない画面（検索・お気に入り）はライブラリを開く", () => {
     expect(mainHrefOf({ pathname: "/search", search: "", hash: "" })).toBe("/library");
     expect(mainHrefOf({ pathname: "/favorites", search: "", hash: "" })).toBe("/library");

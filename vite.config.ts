@@ -25,6 +25,7 @@ const WEB_BASE = "/field-medic-manual/";
 const WEB_STATIC_ROUTES: Readonly<Record<string, string>> = {
   library: "ライブラリ",
   quickref: "クイック表",
+  casualties: "負傷者",
   settings: "設定",
   about: "このサイトについて",
 };

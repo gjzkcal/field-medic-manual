@@ -7,6 +7,8 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check } from "@tauri-apps/plugin-updater";
 
+import type { Casualty } from "@/lib/bindings/Casualty";
+import type { CasualtyOp } from "@/lib/bindings/CasualtyOp";
 import type { DocDetail } from "@/lib/bindings/DocDetail";
 import type { DocOutline } from "@/lib/bindings/DocOutline";
 import type { DocSummary } from "@/lib/bindings/DocSummary";
@@ -168,6 +170,15 @@ export async function historyList(limit: number): Promise<PrefItem[]> {
   return invoke<PrefItem[]>("history_list", { limit });
 }
 
+export async function casualtyList(): Promise<Casualty[]> {
+  return invoke<Casualty[]>("casualty_list");
+}
+
+/** 負傷者の記録への操作を 1 件適用し、全員の記録を返す。 */
+export async function casualtyApply(op: CasualtyOp): Promise<Casualty[]> {
+  return invoke<Casualty[]>("casualty_apply", { op });
+}
+
 export async function hotkeyList(): Promise<HotkeyBinding[]> {
   return invoke<HotkeyBinding[]>("hotkey_list");
 }
@@ -196,6 +207,7 @@ export async function mainWindowReady(): Promise<void> {
 const OVERLAY_MODE_EVENT = "overlay-mode";
 const OPEN_HREF_EVENT = "open-href";
 const SETTINGS_CHANGED_EVENT = "settings-changed";
+const CASUALTIES_CHANGED_EVENT = "casualties-changed";
 
 /** 小窓が呼び出されたとき（ホットキーやトレイ）。戻り値の関数を呼ぶと購読を解除する。 */
 export async function onOverlayMode(handler: (mode: OverlayMode) => void): Promise<() => void> {
@@ -215,6 +227,13 @@ export async function onOpenHref(handler: (href: string) => void): Promise<() =>
 export async function onSettingsChanged(handler: (key: string) => void): Promise<() => void> {
   return listen<string>(SETTINGS_CHANGED_EVENT, (event) => {
     handler(event.payload);
+  });
+}
+
+/** もう一方のウィンドウが負傷者の記録を書いたとき。 */
+export async function onCasualtiesChanged(handler: () => void): Promise<() => void> {
+  return listen<null>(CASUALTIES_CHANGED_EVENT, () => {
+    handler();
   });
 }
 
