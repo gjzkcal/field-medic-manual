@@ -13,6 +13,8 @@
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-02
+
 ### Added
 
 - 「負傷者」の画面を加えました（デスクトップ版のメイン・小窓と Web 版）。負傷者ごとに、打った薬・生理食塩水・止血帯・メモを記録でき、押し間違えた記録は取り消せます。カードに、薬の今の効能、ピーク・半分・体内から消えるまでの時間、小さなグラフを出します。小さなグラフを押すと大きなグラフで薬を重ねて見られます。デスクトップ版の記録はメインと小窓ですぐそろい、トレイにしまっても残り、アプリを終了すると消えます。Web 版の記録はこのブラウザに残ります。時間はコードの式から計算した目安です。
@@ -58,7 +60,7 @@
   - 配布版の画面に出すエラーの文面から、ファイルのパスなど内部の情報を除きました。詳しい内容はログに残します。
   - 画面の表示に失敗したときに内部の文面を出さず、読み込み直せる画面を出すようにしました。
   - 脆弱性の報告先、通信先、保存するデータ、鍵の扱いを [SECURITY.md](SECURITY.md) にまとめました。
-  - 部品の一覧（SBOM）をリリースに添付するようにしました。署名鍵はタグのリリースからだけ使えるようにしました。
+  - 部品の一覧（SBOM）をリリースに添付するようにしました。
 
 ## [0.6.0] - 2026-10-24
 
@@ -249,7 +251,8 @@
 - 設定の「使っている MOD」に合わせて、フローとクイック表の内容が切り替わります。
 - 起動時に新しい版を確かめ、自動で更新できます。
 
-[Unreleased]: https://github.com/gjzkcal/field-medic-manual/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/gjzkcal/field-medic-manual/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/gjzkcal/field-medic-manual/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/gjzkcal/field-medic-manual/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/gjzkcal/field-medic-manual/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/gjzkcal/field-medic-manual/compare/v0.4.0...v0.5.0
