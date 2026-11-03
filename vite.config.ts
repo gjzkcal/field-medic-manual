@@ -251,6 +251,9 @@ export default defineConfig(({ mode, command }) => {
       environment: "jsdom",
       include: ["src/**/*.test.{ts,tsx}", "scripts/**/*.test.ts"],
       restoreMocks: true,
+      // 変換の結果を残すと、bundle.ts の import.meta.glob も展開した時のまま使われ、足した原稿が検査から漏れる。
+      // 切っても全体で 1.5 s ほど遅くなるだけなので、検査の取りこぼしを防ぐほうを選ぶ
+      fsModuleCache: false,
     },
   };
 });
