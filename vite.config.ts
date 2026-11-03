@@ -235,8 +235,9 @@ export default defineConfig(({ mode, command }) => {
     // Rust のエラー表示を Vite が消さないようにする
     clearScreen: false,
     server: {
-      // Tauri は devUrl の固定ポートを見に行くので、使用中なら別ポートに逃げずに失敗させる
-      port: 1420,
+      // Tauri は devUrl の固定ポートを見に行くので、使用中なら別ポートに逃げずに失敗させる。
+      // Web 版は tauri:dev と同時に起動して見比べられるよう、別のポートにする
+      port: web ? 1430 : 1420,
       strictPort: true,
       host: host ?? false,
       ...(host === undefined ? {} : { hmr: { protocol: "ws", host, port: 1421 } }),
