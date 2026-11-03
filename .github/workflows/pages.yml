@@ -21,7 +21,7 @@ jobs:
     permissions:
       contents: read
     outputs:
-      index-sha256: ${{ steps.index.outputs.sha256 }}
+      library-sha256: ${{ steps.library.outputs.sha256 }}
     steps:
       # main など、配っていない原稿を公開しないよう、版のタグからだけ公開する
       - name: Check that a release tag is selected
@@ -73,10 +73,11 @@ jobs:
             exit 1
           fi
 
-      # 公開の後に本番を測る lighthouse ジョブが、CDN が新しい版を返し始めたかを見分けるのに使う
-      - name: Hash the entry page
-        id: index
-        run: echo "sha256=$(sha256sum dist-web/index.html | cut -d " " -f 1)" >> "$GITHUB_OUTPUT"
+      # 公開の後に本番を測る lighthouse ジョブが、CDN が新しい版を返し始めたかを見分けるのに使う。
+      # 写しは画面ごとに <title> が違うので、そのジョブが取る /library と同じ写しの値にする
+      - name: Hash the library page
+        id: library
+        run: echo "sha256=$(sha256sum dist-web/library.html | cut -d " " -f 1)" >> "$GITHUB_OUTPUT"
 
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
@@ -133,7 +134,7 @@ jobs:
       - name: Wait for the new version to be served
         env:
           PAGE_URL: ${{ needs.deploy.outputs.page_url }}
-          EXPECTED: ${{ needs.build.outputs.index-sha256 }}
+          EXPECTED: ${{ needs.build.outputs.library-sha256 }}
         run: |
           for i in $(seq 1 40); do
             actual=$(curl -fsS "${PAGE_URL}library" | sha256sum | cut -d " " -f 1 || true)
