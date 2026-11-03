@@ -101,13 +101,17 @@ GNU General Public License v3.0 またはそれ以降のバージョン（GPL-3.
 pnpm install
 cargo install cargo-about --locked --features cli   # 依存のライセンス表記の生成に使う
 pnpm tauri:dev                                      # 開発起動（DB などはインストール版と別のフォルダ）
-pnpm dev:web                                        # Web 版の開発起動（http://localhost:1420/field-medic-manual/）
+pnpm dev:web                                        # Web 版の開発起動（http://localhost:1430/field-medic-manual/。tauri:dev と同時に起動できる）
 pnpm build:web && pnpm preview:web                  # Web 版をビルドして確かめる（dist-web/）
+pnpm dev:web:lan                                    # 同じ LAN のスマホから開く（PC の IP と自己署名の HTTPS。下を参照）
+pnpm build:web && pnpm preview:web:lan              # ビルドした Web 版を同じ LAN のスマホから開く
 pnpm build:web && pnpm lighthouse:web               # Web 版の全ページの A11y・BP・SEO を Lighthouse で測る（Chrome、Windows で無ければ Edge。lighthouse-results/）
 pnpm lighthouse:web --url https://gjzkcal.github.io/field-medic-manual/  # 公開中の Web 版の Performance を測る
 pnpm lint && pnpm test                              # 確認
 cd src-tauri && cargo clippy --all-targets -- -D warnings && cargo test
 ```
+
+スマホでの確認: `pnpm dev:web:lan` などが表示する Network の URL（`https://<PC の IP>:1430/field-medic-manual/`、preview は 4173）を、同じ Wi-Fi のスマホのブラウザで開きます。証明書は自己署名なので警告が出ます（iPhone の Safari では「詳細を表示」→「この Web サイトを閲覧」）。初回の起動で Windows のファイアウォールが Node.js の通信の許可を求めたら、プライベート ネットワークだけを許可してください。LAN の他の端末から開発サーバーに届くようになるので、確認が終わったら止めてください。
 
 依存（npm・cargo・GitHub Actions・Rust の版）は [Renovate](https://docs.renovatebot.com/) が毎週月曜の朝（JST）に PR にします。設定は `.github/renovate.json5` にあります。開発用ツールの小さな更新は CI が通れば自動でマージされ、それ以外は PR を見てマージします。
 
