@@ -78,11 +78,18 @@ jobs:
               - 'THIRD_PARTY_LICENSES.txt'
               - '.github/workflows/ci.yml'
 
-  frontend:
+  # lint・test・Web 版のビルドは互いに依らないので、別々のランナーで同時に走らせて待ち時間を縮める
+  frontend-check:
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
     runs-on: windows-latest
     timeout-minutes: 10
+    strategy:
+      # 1 つが落ちても残りを最後まで走らせ、直すべきものを 1 回で全部出す
+      fail-fast: false
+      matrix:
+        # Web 版は alias とエントリの差し替えでビルドするので、壊れたかはバンドルして初めて分かる
+        task: [lint, test, "build:web"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -97,10 +104,24 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - run: pnpm lint
-      - run: pnpm test
-      # Web 版は alias とエントリの差し替えでビルドするので、壊れたかはバンドルして初めて分かる
-      - run: pnpm build:web
+      - run: pnpm ${{ matrix.task }}
+
+  # main のルールセットは必須のチェックを「frontend」の名前で待つので、分けた確認の結果をこの名前にまとめる。
+  # 画面側の変更が無いときは、分ける前と同じく skipped にする（必須のチェックは skipped を通す）
+  frontend:
+    needs: [changes, frontend-check]
+    if: ${{ !cancelled() && needs.changes.outputs.frontend == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check that all frontend checks passed
+        env:
+          RESULT: ${{ needs.frontend-check.result }}
+        run: |
+          if [ "$RESULT" != "success" ]; then
+            echo "::error::画面側の確認（lint・test・build:web）のどれかが通りませんでした（${RESULT}）"
+            exit 1
+          fi
 
   rust:
     needs: changes

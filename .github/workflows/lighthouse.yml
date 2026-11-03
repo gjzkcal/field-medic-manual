@@ -2,7 +2,8 @@
 # リリースの前に、main の Web 版に崩れが無いかを確かめるため。原稿によって結果が変わるので、全部を測る。
 # Performance はここでは測らない。ランナーの速さでぶれ、利用者が開く本番とも配信が違うので、
 # Pages に公開した後に本番を測る（pages.yml）。
-# 結果の表はジョブの概要に、レポート（HTML・JSON）は成果物の lighthouse に残る。
+# 全ページを 3 つのジョブに分けて同時に測り、待ち時間を縮める。
+# 結果の表は分担ごとのジョブの概要に、レポート（HTML・JSON）は分担ごとのフォルダに分けて成果物の lighthouse に残る。
 name: Lighthouse
 
 on:
@@ -59,8 +60,14 @@ jobs:
   lighthouse:
     # Chrome が最初から入っている
     runs-on: ubuntu-latest
-    # 全ページ × 2 端末の計測（今は 84 回。3 本ずつ並べる）とビルドに余裕を持たせる。原稿が増えると延びる
-    timeout-minutes: 45
+    # 分担ごとの計測（今は 44 ページ × 2 端末 = 88 回の 3 分の 1。1 台で 3 本ずつ並べる）とビルドに余裕を持たせる。原稿が増えると延びる
+    timeout-minutes: 20
+    strategy:
+      # 1 つの分担が落ちても残りを最後まで測り、100 を切ったページを 1 回で全部出す
+      fail-fast: false
+      matrix:
+        # ランナー（4 コア）1 台で 3 本ずつ並べたまま、ジョブの数で時間を割る
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -77,12 +84,29 @@ jobs:
 
       - run: pnpm build:web
 
-      - run: pnpm lighthouse:web
+      - run: pnpm lighthouse:web --shard ${{ matrix.shard }}/${{ strategy.job-total }}
 
       # 失敗したときこそ、どの監査が落ちたかをレポートで見るので、結果に関わらず残す
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
-          name: lighthouse
+          name: lighthouse-${{ matrix.shard }}
           path: lighthouse-results/
+          retention-days: 30
+
+  # 分担ごとの成果物を 1 つにまとめ、レポートを 1 回のダウンロードで見られるようにする
+  merge:
+    needs: lighthouse
+    # 失敗したときこそレポートを見るので、計測の結果に関わらずまとめる
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/upload-artifact/merge@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: lighthouse
+          pattern: lighthouse-*
+          # どの分担も summary.md を出すので、分担ごとのフォルダに分けて上書きを避ける
+          separate-directories: true
+          delete-merged: true
           retention-days: 30

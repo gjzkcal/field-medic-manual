@@ -3,6 +3,7 @@
 //     合否。Web 版のビルド（dist-web）を vite preview で配り、ビルドにある全ページ（画面と原稿ごと）を
 //     モバイルとデスクトップで A11y・BP・SEO だけ 1 回ずつ測る。どれかが 100 を切ったら失敗する。
 //     この 3 つはページの中身で決まりぶれないので、回数ではなく測るページの広さで漏れを防ぐ。
+//     --shard 2/3 を付けると、全ページを 3 つに分けた 2 番目だけを測る（CI で複数のジョブに分けて時間を縮めるため）。
 //   pnpm lighthouse:web --url https://gjzkcal.github.io/field-medic-manual/
 //     性能。公開した Web 版の代表ページを、モバイルとデスクトップで Performance だけ 5 回ずつ測り、中央値を記録する。
 //     利用者が開くもの（リリースの版と Pages の配信）の数字にするため、preview ではなく本番を測る。
@@ -28,10 +29,13 @@ import {
   failingRows,
   pagesFromBuild,
   parseReport,
+  parseShard,
+  shardPages,
   summarize,
   toMarkdown,
   type FormFactor,
   type Run,
+  type Shard,
 } from "./lib/lighthouse.ts";
 
 // 手元と PageSpeed Insights の点数と比べられるよう、版を固定する（Renovate が .github/renovate.json5 の正規表現で追う）
@@ -58,11 +62,23 @@ function fail(message: string): never {
 }
 
 const { values: options, positionals } = parseArgs({
-  options: { url: { type: "string" } },
+  options: { url: { type: "string" }, shard: { type: "string" } },
   allowPositionals: true,
 });
 const outDir = join(ROOT, positionals[0] ?? "lighthouse-results");
 const production = options.url;
+// 性能は 1 本ずつ測る前提なので、分けて同時に測ると数字が悪くなる
+if (production !== undefined && options.shard !== undefined) {
+  fail("--shard は --url と一緒に使えません");
+}
+function shardOption(spec: string | undefined): Shard | undefined {
+  try {
+    return spec === undefined ? undefined : parseShard(spec);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+}
+const shard = shardOption(options.shard);
 // pnpm の実体（pnpm.cjs）を node で直接動かす。Windows の pnpm.cmd はシェルを通さないと起動できず、
 // シェルを通すと引数の扱いが OS で変わるため
 const pnpm = process.env["npm_execpath"] ?? fail("pnpm lighthouse:web から実行してください");
@@ -144,17 +160,21 @@ function plan(): Plan {
   if (!existsSync(join(DIST, "index.html"))) {
     fail("dist-web がありません。先に pnpm build:web を実行してください");
   }
-  const pages = pagesFromBuild(
+  const allPages = pagesFromBuild(
     readdirSync(DIST, { recursive: true, encoding: "utf8" }).filter((f) => f.endsWith(".html")),
   );
+  const pages = shard === undefined ? allPages : shardPages(allPages, shard);
+  const scope =
+    shard === undefined
+      ? `全 ${String(allPages.length)} ページ`
+      : `全 ${String(allPages.length)} ページのうち分担 ${String(shard.index)}/${String(shard.total)} の ${String(pages.length)} ページ`;
   return {
     base: `http://localhost:${String(PREVIEW_PORT)}${BASE}`,
     pages,
     runs: 1,
     categories: "accessibility,best-practices,seo",
     concurrency: GATE_CONCURRENCY,
-    heading: (version) =>
-      `Lighthouse ${version}: A11y・BP・SEO（全 ${String(pages.length)} ページ）`,
+    heading: (version) => `Lighthouse ${version}: A11y・BP・SEO（${scope}）`,
   };
 }
 

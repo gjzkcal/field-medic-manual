@@ -72,6 +72,30 @@ export function pagesFromBuild(htmlFiles: readonly string[]): string[] {
     });
 }
 
+/** 全ページを n 個の分担に分けたうちの i 番目（1 始まり）。CI で複数のジョブに分けて同時に測るため */
+export interface Shard {
+  index: number;
+  total: number;
+}
+
+export function parseShard(spec: string): Shard {
+  const match = /^(\d+)\/(\d+)$/.exec(spec);
+  const index = Number(match?.[1]);
+  const total = Number(match?.[2]);
+  if (match === null || total < 1 || index < 1 || index > total) {
+    throw new Error(`--shard は 1/3 のように「番号/分担の数」で指定してください（${spec}）`);
+  }
+  return { index, total };
+}
+
+/**
+ * 順に 1 つずつ配る。pagesFromBuild は画面を先に、原稿を名前順に並べるので、
+ * 重い原稿や画面が 1 つの分担に偏らず、分担ごとの時間がそろう
+ */
+export function shardPages(pages: readonly string[], { index, total }: Shard): string[] {
+  return pages.filter((_, i) => i % total === index - 1);
+}
+
 export interface Run {
   page: string;
   formFactor: FormFactor;
