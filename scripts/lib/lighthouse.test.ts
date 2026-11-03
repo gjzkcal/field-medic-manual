@@ -6,6 +6,8 @@ import {
   METRICS,
   pagesFromBuild,
   parseReport,
+  parseShard,
+  shardPages,
   summarize,
   toMarkdown,
   type Report,
@@ -87,6 +89,38 @@ describe("pagesFromBuild", () => {
         "library.html",
       ]),
     ).toEqual(["library", "quickref", "doc/airway", "doc/pain"]);
+  });
+});
+
+describe("parseShard", () => {
+  it("i/n を 1 始まりの番号と分担の数にする", () => {
+    expect(parseShard("2/3")).toEqual({ index: 2, total: 3 });
+    expect(parseShard("1/1")).toEqual({ index: 1, total: 1 });
+  });
+
+  it.each(["0/3", "4/3", "1/0", "1", "a/3", "1.5/3", "-1/3", "1/3/5", ""])(
+    "%j は例外にする",
+    (spec) => {
+      expect(() => parseShard(spec)).toThrow("--shard");
+    },
+  );
+});
+
+describe("shardPages", () => {
+  const pages = ["library", "quickref", "doc/a", "doc/b", "doc/c", "doc/d", "doc/e"];
+
+  it("順に配り、どのページもちょうど 1 つの分担に入る", () => {
+    const shards = [1, 2, 3].map((index) => shardPages(pages, { index, total: 3 }));
+    expect(shards).toEqual([
+      ["library", "doc/b", "doc/e"],
+      ["quickref", "doc/c"],
+      ["doc/a", "doc/d"],
+    ]);
+    expect(shards.flat().toSorted()).toEqual(pages.toSorted());
+  });
+
+  it("分担が 1 つなら全ページ", () => {
+    expect(shardPages(pages, { index: 1, total: 1 })).toEqual(pages);
   });
 });
 
