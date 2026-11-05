@@ -22,14 +22,15 @@ pub fn upsert(conn: &Connection, input: &TriageUpsertInput) -> Result<(), AppErr
         .map_err(|e| AppError::Internal(format!("mod_targets を JSON にできません: {e}")))?;
     conn.execute(
         "INSERT INTO triage_flows (id, title, description, mod_targets, mod_channel, verified_at,
-           json, search_text, source_hash, version, updated_at)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
+           json, search_text, source_hash, version, updated_at, sort_order)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)
          ON CONFLICT(id) DO UPDATE SET
            title = excluded.title, description = excluded.description,
            mod_targets = excluded.mod_targets, mod_channel = excluded.mod_channel,
            verified_at = excluded.verified_at, json = excluded.json,
            search_text = excluded.search_text, source_hash = excluded.source_hash,
-           version = excluded.version, updated_at = excluded.updated_at",
+           version = excluded.version, updated_at = excluded.updated_at,
+           sort_order = excluded.sort_order",
         params![
             input.id,
             input.title,
@@ -42,6 +43,7 @@ pub fn upsert(conn: &Connection, input: &TriageUpsertInput) -> Result<(), AppErr
             input.source_hash,
             input.version,
             now,
+            input.order,
         ],
     )?;
     Ok(())
@@ -124,7 +126,7 @@ fn read_summary(row: &Row<'_>) -> rusqlite::Result<TriageSummary> {
     })
 }
 
-/// フローの一覧（タイトル順）。
+/// フローの一覧（order の順。order のないものはタイトル順で後ろ）。
 ///
 /// # Errors
 ///
@@ -132,7 +134,8 @@ fn read_summary(row: &Row<'_>) -> rusqlite::Result<TriageSummary> {
 pub fn list(conn: &Connection) -> Result<Vec<TriageSummary>, AppError> {
     Ok(conn
         .prepare(&format!(
-            "SELECT {SUMMARY_COLUMNS} FROM triage_flows ORDER BY title COLLATE NOCASE, id"
+            "SELECT {SUMMARY_COLUMNS} FROM triage_flows
+             ORDER BY sort_order IS NULL, sort_order, title COLLATE NOCASE, id"
         ))?
         .query_map([], read_summary)?
         .collect::<rusqlite::Result<_>>()?)
@@ -180,6 +183,7 @@ pub mod fixtures {
             mod_channel: None,
             verified_at: Some("2026-09-26".to_owned()),
             version: 1,
+            order: None,
             json: format!(r#"{{"id":"{id}"}}"#),
             search_text: search_text.to_owned(),
             source_hash: format!("hash-{id}"),
@@ -221,6 +225,34 @@ mod tests {
         assert_eq!(detail.summary.mod_channel, Some(ModChannel::Dev));
         assert_eq!(detail.summary.source_hash, "hash-b-flow");
         assert_eq!(detail.json, r#"{"id":"b-flow"}"#);
+    }
+
+    #[test]
+    fn list_orders_by_order_then_title() {
+        let conn = test_conn();
+        upsert(&conn, &flow("a-flow", "A", "")).expect("保存できる");
+        upsert(
+            &conn,
+            &TriageUpsertInput {
+                order: Some(20),
+                ..flow("z-flow", "Z", "")
+            },
+        )
+        .expect("保存できる");
+        upsert(
+            &conn,
+            &TriageUpsertInput {
+                order: Some(10),
+                ..flow("y-flow", "Y", "")
+            },
+        )
+        .expect("保存できる");
+        let flows = list(&conn).expect("一覧を読める");
+        // order のあるものが小さい順に先、order のないものはその後ろ
+        assert_eq!(
+            flows.iter().map(|f| f.id.as_str()).collect::<Vec<_>>(),
+            ["y-flow", "z-flow", "a-flow"]
+        );
     }
 
     #[test]

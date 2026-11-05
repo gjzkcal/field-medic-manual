@@ -171,6 +171,26 @@ describe("replay", () => {
     it("サブフローが見つからなければ例外（読み込み側で先に確かめる前提）", () => {
       expect(() => replay(parent, lookupOf(parent), [0])).toThrow(/child/);
     });
+
+    // 「気道と呼吸を確かめる」は「気道を開ける」と「気胸を確かめる」を呼ぶので、2 段の入れ子を経路で再生できること
+    it("サブフローの中のサブフローから、順に呼び出し元へ戻る", () => {
+      const middle = makeFlow("middle", "sf", {
+        sf: subflow("child", "me"),
+        me: end("中の結果"),
+      });
+      const top = makeFlow("top", "sf", { sf: subflow("middle", "after"), after: end("上の結果") });
+      const lookup3 = lookupOf(top, middle, child);
+
+      const inner = replay(top, lookup3, []);
+      expect([inner.flow.id, inner.nodeId, inner.depth]).toEqual(["child", "cq", 2]);
+
+      // 子の end → 中の end → 上の after の順に「元のフローへ戻る」で上がる
+      const midEnd = replay(top, lookup3, [1, 0]);
+      expect([midEnd.flow.id, midEnd.nodeId, midEnd.depth]).toEqual(["middle", "me", 1]);
+      const after = replay(top, lookup3, [1, 0, 0]);
+      expect([after.flow.id, after.nodeId, after.depth]).toEqual(["top", "after", 0]);
+      expect(after.path).toEqual([1, 0, 0]);
+    });
   });
 });
 

@@ -127,6 +127,7 @@ describe("データ層のラッパ", () => {
       modChannel: null,
       verifiedAt: null,
       version: 1,
+      order: null,
       json: "{}",
       searchText: "",
       sourceHash: "h",

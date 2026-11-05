@@ -1,0 +1,61 @@
+# PAWS の W（Wounds、傷）と S（Splint、副子固定）に当たる。「負傷者を見つけたら」から、最後に呼ばれる。単独でも実行できる。
+# 各ノードの説明は ACE Medical Dev 1.5.36 の仕様（ソースと実機で確かめた事実）に基づく。
+# ACE Medical に副木（Splint）の物品は無く、医療ラジアルメニューの「骨折の治療」に出るのは医療キットなので、W と S をまとめた。
+# 処置の選び方は作者の方針（見落とした出血は「出血を止める」に戻り、傷んだ部位と骨折は医療キットで治す）。
+# 次の行はフローの形式（JSON Schema）。VS Code で開くと、キーの補完と書き間違いの表示が効く
+$schema: ./triage-flow.v1.schema.json
+id: wounds-fractures
+title: 傷と骨折を確かめる
+description: PAWS の W と S。見落とした出血を探し、傷んだ部位と骨折を医療キットで治す
+modTarget: [core]
+modChannel: dev
+verifiedAt: "2026-11-04"
+version: 1
+order: 90
+march: [w, s]
+start: q-wounds
+nodes:
+  q-wounds:
+    type: question
+    text: 診察で、残っている傷はある？
+    help: >-
+      診察（医療ラジアルメニューの「診察する」）には、出血・部位ごとの損傷・腕と脚の骨折が出る。
+      骨折は腕・脚を分けて出る。止血帯を巻いたままの腕・脚も骨折として出る
+    choices:
+      - { label: 出血が残っている, tone: danger, next: sf-bleeding }
+      - { label: 部位の損傷・骨折がある, tone: danger, next: a-medkit }
+      - { label: ない, tone: no, next: end-ok }
+
+  sf-bleeding:
+    type: subflow
+    flowId: massive-bleeding
+    next: q-wounds
+
+  a-medkit:
+    type: action
+    text: 医療キットで、傷んだ部位と骨折を治す
+    help: >-
+      医療ラジアルメニューの「骨折の治療」にも医療キットが出る。部位に使い続けると、部位の HP を 1 回 10 回復する（約 3.33 HP/s）。
+      血液は戻らず、痛みも減らない。医療キット自体は減らない。
+      止血帯を巻いた腕・脚は、部位の HP にかかわらず骨折として出る。止血帯を外すと部位の HP から計算し直される（包帯を巻いてから外す）
+    items: [医療キット]
+    ifMissing: { next: end-no-medkit }
+    links:
+      - doc:medical-kit.md#効果
+      - doc:medical-kit.md#使い方
+      - doc:vitals.md#診察画面の表示
+      - doc:tccc-march.md#paws
+    next: q-wounds
+
+  end-no-medkit:
+    type: end
+    outcome: warn
+    text: 医療キットを持っている仲間に頼む
+    help: 腕の損傷は照準を、脚の損傷は移動を悪くする（骨折の表示はこの損傷から出る）
+    links:
+      - doc:medical-kit.md#入手
+
+  end-ok:
+    type: end
+    outcome: ok
+    text: 傷と骨折を確かめた

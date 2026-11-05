@@ -1,0 +1,59 @@
+# MARCH の M（Massive Bleeding、大出血）に当たる。「負傷者を見つけたら」から、周囲が安全になったら最初に呼ばれる。単独でも実行できる。
+# 各ノードの説明は ACE Medical Dev 1.5.36 の仕様（ソースと実機で確かめた事実）に基づく。
+# 処置の選び方は作者の方針（包帯が基本。物品がなければ医療キットか仲間から受け取る）。
+# 次の行はフローの形式（JSON Schema）。VS Code で開くと、キーの補完と書き間違いの表示が効く
+$schema: ./triage-flow.v1.schema.json
+id: massive-bleeding
+title: 出血を止める
+description: MARCH の M。出血をすべて包帯で止める
+modTarget: [core]
+modChannel: dev
+verifiedAt: "2026-11-04"
+version: 1
+order: 30
+march: [m]
+start: q-bleeding
+nodes:
+  q-bleeding:
+    type: question
+    text: 出血している？
+    help: >-
+      診察に出血が出る。出血の程度は 3 段階（10 ml/s 未満、10〜20、20 以上）で表示される。
+      自分が出血していると、画面の縁が赤く脈打つ。
+      止血帯で止めた腕・脚も、包帯を巻くまでは出血の扱いが残る
+    choices:
+      - { label: はい, tone: danger, next: a-bandage }
+      - { label: いいえ, tone: no, next: end-ok }
+
+  a-bandage:
+    type: action
+    text: 包帯を巻く
+    help: >-
+      包帯は 1 本で、巻いた部位のグループ全体の出血を消す（例: 頭と首、腹と腰、片腕全体）。止血帯を巻いた腕・脚にも巻く。
+      出血が 1 つもなくなると、10 秒後から血液が回復し始める。
+      止血帯（「止血帯を使う」）は腕・脚だけに巻け、出血はほぼ止まるが、包帯を巻くまで血液は回復しない
+    items: [包帯]
+    ifMissing: { next: a-bleeding-no-kit }
+    links:
+      - doc:bandage.md
+      - doc:tourniquet.md
+      - doc:tccc-march.md#march
+    next: q-bleeding
+
+  a-bleeding-no-kit:
+    type: action
+    text: 医療キットの包帯を使うか、仲間から受け取る
+    help: >-
+      医療キットには包帯が 8 個入っている。医療キットで部位を治しても、出血は止まらず血液も戻らない。
+      止血帯があれば、腕・脚の出血はほぼ止められる
+    links:
+      - doc:medical-kit.md
+    next: q-bleeding
+
+  end-ok:
+    type: end
+    outcome: ok
+    text: 出血を止めた
+    help: 出血が 1 つもなくなってから 10 秒後に、血液が回復し始める
+    links:
+      - doc:bleeding-system.md#血液の回復

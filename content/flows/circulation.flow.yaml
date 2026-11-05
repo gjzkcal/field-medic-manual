@@ -1,0 +1,96 @@
+# MARCH の C（Circulation、循環）のうち、失血と止血帯の見直しに当たる。脈と心停止は「負傷者を見つけたら」と「心停止」が持つ。
+# 「負傷者を見つけたら」から、意識がある負傷者と、意識がなく脈がある負傷者で呼ばれる。単独でも実行できる。
+# 各ノードの説明は ACE Medical Dev 1.5.36 の仕様（ソースと実機で確かめた事実）に基づく。
+# 処置の選び方は作者の方針（失血には生理食塩水、包帯を巻いた腕・脚の止血帯は外す）。
+# 失血の Class は Circulation を入れていないと表示されないので、MOD で問いを変える。
+# 次の行はフローの形式（JSON Schema）。VS Code で開くと、キーの補完と書き間違いの表示が効く
+$schema: ./triage-flow.v1.schema.json
+id: circulation
+title: 失血と止血帯を見直す
+description: MARCH の C。失血を生理食塩水で補い、包帯を巻いた腕・脚の止血帯を外す
+modTarget: [core, circulation]
+modChannel: dev
+verifiedAt: "2026-11-04"
+version: 1
+order: 60
+march: [c]
+start: b-class
+nodes:
+  b-class:
+    type: branch
+    cases:
+      - { mods: [circulation], next: q-class }
+    else: q-blood-core
+
+  q-class:
+    type: question
+    text: 失血は Class II 以上？
+    help: >-
+      診察（医療ラジアルメニューの「診察する」）とインベントリに「Class I〜IV hemorrhage」と出る。Class II は血液 70% 以下。
+      Class II 以上は状態が Stable でないので、意識不明なら自然には目覚めず、炭酸アンモニウムも効かない
+    choices:
+      - { label: Class II 以上, tone: danger, next: a-saline }
+      - { label: Class I か失血なし, tone: yes, next: q-tourniquet }
+
+  q-blood-core:
+    type: question
+    text: 診察の失血が多い？
+    help: >-
+      診察の「失血」の程度は、血液の残りで 4 段階（81.25% 超・62.51% 超・43.76% 超・それ以下）。血液 50% 以下で画面の色が抜ける。
+      血液が 33.3% 以下の間は、意識不明のまま目覚めない（エピネフリンを打っても）
+    choices:
+      - { label: 多い, tone: danger, next: a-saline }
+      - { label: 少ないか失血なし, tone: yes, next: q-tourniquet }
+
+  a-saline:
+    type: action
+    text: 生理食塩水を入れる
+    help: >-
+      1 袋で血液の 25% を 90 秒かけて入れる（例: 38% → 63%、もう 1 袋で 88%）。付けている間は次の袋を付けられない。
+      出血が残っていると追いつかないことがある。タイマーは 1 袋が入る時間（90 秒）
+    items: [生理食塩水]
+    ifMissing: { next: a-no-saline }
+    timerSec: 90
+    links:
+      - doc:saline.md
+    next: b-class
+
+  a-no-saline:
+    type: action
+    text: 医療キットか仲間から生理食塩水を受け取る
+    help: >-
+      医療キットには生理食塩水が 3 袋入っている。
+      なければ、出血が止まっていれば 10 秒後から自然に戻る（Circulation では毎分 4.4%。40% → 70% に約 7 分）
+    links:
+      - doc:bleeding-system.md#血液の回復
+    next: q-tourniquet
+
+  q-tourniquet:
+    type: question
+    text: 止血帯を巻いたままの腕・脚がある？
+    help: >-
+      診察画面に止血帯が出る。巻いた腕・脚は、照準・移動の損傷（0.7）として扱われ、診察画面に骨折として出る。
+      止血帯で止めた傷も出血の扱いが残り、包帯を巻くまで血液は回復しない
+    choices:
+      - { label: ある, tone: danger, next: a-remove-tourniquet }
+      - { label: ない, tone: no, next: end-ok }
+
+  a-remove-tourniquet:
+    type: action
+    text: 包帯を巻いた腕・脚の止血帯を外す
+    help: >-
+      外す操作はその場で外れる。包帯で出血を消した腕・脚なら、外しても出血は戻らない。
+      包帯を巻いていない腕・脚の止血帯は外さない（元の速さで出血する）
+    links:
+      - doc:tourniquet.md#止血帯を巻いたままにしたとき
+      - doc:tourniquet.md#使い方
+      - doc:tccc-march.md#march
+    next: end-ok
+
+  end-ok:
+    type: end
+    outcome: ok
+    text: 失血と止血帯を見直した
+    help: 生理食塩水を付けたなら、90 秒たったら失血をもう一度確かめる
+    links:
+      - doc:saline.md

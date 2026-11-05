@@ -357,6 +357,8 @@ pub struct TriageUpsertInput {
     /// YYYY-MM-DD
     pub verified_at: Option<String>,
     pub version: u32,
+    /// 一覧での順番（小さいほど前）。ないものはタイトル順で後ろに並ぶ
+    pub order: Option<u32>,
     /// フロー全体の JSON（形は TS の `src/features/triage/schema.ts`）
     pub json: String,
     /// ノードの文などを改行でつないだもの（検索用）

@@ -264,6 +264,30 @@ describe("FlowRunner", () => {
     expect(screen.getByText(/Core \+ Breathing/)).toBeDefined();
   });
 
+  it("MARCH の文字をバッジで出す。ノードの march がフロー全体の march より優先する", async () => {
+    const flow = makeFlow(
+      "root",
+      "q",
+      {
+        q: question("出血している？", "a", "e"),
+        a: { type: "action", text: "回復体位にする", next: "e", march: ["a"] },
+        e: end("終わり"),
+      },
+      { march: ["m"] },
+    );
+    renderRunner("/triage/root", flow);
+    const badges = (): string[] =>
+      screen
+        .getAllByRole("list", { name: "TCCC・MARCH PAWS の段階" })
+        .flatMap((list) => [...list.querySelectorAll("li")].map((li) => li.textContent));
+    expect(badges()).toEqual(["M 大出血"]);
+    expect(await axeViolations()).toEqual([]);
+
+    press("1");
+    expect(heading()).toBe("回復体位にする");
+    expect(badges()).toEqual(["A 気道"]);
+  });
+
   it("質問・タイマーのある処置・終わりの画面で、axe の違反がない（WCAG 2.2 A・AA）", async () => {
     renderRunner();
     expect(await axeViolations()).toEqual([]);
