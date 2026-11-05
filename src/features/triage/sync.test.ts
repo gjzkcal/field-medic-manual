@@ -73,6 +73,7 @@ describe("syncFlows", () => {
         modChannel: "dev",
         verifiedAt: "2026-09-26",
         version: 2,
+        order: 30,
       },
     );
     await syncFlows([source(flow)], db);
@@ -83,6 +84,7 @@ describe("syncFlows", () => {
       modChannel: "dev",
       verifiedAt: "2026-09-26",
       version: 2,
+      order: 30,
       sourceHash: "hash-meta",
     });
     expect(db.saved[0]?.searchText.split("\n")[0]).toBe("説明");

@@ -1,147 +1,43 @@
-# 「負傷者を見つけたら」から、意識がないときにサブフローとして呼ばれる。単独でも実行できる。
-# 各ノードの説明は ACE Medical Dev 1.5.36 の仕様（ソースと実機で確かめた事実）に基づく。
+# MARCH の A と R をまとめて確かめる。「気道を開ける」（airway）と「気胸を確かめる」（pneumothorax）を順に呼ぶ。
+# 「負傷者を見つけたら」から、意識がない負傷者の SpO2 が低いときに、もう一度確かめるために呼ばれる。単独でも実行できる。
+# id はお気に入り・履歴・クイック表のリンクで使っているので変えない。
 # Breathing を入れていなければ、設定の「使っている MOD」で branch がすぐ終わりへ進む。
-# 処置の選び方は作者の方針（気道は King LT、なければ嘔吐物の除去とあご先挙上。物品がなければ仲間から受け取る）。
-# 詳しくはマニュアルの「気道管理」「呼吸と気胸」を見る。
 # 次の行はフローの形式（JSON Schema）。VS Code で開くと、キーの補完と書き間違いの表示が効く
 $schema: ./triage-flow.v1.schema.json
 id: airway-breathing
 title: 気道と呼吸を確かめる
-description: 意識がない負傷者の気道閉塞と気胸を確かめる（Breathing）
+description: MARCH の A と R。意識がない負傷者の気道を開け、気胸を確かめる（Breathing）
 modTarget: [breathing]
 modChannel: dev
-verifiedAt: "2026-09-28"
-version: 4
+verifiedAt: "2026-11-04"
+version: 5
+order: 40
 start: b-breathing
 nodes:
   b-breathing:
     type: branch
     cases:
-      - { mods: [breathing], next: q-airway }
+      - { mods: [breathing], next: sf-airway }
     else: end-no-breathing
 
-  q-airway:
-    type: question
-    text: 気道が塞がっている？
-    help: >-
-      頭の「Check respiratory rate」（3 秒、意識不明の相手だけ）で呼吸数が 0 なら、
-      気道閉塞か緊張性気胸か心停止。舌根沈下は見た目では分からない（Lift chin は塞がっていなくても出る）。
-      嘔吐で塞がっているときは、頭に「Clear vomit」が出る
-    choices:
-      - { label: 塞がっている（呼吸数 0）, tone: danger, next: a-king-lt }
-      - { label: 塞がっていない, tone: no, next: q-chest }
+  sf-airway:
+    type: subflow
+    flowId: airway
+    next: sf-pneumothorax
 
-  a-king-lt:
-    type: action
-    text: King LT を入れる（Insert King LT）
-    help: >-
-      頭に使う。入れた時点で舌根沈下と嘔吐の両方が解除され、入れている間はどちらも起きない。
-      自分には使えない。あとで外せるが、外すと嘔吐を防げなくなる。
-      King LT は初期装備に無く、補給で手に入れる
-    items: [King LT]
-    ifMissing: { next: q-vomit }
-    links:
-      - doc:king-lt.md
-      - doc:airway.md#気道閉塞の種類
-    next: q-chest
-
-  q-vomit:
-    type: question
-    text: 頭に「Clear vomit」が出ている？
-    help: 「Clear vomit」は嘔吐で塞がっているときだけ出る。出ていなければ、舌根沈下か、緊張性気胸（または心停止）
-    choices:
-      - { label: 出ている（嘔吐）, tone: danger, next: a-clear-vomit }
-      - { label: 出ていない（舌根沈下）, tone: danger, next: a-lift-chin }
-
-  a-clear-vomit:
-    type: action
-    text: 嘔吐物を除去する（Clear vomit）
-    help: >-
-      頭に使う（1 秒）。解除されるのは嘔吐だけ。意識不明の間は約 60 秒ごとに 10% で再び吐く（吐いたあと 6 分は吐かない）。
-      左右の回復体位にすると、以後の嘔吐は起きない（うつ伏せでは起きる）。
-      舌根沈下が重なっていることもあるので、呼吸数をもう一度確かめる
-    links:
-      - doc:airway.md#嘔吐物の除去
-      - doc:airway.md#回復体位
-    next: q-chest
-
-  a-lift-chin:
-    type: action
-    text: あご先を挙上する（Lift chin）
-    help: >-
-      頭の操作（1 秒）。舌根沈下だけを解除する。仰向けのときだけ出る。
-      回復体位（左右の横向き）にしてあれば舌根沈下は起きないので、それでも呼吸数が 0 なら緊張性気胸か心停止を疑う。
-      仰向けに戻すと、舌根沈下の抽選（15%）がやり直しになる
-    links:
-      - doc:airway.md#あご先挙上
-      - doc:airway.md#回復体位
-    next: q-chest
-
-  q-chest:
-    type: question
-    text: 診察に気胸が出ている？
-    help: >-
-      医療ラジアルメニューの「診察する」で、「Tension pneumothorax」（緊張性）か「Open pneumothorax」（開放性）が出る。両方あるときは緊張性が出る。
-      気胸は胸への銃弾・近接攻撃の強い打撃で起きる（爆発・落下では起きない）
-    choices:
-      - { label: Tension pneumothorax, tone: danger, next: a-ncd }
-      - { label: Open pneumothorax, tone: danger, next: a-chest-seal }
-      - { label: 出ていない, tone: no, next: end-ok }
-
-  a-ncd:
-    type: action
-    text: 胸に NCD キットを使う（Perform needle decompression）
-    help: >-
-      緊張性気胸だけを解除する（6.3 秒）。開放性気胸は残るので、もう一度診察すると「Open pneumothorax」が出る。
-      緊張性の間は呼吸数 0 になり、放置すると気胸 0.18 で約 14 分、0.72 で約 7 分で心停止する
-    items: [NCD キット（NCD Kit）]
-    ifMissing: { next: end-no-ncd }
-    links:
-      - doc:ncd-kit.md
-      - doc:breathing.md#気胸の見分け方
-    next: q-chest
-
-  end-no-ncd:
-    type: end
-    outcome: critical
-    text: NCD キットを持っている仲間から受け取る
-    help: >-
-      チェストシールでは緊張性気胸は治らない。NCD キットは医療キットにも初期装備にも無く、補給（アーセナル）で手に入れる。
-      緊張性の間は呼吸数 0 になり、放置すると気胸 0.18 で約 14 分、0.72 で約 7 分で心停止する
-    links:
-      - doc:items.md#breathing-の物品の入手
-
-  a-chest-seal:
-    type: action
-    text: 胸にチェストシールを貼る（Use chest seal）
-    help: >-
-      開放性気胸を 0 に戻して治す（緊張性は治さない）。気胸がないと使えない。自分に使うときは伏せではできない。
-      放置すると約 60 秒ごとに悪化し（50% で +0.18、5% で緊張性に）、0.75 に達すると心停止する
-    items: [チェストシール（Chest Seal）]
-    ifMissing: { next: end-no-chest-seal }
-    links:
-      - doc:chest-seal.md
-    next: q-chest
-
-  end-no-chest-seal:
-    type: end
-    outcome: warn
-    text: チェストシールを持っている仲間から受け取る
-    help: >-
-      チェストシールは医療キットにも初期装備にも無く、補給（アーセナル）で手に入れる。
-      開放性気胸だけなら状態は Stable のままのことが多い（SpO2 は 0.75 でも約 90%）。ただし放置すると悪化し、心停止までの中央値は約 8 分
-    links:
-      - doc:breathing.md#気胸の悪化と放置したときの時間
+  sf-pneumothorax:
+    type: subflow
+    flowId: pneumothorax
+    next: end-ok
 
   end-ok:
     type: end
     outcome: ok
     text: 気道と呼吸を確かめた
-    help: >-
-      意識不明の間は、仰向けで舌根沈下が、仰向け・うつ伏せで嘔吐が起こりうる。回復体位と King LT はどちらも防ぐ。
-      状態が変わったら、もう一度確かめる
+    help: 状態が変わったら、もう一度確かめる
+    march: [a, r]
     links:
-      - doc:respiration-system.md#仰向けで放置したとき
+      - doc:tccc-march.md#march
 
   end-no-breathing:
     type: end

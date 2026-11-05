@@ -16,6 +16,10 @@ id: string, title: string, description: string | null, modTargets: Array<ModTarg
  */
 verifiedAt: string | null, version: number, 
 /**
+ * 一覧での順番（小さいほど前）。ないものはタイトル順で後ろに並ぶ
+ */
+order: number | null, 
+/**
  * フロー全体の JSON（形は TS の `src/features/triage/schema.ts`）
  */
 json: string, 

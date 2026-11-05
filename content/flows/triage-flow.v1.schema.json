@@ -53,6 +53,31 @@
       "exclusiveMinimum": 0,
       "maximum": 9007199254740991
     },
+    "order": {
+      "description": "一覧の並び（小さい順。省略はタイトル順で後ろ）",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "march": {
+      "description": "march を書いていないノードすべてに当てる、TCCC・MARCH PAWS の文字",
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "cuf",
+          "m",
+          "a",
+          "r",
+          "c",
+          "cpr",
+          "p",
+          "w",
+          "s"
+        ]
+      }
+    },
     "start": {
       "type": "string",
       "minLength": 1,
@@ -115,6 +140,25 @@
                   "additionalProperties": false
                 },
                 "description": "選択肢（2〜4 個。1〜4 のキーで選ぶ）"
+              },
+              "march": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "cuf",
+                    "m",
+                    "a",
+                    "r",
+                    "c",
+                    "cpr",
+                    "p",
+                    "w",
+                    "s"
+                  ]
+                },
+                "description": "TCCC・MARCH PAWS のどこに当たるか（cuf = CUF/T、m / a / r / c / p / w / s、cpr = CPR）。バッジで出す"
               }
             },
             "required": [
@@ -188,6 +232,25 @@
                 "type": "string",
                 "minLength": 1,
                 "description": "「次へ」で進むノードの id"
+              },
+              "march": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "cuf",
+                    "m",
+                    "a",
+                    "r",
+                    "c",
+                    "cpr",
+                    "p",
+                    "w",
+                    "s"
+                  ]
+                },
+                "description": "TCCC・MARCH PAWS のどこに当たるか（cuf = CUF/T、m / a / r / c / p / w / s、cpr = CPR）。バッジで出す"
               }
             },
             "required": [
@@ -231,6 +294,25 @@
                   "description": "doc:<ファイル名>#<アンカー> / flow:<id> / quickref:<id> / https://..."
                 },
                 "description": "関連ページ"
+              },
+              "march": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "cuf",
+                    "m",
+                    "a",
+                    "r",
+                    "c",
+                    "cpr",
+                    "p",
+                    "w",
+                    "s"
+                  ]
+                },
+                "description": "TCCC・MARCH PAWS のどこに当たるか（cuf = CUF/T、m / a / r / c / p / w / s、cpr = CPR）。バッジで出す"
               }
             },
             "required": [

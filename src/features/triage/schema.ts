@@ -52,6 +52,13 @@ const help = text.meta({
 });
 const links = z.array(link).meta({ description: "関連ページ" });
 
+// TCCC の段階と MARCH PAWS の文字。H（低体温・頭部）と抗菌薬は ACE Medical に当たる処置が無いので値を作らない
+export const MARCH_STEPS = ["cuf", "m", "a", "r", "c", "cpr", "p", "w", "s"] as const;
+const march = z.array(z.enum(MARCH_STEPS)).min(1, "march には 1 つ以上書いてください").meta({
+  description:
+    "TCCC・MARCH PAWS のどこに当たるか（cuf = CUF/T、m / a / r / c / p / w / s、cpr = CPR）。バッジで出す",
+});
+
 export const choiceSchema = z.strictObject({
   label: text.meta({ description: "ボタンの文言" }),
   next: text.meta({ description: "選んだときに進むノードの id" }),
@@ -67,6 +74,7 @@ const questionSchema = z.strictObject({
   text: text.meta({ description: "質問" }),
   help: help.optional(),
   choices: z.array(choiceSchema).meta({ description: "選択肢（2〜4 個。1〜4 のキーで選ぶ）" }),
+  march: march.optional(),
 });
 
 // 物品を持っていないときの行き先。現場で物品が足りなくてもフローが止まらないようにする
@@ -93,6 +101,7 @@ const actionSchema = z.strictObject({
     .optional()
     .meta({ description: "カウントダウンの秒数（CPR のサイクルなど）" }),
   next: text.meta({ description: "「次へ」で進むノードの id" }),
+  march: march.optional(),
 });
 
 const endSchema = z.strictObject({
@@ -103,6 +112,7 @@ const endSchema = z.strictObject({
     .enum(["ok", "warn", "critical"])
     .meta({ description: "結果の色（ok = 緑、warn = 黄、critical = 赤）" }),
   links: links.optional(),
+  march: march.optional(),
 });
 
 const subflowSchema = z.strictObject({
@@ -149,6 +159,14 @@ export const flowSchema = z
     modChannel: modChannel.optional().meta({ description: "ACE の版。省略 = 版を問わない" }),
     verifiedAt: isoDate.optional().meta({ description: "内容を確認した日（YYYY-MM-DD）" }),
     version: z.int().positive().optional(),
+    order: z
+      .int()
+      .nonnegative()
+      .optional()
+      .meta({ description: "一覧の並び（小さい順。省略はタイトル順で後ろ）" }),
+    march: march.optional().meta({
+      description: "march を書いていないノードすべてに当てる、TCCC・MARCH PAWS の文字",
+    }),
     start: text.meta({ description: "最初のノードの id" }),
     nodes: z.record(z.string(), nodeSchema).meta({ description: "ノード（キーがノードの id）" }),
   })
@@ -163,6 +181,7 @@ export type BranchNode = z.infer<typeof branchSchema>;
 export type Choice = z.infer<typeof choiceSchema>;
 export type ChoiceTone = NonNullable<Choice["tone"]>;
 export type Outcome = EndNode["outcome"];
+export type MarchStep = (typeof MARCH_STEPS)[number];
 
 export type ParseResult = { ok: true; flow: Flow } | { ok: false; messages: string[] };
 

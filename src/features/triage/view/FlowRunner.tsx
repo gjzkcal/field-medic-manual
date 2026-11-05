@@ -27,9 +27,10 @@ import {
   type RunnerOption,
   type RunnerState,
 } from "@/features/triage/runner";
-import type { Flow, Outcome } from "@/features/triage/schema";
+import type { Flow, MarchStep, Outcome } from "@/features/triage/schema";
 import { useTriageRunner } from "@/features/triage/use-triage-runner";
 import { CountdownTimer } from "@/features/triage/view/CountdownTimer";
+import { MARCH_LABELS, marchOf } from "@/features/triage/view/march";
 import { OUTCOME_CLASSES, OUTCOME_LABELS, TONE_CLASSES } from "@/features/triage/view/tone";
 import { TrailNav } from "@/features/triage/view/TrailNav";
 import { useNow } from "@/hooks/use-now";
@@ -207,6 +208,7 @@ function NodeView({
   onRestart,
 }: NodeViewProps): JSX.Element {
   const { node, options } = state;
+  const march = <MarchBadges steps={marchOf(state.flow, node)} />;
   const heading = (
     <h2
       ref={headingRef}
@@ -221,6 +223,7 @@ function NodeView({
     case "question":
       return (
         <section className="flex flex-col gap-4">
+          {march}
           {heading}
           {node.help !== undefined && <HelpText help={node.help} />}
           <ChoiceButtons options={options} digitKeys={digitKeys} onChoose={onChoose} />
@@ -229,9 +232,10 @@ function NodeView({
     case "action":
       return (
         <section className="flex flex-col gap-4">
-          <Badge variant="outline" className="w-fit">
-            処置
-          </Badge>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge variant="outline">処置</Badge>
+            {march}
+          </div>
           {heading}
           {node.items !== undefined && node.items.length > 0 && (
             <ul aria-label="使う物品" className="flex flex-wrap gap-1.5">
@@ -257,6 +261,7 @@ function NodeView({
     case "end":
       return (
         <section className="flex flex-col gap-4">
+          {march}
           <div
             className={cn(
               "flex flex-col gap-2 rounded-xl border-2 p-4",
@@ -337,6 +342,21 @@ function ChoiceButtons({
         );
       })}
     </div>
+  );
+}
+
+function MarchBadges({ steps }: { steps: readonly MarchStep[] }): JSX.Element | null {
+  if (steps.length === 0) {
+    return null;
+  }
+  return (
+    <ul aria-label="TCCC・MARCH PAWS の段階" className="flex flex-wrap gap-1.5">
+      {steps.map((step) => (
+        <li key={step}>
+          <Badge>{MARCH_LABELS[step]}</Badge>
+        </li>
+      ))}
+    </ul>
   );
 }
 

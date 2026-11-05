@@ -1,0 +1,55 @@
+# MARCH の A（Airway、気道）に当たる。「負傷者を見つけたら」から、意識がないときに呼ばれる。単独でも実行できる。
+# 各ノードの説明は ACE Medical Dev 1.5.36 の仕様（ソースと実機で確かめた事実）に基づく。
+# 処置の選び方は作者の方針: ここでは物品を使わずに気道を開けるだけにし、気道を保つ手段（心停止なら King LT、
+# 脈があれば回復体位）は脈を確かめてから選ぶ。CPR は仰向けでしかできず、回復体位とぶつかるため。
+# Breathing を入れていなければ、設定の「使っている MOD」で branch がすぐ終わりへ進む。
+# 次の行はフローの形式（JSON Schema）。VS Code で開くと、キーの補完と書き間違いの表示が効く
+$schema: ./triage-flow.v1.schema.json
+id: airway
+title: 気道を開ける
+description: MARCH の A。意識がない負傷者の嘔吐物を除去し、あご先を挙上する（Breathing）
+modTarget: [breathing]
+modChannel: dev
+verifiedAt: "2026-11-04"
+version: 1
+order: 41
+march: [a]
+start: b-breathing
+nodes:
+  b-breathing:
+    type: branch
+    cases:
+      - { mods: [breathing], next: a-open-airway }
+    else: end-no-breathing
+
+  a-open-airway:
+    type: action
+    text: 嘔吐物を除去し、仰向けならあご先を挙上する
+    help: >-
+      気道が塞がるのは意識がないときだけ。
+      頭に「Clear vomit」が出ていれば嘔吐物を除去する（1 秒。体位を問わず、嘔吐で塞がっているときだけ出る）。
+      仰向けなら、続けてあご先挙上（Lift chin、1 秒）で舌根沈下を解除する。舌根沈下は仰向けのときだけ起き、見た目では分からない。
+      あご先挙上は塞がっていなくても出て、使っても害はない
+    links:
+      - doc:airway.md#嘔吐物の除去
+      - doc:airway.md#あご先挙上
+      - doc:airway.md#気道閉塞の見分け方
+      - doc:tccc-march.md#march
+    next: end-ok
+
+  end-ok:
+    type: end
+    outcome: ok
+    text: 気道を開けた
+    help: >-
+      意識不明の間は、約 60 秒ごとに 10% で再び吐く（吐いたあと 6 分は吐かない）。仰向けに戻すたびに 15% で舌根沈下し直す。
+      回復体位と King LT は、どちらも以後の舌根沈下と嘔吐を防ぐ。どちらにするかは脈を確かめてから決める（CPR は仰向けでしかできない）
+    links:
+      - doc:respiration-system.md#仰向けで放置したとき
+      - doc:airway.md#回復体位
+      - doc:king-lt.md
+
+  end-no-breathing:
+    type: end
+    outcome: ok
+    text: Breathing を入れていないので、気道閉塞は起きない

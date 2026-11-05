@@ -121,6 +121,7 @@ export function toUpsertInput(flow: Flow, sourceHash: string): TriageUpsertInput
     modChannel: flow.modChannel ?? null,
     verifiedAt: flow.verifiedAt ?? null,
     version: flow.version ?? 1,
+    order: flow.order ?? null,
     // Date などを文字列に揃えた後の値を保存する（実行画面は同じ zod で読み直す）
     json: JSON.stringify(flow),
     searchText: flowSearchText(flow),

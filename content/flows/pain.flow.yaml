@@ -1,0 +1,54 @@
+# PAWS の P（Pain、痛み）に当たる。「負傷者を見つけたら」から、MARCH の後に呼ばれる。単独でも実行できる。
+# 各ノードの説明は ACE Medical Dev 1.5.36 の仕様（ソースと実機で確かめた事実）に基づく。
+# 処置の選び方は作者の方針（痛みは目覚めてからモルヒネ。フェニレフリンを使ったなら止血が済んでから）。
+# 次の行はフローの形式（JSON Schema）。VS Code で開くと、キーの補完と書き間違いの表示が効く
+$schema: ./triage-flow.v1.schema.json
+id: pain
+title: 痛みを抑える
+description: PAWS の P。意識があって痛みがあれば、モルヒネ注射器を打つ
+modTarget: [core]
+modChannel: dev
+verifiedAt: "2026-11-04"
+version: 1
+order: 80
+march: [p]
+start: q-pain
+nodes:
+  q-pain:
+    type: question
+    text: 意識があって、痛みがある？
+    help: >-
+      痛みがあると、白い点滅の画面効果が出る。Circulation を入れていれば、痛みで心拍数が上がる（激痛で約 130）。
+      痛みそのものは命に関わらない
+    choices:
+      - { label: はい, tone: yes, next: a-morphine }
+      - { label: いいえ, tone: no, next: end-ok }
+
+  a-morphine:
+    type: action
+    text: モルヒネ注射器を 1 本打つ
+    help: >-
+      フェニレフリンを使ったときは、止血が済んでから打つ。
+      Circulation あり: 約 30 秒で痛みが消えるが、痛み自体は残る。約 15 分で効き目が半分になり、激痛なら痛みが戻るので、戻ったら 1 本足す。同時に 2 本以上は打たない（一度に約 3 本で Critical、約 4 本で心停止）。過量ならナロキソン（Naloxone）で弱められる。
+      Circulation なし: 痛みを 60 秒かけて治す。効果が切れるまで次は打てない
+    items: [モルヒネ注射器]
+    ifMissing: { next: a-pain-no-morphine }
+    links:
+      - doc:morphine.md
+      - doc:drug-effects.md#過量投与
+      - doc:tccc-march.md#paws
+    next: end-ok
+
+  a-pain-no-morphine:
+    type: action
+    text: 医療キットか仲間からモルヒネ注射器を受け取る
+    help: 医療キットにはモルヒネ注射器が 8 本入っている。なければ後回しでよい（痛みの自然回復はとても遅い）
+    links:
+      - doc:pain.md#痛みの仕組み
+    next: end-ok
+
+  end-ok:
+    type: end
+    outcome: ok
+    text: 痛みを確かめた
+    help: 意識が戻ったら、もう一度確かめる

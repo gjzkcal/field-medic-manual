@@ -1,7 +1,7 @@
 # 症状→処置 クイック表。1 行 = 1 つの症状（ゲーム内で見える様子）。
 # 各行の事実（数値・条件・表示名）は同梱のマニュアル 12 本に基づく。
 # マニュアルは ACE Medical Dev 1.5.36（ACE-Anvil の dev ブランチ 703d1aa7。医療の挙動は Workshop の Dev 1.5.36 と同じ）で確かめた。
-# 手順の順番と選び方は作者の方針（普段の組み合わせ Core + Circulation + Breathing での遊び方）。
+# 手順の順番と選び方は作者の方針（TCCC と MARCH PAWS の順を ACE Medical に当てはめたもの。トリアージのフローと同じ順）。
 # MOD で処置が変わる行は mods / withoutMods で出し分け、設定の「使っている MOD」に合う行だけを表示する。
 #
 # 書き方（形は下の JSON Schema と pnpm test で確かめる）:
@@ -14,7 +14,7 @@
 # 次の行はクイック表の形式（JSON Schema）。VS Code で開くと、キーの補完と書き間違いの表示が効く
 $schema: ./quickref.v1.schema.json
 modChannel: dev
-verifiedAt: "2026-09-28"
+verifiedAt: "2026-11-04"
 rows:
   # ---- 出血 ----
   - id: limb-bleeding
@@ -34,7 +34,7 @@ rows:
       - doc:bandage.md
       - doc:tourniquet.md
       - doc:bleeding-system.md#出血を放置したときの時間
-      - flow:casualty-first-contact
+      - flow:massive-bleeding
 
   - id: torso-head-bleeding
     category: 出血
@@ -51,7 +51,7 @@ rows:
     links:
       - doc:bandage.md
       - doc:hemorrhage.md#首と大腿動脈の大出血
-      - flow:casualty-first-contact
+      - flow:massive-bleeding
 
   - id: femoral-bleeding
     category: 出血
@@ -74,40 +74,20 @@ rows:
     symptom: 撃たれている中で、仲間が倒れている
     severity: 重度
     treatment:
-      - 診察で失血の Class を確かめる（「Class III hemorrhage」など）
-      - Class III 以上なら、フェニレフリン（Phenylephrine）を打ち、生理食塩水を付ける
-      - 遮蔽物の陰へ運ぶ（腰の「引きずって運ぶ（Drag）」か「持ちあげて運ぶ（Carry）」）
+      - 止血帯を巻いていない腕・脚から出血していれば、止血帯を巻く（「止血帯を使う」）
+      - 遮蔽物の陰へ運ぶ（腰の「引きずって運ぶ（Drag）」か「持ちあげて運ぶ（Carry）」）。意識があって動けるなら、本人が移る
       - 安全になったら、包帯で出血を止める
-    items: [フェニレフリン（Phenylephrine）, 生理食塩水, 包帯]
+    items: [止血帯, 包帯]
     notes: >-
-      フェニレフリンは出血を遅くするだけ（1 本で最大約 0.69 倍、約 3 分）。生理食塩水は 1 袋で血液の 25%（750 ml）を 90 秒かけて入れる。
-      注意: 激痛の患者は、フェニレフリン約 1 本で心停止しうる。
-      意識を失ってから 1 秒以上たった後に致命打を受けると、Second Chance の判定なしで即死する
-    links:
-      - doc:phenylephrine.md
-      - doc:drug-effects.md#過量投与
-      - doc:saline.md
-      - doc:medical-actions.md#負傷者を運ぶ
-      - doc:death-second-chance.md#倒れた後の追い打ち
-      - flow:casualty-first-contact
-    mods: [circulation]
-
-  - id: under-fire-core
-    category: 出血
-    symptom: 撃たれている中で、仲間が倒れている
-    severity: 重度
-    treatment:
-      - 遮蔽物の陰へ運ぶ（腰の「引きずって運ぶ（Drag）」か「持ちあげて運ぶ（Carry）」）
-      - 安全になったら、包帯で出血を止める
-    items: [包帯]
-    notes: >-
+      止血帯は衛生兵なら他人に 3.4〜4.4 秒で、包帯（5.9〜6.4 秒）より速く巻け、出血を 0.001 倍にする。頭・首・胸・腹・腰には巻けない。
       意識を失ってから 1 秒以上たった後に致命打を受けると、Second Chance の判定なしで即死する。
       運んでいる間は移動が半分の速さになる。離すのは Ctrl+X。武器を選ぶと手を離す
     links:
+      - doc:tourniquet.md
+      - doc:tourniquet.md#所要時間
       - doc:medical-actions.md#負傷者を運ぶ
       - doc:death-second-chance.md#倒れた後の追い打ち
-      - flow:casualty-first-contact
-    withoutMods: [circulation]
+      - flow:under-fire
 
   - id: self-bleeding
     category: 出血
@@ -142,6 +122,7 @@ rows:
       - doc:saline.md
       - doc:bleeding-system.md#血液の回復
       - doc:states.md#状態の閾値
+      - flow:circulation
     mods: [circulation]
 
   - id: blood-loss-core
@@ -159,6 +140,7 @@ rows:
       - doc:saline.md
       - doc:bleeding-system.md#血液の回復
       - doc:consciousness-system.md#血液で意識を失う条件
+      - flow:circulation
     withoutMods: [circulation]
 
   - id: tourniquet-only
@@ -167,14 +149,17 @@ rows:
     severity: 中等度
     treatment:
       - 止血帯を巻いた腕・脚に包帯を巻く
+      - 包帯を巻いたら、止血帯を外す（その場で外れる）
     items: [包帯]
     notes: >-
       止血帯で止めた傷も出血の扱いが残るので、包帯を巻くまで血液は回復しない（Circulation なしでは、エピネフリンも使えない）。
-      止血帯を巻いたままにしたことによる悪影響の処理は、ACE にはない
+      ACE には巻いたままにしたことによる悪影響の処理はないが、本体の処理で、巻いた腕・脚は照準・移動の損傷（0.7）として扱われ、診察に骨折として出る。
+      包帯を巻かずに外すと、元の速さで出血する
     links:
       - doc:tourniquet.md
       - doc:tourniquet.md#止血帯を巻いたままにしたとき
       - doc:bleeding-system.md#血液の回復
+      - flow:circulation
 
   # ---- 循環 ----
   - id: cardiac-arrest
@@ -183,21 +168,25 @@ rows:
     severity: 致命的
     treatment:
       - 出血があれば包帯で止める
-      - 仰向けにして King LT を入れる（Insert King LT）。なければ、Clear vomit が出ていれば嘔吐物を除去し、あご先挙上（Lift chin）をする
+      - 頭に Clear vomit が出ていれば嘔吐物を除去し、仰向けならあご先挙上（Lift chin）をする
+      - 診察に「Tension pneumothorax」が出ていれば NCD キット、「Open pneumothorax」ならチェストシールを使う
+      - 仰向けのまま King LT を入れる（Insert King LT）
       - 酸素マスク（Oxygen Mask）を持っていれば付ける
       - Epinephrine を 1 本打つ
       - 胸に CPR（Perform CPR）を行う。生理食塩水は合間に付ける
       - 蘇生しないまま約 3 分たったら、Epinephrine をもう 1 本打つ
-    items: [包帯, King LT, 酸素マスク（Oxygen Mask）, Epinephrine, 生理食塩水]
+    items: [包帯, NCD キット（NCD Kit）, チェストシール（Chest Seal）, King LT, 酸素マスク（Oxygen Mask）, Epinephrine, 生理食塩水]
     notes: >-
       Check pulse で「You find a heart rate of 0」、血圧は 0/0。CPR をしないと約 5 分（310 秒）で脳が尽きて死亡する（CPR 中は脳が減らない）。
-      SpO2 が 65% 未満の間は蘇生の判定が必ず失敗するので、気道が塞がったままでは蘇生しない
+      SpO2 が 65% 未満の間は蘇生の判定が必ず失敗するので、気道が塞がったままでは蘇生しない。緊張性気胸の間は酸素マスクが効かない。
+      CPR は仰向けでしかできないので、回復体位にはしない（King LT なら仰向けのまま気道が塞がらない）
     links:
       - doc:cardiac-arrest.md#心停止の見分け方
       - doc:cardiac-arrest.md#cpr-を行う
       - doc:cardiac-arrest.md#breathing-を入れているとき
       - doc:king-lt.md
-      - flow:casualty-first-contact
+      - doc:oxygen-mask.md
+      - flow:cardiac-arrest
     mods: [circulation, breathing]
 
   - id: cardiac-arrest-no-breathing
@@ -218,7 +207,7 @@ rows:
       - doc:cardiac-arrest.md#心停止の見分け方
       - doc:cardiac-arrest.md#cpr-を行う
       - doc:cardiac-arrest.md#エピネフリンの役割
-      - flow:casualty-first-contact
+      - flow:cardiac-arrest
     mods: [circulation]
     withoutMods: [breathing]
 
@@ -299,7 +288,7 @@ rows:
       - doc:ncd-kit.md
       - doc:pneumothorax-system.md#緊張性気胸から心停止まで
       - doc:items.md#breathing-の物品の入手
-      - flow:airway-breathing
+      - flow:pneumothorax
     mods: [breathing]
 
   - id: apnea
@@ -307,11 +296,11 @@ rows:
     symptom: 意識不明で、呼吸数が 0・SpO2 が下がっている
     severity: 重度
     treatment:
-      - 脈を確かめる（0 なら心停止の処置へ）
+      - 頭に Clear vomit が出ていれば嘔吐物を除去し、仰向けならあご先挙上（Lift chin）をする
       - 診察に「Tension pneumothorax」が出ていれば、NCD キットを使う
-      - どちらでもなければ、King LT を入れる。なければ、Clear vomit が出ていれば嘔吐物を除去し、あご先挙上（Lift chin）をする
+      - 脈を確かめる（0 なら、仰向けのまま心停止の処置へ。King LT を入れる）
       - 脈があれば、回復体位にする
-    items: [King LT, NCD キット（NCD Kit）]
+    items: [NCD キット（NCD Kit）]
     notes: >-
       呼吸数 0 の原因は、気道閉塞（舌根沈下・嘔吐）・緊張性気胸・心停止。舌根沈下は見た目では分からない（Lift chin は塞がっていなくても出る）。
       無呼吸でも画面の効果や音は変わらない。塞がったままだと約 16 秒で Unstable、85 秒で Critical、約 15 分で心停止する。
@@ -329,10 +318,9 @@ rows:
     symptom: 頭に「Clear vomit」が出ている（嘔吐で気道が塞がっている）
     severity: 重度
     treatment:
-      - King LT を入れる（Insert King LT）
-      - King LT がなければ、嘔吐物を除去する（Clear vomit）
-      - 呼吸数がまだ 0 なら、あご先挙上（Lift chin）もする
-      - 脈があれば、回復体位にする（以後の嘔吐を防ぐ）
+      - 嘔吐物を除去する（Clear vomit）
+      - 仰向けなら、あご先挙上（Lift chin）もする（舌根沈下が重なっていることがある）
+      - 脈があれば、回復体位にする（以後の嘔吐を防ぐ）。脈がなければ、仰向けのまま King LT を入れて心停止の処置へ
     items: [King LT]
     notes: >-
       回復体位にしても、すでに嘔吐で塞がっている気道は解けない（解けるのは嘔吐物の除去か King LT だけ）。舌根沈下が重なっていることもある。
@@ -341,7 +329,7 @@ rows:
       - doc:airway.md#嘔吐物の除去
       - doc:king-lt.md
       - doc:airway.md#回復体位
-      - flow:airway-breathing
+      - flow:airway
     mods: [breathing]
 
   - id: open-pneumothorax
@@ -360,7 +348,7 @@ rows:
       - doc:chest-seal.md
       - doc:breathing.md#気胸の悪化と放置したときの時間
       - doc:items.md#breathing-の物品の入手
-      - flow:airway-breathing
+      - flow:pneumothorax
     mods: [breathing]
 
   - id: supine-unconscious
@@ -368,9 +356,9 @@ rows:
     symptom: 意識不明の仲間が仰向けのまま
     severity: 中等度
     treatment:
-      - 脈を確かめる（0 なら心停止の処置へ）
-      - 頭に Clear vomit が出ていれば、嘔吐物を除去する
-      - 回復体位にする（腰の「左向きに寝かせる」か「右向きに寝かせる」）
+      - 頭に Clear vomit が出ていれば嘔吐物を除去し、あご先挙上（Lift chin）をする
+      - 脈を確かめる（0 なら、仰向けのまま心停止の処置へ）
+      - 脈があれば、回復体位にする（腰の「左向きに寝かせる」か「右向きに寝かせる」）
     notes: >-
       仰向けで放置すると、気道が塞がる割合は 0 分で 23.5%、5 分で 54.8%、10 分で 73.3%。
       回復体位にすると舌根沈下はその場で解け、以後の嘔吐も起きない（すでにある嘔吐は残る）。King LT を入れても、体位を問わず塞がらなくなる。
@@ -379,6 +367,7 @@ rows:
       - doc:respiration-system.md#仰向けで放置したとき
       - doc:airway.md#回復体位
       - doc:medical-actions.md#体位を変える
+      - flow:airway
     mods: [breathing]
 
   # ---- 意識 ----
@@ -388,12 +377,13 @@ rows:
     severity: 重度
     treatment:
       - 出血があれば包帯で止める
-      - 脈を確かめる（Check pulse）。0 なら心停止の処置へ
-      - 回復体位にする（腰の「左向きに寝かせる」か「右向きに寝かせる」）
-      - 失血・呼吸数・SpO2 を確かめる
-      - 失血が Class II 以上なら生理食塩水を入れる。呼吸数が 0 か SpO2 が低ければ、気道と気胸を処置する
+      - 頭に Clear vomit が出ていれば嘔吐物を除去し、仰向けならあご先挙上（Lift chin）をする
+      - 診察で気胸を確かめ、「Tension pneumothorax」なら NCD キット、「Open pneumothorax」ならチェストシールを使う
+      - 脈を確かめる（Check pulse）。0 なら、仰向けのまま心停止の処置へ
+      - 脈があれば回復体位にし、呼吸数と SpO2 を確かめる。呼吸数が 0 か SpO2 が低ければ、気道と気胸をもう一度処置する
+      - 失血が Class II 以上なら生理食塩水を入れる。包帯を巻いた腕・脚の止血帯は外す
       - 炭酸アンモニウム（Ammonium Carbonate）で起こす（頭の「Hold under nose」）
-    items: [包帯, 生理食塩水, 炭酸アンモニウム（Ammonium Carbonate）]
+    items: [包帯, NCD キット（NCD Kit）, チェストシール（Chest Seal）, 生理食塩水, 炭酸アンモニウム（Ammonium Carbonate）]
     notes: >-
       炭酸アンモニウムは状態が Stable のときだけ効き、それ以外では何も起きないが物品は減る。
       Stable でなくなる主な条件は、血液 70% 以下（Class II 以上）、SpO2 85% 未満、心拍 40 未満。
@@ -412,7 +402,7 @@ rows:
     treatment:
       - 出血があれば包帯で止める
       - 脈を確かめる（Check pulse）。0 なら心停止の処置へ
-      - 失血を確かめ、Class II 以上なら生理食塩水を入れる
+      - 失血を確かめ、Class II 以上なら生理食塩水を入れる。包帯を巻いた腕・脚の止血帯は外す
       - 炭酸アンモニウム（Ammonium Carbonate）で起こす（頭の「Hold under nose」）
     items: [包帯, 生理食塩水, 炭酸アンモニウム（Ammonium Carbonate）]
     notes: >-
@@ -433,9 +423,10 @@ rows:
     severity: 重度
     treatment:
       - 出血をすべて包帯で止める（止血帯だけで止めた傷にも包帯を巻く）
+      - 診察の失血が多ければ、生理食塩水を入れる
       - エピネフリンを打つ（腕・脚の「エピネフリンを注射」）
       - エピネフリンがなければ、医療キットか仲間から受け取る
-    items: [包帯, エピネフリン]
+    items: [包帯, 生理食塩水, エピネフリン]
     notes: >-
       使える条件は、意識不明・前のエピネフリンの効果が切れている・出血していない・全体の健康度 0.33 以上（Hitzones を入れていれば、この条件はない）。
       打ってから約 19 秒で目覚める。血液 33.3% 以下の間は目覚めない。Second Chance の後は、既定ではエピネフリンを打たないと目覚めない
@@ -451,9 +442,9 @@ rows:
     symptom: 炭酸アンモニウム（Ammonium Carbonate）を使っても起きない
     severity: 重度
     treatment:
-      - 脈・血圧・失血・呼吸数・SpO2 を確かめる
-      - 失血が Class II 以上なら、生理食塩水を入れる
+      - 呼吸数・SpO2・脈・血圧・失血を確かめる
       - 呼吸数が 0 か SpO2 が 85% 未満なら、気道と気胸を処置する
+      - 失血が Class II 以上なら、生理食塩水を入れる
       - Stable になってから、もう一度使う
     items: [生理食塩水, 炭酸アンモニウム（Ammonium Carbonate）]
     notes: >-
@@ -490,8 +481,9 @@ rows:
     severity: 重度
     treatment:
       - 出血をすぐ包帯で止める
+      - Breathing を入れていれば、Clear vomit が出ていれば嘔吐物を除去し、回復体位にする（腰の「左向きに寝かせる」か「右向きに寝かせる」）
+      - Breathing を入れていれば、診察に気胸が出ていないか確かめ、NCD キットかチェストシールを使う
       - 失血が Class II 以上なら、生理食塩水を入れる
-      - 回復体位にする（腰の「左向きに寝かせる」か「右向きに寝かせる」）
       - Stable になったら、炭酸アンモニウム（Ammonium Carbonate）で起こす
     items: [包帯, 生理食塩水, 炭酸アンモニウム（Ammonium Carbonate）]
     notes: >-
@@ -500,7 +492,8 @@ rows:
       Breathing を入れていれば、仰向けのまま気道が塞がると約 15 分で死亡する
     links:
       - doc:ai-medic.md#ai-自身が負傷したとき
-      - doc:ai-medic.md#ai-自身が負傷したとき
+      - doc:airway.md#回復体位
+      - flow:casualty-first-contact
     mods: [circulation]
 
   - id: ai-medic
@@ -589,6 +582,7 @@ rows:
       - doc:morphine.md
       - doc:drug-effects.md#過量投与
       - doc:pain.md#痛みの仕組み
+      - flow:pain
     mods: [circulation]
 
   - id: pain-core
@@ -605,6 +599,7 @@ rows:
     links:
       - doc:morphine.md
       - doc:pain.md#痛みの仕組み
+      - flow:pain
     withoutMods: [circulation]
 
   - id: medkit-no-blood
