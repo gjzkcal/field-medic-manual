@@ -148,7 +148,7 @@ Circulation を入れていると、Second Chance で助かった人は心停止
 - Breathing を入れていると、心停止中は SpO2 が下がり、約 190 s で 65% を割る。SpO2 が 65% 未満の間は CPR で蘇生しない（[心停止中の SpO2](cardiac-arrest-system.md#心停止中の-spo2)）。
 - Hitzones と Circulation の両方を入れていると、心臓の破壊で助かった場合も心停止になる（`m_fSecondChanceOnHeart` の既定 0 では即死）。
 - Second Chance のほかに心停止に入る経路（心拍数・血圧・血液量・CPR をやめる・SpO2・気胸）は [心停止に入る経路](cardiac-arrest-system.md#心停止に入る経路)。
-- AI は既定で、心停止に入った瞬間に死亡する（`m_bCardiacArrestForAIEnabled` = false）。出血した AI は血液 25% 前後で、気道が塞がった AI は約 15 分で死にうる（[AI 自身が負傷したとき](ai-medic.md#ai-自身が負傷したとき)）。
+- AI は既定で、心停止に入った瞬間に死亡する（`m_bCardiacArrestForAIEnabled` = false）。出血した AI は血液 25% 前後で、気道が塞がった AI は約 6 分で死にうる（[AI 自身が負傷したとき](ai-medic.md#ai-自身が負傷したとき)）。
 
 
 ## Hitzones の急所と心臓
