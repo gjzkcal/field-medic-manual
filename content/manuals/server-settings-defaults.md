@@ -100,12 +100,21 @@ category: 管理者向け
 | `m_fPneumothoraxArrestEnabled` | true | 気胸が上限に達したら心停止にする（名前は `m_f` だが真偽値） |
 | `m_fTensionPneumothoraxChance` | 0.15 | 気胸のある胸への致命的な打撃で緊張性になる確率 |
 | `m_fDeteriorateToTensionPneumothoraxChancePerMinute` | 0.05 | 約 60 s ごとに緊張性へ移る確率 |
+| `m_fTensionPneumothoraxStrokeVolumeScale` | 0.455 | 緊張性気胸の間、一回拍出量に掛ける値（CPR 中も） |
 | `m_fDefaultRespiratoryRateBPM` | 14.573 | 基準の呼吸数（回/分） |
 | `m_fMaxRespiratoryRateBPM` | 40 | 呼吸数の上限 |
-| `m_fDefaultSpO2` | 97.149 | SpO2 の初期値（%） |
+| `m_fCPRPassiveVentilationRateBPM` | 0.5 | CPR 中の呼吸数（回/分）。気道が塞がっていても同じ |
+| `m_fDefaultOxygenConsumptionMMOLPS` | 0.208 | SpO2 が初期値のときの酸素の消費（mmol/s） |
+| `m_fHypoxicOxygenConsumptionMMOLPS` | 0.013 | SpO2 が下の `m_fHypoxicMetabolismSpO2` 以下のときの酸素の消費（mmol/s） |
+| `m_fDefaultRER` | 0.8 | SpO2 が初期値のときの呼吸商（二酸化炭素の産生 ÷ 酸素の消費） |
+| `m_fHypoxicRER` | 1.2 | SpO2 が `m_fHypoxicMetabolismSpO2` 以下のときの呼吸商 |
+| `m_fDefaultSpO2` | 97.149 | SpO2 の初期値（%）。消費と呼吸商を補間する上の端にもなる |
+| `m_fHypoxicMetabolismSpO2` | 75 | 消費と呼吸商が低酸素の値になる SpO2（%）。初期値との間は直線で補間する |
 | `m_fDefaultPalvCO2KPA` | 5.21 | 肺胞の二酸化炭素の初期値（kPa） |
 | `m_bPaCO2Enabled` | true | 効かない（[効かない設定](server-settings.md#効かない設定)） |
-| `m_bKidneyEnabled` | false | 効かない（未実装） |
+
+> [!NOTE]
+> 公式ドキュメントとの違い: ドキュメントでは `m_fCPRPassiveVentilationRateBPM` の既定値が 0.3 だが、スクリプトの既定値は 0.5。ミッションヘッダーにドキュメントの雛形をそのまま書くと 0.3 になり、CPR 中の換気が減る。
 
 - 例: `"m_ACE_Medical_Breathing": {"m_fVomitChancePerMinute": 0}` だけを書くと、嘔吐は起きず、ほかは既定値のままとみられる（Breathing の項目はすべて既定値があるので安全）。
 - `m_fPneumothoraxArrestEnabled` を false にすると、気胸が上限に達しても心停止しない。ただし悪化の判定もそこで止まる。

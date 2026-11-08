@@ -73,7 +73,7 @@ category: 管理者向け
 |---|---|---|
 | `m_ACE_Medical_Core` | 既定値に戻るとみられる（Settings.conf が空なので、結果は同じ） | 安全 |
 | `m_ACE_Medical_Hitzones` | 同上 | 安全 |
-| `m_ACE_Medical_Breathing` | 既定値に戻るとみられる（16 項目すべてに既定値がある） | 安全 |
+| `m_ACE_Medical_Breathing` | 既定値に戻るとみられる（22 項目すべてに既定値がある） | 安全 |
 | `m_ACE_Medical_Circulation` | 数値の項目は既定値に戻る。**状態の閾値 3 つ（`m_UnstableThresholds`・`m_CriticalThresholds`・`m_CardiacArrestThresholds`）の中身には既定値が無い**。脳の損傷の設定（`m_CardiacArrestDamageEffect`）だけは、空なら既定値で作り直される | **危険**（[書き漏らすと危険な設定](#書き漏らすと危険な設定)） |
 | `m_ACE_Medical_Medication` | 薬物動態・効果の設定のほとんど（吸収と消失の速さ、効き始める濃度、薬の一覧など）に既定値が無い。`m_fGamma` と `m_fMaxEffect` だけは既定値 1 | **危険** |
 
@@ -81,7 +81,7 @@ category: 管理者向け
 - 設定の一部は、ゲームの開始時に一度だけ読み込まれて保存される。ミッションヘッダーの適用はワールドの読み込みより前とみられるので、通常は問題にならない。
 
 > [!NOTE]
-> 公式ドキュメントとの違い: ドキュメントの JSON の雛形には、薬の設定 `m_ACE_Medical_Medication` が無い。Circulation の雛形の閾値には Breathing の `m_fSpO2` が無い。Breathing の `m_bKidneyEnabled` も載っていない。閾値の「既定値」はドキュメントに書いてあるが、実際にはスクリプトの既定値ではなく、Settings.conf の値である（ミッションヘッダーで省くと 0 になるとみられる）。
+> 公式ドキュメントとの違い: ドキュメントの JSON の雛形には、薬の設定 `m_ACE_Medical_Medication` が無い。Circulation の雛形の閾値には Breathing の `m_fSpO2` が無い。Breathing の雛形の `m_fCPRPassiveVentilationRateBPM` は 0.3 だが、スクリプトの既定値は 0.5（雛形をそのまま書くと 0.3 になる）。閾値の「既定値」はドキュメントに書いてあるが、実際にはスクリプトの既定値ではなく、Settings.conf の値である（ミッションヘッダーで省くと 0 になるとみられる）。
 
 ### 書き漏らすと危険な設定
 
@@ -122,7 +122,6 @@ Circulation の閾値の値（Settings.conf の値。ミッションヘッダー
 | 設定 | 既定値 | 効かない条件 | 内容 |
 |---|---|---|---|
 | `m_bPaCO2Enabled`（Breathing） | true | 常に | どこからも読まれない。二酸化炭素の計算は設定に関係なく常に行われ、呼吸数には影響しない |
-| `m_bKidneyEnabled`（Breathing） | false | 常に | 未実装 |
 | `m_fSecondChanceResilienceRegenScale`（Core） | 0 | Circulation を入れているとき | Circulation が意識の回復の計算を置き換えるので使われない |
 | `m_fMinHealthScaledForEpinephrine`（Core） | 0.33 | Circulation を入れているとき・Hitzones を入れているとき | Circulation ではエピネフリンの使用条件そのものが無い。Hitzones では見ている全体の体力が減らないので、条件が常に満たされる |
 | `m_ePainScreenEffectType`（Core） | 1（白い点滅） | 4 を選んだとき | 4（RADIAL_BLUR）を選ぶと画面効果が出ない。3（CHROMATIC_ABERRATION）を選ぶと放射ブラーになる |
