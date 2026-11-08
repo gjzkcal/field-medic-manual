@@ -2,7 +2,7 @@
 # 「負傷者を見つけたら」から、意識がある負傷者と、意識がなく脈がある負傷者で呼ばれる。単独でも実行できる。
 # 各ノードの説明は ACE Medical Dev 1.5.36 の仕様（ソースと実機で確かめた事実）に基づく。
 # 処置の選び方は作者の方針（失血には生理食塩水、包帯を巻いた腕・脚の止血帯は外す）。
-# 失血の Class は Circulation を入れていないと表示されないので、MOD で問いを変える。
+# 失血の段階（I度〜IV度出血）は Circulation を入れていないと表示されないので、MOD で問いを変える。
 # 次の行はフローの形式（JSON Schema）。VS Code で開くと、キーの補完と書き間違いの表示が効く
 $schema: ./triage-flow.v1.schema.json
 id: circulation
@@ -24,13 +24,13 @@ nodes:
 
   q-class:
     type: question
-    text: 失血は Class II 以上？
+    text: 失血は II度以上？
     help: >-
-      診察（医療ラジアルメニューの「診察する」）とインベントリに「Class I〜IV hemorrhage」と出る。Class II は血液 70% 以下。
-      Class II 以上は状態が Stable でないので、意識不明なら自然には目覚めず、炭酸アンモニウムも効かない
+      診察（医療ラジアルメニューの「診察する」）とインベントリに「I度〜IV度出血」と出る。II度出血は血液 70% 以下。
+      II度以上は状態が Stable でないので、意識不明なら自然には目覚めず、炭酸アンモニウムも効かない
     choices:
-      - { label: Class II 以上, tone: danger, next: a-saline }
-      - { label: Class I か失血なし, tone: yes, next: q-tourniquet }
+      - { label: II度以上, tone: danger, next: a-saline }
+      - { label: I度出血か失血なし, tone: yes, next: q-tourniquet }
 
   q-blood-core:
     type: question

@@ -34,10 +34,10 @@ category: 物品
 
 ## 使い方
 
-- 表示名は「Phenylephrine」、操作は「Inject phenylephrine」（Circulation には日本語訳がなく、英語で表示される）。
+- 表示名は「フェニレフリン」、操作は「フェニレフリンを注射」。
 - 左右の腕・脚に打つ。
 - 使用条件はない（意識のある健康な仲間にも打てる）。
-- 説明文は「Administered to patients for raising blood pressure」、ヒントは「Increases blood pressure and slows down bleeding and transfusion」。
+- 説明文は「血圧を上げる必要がある患者に投与する。」、ヒントは「血圧を上げ、出血および輸血を遅らせる」。
 
 ## 所要時間
 
@@ -88,7 +88,7 @@ $$
 
 40 ml/s の出血が続いている患者に、出血の始めに打った場合:
 
-| 本数 | 30 s 時点の出血 | Class II に入る | Class III に入る | 心停止 | 失血死 |
+| 本数 | 30 s 時点の出血 | II度出血（Class II）に入る | III度出血に入る | 心停止 | 失血死 |
 |---|---|---|---|---|---|
 | 0 | 40.0 ml/s | 23 s | 45 s | 58 s | 91 s |
 | 1 | 27.4 ml/s | 30 s | 62 s | 82 s | 116.7 s |

@@ -32,9 +32,9 @@ category: 物品
 
 ## 使い方
 
-- 表示名は「Ammonium Carbonate」、操作は頭に対する「Hold under nose」（Circulation には日本語訳がなく、英語で表示される）。
+- 表示名は「炭酸アンモニウム」、操作は頭に対する「鼻の下に当てる」。
 - 使用条件はない（状態ごとに起きることは [5 つの状態](states.md#5-つの状態)）。
-- 説明文は「Administered to unconscious patients.」、ヒントは「Increases wake-up chance」。
+- 説明文は「意識不明の患者に投与する。」、ヒントは「覚醒の可能性を高める」。
 
 ## 所要時間
 

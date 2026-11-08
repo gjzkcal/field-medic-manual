@@ -83,7 +83,7 @@ $$
 ### Circulation を入れている場合
 <!-- mods: circulation -->
 
-Core の枠に Circulation の枠が足される。実機（2026-09-27、日本語表示）では次の 8 種類が入っていた: モルヒネ注射器 8・Epinephrine 8・包帯 8・生理食塩水 3・Ammonium Carbonate 8・Naloxone 8・Phenylephrine 8・Metoprolol 8。エピネフリンは Circulation の「Epinephrine」の 8 本だけになる。
+Core の枠に Circulation の枠が足される。実機（2026-09-27）では次の 8 種類が入っていた: モルヒネ注射器 8・エピネフリン 8・包帯 8・生理食塩水 3・炭酸アンモニウム 8・ナロキソン 8・フェニレフリン 8・メトプロロール 8。エピネフリンは Circulation の 8 本だけになる。
 
 ## 入手
 

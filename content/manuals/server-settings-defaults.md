@@ -72,8 +72,8 @@ category: 管理者向け
 | `m_bCardiacArrestForAIEnabled` | false | AI も心停止の状態になるか（false なら即死） |
 | `m_fCPRStrokeVolumeScale` | 0.23 | CPR 中の 1 回拍出量の倍率 |
 | `m_fCPRSuccessCheckTimeoutS` | 22 | 蘇生判定の間隔（CPR の累計の秒数） |
-| `m_fCPRSuccessChanceMin` | 0 | 蘇生判定の最小の成功率（血液が Class IV の閾値以下） |
-| `m_fCPRSuccessChanceMax` | 0.4 | 蘇生判定の最大の成功率（血液が Class II の閾値以上） |
+| `m_fCPRSuccessChanceMin` | 0 | 蘇生判定の最小の成功率（血液が IV度出血の閾値以下） |
+| `m_fCPRSuccessChanceMax` | 0.4 | 蘇生判定の最大の成功率（血液が II度出血の閾値以上） |
 | `m_fAmmoniumCarbonateSuccessChanceMin` | 0.2 | 炭酸アンモニウムの最小の成功率 |
 | `m_fAmmoniumCarbonateSuccessChanceMax` | 1.0 | 炭酸アンモニウムの最大の成功率 |
 | `m_fMaxRevivalResilienceRecoveryScale` | 0.2 | 蘇生した後の意識の回復倍率 |

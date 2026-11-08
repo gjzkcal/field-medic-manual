@@ -109,35 +109,27 @@ category: はじめに
 
 ## 表示名の言語
 
-- ゲームを日本語にしていても、日本語で表示されるのは **本体と Core の物品・操作だけ**。**Circulation と Breathing の物品・操作は英語で表示される**（翻訳が無い）。
-- このマニュアルでは、英語で表示されるものは初出で英語の表示名を括弧に併記した（例: 「炭酸アンモニウム（Ammonium Carbonate）」「CPR（Perform CPR）」）。
-- 実機（2026-09-27、ACE All in One Dev・日本語）で確かめた表示:
-
-| 物品・操作 | 表示 | MOD |
-|---|---|---|
-| 止血帯 | 止血帯を使う | 本体 |
-| 包帯 | 包帯 | 本体 |
-| 生理食塩水 | 生理食塩水 | 本体 |
-| 医療キット | 医療キット | 本体 |
-| モルヒネ | モルヒネ注射器 | 本体 |
-| エピネフリン | Circulation を入れていると「Epinephrine」（Core だけなら、文字列表では「エピネフリン」） | Core / Circulation |
-| 炭酸アンモニウム・ナロキソン・フェニレフリン・メトプロロール | Ammonium Carbonate ／ Naloxone ／ Phenylephrine ／ Metoprolol | Circulation |
-| 呼吸数の確認 | Check respiratory rate | Breathing |
-
-- エピネフリンの説明文も、名前と同じく英語（Circulation の文）で表示される。
-
-ソースの文字列表から分かる表示（抜粋）:
+- ゲームを日本語にしていると、**本体・Core・Circulation の物品・操作・通知は日本語で表示される**。**Breathing の物品・操作だけは英語で表示される**（翻訳が無い）。
+- このマニュアルでは、英語で表示されるものは初出で英語の表示名を括弧に併記した（例: 「チェストシール（Chest Seal）」「あご先挙上（Lift chin）」）。
+- ソースの文字列表から分かる表示（抜粋）:
 
 | 表示 | 内容 | MOD |
 |---|---|---|
+| 止血帯を使う ／ 包帯 ／ 生理食塩水 ／ 医療キット ／ モルヒネ注射器 | 物品・操作 | 本体 |
+| 怪我を確認する | 診察の操作 | 本体 |
 | 医療ラジアルメニューを開く ／ 診察する ／ 止血 ／ 輸液 ／ 投薬 ／ 骨折の治療 | 医療ラジアルメニュー | Core |
 | 仰向けに寝かせる ／ 左向きに寝かせる ／ 右向きに寝かせる | 体位を変える操作 | Core |
-| エピネフリンを注射 | エピネフリンの操作（Circulation を入れると本体の注射の操作に置き換わる） | Core |
 | 痛みはない ／ 意識不明ではない ／ 怪我が酷い | 物品を使えない理由 | Core |
-| Perform CPR ／ Check pulse ／ Check blood pressure ／ Hold under nose ／ Not on back | CPR・バイタルの確認・炭酸アンモニウム・CPR できない理由 | Circulation |
-| Class I〜IV hemorrhage | 出血の段階 | Circulation |
-| Lift chin ／ Clear vomit ／ Insert King LT ／ Use chest seal ／ Perform needle decompression ／ Put oxygen mask on ／ Check SpO2 | 気道・気胸の操作 | Breathing |
+| エピネフリン ／ エピネフリンを注射 | エピネフリンの物品と操作（Circulation の有無で変わらない） | Core |
+| 炭酸アンモニウム ／ ナロキソン ／ フェニレフリン ／ メトプロロール | 物品 | Circulation |
+| 鼻の下に当てる ／ ナロキソンを注射 ／ フェニレフリンを注射 ／ メトプロロールを注射 | 薬の操作 | Circulation |
+| 心肺蘇生を行う ／ 脈拍を測る ／ 血圧を測る ／ 仰向けではありません | CPR・バイタルの確認・CPR できない理由 | Circulation |
+| 心拍数は%1です ／ 血圧は%1/%2 mmHgです | バイタルの確認の通知（%1・%2 に数値が入る） | Circulation |
+| I度出血 〜 IV度出血 | 出血の段階 | Circulation |
+| Lift chin ／ Clear vomit ／ Insert King LT ／ Use chest seal ／ Perform needle decompression ／ Put oxygen mask on ／ Check respiratory rate ／ Check SpO2 | 気道・気胸の操作 | Breathing |
 | King LT ／ Chest Seal ／ NCD Kit ／ Oxygen Mask ／ Open pneumothorax ／ Tension pneumothorax ／ Airway/Thorax management | 物品・診察の表示・ラジアルメニューの分類 | Breathing |
+
+- エピネフリンの説明文とヒントは、Circulation を入れていると「心停止の患者に投与する。」「心拍数を上げる」、Core だけなら「意識不明の患者に投与する。」「覚醒の可能性を高める」。
 
 ## 用語
 

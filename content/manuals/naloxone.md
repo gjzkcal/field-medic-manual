@@ -30,10 +30,10 @@ category: 物品
 
 ## 使い方
 
-- 表示名は「Naloxone」、操作は「Inject naloxone」（Circulation には日本語訳がなく、英語で表示される）。
+- 表示名は「ナロキソン」、操作は「ナロキソンを注射」。
 - 左右の腕・脚に打つ。
 - 使用条件はない（意識のある健康な仲間にも打てる）。
-- 説明文は「Administered to patients with opioid overdose」、ヒントは「Antagonist for opioids like morphine」。
+- 説明文は「オピオイド過剰摂取の患者に投与する。」、ヒントは「モルヒネなどのオピオイド中毒を治療する」。
 
 ## 所要時間
 
