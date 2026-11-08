@@ -1,0 +1,103 @@
+# ゲームの画面に出る表示名の用語集。原稿・クイック表・フローの表記が画面とずれていないかを、pnpm test で確かめるのに使う。
+# アプリには同梱しない（画面にも検索にも出ない）。
+#
+# 書き方（形は下の JSON Schema と pnpm test で確かめる）:
+# - en は英語で遊んでいるときの表示。stringId はその文字列表のキー（文字列表を使わず prefab に名前を直に書いている物は省く）。
+# - ja は、日本語で遊んでいるときに日本語で出るものにだけ書く（本体・Core・Circulation）。
+#   ja を書いた用語は、原稿などに en が残っているとテストが失敗する。
+# - manual は、日本語で遊んでいても英語で出るもの（Breathing）を、原稿で何と呼ぶか。ja と一緒には書かない。
+# - 本体の表示名は、物品と操作の短い名前だけを載せる（本体の文字列表は写さない）。
+# - 値は ACE Medical の Dev 版（ACE-Anvil の v1.5.0-dev41）とゲーム本体 1.9.0.37 の文字列表と prefab。
+# 次の行は用語集の形式（JSON Schema）。VS Code で開くと、キーの補完と書き間違いの表示が効く
+$schema: ./glossary.v1.schema.json
+modChannel: dev
+verifiedAt: "2026-11-08"
+terms:
+  # ---- 本体 ----
+  - { id: tourniquet, mod: reforger, kind: item, stringId: AR-Item_Tourniquet_Name, en: Tourniquet, ja: 止血帯を使う }
+  - { id: bandage, mod: reforger, kind: item, stringId: AR-Item_BandageUS_Name, en: Bandage, ja: 包帯 }
+  - { id: saline, mod: reforger, kind: item, stringId: AR-Item_Saline_Name, en: Saline Solution, ja: 生理食塩水 }
+  - { id: medical-kit, mod: reforger, kind: item, stringId: AR-Item_MedicalKit_Name, en: Medical Kit, ja: 医療キット }
+  - { id: morphine, mod: reforger, kind: item, stringId: AR-Item_Morphine_Name, en: Morphine Injector, ja: モルヒネ注射器 }
+  - { id: inspect-casualty, mod: reforger, kind: action, stringId: AR-UserAction_InspectCasualty, en: Check injuries, ja: 怪我を確認する }
+
+  # ---- Core ----
+  - { id: epinephrine, mod: core, kind: item, stringId: ACE_Medical-Item_Epinephrine_Name, en: Epinephrine, ja: エピネフリン }
+  # Circulation を入れても操作の名前は Core のまま
+  - { id: epinephrine-inject, mod: core, kind: action, stringId: ACE_Medical-EpinephrineInjectionAction, en: Inject epinephrine, ja: エピネフリンを注射 }
+  # Circulation を入れていないときの説明文とヒント（入れると Circulation の文に替わる）
+  - { id: epinephrine-description-core, mod: core, kind: description, stringId: ACE_Medical-Item_Epinephrine_Description, en: Administered to unconscious patients., ja: 意識不明の患者に投与する。 }
+  - { id: epinephrine-hint-core, mod: core, kind: hint, stringId: ACE_Medical-InfoWidget_Epinephrine, en: Increases wake-up chance, ja: 覚醒の可能性を高める }
+  - { id: morphine-description, mod: core, kind: description, stringId: ACE_Medical-Item_Morphine_Description, en: Administered to patients in severe pain., ja: 激しい痛みのある患者に投与する。 }
+  - { id: morphine-hint, mod: core, kind: hint, stringId: ACE_Medical-InfoWidget_Morphine, en: Alleviates severe pain, ja: 激しい痛みを緩和する }
+  - { id: fail-no-pain, mod: core, kind: failReason, stringId: ACE_Medical-FailReason_NoPain, en: Not in pain, ja: 痛みはない }
+  - { id: fail-not-unconscious, mod: core, kind: failReason, stringId: ACE_Medical-FailReason_NotUnconscious, en: Not unconscious, ja: 意識不明ではない }
+  - { id: fail-too-injured, mod: core, kind: failReason, stringId: ACE_Medical-FailReason_TooInjured, en: Too injured, ja: 怪我が酷い }
+  - { id: radial-open, mod: core, kind: menu, stringId: ACE_Medical-KeyBind_OpenRadialMenu, en: Open medical radial menu, ja: 医療ラジアルメニューを開く }
+  - { id: radial-examine, mod: core, kind: menu, stringId: ACE_Medical-RadialMenu_ExaminePatient, en: Examine patient, ja: 診察する }
+  - { id: radial-hemorrhage, mod: core, kind: menu, stringId: ACE_Medical-RadialMenu_HemorrhageControl, en: Hemorrhage control, ja: 止血 }
+  - { id: radial-fluid, mod: core, kind: menu, stringId: ACE_Medical-RadialMenu_FluidReplacement, en: Fluid Replacement, ja: 輸液 }
+  - { id: radial-medication, mod: core, kind: menu, stringId: ACE_Medical-RadialMenu_Medication, en: Medication, ja: 投薬 }
+  - { id: radial-fracture, mod: core, kind: menu, stringId: ACE_Medical-RadialMenu_FractureManagement, en: Fracture management, ja: 骨折の治療 }
+  - { id: position-back, mod: core, kind: action, stringId: ACE_Medical-UserAction_BackPosition, en: Put on back, ja: 仰向けに寝かせる }
+  - { id: position-left, mod: core, kind: action, stringId: ACE_Medical-UserAction_LeftRecoveryPosition, en: Put in left recovery position, ja: 左向きに寝かせる }
+  - { id: position-right, mod: core, kind: action, stringId: ACE_Medical-UserAction_RightRecoveryPosition, en: Put in right recovery position, ja: 右向きに寝かせる }
+
+  # ---- Circulation ----
+  - { id: ammonium-carbonate, mod: circulation, kind: item, stringId: ACE_Medical-Item_AmmoniumCarbonate_Name, en: Ammonium Carbonate, ja: 炭酸アンモニウム }
+  - { id: ammonium-carbonate-use, mod: circulation, kind: action, stringId: ACE_Medical-AmmoniumCarbonatePackageAction, en: Hold under nose, ja: 鼻の下に当てる }
+  - { id: ammonium-carbonate-description, mod: circulation, kind: description, stringId: ACE_Medical-Item_AmmoniumCarbonate_Description, en: Administered to unconscious patients., ja: 意識不明の患者に投与する。 }
+  - { id: ammonium-carbonate-hint, mod: circulation, kind: hint, stringId: ACE_Medical-InfoWidget_AmmoniumCarbonate, en: Increases wake-up chance, ja: 覚醒の可能性を高める }
+  - { id: epinephrine-description, mod: circulation, kind: description, stringId: ACE_Medical-Item_Epinephrine_Description, en: Administered to patients in cardiac arrest, ja: 心停止の患者に投与する。 }
+  - { id: epinephrine-hint, mod: circulation, kind: hint, stringId: ACE_Medical-InfoWidget_Epinephrine, en: Increases heart rate, ja: 心拍数を上げる }
+  - { id: naloxone, mod: circulation, kind: item, stringId: ACE_Medical-Item_Naloxone_Name, en: Naloxone, ja: ナロキソン }
+  - { id: naloxone-inject, mod: circulation, kind: action, stringId: ACE_Medical-NaloxoneInjectionAction, en: Inject naloxone, ja: ナロキソンを注射 }
+  - { id: naloxone-description, mod: circulation, kind: description, stringId: ACE_Medical-Item_Naloxone_Description, en: Administered to patients with opioid overdose, ja: オピオイド過剰摂取の患者に投与する。 }
+  - { id: naloxone-hint, mod: circulation, kind: hint, stringId: ACE_Medical-InfoWidget_Naloxone, en: Antagonist for opioids like morphine, ja: モルヒネなどのオピオイド中毒を治療する }
+  - { id: phenylephrine, mod: circulation, kind: item, stringId: ACE_Medical-Item_Phenylephrine_Name, en: Phenylephrine, ja: フェニレフリン }
+  - { id: phenylephrine-inject, mod: circulation, kind: action, stringId: ACE_Medical-PhenylephrineInjectionAction, en: Inject phenylephrine, ja: フェニレフリンを注射 }
+  - { id: phenylephrine-description, mod: circulation, kind: description, stringId: ACE_Medical-Item_Phenylephrine_Description, en: Administered to patients for raising blood pressure, ja: 血圧を上げる必要がある患者に投与する。 }
+  - { id: phenylephrine-hint, mod: circulation, kind: hint, stringId: ACE_Medical-InfoWidget_Phenylephrine, en: Increases blood pressure and slows down bleeding and transfusion, ja: 血圧を上げ、出血および輸血を遅らせる }
+  - { id: metoprolol, mod: circulation, kind: item, stringId: ACE_Medical-Item_Metoprolol_Name, en: Metoprolol, ja: メトプロロール }
+  - { id: metoprolol-inject, mod: circulation, kind: action, stringId: ACE_Medical-MetoprololInjectionAction, en: Inject metoprolol, ja: メトプロロールを注射 }
+  - { id: metoprolol-description, mod: circulation, kind: description, stringId: ACE_Medical-Item_Metoprolol_Description, en: Administered to patients with too high heart rate, ja: 心拍数が過度に高い患者に投与する。 }
+  - { id: metoprolol-hint, mod: circulation, kind: hint, stringId: ACE_Medical-InfoWidget_Metoprolol, en: Decreases heart rate, ja: 心拍数を下げる }
+  - { id: cpr, mod: circulation, kind: action, stringId: ACE_Medical-CPRAction, en: Perform CPR, ja: 心肺蘇生を行う }
+  - { id: check-pulse, mod: circulation, kind: action, stringId: ACE_Medical-CheckPulseAction, en: Check pulse, ja: 脈拍を測る }
+  - { id: check-blood-pressure, mod: circulation, kind: action, stringId: ACE_Medical-CheckBloodPressureAction, en: Check blood pressure, ja: 血圧を測る }
+  - { id: fail-not-on-back, mod: circulation, kind: failReason, stringId: ACE_Medical-FailReason_NotOnBack, en: Not on back, ja: 仰向けではありません }
+  # %1・%2 には数値が入る
+  - { id: pulse-result, mod: circulation, kind: notification, stringId: ACE_Medical-Notification_PULSE_RESULT, en: You find a heart rate of %1, ja: 心拍数は%1です }
+  - { id: blood-pressure-result, mod: circulation, kind: notification, stringId: ACE_Medical-Notification_BLOOD_PRESSURE_RESULT, en: You find a blood pressure of %1/%2 mmHg, ja: 血圧は%1/%2 mmHgです }
+  - { id: blood-state-1, mod: circulation, kind: state, stringId: ACE_Medical-BloodState_Class1, en: Class I hemorrhage, ja: I度出血 }
+  - { id: blood-state-2, mod: circulation, kind: state, stringId: ACE_Medical-BloodState_Class2, en: Class II hemorrhage, ja: II度出血 }
+  - { id: blood-state-3, mod: circulation, kind: state, stringId: ACE_Medical-BloodState_Class3, en: Class III hemorrhage, ja: III度出血 }
+  - { id: blood-state-4, mod: circulation, kind: state, stringId: ACE_Medical-BloodState_Class4, en: Class IV hemorrhage, ja: IV度出血 }
+
+  # ---- Breathing（日本語で遊んでいても英語で出る）----
+  - { id: king-lt, mod: breathing, kind: item, stringId: ACE_Medical-Item_KingLT_Name, en: King LT }
+  - { id: chest-seal, mod: breathing, kind: item, stringId: ACE_Medical-Item_ChestSeal_Name, en: Chest Seal, manual: チェストシール }
+  - { id: ncd-kit, mod: breathing, kind: item, stringId: ACE_Medical-Item_NCDKit_Name, en: NCD Kit, manual: NCD キット }
+  - { id: oxygen-mask, mod: breathing, kind: item, stringId: ACE_Medical-Item_OxygenMask_Name, en: Oxygen Mask, manual: 酸素マスク }
+  # King LT と酸素マスクの操作は、文字列表を使わず prefab に名前を書いている（酸素マスクの文字列表のキー UserAction_OxygenMask は使われていない）
+  - { id: king-lt-insert, mod: breathing, kind: action, en: Insert King LT }
+  - { id: oxygen-mask-put-on, mod: breathing, kind: action, en: Put oxygen mask on }
+  - { id: chest-seal-use, mod: breathing, kind: action, stringId: ACE_Medical-UserAction_ChestSeal, en: Use chest seal }
+  - { id: needle-decompression, mod: breathing, kind: action, stringId: ACE_Medical-UserAction_NeedleDecompression, en: Perform needle decompression }
+  - { id: check-respiratory-rate, mod: breathing, kind: action, stringId: ACE_Medical-UserAction_CheckBreathing, en: Check respiratory rate }
+  - { id: check-spo2, mod: breathing, kind: action, stringId: ACE_Medical-UserAction_CheckSpO2, en: Check SpO2 }
+  - { id: clear-vomit, mod: breathing, kind: action, stringId: ACE_Medical-UserAction_ClearVomit, en: Clear vomit, manual: 嘔吐物の除去 }
+  - { id: lift-chin, mod: breathing, kind: action, stringId: ACE_Medical-UserAction_TiltHead, en: Lift chin, manual: あご先挙上 }
+  - { id: radial-airway-thorax, mod: breathing, kind: menu, stringId: ACE_Medical-RadialMenu_AirwayThoraxManagement, en: Airway/Thorax management }
+  - { id: open-pneumothorax, mod: breathing, kind: diagnosis, stringId: ACE_Medical-OpenPneumothorax, en: Open pneumothorax, manual: 開放性気胸 }
+  - { id: tension-pneumothorax, mod: breathing, kind: diagnosis, stringId: ACE_Medical-TensionPneumothorax, en: Tension pneumothorax, manual: 緊張性気胸 }
+  - { id: respiratory-rate-result, mod: breathing, kind: notification, stringId: ACE_Medical-Notification_BREATHING_RESULT, en: You find a respiratory rate of %1 breaths per minute }
+  - { id: spo2-result, mod: breathing, kind: notification, stringId: ACE_Medical-Notification_SPO2_RESULT, en: You find a SpO2 of %1% }
+  - { id: chest-seal-description, mod: breathing, kind: description, stringId: ACE_Medical-Item_ChestSeal_Description, en: Special dressing for open chest wounds }
+  - { id: chest-seal-hint, mod: breathing, kind: hint, stringId: ACE_Medical-InfoWidget_ChestSeal, en: Prevents tension pneumothorax }
+  - { id: king-lt-description, mod: breathing, kind: description, stringId: ACE_Medical-Item_KingLT_Description, en: Airway management device inserted into throat }
+  - { id: king-lt-hint, mod: breathing, kind: hint, stringId: ACE_Medical-InfoWidget_KingLT, en: Prevents obstruction and occlusion of airways }
+  - { id: ncd-kit-description, mod: breathing, kind: description, stringId: ACE_Medical-Item_NCDKit_Description, en: Kit for performing needle decompression }
+  - { id: ncd-kit-hint, mod: breathing, kind: hint, stringId: ACE_Medical-InfoWidget_NCDKit, en: Used for treating tension pneumothorax }
+  - { id: oxygen-mask-description, mod: breathing, kind: description, stringId: ACE_Medical-Item_OxygenMask_Description, en: Mask for oxygen therapy }
+  - { id: oxygen-mask-hint, mod: breathing, kind: hint, stringId: ACE_Medical-InfoWidget_OxygenMask, en: Provides supplemental oxygen }
