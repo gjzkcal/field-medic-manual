@@ -53,7 +53,7 @@ category: 物品
 ### Circulation を入れている場合
 <!-- mods: circulation -->
 
-- 例: Class III（血液 38%）に 1 袋 → 90 s 後に 63%（Class II）。もう 1 袋で 88%（Class I）。
+- 例: III度出血（Class III、血液 38%）に 1 袋 → 90 s 後に 63%（II度出血）。もう 1 袋で 88%（I度出血）。
 - 状態は閾値を外れた次の更新で戻る（戻りの余裕はない）。40% を超えれば Critical から Unstable へ、70% を超えれば Stable へ移る。
 - 15 ml/s の出血が続いている間に入れると、90 s で $750 - 15 \times 90 = -600\,\text{ml}$ と出血に負ける。
 

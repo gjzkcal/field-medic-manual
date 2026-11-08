@@ -1,13 +1,13 @@
 # 心停止（脈がない）ときの流れ。TCCC では CPR は MARCH PAWS の外の項目で、ここでは C で脈がないと分かったときに呼ばれる。単独でも実行できる。
 # 各ノードの説明は ACE Medical Dev 1.5.36 の仕様（ソースと実機で確かめた事実）に基づく。
-# 処置の順番は作者の方針（King LT → 酸素マスク → Epinephrine → CPR。出血は止血してから、生理食塩水は合間に。Epinephrine は約 3 分ごとに 1 本）。
+# 処置の順番は作者の方針（King LT → 酸素マスク → エピネフリン → CPR。出血は止血してから、生理食塩水は合間に。エピネフリンは約 3 分ごとに 1 本）。
 # 呼んだ側で A と R（気胸）を済ませてある前提。単独で開いたときのために、気胸の確かめ方へのリンクを置く。
 # 心停止と CPR は Circulation の仕組み。気道閉塞・酸素マスクは Breathing の仕組み。
 # 次の行はフローの形式（JSON Schema）。VS Code で開くと、キーの補完と書き間違いの表示が効く
 $schema: ./triage-flow.v1.schema.json
 id: cardiac-arrest
 title: 心停止
-description: 脈がない負傷者に、King LT・酸素マスク・Epinephrine を使い、CPR を続ける（Circulation）
+description: 脈がない負傷者に、King LT・酸素マスク・エピネフリンを使い、CPR を続ける（Circulation）
 modTarget: [circulation, breathing]
 modChannel: dev
 verifiedAt: "2026-11-04"
@@ -65,11 +65,11 @@ nodes:
 
   a-epi:
     type: action
-    text: Epinephrine を 1 本打つ
+    text: エピネフリンを 1 本打つ
     help: >-
       蘇生の判定の頻度を上げる（打って約 23 秒で最大 1.43 倍、約 164 秒で体内から消える）。1 回の成功率は変えない。
       このあと蘇生しないまま約 3 分たったら、もう 1 本打つ。同時に 2 本以上は打たない（一度に約 4.4 本、激痛なら約 2.4 本で心停止に当たる過量になる）
-    items: [Epinephrine]
+    items: [エピネフリン]
     ifMissing: { next: a-cpr }
     links:
       - doc:cardiac-arrest.md#エピネフリンの役割
@@ -78,7 +78,7 @@ nodes:
 
   a-cpr:
     type: action
-    text: CPR を行う（Perform CPR）
+    text: CPR をする（胸の「心肺蘇生を行う」）
     help: >-
       胸に対して行う。CPR をした時間 22 秒ごとに蘇生の判定があり、成功率は血液量で決まる（70% 以上で 40%、20% 以下で 0%）。
       CPR 中は脳が損傷しない（CPR なしの心停止は、10 秒の後に脳が減り始め、約 5 分で死亡する）。蘇生しても CPR は自動では止まらないので、脈を確かめる。
@@ -98,7 +98,7 @@ nodes:
     choices:
       - { label: 戻った, tone: yes, next: end-rosc }
       - { label: 戻らない, tone: danger, next: a-cpr }
-      - { label: 戻らない・失血が Class II 以上, tone: danger, next: a-saline-cpr }
+      - { label: 戻らない・失血が II度以上, tone: danger, next: a-saline-cpr }
       - { label: 戻らないまま約 3 分たった, tone: danger, next: a-epi }
 
   a-saline-cpr:

@@ -109,7 +109,7 @@ Circulation の閾値の値（Settings.conf の値。ミッションヘッダー
 | `m_fMeanArterialPressureLowKPA` | 7.11 | 5.21 | 5.21 | 平均血圧（kPa）がこれ未満、かつ心拍数が下の上限以下で移る |
 | `m_fMeanArterialPressureHighKPA` | 29.5 | 29.5 | 29.5 | 平均血圧がこれを超えると移る。心停止の値は蘇生中の平均血圧の上限 |
 | `m_fMaxHeartForMeanArterialPressureLowBPM` | 80 | 40 | 30 | 平均血圧の下限を使うときの心拍数の上限 |
-| `m_eBloodState` | Class II | Class III | Class IV | 血液がこの段階以下で移る |
+| `m_eBloodState` | II度出血（Class II） | III度出血（Class III） | IV度出血（Class IV） | 血液がこの段階以下で移る |
 | `m_fSpO2`（Breathing） | 85 | 75 | 65 | SpO2（%）がこれ未満で移る |
 
 - 閾値の意味は [状態の閾値](states.md#状態の閾値) を見る。

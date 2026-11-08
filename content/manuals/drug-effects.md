@@ -30,17 +30,17 @@ Circulation を入れると、エピネフリンとモルヒネは別の仕組�
 
 | 物品 | Circulation あり | Circulation なし |
 |---|---|---|
-| [エピネフリン](epinephrine.md)（Epinephrine） | 意識は戻さない。心拍数を上げ、CPR の判定を速める | 意識不明の患者を起こす |
+| [エピネフリン](epinephrine.md) | 意識は戻さない。心拍数を上げ、CPR の判定を速める | 意識不明の患者を起こす |
 | [モルヒネ注射器](morphine.md) | 鎮痛量を足す（痛みの HP は残る）。心拍数・血圧を下げる | 痛みの HP を治す |
-| [メトプロロール](metoprolol.md)（Metoprolol） | 心拍数を下げる | ない |
-| [ナロキソン](naloxone.md)（Naloxone） | モルヒネを弱める | ない |
-| [フェニレフリン](phenylephrine.md)（Phenylephrine） | 血圧を上げ、出血を遅くする | ない |
-| [炭酸アンモニウム](ammonium-carbonate.md)（Ammonium Carbonate） | Stable の意識不明者を確率で起こす | ない |
+| [メトプロロール](metoprolol.md) | 心拍数を下げる | ない |
+| [ナロキソン](naloxone.md) | モルヒネを弱める | ない |
+| [フェニレフリン](phenylephrine.md) | 血圧を上げ、出血を遅くする | ない |
+| [炭酸アンモニウム](ammonium-carbonate.md) | Stable の意識不明者を確率で起こす | ない |
 
 - 使用条件: Circulation ありでは、どの薬にもない（意識のある健康な仲間にも打てる）。Circulation なしでは、エピネフリンとモルヒネに条件があり、効果が続いている間は次を打てない。
 - 過量投与: Circulation ありだけにある（[過量投与](#過量投与)）。
 - 投薬記録: Circulation ありだけにある（最新 8 件。[投薬記録](vitals.md#投薬記録)）。
-- Circulation の物品と操作は英語で表示される（日本語訳がない）。薬 1 つだけの式と推移、表示名・操作・所要時間・入手は、各物品の原稿（表の物品名のリンク）にある。
+- Circulation の物品と操作は日本語で表示される。薬 1 つだけの式と推移、表示名・操作・所要時間・入手は、各物品の原稿（表の物品名のリンク）にある。
 
 ## 過量投与
 

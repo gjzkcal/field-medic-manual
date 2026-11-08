@@ -33,7 +33,7 @@ Circulation を入れると、生存しているキャラクターは次の 5 �
 ### Circulation なし（Core だけ）の場合
 <!-- mods: !circulation -->
 
-- 5 つの状態はなく、生存・意識不明・死亡だけ。血液の分類（Class）もない。意識は意識の値と血液量で決まる（[意識を失う条件](consciousness-system.md#意識を失う条件)、[血液量と出血の段階](bleeding-system.md#血液量と出血の段階)）。
+- 5 つの状態はなく、生存・意識不明・死亡だけ。I度〜IV度出血（Class I〜IV）の分類もない。意識は意識の値と血液量で決まる（[意識を失う条件](consciousness-system.md#意識を失う条件)、[血液量と出血の段階](bleeding-system.md#血液量と出血の段階)）。
 
 ## 状態の閾値
 
@@ -59,7 +59,7 @@ flowchart TD
 | 心拍数が上限より高い | > 220 | > 220 | > 220 |
 | 平均血圧が下限より低く、かつ心拍数がこの値以下 | < 7.11 kPa<br>（53.3 mmHg）かつ ≤ 80 | < 5.21 kPa<br>（39.1 mmHg）かつ ≤ 40 | < 5.21 kPa かつ ≤ 30 |
 | 平均血圧が上限より高い | > 29.5 kPa<br>（221.3 mmHg） | > 29.5 kPa | > 29.5 kPa |
-| 血液の残り | ≤ 70%（Class II） | ≤ 40%（Class III） | ≤ 20%（Class IV） |
+| 血液の残り | ≤ 70%（II度出血） | ≤ 40%（III度出血） | ≤ 20%（IV度出血） |
 | SpO2（Breathing のみ） | < 85% | < 75% | < 65% |
 
 - 戻るとき（Unstable → Stable、Critical → Unstable）は、その状態の条件に**どれも当たらなくなった**時点で戻る。戻りの余裕（ヒステリシス）はない。
@@ -81,7 +81,7 @@ flowchart TD
 > 公式ドキュメントとの違い:
 > - ドキュメントのバイタルの表は、Unstable・Critical の血圧の条件を血圧だけで書いているが、実際は「心拍数 ≤ 80」「心拍数 ≤ 40」も満たすときだけ当たる。心停止の注記「HR < 30」は、ソースでは「≤ 30」。
 > - Critical の血圧はドキュメントでは 51/34 未満だが、式から計算すると 50.24/33.50（通知では 50/33）。
-> - 出血による心停止は Class IV ではなく、多くは Class III の中（血液 25% 前後）で頻脈によって起きる（[心拍数の決まり方](vitals-system.md#心拍数の決まり方)）。
+> - 出血による心停止は IV度出血ではなく、多くは III度出血の中（血液 25% 前後）で頻脈によって起きる（[心拍数の決まり方](vitals-system.md#心拍数の決まり方)）。
 > - Breathing の説明には「気道が塞がると Unstable」とあるが、直接その規則はない。無呼吸で SpO2 が 85% を割ると（約 77 s 後）Unstable になる。
 
 ### 閾値の設定
@@ -96,13 +96,13 @@ flowchart TD
 | 分類 | 血液の残り（3000 ml が満タン） | 診察画面・インベントリの表示 |
 |---|---|---|
 | Normal | 100% | なし |
-| Class I | 70〜100% | Class I hemorrhage |
-| Class II | 40〜70%（70% ちょうどを含む） | Class II hemorrhage |
-| Class III | 20〜40%（40% ちょうどを含む） | Class III hemorrhage |
-| Class IV | 0〜20%（20% ちょうどを含む） | Class IV hemorrhage |
+| I度出血（Class I） | 70〜100% | I度出血 |
+| II度出血（Class II） | 40〜70%（70% ちょうどを含む） | II度出血 |
+| III度出血（Class III） | 20〜40%（40% ちょうどを含む） | III度出血 |
+| IV度出血（Class IV） | 0〜20%（20% ちょうどを含む） | IV度出血 |
 | Fatal | 0 | 死亡 |
 
-満タンから少しでも減ると Class I になる。
+満タンから少しでも減ると I度出血になる。
 
 ### Breathing を入れている場合
 <!-- mods: breathing -->

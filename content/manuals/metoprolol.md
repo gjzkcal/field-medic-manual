@@ -30,10 +30,10 @@ category: 物品
 
 ## 使い方
 
-- 表示名は「Metoprolol」、操作は「Inject metoprolol」（Circulation には日本語訳がなく、英語で表示される）。
+- 表示名は「メトプロロール」、操作は「メトプロロールを注射」。
 - 左右の腕・脚に打つ。
 - 使用条件はない（意識のある健康な仲間にも打てる）。
-- 説明文は「Administered to patients with too high heart rate」、ヒントは「Decreases heart rate」。
+- 説明文は「心拍数が過度に高い患者に投与する。」、ヒントは「心拍数を下げる」。
 
 ## 所要時間
 

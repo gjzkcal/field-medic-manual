@@ -95,8 +95,8 @@ nodes:
     type: question
     text: 脈がある？
     help: >-
-      「Check pulse」（頭・胸・腕・脚。3 秒、意識不明の相手だけ）か、医療ラジアルメニューの診察で確かめる。
-      心停止中は「You find a heart rate of 0」と出る。心停止した本人の画面はほぼ真っ黒になる。
+      「脈拍を測る」（頭・胸・腕・脚。3 秒、意識不明の相手だけ）か、医療ラジアルメニューの診察で確かめる。
+      心停止中は「心拍数は0です」と出る。心停止した本人の画面はほぼ真っ黒になる。
       CPR をしない心停止は、10 秒の後に脳が減り始め、約 5 分で死亡する
     march: [c]
     choices:
@@ -158,11 +158,11 @@ nodes:
 
   a-wake:
     type: action
-    text: 炭酸アンモニウム（Ammonium Carbonate）で起こす
+    text: 炭酸アンモニウムで起こす
     help: >-
-      頭の「Hold under nose」で使う。Stable の患者にだけ効き、それ以外では何も起きないが物品は減る。
+      頭の「鼻の下に当てる」で使う。Stable の患者にだけ効き、それ以外では何も起きないが物品は減る。
       蘇生していない患者なら、脳が 75% 以上で必ず成功し、約 3 秒で目覚める。蘇生した後の患者は、脳の状態で成功率が下がる
-    items: [炭酸アンモニウム（Ammonium Carbonate）]
+    items: [炭酸アンモニウム]
     ifMissing: { next: a-wake-no-ammonia }
     links:
       - doc:consciousness.md#炭酸アンモニウムで起こす
