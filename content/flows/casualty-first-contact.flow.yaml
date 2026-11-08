@@ -1,5 +1,5 @@
 # 負傷者を見つけたときの流れ。TCCC の段階（CUF/T → TFC）と MARCH PAWS の順に、文字ごとのサブフローを呼ぶ。
-# 各ノードの説明は ACE Medical Dev 1.5.36 の仕様（ソースと実機で確かめた事実）に基づく。
+# 各ノードの説明は ACE Medical の Dev 版（ACE-Anvil の v1.5.0-dev41、ゲーム本体 1.9.0.37）の仕様（ソースと実機で確かめた事実）に基づく。
 # 処置の順番は作者の方針（MARCH PAWS を ACE Medical に当てはめたもの）。ACE とぶつかるところは手直ししてある:
 # - 撃たれている間は止血帯と移動だけにする（激痛の患者は、フェニレフリン約 1 本で心停止しうるため）
 # - 意識がない負傷者は A（物品なし）→ R → C（脈）の順。King LT か回復体位かは脈を見てから選ぶ（CPR は仰向けでしかできないため）
@@ -12,7 +12,7 @@ title: 負傷者を見つけたら
 description: TCCC と MARCH PAWS の順に、止血 → 気道 → 呼吸 → 循環（脈）→ 痛み → 傷と骨折へ進む（設定の MOD に合わせて分岐する）
 modTarget: [core, circulation, breathing]
 modChannel: dev
-verifiedAt: "2026-11-04"
+verifiedAt: "2026-11-08"
 version: 5
 order: 10
 start: q-safe

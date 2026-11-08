@@ -118,7 +118,7 @@ describe("buildStore", () => {
     const detail = findDoc(buildStore([d], EMPTY_QUICKREF, NOW), "cpr");
     expect(detail?.meta.aceCommit).toBe("abcdef1");
     expect(detail?.meta.category).toBeNull();
-    expect(detail?.meta.modVersion).toBe("1.5.36");
+    expect(detail?.meta.modVersion).toBe("1.5.40");
   });
 
   it("画像を id で引けるようにし、文書には大きさなどだけを載せる", () => {

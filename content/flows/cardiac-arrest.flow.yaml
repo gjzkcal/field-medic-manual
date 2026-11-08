@@ -1,5 +1,5 @@
 # 心停止（脈がない）ときの流れ。TCCC では CPR は MARCH PAWS の外の項目で、ここでは C で脈がないと分かったときに呼ばれる。単独でも実行できる。
-# 各ノードの説明は ACE Medical Dev 1.5.36 の仕様（ソースと実機で確かめた事実）に基づく。
+# 各ノードの説明は ACE Medical の Dev 版（ACE-Anvil の v1.5.0-dev41、ゲーム本体 1.9.0.37）の仕様（ソースと実機で確かめた事実）に基づく。
 # 処置の順番は作者の方針（King LT → 酸素マスク → エピネフリン → CPR。出血は止血してから、生理食塩水は合間に。エピネフリンは約 3 分ごとに 1 本）。
 # 呼んだ側で A と R（気胸）を済ませてある前提。単独で開いたときのために、気胸の確かめ方へのリンクを置く。
 # 心停止と CPR は Circulation の仕組み。気道閉塞・酸素マスクは Breathing の仕組み。
@@ -10,7 +10,7 @@ title: 心停止
 description: 脈がない負傷者に、King LT・酸素マスク・エピネフリンを使い、CPR を続ける（Circulation）
 modTarget: [circulation, breathing]
 modChannel: dev
-verifiedAt: "2026-11-04"
+verifiedAt: "2026-11-08"
 version: 1
 order: 70
 march: [cpr]

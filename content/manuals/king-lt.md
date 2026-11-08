@@ -2,10 +2,10 @@
 title: King LT
 mod: breathing
 channel: dev
-mod_version: "1.5.36"
-ace_commit: "703d1aa7"
-game_version: "1.8.0.13"
-verified_at: 2026-10-11
+mod_version: "1.5.41"
+ace_commit: "af008614"
+game_version: "1.9.0.37"
+verified_at: 2026-11-08
 tags: [気道・呼吸, 薬・物品]
 order: 210
 category: 物品

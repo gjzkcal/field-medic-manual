@@ -87,7 +87,7 @@ pub fn cpr() -> DocUpsertInput {
             &[],
         )],
     );
-    d.meta.mod_version = Some("1.5.36".to_owned());
+    d.meta.mod_version = Some("1.5.40".to_owned());
     d
 }
 

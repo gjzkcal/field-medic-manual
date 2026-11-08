@@ -1,5 +1,5 @@
 # MARCH の A（Airway、気道）に当たる。「負傷者を見つけたら」から、意識がないときに呼ばれる。単独でも実行できる。
-# 各ノードの説明は ACE Medical Dev 1.5.36 の仕様（ソースと実機で確かめた事実）に基づく。
+# 各ノードの説明は ACE Medical の Dev 版（ACE-Anvil の v1.5.0-dev41、ゲーム本体 1.9.0.37）の仕様（ソースと実機で確かめた事実）に基づく。
 # 処置の選び方は作者の方針: ここでは物品を使わずに気道を開けるだけにし、気道を保つ手段（心停止なら King LT、
 # 脈があれば回復体位）は脈を確かめてから選ぶ。CPR は仰向けでしかできず、回復体位とぶつかるため。
 # Breathing を入れていなければ、設定の「使っている MOD」で branch がすぐ終わりへ進む。
@@ -10,7 +10,7 @@ title: 気道を開ける
 description: MARCH の A。意識がない負傷者の嘔吐物を除去し、あご先を挙上する（Breathing）
 modTarget: [breathing]
 modChannel: dev
-verifiedAt: "2026-11-04"
+verifiedAt: "2026-11-08"
 version: 1
 order: 41
 march: [a]

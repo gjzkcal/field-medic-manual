@@ -558,7 +558,7 @@ mod tests {
         let id = upsert(&mut conn, &fixtures::cpr()).expect("保存できる");
         let doc = get(&conn, &id).expect("取得できる");
         assert_eq!(doc.summary.title, "心停止と CPR");
-        assert_eq!(doc.summary.meta.mod_version.as_deref(), Some("1.5.36"));
+        assert_eq!(doc.summary.meta.mod_version.as_deref(), Some("1.5.40"));
         assert_eq!(doc.summary.meta.tags, ["循環"]);
         assert_eq!(doc.summary.section_count, 1);
         assert_eq!(doc.sections[0].anchor, "cpr-steps");
@@ -587,12 +587,12 @@ mod tests {
     fn ace_commit_and_game_version_roundtrip() {
         let mut conn = test_conn();
         let mut input = fixtures::cpr();
-        input.meta.ace_commit = Some(" 703D1AA7 ".to_owned());
-        input.meta.game_version = Some(" 1.8.0.13 ".to_owned());
+        input.meta.ace_commit = Some(" AF008614 ".to_owned());
+        input.meta.game_version = Some(" 1.9.0.37 ".to_owned());
         let id = upsert(&mut conn, &input).expect("保存できる");
         let doc = get(&conn, &id).expect("取得できる");
-        assert_eq!(doc.summary.meta.ace_commit.as_deref(), Some("703d1aa7"));
-        assert_eq!(doc.summary.meta.game_version.as_deref(), Some("1.8.0.13"));
+        assert_eq!(doc.summary.meta.ace_commit.as_deref(), Some("af008614"));
+        assert_eq!(doc.summary.meta.game_version.as_deref(), Some("1.9.0.37"));
 
         input.meta.ace_commit = Some("  ".to_owned());
         input.meta.game_version = Some("  ".to_owned());

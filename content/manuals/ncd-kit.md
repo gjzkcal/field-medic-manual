@@ -2,10 +2,10 @@
 title: NCD キット
 mod: breathing
 channel: dev
-mod_version: "1.5.36"
-ace_commit: "703d1aa7"
-game_version: "1.8.0.13"
-verified_at: 2026-10-11
+mod_version: "1.5.41"
+ace_commit: "af008614"
+game_version: "1.9.0.37"
+verified_at: 2026-11-08
 tags: [気道・呼吸, 薬・物品]
 order: 230
 category: 物品
@@ -22,7 +22,7 @@ category: 物品
 
 - NCD キット（NCD Kit）を使うと、**緊張性気胸だけを解除する**。下がっていた血圧が戻り、判定のたびに必ず悪化することもなくなる。
 - 開放性気胸（大きさ）はそのまま残るので、悪化の判定が続き、約 60 s ごとに 50% で大きくなり、5% で再び緊張性になりうる。開放性気胸も治すには、チェストシールも要る。
-- 使うと消費する（ソースの dev ブランチ `703d1aa7` ではケースとホースのゴミが出るが、Workshop の Dev 1.5.36 にはまだこのゴミが無い）。
+- 使うと消費し、ケースとホースのゴミが出る。
 
 ## 使い方
 

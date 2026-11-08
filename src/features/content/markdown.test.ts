@@ -19,8 +19,8 @@ const SAMPLE = `---
 title: 止血
 mod: core
 verified_at: 2026-09-25
-ace_commit: " 703D1AA7 "
-game_version: 1.8.0.13
+ace_commit: " AF008614 "
+game_version: 1.9.0.37
 tags: [出血, 止血帯]
 order: 20
 category: " 症状/処置 "
@@ -62,8 +62,8 @@ describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
       modChannel: null,
       modVersion: null,
       verifiedAt: "2026-09-25",
-      aceCommit: "703d1aa7",
-      gameVersion: "1.8.0.13",
+      aceCommit: "af008614",
+      gameVersion: "1.9.0.37",
       tags: ["出血", "止血帯"],
       order: 20,
       category: "症状/処置",
