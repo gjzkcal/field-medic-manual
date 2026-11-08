@@ -2,10 +2,10 @@
 title: 出血と止血
 mod: core
 channel: dev
-mod_version: "1.5.36"
-ace_commit: "703d1aa7"
-game_version: "1.8.0.13"
-verified_at: 2026-09-27
+mod_version: "1.5.40"
+ace_commit: "af008614"
+game_version: "1.9.0.37"
+verified_at: 2026-11-08
 tags: [出血]
 order: 30
 category: 処置
@@ -32,7 +32,7 @@ category: 処置
 | 止血帯・生理食塩水の表示 | 本体の診察画面の表示（ACE は変えない） |
 
 - 止血帯で止めた傷も、出血の扱いは残る（[止血帯](tourniquet.md)）。そのため「出血中」の判定（血液が回復しない、Circulation なしではエピネフリンを使えない）は、包帯を巻くまで消えない。
-- 数値は本体（1.8.0.13）の診察画面の閾値。表示される語句は本体の翻訳による。
+- 数値は本体（1.9.0.37）の診察画面の閾値。表示される語句は本体の翻訳による。
 
 ### Circulation を入れている場合
 <!-- mods: circulation -->

@@ -2,10 +2,10 @@
 title: 心停止と CPR
 mod: circulation
 channel: dev
-mod_version: "1.5.36"
-ace_commit: "703d1aa7"
-game_version: "1.8.0.13"
-verified_at: 2026-09-27
+mod_version: "1.5.40"
+ace_commit: "af008614"
+game_version: "1.9.0.37"
+verified_at: 2026-11-08
 tags: [循環]
 order: 70
 category: 処置

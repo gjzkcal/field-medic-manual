@@ -1,5 +1,5 @@
 # MARCH の M（Massive Bleeding、大出血）に当たる。「負傷者を見つけたら」から、周囲が安全になったら最初に呼ばれる。単独でも実行できる。
-# 各ノードの説明は ACE Medical Dev 1.5.36 の仕様（ソースと実機で確かめた事実）に基づく。
+# 各ノードの説明は ACE Medical の Dev 版（ACE-Anvil の v1.5.0-dev41、ゲーム本体 1.9.0.37）の仕様（ソースと実機で確かめた事実）に基づく。
 # 処置の選び方は作者の方針（包帯が基本。物品がなければ医療キットか仲間から受け取る）。
 # 次の行はフローの形式（JSON Schema）。VS Code で開くと、キーの補完と書き間違いの表示が効く
 $schema: ./triage-flow.v1.schema.json
@@ -8,7 +8,7 @@ title: 出血を止める
 description: MARCH の M。出血をすべて包帯で止める
 modTarget: [core]
 modChannel: dev
-verifiedAt: "2026-11-04"
+verifiedAt: "2026-11-08"
 version: 1
 order: 30
 march: [m]

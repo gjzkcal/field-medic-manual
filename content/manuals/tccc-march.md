@@ -2,10 +2,10 @@
 title: TCCC と MARCH
 mod: general
 channel: dev
-mod_version: "1.5.36"
-ace_commit: "703d1aa7"
-game_version: "1.8.0.13"
-verified_at: 2026-11-03
+mod_version: "1.5.40"
+ace_commit: "af008614"
+game_version: "1.9.0.37"
+verified_at: 2026-11-08
 order: 600
 category: 参考
 ---

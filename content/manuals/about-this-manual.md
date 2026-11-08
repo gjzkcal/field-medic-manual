@@ -2,10 +2,10 @@
 title: このマニュアルの読み方
 mod: general
 channel: dev
-mod_version: "1.5.36"
-ace_commit: "703d1aa7"
-game_version: "1.8.0.13"
-verified_at: 2026-09-27
+mod_version: "1.5.40"
+ace_commit: "af008614"
+game_version: "1.9.0.37"
+verified_at: 2026-11-08
 order: 10
 category: はじめに
 ---
@@ -19,9 +19,18 @@ category: はじめに
 
 ## 対象の版と MOD
 
-- 対象は ACE Medical の **Dev 版 1.5.36**（Workshop の公開は 2026-08-14 00:35 JST ／ 原文 2026-08-13 15:35:56 GMT）。
-- 読んだソースは ACE-Anvil の dev ブランチ `703d1aa7`（2026-09-22 05:16 JST ／ 原文 2026-09-21 22:16:17 +0200）。1.5.36 より新しいが、医療の挙動は 1.5.36 と同じ。違うのは、炭酸アンモニウム・チェストシール・NCD キットを使った後のゴミが 1.5.36 にはまだ無いことだけ。
-- ゲーム本体は 1.8.0.13 で確かめた。
+- 対象は ACE Medical の **Dev 版**。Workshop の版の番号は MOD ごとに違う。
+
+| MOD（Workshop の名前） | 版 | Workshop の公開 |
+|---|---|---|
+| ACE Medical Breathing Dev | 1.5.41 | 2026-11-06 07:00 JST ／ 原文 2026-11-05 22:00:13 GMT |
+| ACE Core Dev | 1.5.41 | 2026-11-06 06:59 JST ／ 原文 2026-11-05 21:59:52 GMT |
+| ACE Medical Core Dev ／ Hitzones Dev ／ Circulation Dev ／ AI Dev | 1.5.40 | 2026-11-06 00:10〜00:11 JST ／ 原文 2026-11-05 15:10:41〜15:11:57 GMT |
+| ACE All in One Dev | 1.5.40 | 2026-11-06 00:06 JST ／ 原文 2026-11-05 15:06:58 GMT |
+
+- 読んだソースは ACE-Anvil のタグ `v1.5.0-dev41`（コミット `af008614`、2026-11-06 06:54 JST ／ 原文 2026-11-05 22:54:46 +0100）。1.5.40 の MOD（タグ `v1.5.0-dev40`）との違いは、King LT・酸素マスクを付ける処理と持ち方の見た目だけで、ほかの医療の挙動は同じ。
+- 各原稿に付けた版は、その原稿の MOD の版。Breathing の原稿は 1.5.41、ほかは 1.5.40。
+- ゲーム本体は 1.9.0.37 で確かめた。
 - **Release 版（1.4.3）は対象外**。Release には Circulation・Breathing・AI の MOD が無く、Core の挙動も一部違う。
 - 対象の MOD（いずれも Dev 版）:
 

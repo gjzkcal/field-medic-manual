@@ -2,10 +2,10 @@
 title: チェストシール
 mod: breathing
 channel: dev
-mod_version: "1.5.36"
-ace_commit: "703d1aa7"
-game_version: "1.8.0.13"
-verified_at: 2026-09-27
+mod_version: "1.5.41"
+ace_commit: "af008614"
+game_version: "1.9.0.37"
+verified_at: 2026-11-08
 tags: [気道・呼吸, 薬・物品]
 order: 220
 category: 物品
@@ -22,7 +22,7 @@ category: 物品
 
 - チェストシール（Chest Seal）を貼ると、**気胸が完全に治る**（大きさ 0）。**緊張性気胸は治さない**（血圧が低いまま残る）。
 - 貼った後に胸に再び強い打撃を受けると、また 51% で気胸になる。
-- 使うと消費する（ソースの dev ブランチ `703d1aa7` では包装のゴミが出るが、Workshop の Dev 1.5.36 にはまだこのゴミが無い）。
+- 使うと消費し、包装のゴミが出る。
 
 ## 使い方
 

@@ -1,6 +1,6 @@
 # 症状→処置 クイック表。1 行 = 1 つの症状（ゲーム内で見える様子）。
 # 各行の事実（数値・条件・表示名）は同梱のマニュアル 12 本に基づく。
-# マニュアルは ACE Medical Dev 1.5.36（ACE-Anvil の dev ブランチ 703d1aa7。医療の挙動は Workshop の Dev 1.5.36 と同じ）で確かめた。
+# マニュアルは ACE Medical の Dev 版（Workshop の 1.5.40〜1.5.41、ACE-Anvil の v1.5.0-dev41）とゲーム本体 1.9.0.37 で確かめた。
 # 手順の順番と選び方は作者の方針（TCCC と MARCH PAWS の順を ACE Medical に当てはめたもの。トリアージのフローと同じ順）。
 # MOD で処置が変わる行は mods / withoutMods で出し分け、設定の「使っている MOD」に合う行だけを表示する。
 #
@@ -14,7 +14,7 @@
 # 次の行はクイック表の形式（JSON Schema）。VS Code で開くと、キーの補完と書き間違いの表示が効く
 $schema: ./quickref.v1.schema.json
 modChannel: dev
-verifiedAt: "2026-11-04"
+verifiedAt: "2026-11-08"
 rows:
   # ---- 出血 ----
   - id: limb-bleeding

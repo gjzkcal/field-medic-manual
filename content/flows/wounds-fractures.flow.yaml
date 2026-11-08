@@ -1,5 +1,5 @@
 # PAWS の W（Wounds、傷）と S（Splint、副子固定）に当たる。「負傷者を見つけたら」から、最後に呼ばれる。単独でも実行できる。
-# 各ノードの説明は ACE Medical Dev 1.5.36 の仕様（ソースと実機で確かめた事実）に基づく。
+# 各ノードの説明は ACE Medical の Dev 版（ACE-Anvil の v1.5.0-dev41、ゲーム本体 1.9.0.37）の仕様（ソースと実機で確かめた事実）に基づく。
 # ACE Medical に副木（Splint）の物品は無く、医療ラジアルメニューの「骨折の治療」に出るのは医療キットなので、W と S をまとめた。
 # 処置の選び方は作者の方針（見落とした出血は「出血を止める」に戻り、傷んだ部位と骨折は医療キットで治す）。
 # 次の行はフローの形式（JSON Schema）。VS Code で開くと、キーの補完と書き間違いの表示が効く
@@ -9,7 +9,7 @@ title: 傷と骨折を確かめる
 description: PAWS の W と S。見落とした出血を探し、傷んだ部位と骨折を医療キットで治す
 modTarget: [core]
 modChannel: dev
-verifiedAt: "2026-11-04"
+verifiedAt: "2026-11-08"
 version: 1
 order: 90
 march: [w, s]

@@ -9,7 +9,7 @@ title: 気道と呼吸を確かめる
 description: MARCH の A と R。意識がない負傷者の気道を開け、気胸を確かめる（Breathing）
 modTarget: [breathing]
 modChannel: dev
-verifiedAt: "2026-11-04"
+verifiedAt: "2026-11-08"
 version: 5
 order: 40
 start: b-breathing

@@ -1,5 +1,5 @@
 # MARCH の R（Respiration、呼吸）に当たる。「負傷者を見つけたら」から、意識の有無にかかわらず呼ばれる。単独でも実行できる。
-# 各ノードの説明は ACE Medical Dev 1.5.36 の仕様（ソースと実機で確かめた事実）に基づく。
+# 各ノードの説明は ACE Medical の Dev 版（ACE-Anvil の v1.5.0-dev41、ゲーム本体 1.9.0.37）の仕様（ソースと実機で確かめた事実）に基づく。
 # 処置の選び方は作者の方針（緊張性は NCD キット、開放性はチェストシール。物品がなければ仲間から受け取る）。
 # Breathing を入れていなければ、設定の「使っている MOD」で branch がすぐ終わりへ進む。
 # 次の行はフローの形式（JSON Schema）。VS Code で開くと、キーの補完と書き間違いの表示が効く
@@ -9,7 +9,7 @@ title: 気胸を確かめる
 description: MARCH の R。診察で気胸を確かめ、NCD キットとチェストシールで処置する（Breathing）
 modTarget: [breathing]
 modChannel: dev
-verifiedAt: "2026-11-04"
+verifiedAt: "2026-11-08"
 version: 1
 order: 50
 march: [r]
