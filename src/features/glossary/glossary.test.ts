@@ -17,9 +17,14 @@ const glossary = glossaryFileSchema.parse(
   parse(readFileSync(resolve(REPO_ROOT, "content", "glossary.yaml"), "utf8")),
 );
 
-/** 画面で一続きに読まれる文字列。where は失敗の表示に使う。 */
+/**
+ * 画面で一続きに読まれる文字列。where は失敗の表示に使う。
+ * scope は一度に開いて読まれる単位（原稿 1 本・クイック表の 1 行・フローの 1 ノード）で、初出の判定に使う。
+ */
 interface TextUnit {
   where: string;
+  scope: string;
+  heading: boolean;
   text: string;
 }
 
@@ -87,12 +92,12 @@ async function manualUnits(): Promise<TextUnit[]> {
     })),
   );
   return converted.flatMap(({ manual, doc }) => [
-    { where: `${manual.fileName}（表題）`, text: doc.title },
+    { where: `${manual.fileName}（表題）`, scope: manual.fileName, heading: true, text: doc.title },
     ...doc.sections.flatMap((section) => {
       const where = `${manual.fileName}#${section.anchor}`;
       return [
-        { where: `${where}（見出し）`, text: section.title },
-        { where, text: visibleText(section.html) },
+        { where: `${where}（見出し）`, scope: manual.fileName, heading: true, text: section.title },
+        { where, scope: manual.fileName, heading: false, text: visibleText(section.html) },
       ];
     }),
   ]);
@@ -104,7 +109,8 @@ async function quickrefUnits(): Promise<TextUnit[]> {
   const rows = isRecord(value) && Array.isArray(value["rows"]) ? value["rows"] : [];
   return rows.flatMap((row: unknown) => {
     const id = isRecord(row) && typeof row["id"] === "string" ? row["id"] : "?";
-    return yamlStrings(row).map((text) => ({ where: `quickref.yaml の ${id}`, text }));
+    const where = `quickref.yaml の ${id}`;
+    return yamlStrings(row).map((text) => ({ where, scope: where, heading: false, text }));
   });
 }
 
@@ -117,11 +123,18 @@ async function flowUnits(): Promise<TextUnit[]> {
     }
     const { nodes, ...header } = value;
     const nodeUnits = isRecord(nodes)
-      ? Object.entries(nodes).flatMap(([nodeId, node]) =>
-          yamlStrings(node).map((text) => ({ where: `${source.fileName} の ${nodeId}`, text })),
-        )
+      ? Object.entries(nodes).flatMap(([nodeId, node]) => {
+          const where = `${source.fileName} の ${nodeId}`;
+          return yamlStrings(node).map((text) => ({ where, scope: where, heading: false, text }));
+        })
       : [];
-    return [...yamlStrings(header).map((text) => ({ where: source.fileName, text })), ...nodeUnits];
+    const headerUnits = yamlStrings(header).map((text) => ({
+      where: source.fileName,
+      scope: source.fileName,
+      heading: false,
+      text,
+    }));
+    return [...headerUnits, ...nodeUnits];
   });
 }
 
@@ -151,6 +164,19 @@ function englishUsedAsName(text: string, en: string): string[] {
     .map((m) => m[0]);
 }
 
+/**
+ * 原稿での呼び方が最初に出た所の直後に、括弧で英語の表示名が添えてあるか。出てこなければ添える所が無いので通す。
+ * 「あご先挙上（Lift chin、1 秒）」のように、英語の後に読点で補足が続く形も許す。
+ */
+function firstMentionAnnotated(text: string, manual: string, en: string): boolean {
+  const index = text.indexOf(manual);
+  if (index === -1) {
+    return true;
+  }
+  const rest = text.slice(index + manual.length);
+  return rest.startsWith(`（${en}）`) || rest.startsWith(`（${en}、`);
+}
+
 describe("英語の表示名の見つけ方", () => {
   it("語の境界と、通知の数値の位置を扱う", () => {
     expect(englishUsedAsName("Bandage を巻く", "Bandage")).toEqual(["Bandage"]);
@@ -170,6 +196,23 @@ describe("英語の表示名の見つけ方", () => {
       "Too injured",
       "Too injured",
     ]);
+  });
+
+  it("初出の併記は、最初に出た所だけを見る", () => {
+    expect(
+      firstMentionAnnotated("あご先挙上（Lift chin）。あご先挙上", "あご先挙上", "Lift chin"),
+    ).toBe(true);
+    expect(firstMentionAnnotated("あご先挙上（Lift chin、1 秒）", "あご先挙上", "Lift chin")).toBe(
+      true,
+    );
+    expect(firstMentionAnnotated("回復体位にする", "あご先挙上", "Lift chin")).toBe(true);
+    expect(
+      firstMentionAnnotated("あご先挙上。あご先挙上（Lift chin）", "あご先挙上", "Lift chin"),
+    ).toBe(false);
+    expect(firstMentionAnnotated("あご先挙上（Breathing）", "あご先挙上", "Lift chin")).toBe(false);
+    expect(firstMentionAnnotated("あご先挙上（Lift chinX）", "あご先挙上", "Lift chin")).toBe(
+      false,
+    );
   });
 });
 
@@ -196,6 +239,37 @@ describe("原稿・クイック表・フローの表示名", () => {
       expect(
         found,
         `ゲームを日本語にしていると「${term.ja}」と表示されます。日本語の表示名で書き、英語を添えるなら「${term.ja}（${term.en}）」の形にしてください（content/glossary.yaml の ${term.id}）`,
+      ).toEqual([]);
+    },
+  );
+
+  // 日本語で遊んでいても英語で出る操作は、ラジアルメニューから英語の名前で選ぶので、日本語の呼び方だけでは探せない。
+  // 物品はカタカナから英語の見当がつき（チェストシール → Chest Seal）、診察の表示（緊張性気胸など）は
+  // 病態の名前として本文で何度も使うので、どちらも初出の併記は求めない
+  const englishActions = glossary.terms.filter(
+    (term): term is GlossaryTerm & { manual: string } =>
+      term.kind === "action" && term.manual !== undefined && term.manual !== term.en,
+  );
+
+  // 見出しは目次にも出る短い名前なので、併記は本文の初出に置く
+  const scopes = new Map<string, string>();
+  for (const unit of units.filter((u) => !u.heading)) {
+    scopes.set(unit.scope, `${scopes.get(unit.scope) ?? ""}\n${unit.text}`);
+  }
+
+  it("英語で表示される操作が、検査の対象にある", () => {
+    expect(englishActions.map((term) => term.id)).toContain("lift-chin");
+  });
+
+  it.each(englishActions.map((term) => [term.id, term] as const))(
+    "%s: 英語で表示される操作は、原稿 1 本・クイック表の 1 行・フローの 1 ノードの初出で英語を添えている",
+    (_, term) => {
+      const missing = Array.from(scopes)
+        .filter(([, text]) => !firstMentionAnnotated(text, term.manual, term.en))
+        .map(([scope]) => scope);
+      expect(
+        missing,
+        `ゲームでは日本語にしていても「${term.en}」と英語で表示されます。最初に出る所を「${term.manual}（${term.en}）」の形にしてください（content/glossary.yaml の ${term.id}）`,
       ).toEqual([]);
     },
   );

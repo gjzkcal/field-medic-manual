@@ -114,7 +114,7 @@ category: 操作
 | 脈拍を測る・血圧を測る（Circulation。体へのインタラクション） | 押し続け 3 s |
 | 呼吸数の確認・Check SpO2（Breathing。体へのインタラクション） | 押し続け 3 s |
 | ラジアルメニューからの確認（脈・血圧・呼吸数・SpO2） | 待ち時間なし |
-| Lift chin（あご先挙上）・Clear vomit（嘔吐物の除去）（Breathing） | 押し続け 1 s |
+| あご先挙上（Lift chin）・嘔吐物の除去（Clear vomit）（Breathing） | 押し続け 1 s |
 
 - 計算例（CPR）: 押し始めて 1 s から CPR が有効になり、CPR を 22 s 続けると 1 回目の蘇生判定がある。押し始めからは約 23 s（[蘇生の判定](cardiac-arrest-system.md#蘇生の判定)）。
 
