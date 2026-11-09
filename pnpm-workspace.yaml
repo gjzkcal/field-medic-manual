@@ -1,0 +1,6 @@
+overrides:
+  # GHSA-g3hv-75wg-m249（globParts の増幅による DoS）の修正は minimatch 11.0.1 以降にしか無いが、
+  # eslint・@eslint/config-array・@typescript-eslint/typescript-estree・@ts-morph/common は ^10 を要求している。
+  # どれも new Minimatch(…).match() と minimatch() だけを使い、v11 で消えた makeRe などは呼ばないので 11 に寄せる。
+  # これらが ^11 を許すようになったら、この上書きは外す
+  "minimatch@>=7.0.0 <11.0.1": ^11.0.5
