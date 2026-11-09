@@ -13,6 +13,8 @@
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-10
+
 ### Added
 
 - 原稿「TCCC と MARCH」を加えました（新しい分類「参考」）。現実の戦傷救護の枠組みである TCCC の 3 つの段階、MARCH PAWS の各項目、CPR の扱い、トリアージの区分、引き継ぎの MIST と TCCC Casualty Card、後送を頼む 9-Line MEDEVAC を、米国防総省と米陸軍の公開資料から紹介し、それぞれが ACE Medical のどの物品・操作に当たるか（無いものは無いこと）を示しています。ゲームでの手順を勧めるものではありません。
@@ -290,7 +292,8 @@
 - 設定の「使っている MOD」に合わせて、フローとクイック表の内容が切り替わります。
 - 起動時に新しい版を確かめ、自動で更新できます。
 
-[Unreleased]: https://github.com/gjzkcal/field-medic-manual/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/gjzkcal/field-medic-manual/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/gjzkcal/field-medic-manual/compare/v0.7.1...v0.8.0
 [0.7.1]: https://github.com/gjzkcal/field-medic-manual/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/gjzkcal/field-medic-manual/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/gjzkcal/field-medic-manual/compare/v0.5.1...v0.6.0
