@@ -23,6 +23,45 @@ function permissionsOf(file: string): z.infer<typeof capabilitySchema>["permissi
   return capabilitySchema.parse(JSON.parse(readFileSync(path, "utf8"))).permissions;
 }
 
+function readSource(...parts: string[]): string {
+  return readFileSync(resolve(REPO_ROOT, "src-tauri", ...parts), "utf8");
+}
+
+/** build.rs の COMMANDS（権限にするコマンドの一覧） */
+function manifestCommands(): string[] {
+  const block = /const COMMANDS: &\[&str\] = &\[([\s\S]*?)\];/.exec(readSource("build.rs"))?.[1];
+  return [...(block ?? "").matchAll(/"([a-z_]+)"/g)].map((m) => m[1] ?? "");
+}
+
+/** lib.rs の generate_handler! に並べたコマンド */
+function handlerCommands(): string[] {
+  const block = /generate_handler!\[([\s\S]*?)\]/.exec(readSource("src", "lib.rs"))?.[1];
+  return [...(block ?? "").matchAll(/::([a-z_]+),/g)].map((m) => m[1] ?? "");
+}
+
+function permissionNames(file: string): string[] {
+  return permissionsOf(file).map((p) => (typeof p === "string" ? p : p.identifier));
+}
+
+// build.rs に入れ忘れたコマンドは権限で絞られず、どのウィンドウからも呼べてしまう
+describe("コマンドの登録", () => {
+  it("generate_handler! のコマンドがすべて build.rs の COMMANDS にある", () => {
+    expect(handlerCommands().length).toBeGreaterThan(0);
+    expect([...handlerCommands()].sort()).toEqual([...manifestCommands()].sort());
+  });
+
+  it("AI チャットのコマンドはメインだけに許し、小窓には許さない", () => {
+    const aiPermissions = manifestCommands()
+      .filter((name) => name.startsWith("ai_"))
+      .map((name) => `allow-${name.replaceAll("_", "-")}`);
+    expect(aiPermissions.length).toBeGreaterThan(0);
+    expect(permissionNames("main.json")).toEqual(expect.arrayContaining(aiPermissions));
+    expect(permissionNames("overlay.json").filter((name) => name.startsWith("allow-ai-"))).toEqual(
+      [],
+    );
+  });
+});
+
 // まとめの権限は、プラグインの更新で中身が増えると気づかないうちに権限が広がるので、使うものを列挙する
 describe.each(["main.json", "overlay.json"])("%s", (file) => {
   const permissions = permissionsOf(file);

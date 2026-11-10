@@ -3,4 +3,4 @@
 /**
  * TS 側で分岐に使うエラーの種類。文字列リテラルの union として生成される。
  */
-export type ErrorKind = "io" | "not_found" | "invalid_input" | "forbidden" | "internal";
+export type ErrorKind = "io" | "not_found" | "invalid_input" | "forbidden" | "internal" | "ai_auth" | "network" | "rate_limited" | "overloaded" | "ai_request";

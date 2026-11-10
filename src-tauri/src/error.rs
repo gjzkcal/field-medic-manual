@@ -16,6 +16,16 @@ pub enum AppError {
     Internal(String),
     #[error("データベースエラー: {0}")]
     Db(#[from] rusqlite::Error),
+    #[error("API キーが使えません: {0}")]
+    AiAuth(String),
+    #[error("通信できません: {0}")]
+    Network(String),
+    #[error("利用の上限に達しました: {0}")]
+    RateLimited(String),
+    #[error("AI のサーバーが混み合っています: {0}")]
+    Overloaded(String),
+    #[error("AI への要求が受け付けられませんでした: {0}")]
+    AiRequest(String),
 }
 
 /// TS 側で分岐に使うエラーの種類。文字列リテラルの union として生成される。
@@ -28,6 +38,16 @@ pub enum ErrorKind {
     InvalidInput,
     Forbidden,
     Internal,
+    /// API キーが未登録・無効・権限なし（401 / 403）
+    AiAuth,
+    /// 接続できない・途中で切れた・応答が来ない
+    Network,
+    /// 429。時間をおけば通る
+    RateLimited,
+    /// 529 と 5xx。時間をおけば通る
+    Overloaded,
+    /// 400 / 404 / 413 など、送り方を変えないと通らない
+    AiRequest,
 }
 
 /// IPC で送る形。`AppError` は `std::io::Error` などを抱えて直接シリアライズできないため、この形に写して送る。
@@ -48,6 +68,11 @@ impl AppError {
             Self::Forbidden(_) => ErrorKind::Forbidden,
             // DB の失敗は利用者が対処できる種類のエラーではないため、TS 側では内部エラーとして扱う
             Self::Internal(_) | Self::Db(_) => ErrorKind::Internal,
+            Self::AiAuth(_) => ErrorKind::AiAuth,
+            Self::Network(_) => ErrorKind::Network,
+            Self::RateLimited(_) => ErrorKind::RateLimited,
+            Self::Overloaded(_) => ErrorKind::Overloaded,
+            Self::AiRequest(_) => ErrorKind::AiRequest,
         }
     }
 
@@ -66,7 +91,14 @@ impl AppError {
     fn report(&self) {
         match self {
             Self::NotFound(_) => {}
-            Self::InvalidInput(_) | Self::Forbidden(_) => log::warn!("{self}"),
+            // AI の失敗は通信やキーなど利用者の環境で起きるもので、アプリの不具合ではないので warn にする
+            Self::InvalidInput(_)
+            | Self::Forbidden(_)
+            | Self::AiAuth(_)
+            | Self::Network(_)
+            | Self::RateLimited(_)
+            | Self::Overloaded(_)
+            | Self::AiRequest(_) => log::warn!("{self}"),
             Self::Io(_) | Self::Internal(_) | Self::Db(_) => log::error!("{self}"),
         }
     }

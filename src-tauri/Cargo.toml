@@ -37,6 +37,13 @@ tauri-plugin-process = "2"
 tauri-plugin-log = "2"
 log = "0.4"
 time = { version = "0.3", features = ["formatting"] }
+# AI チャットで Claude API を呼ぶ。既定の features は TLS に aws-lc を入れるので外し、updater と同じ ring にそろえる
+reqwest = { version = "0.13", default-features = false, features = ["json", "stream", "rustls-no-provider", "http2", "system-proxy"] }
+rustls = { version = "0.23", default-features = false, features = ["ring"] }
+tokio = { version = "1", features = ["time", "macros", "sync"] }
+futures-util = { version = "0.3", default-features = false, features = ["std"] }
+base64 = "0.23"
+bytes = "1"
 
 [lints.rust]
 unsafe_code = "forbid"
@@ -54,6 +61,11 @@ strip = true
 
 [dev-dependencies]
 tempfile = "3"
+
+[target.'cfg(windows)'.dependencies]
+# AI チャットの API キーを Windows の資格情報マネージャーに置く（WebView や DB に平文で残さない）
+keyring-core = "1"
+windows-native-keyring-store = "1.1"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 # 既定の機能の `zip` は、Windows で zip に包んだ更新を展開するためだけのもの。リリースは -setup.exe と .msi をそのまま配るので要らない。

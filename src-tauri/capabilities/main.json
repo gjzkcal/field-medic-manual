@@ -48,6 +48,14 @@
     "allow-history-list",
     "allow-hotkey-list",
     "allow-hotkey-set",
-    "allow-main-window-ready"
+    "allow-main-window-ready",
+    "allow-ai-key-status",
+    "allow-ai-key-set",
+    "allow-ai-key-clear",
+    "allow-ai-key-check",
+    "allow-ai-chat-send",
+    "allow-ai-chat-tool-result",
+    "allow-ai-chat-cancel",
+    "allow-ai-chat-reset"
   ]
 }
