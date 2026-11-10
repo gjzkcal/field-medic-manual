@@ -13,12 +13,10 @@ import type { Alias, HtmlTagDescriptor, Plugin } from "vite";
 import { defineConfig } from "vitest/config";
 
 import { APP_NAME, pageTitle } from "./src/app/page-title.ts";
+import { WEB_BASE } from "./src/lib/web-site.ts";
 import { THEME_BOOT_SCRIPT } from "./src/web/theme-boot.ts";
 
 const host = process.env["TAURI_DEV_HOST"];
-
-/** GitHub Pages の公開先（https://gjzkcal.github.io/field-medic-manual/）のパス */
-const WEB_BASE = "/field-medic-manual/";
 
 // src/web/router.tsx のルートのうち、引数を持たないものと、その画面の名前（各画面の usePageTitle と同じ）。
 // ルートを足したらここにも足す（足し忘れるとその URL だけ HTTP 404 に戻る）

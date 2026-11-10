@@ -3,6 +3,7 @@ import { Link } from "react-router";
 
 import { LinkButton } from "@/components/LinkButton";
 import { docHref } from "@/features/library/link";
+import { CopyLinkButton } from "@/features/library/viewer/CopyLinkButton";
 import { headingIndent } from "@/features/library/viewer/heading-indent";
 import { nestHeadings } from "@/features/library/viewer/heading-tree";
 import { HeadingList } from "@/features/library/viewer/HeadingList";
@@ -14,6 +15,8 @@ interface DocTocProps {
   headings: readonly OutlineHeading[];
   /** 今読んでいる節の見出し */
   activeAnchor: string | null;
+  /** 項目の横の「リンクをコピー」で写す URL */
+  shareUrlOf: (level: number, anchor: string) => string | null;
   /** 見出しの「目次」を出すか。シートの中では、シートの表題と重なるので出さない */
   showLabel?: boolean;
   /** 項目を押したとき（シートを閉じるため） */
@@ -25,6 +28,7 @@ export function DocToc({
   docId,
   headings,
   activeAnchor,
+  shareUrlOf,
   showLabel = true,
   onNavigate,
 }: DocTocProps): JSX.Element {
@@ -38,21 +42,31 @@ export function DocToc({
         nestedClassName="mt-0.5 flex flex-col gap-0.5"
         renderItem={(h) => {
           const active = h.anchor === activeAnchor;
+          const url = shareUrlOf(h.level, h.anchor);
           return (
-            <LinkButton
-              key={h.anchor}
-              variant="ghost"
-              size="sm"
-              render={<Link to={docHref(docId, h.anchor)} onClick={onNavigate} />}
-              aria-current={active ? "location" : undefined}
-              className={cn(
-                "h-auto min-h-7 justify-start rounded-l-none border-l-2 border-transparent py-1 text-left font-normal whitespace-normal text-muted-foreground hover:text-foreground",
-                headingIndent(h.level),
-                active && "border-l-primary bg-muted font-semibold text-foreground",
+            <div className="group/link-target flex items-start">
+              <LinkButton
+                variant="ghost"
+                size="sm"
+                render={<Link to={docHref(docId, h.anchor)} onClick={onNavigate} />}
+                aria-current={active ? "location" : undefined}
+                className={cn(
+                  "h-auto min-h-7 min-w-0 flex-1 justify-start rounded-l-none border-l-2 border-transparent py-1 text-left font-normal whitespace-normal text-muted-foreground hover:text-foreground",
+                  headingIndent(h.level),
+                  active && "border-l-primary bg-muted font-semibold text-foreground",
+                )}
+              >
+                {h.title}
+              </LinkButton>
+              {url !== null && (
+                <CopyLinkButton
+                  url={url}
+                  label={`「${h.title}」`}
+                  reveal="hover"
+                  className="mt-0.5 shrink-0"
+                />
               )}
-            >
-              {h.title}
-            </LinkButton>
+            </div>
           );
         }}
       />

@@ -1,8 +1,8 @@
 // Web 版で、変換した原稿とクイック表をメモリに持つ。
 // デスクトップ版は Rust が SQLite に入れて返す形（DocSummary・DocDetail・DocOutline など）を、同じ規則でここで作る
 // （src-tauri/src/db/docs.rs の validate・insert_sections・list・outline・get、dict.rs の tag_list）。
-import { fileName, fileStem } from "@/features/content/path";
 import type { NormalizedAsset, NormalizedDoc } from "@/features/content/types";
+import { webDocId } from "@/features/library/share-link";
 import type { DocDetail } from "@/lib/bindings/DocDetail";
 import type { DocMeta } from "@/lib/bindings/DocMeta";
 import type { DocOutline } from "@/lib/bindings/DocOutline";
@@ -47,7 +47,7 @@ export function buildStore(
   // 節の id は文書をまたいで一意にする（検索結果の key が section:<id> のため）。同期の順（ファイル名順）で振る
   const sorted = [...docs].sort((a, b) => compareBinary(a.sourcePath, b.sourcePath));
   const details = sorted.map((doc): DocDetail => {
-    const id = fileStem(fileName(doc.sourcePath));
+    const id = webDocId(doc.sourcePath);
     if (ids.has(id)) {
       throw new Error(`同じ名前の原稿が 2 つあります: ${id}`);
     }
