@@ -1,6 +1,7 @@
 // アプリのコマンドも権限（allow-<コマンド名>）にし、capability で許可したウィンドウからだけ呼べるようにする。
 // 常に最前面の小窓から、本文の書き換えや削除を呼べないようにするため。
 // 小窓（capabilities/overlay.json）には、閲覧・検索・お気に入り・履歴・負傷者の記録・設定の読み書き・小窓の操作だけを許す。
+// AI チャット（ai_*）はメインだけに許す。小窓から外へ送る口を増やさないため。
 // コマンドを足したら、ここと capabilities/*.json の両方に足す。
 const COMMANDS: &[&str] = &[
     "app_version",
@@ -36,6 +37,14 @@ const COMMANDS: &[&str] = &[
     "window_open_in_main",
     "overlay_activate",
     "main_window_ready",
+    "ai_key_status",
+    "ai_key_set",
+    "ai_key_clear",
+    "ai_key_check",
+    "ai_chat_send",
+    "ai_chat_tool_result",
+    "ai_chat_cancel",
+    "ai_chat_reset",
 ];
 
 fn main() {

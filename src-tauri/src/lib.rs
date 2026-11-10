@@ -1,3 +1,4 @@
+pub mod ai;
 pub mod commands;
 pub mod db;
 pub mod error;
@@ -5,6 +6,7 @@ pub mod logging;
 pub mod model;
 pub mod window;
 
+use std::sync::Arc;
 use std::time::Duration;
 
 use tauri::Manager;
@@ -56,6 +58,7 @@ pub fn run() {
         .manage(hotkey::HotkeyState::default())
         .manage(overlay::MainRevealed::default())
         .manage(overlay::ViewMode::default())
+        .manage(Arc::new(ai::AiState::default()))
         .setup(|app| {
             log::info!("起動しました: 版 {}", app.package_info().version);
             // updater のクレートはデスクトップだけの依存にしてある（Cargo.toml）
@@ -116,6 +119,14 @@ pub fn run() {
             commands::window::window_open_in_main,
             commands::window::overlay_activate,
             commands::window::main_window_ready,
+            commands::ai::ai_key_status,
+            commands::ai::ai_key_set,
+            commands::ai::ai_key_clear,
+            commands::ai::ai_key_check,
+            commands::ai::ai_chat_send,
+            commands::ai::ai_chat_tool_result,
+            commands::ai::ai_chat_cancel,
+            commands::ai::ai_chat_reset,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

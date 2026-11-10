@@ -9,6 +9,11 @@ const ERROR_KINDS: Record<ErrorKind, true> = {
   invalid_input: true,
   forbidden: true,
   internal: true,
+  ai_auth: true,
+  network: true,
+  rate_limited: true,
+  overloaded: true,
+  ai_request: true,
 };
 
 export function isAppError(value: unknown): value is AppError {
