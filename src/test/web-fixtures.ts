@@ -1,11 +1,12 @@
-// Web 版の検索とメモリの表のテストに使う原稿とクイック表。
-// デスクトップ版の Rust のテスト（src-tauri/src/db/fixtures.rs、quickref.rs の fixtures）と同じ中身にして、
+// Web 版の検索とメモリの表のテストに使う原稿・クイック表・フロー。
+// デスクトップ版の Rust のテスト（src-tauri/src/db/fixtures.rs、quickref.rs・triage.rs の fixtures）と同じ中身にして、
 // 同じ語で同じ結果になることを確かめる。
 import type { NormalizedDoc, NormalizedSection } from "@/features/content/types";
 import type { ModChannel } from "@/lib/bindings/ModChannel";
 import type { ModTarget } from "@/lib/bindings/ModTarget";
 import type { QuickrefRow } from "@/lib/bindings/QuickrefRow";
 import type { QuickrefTable } from "@/lib/bindings/QuickrefTable";
+import type { WebFlow } from "@/web/backend/store";
 
 export function section(
   level: number,
@@ -154,3 +155,47 @@ export const EMPTY_QUICKREF: QuickrefTable = {
   verifiedAt: null,
   rows: [],
 };
+
+export function flow(
+  id: string,
+  title: string,
+  searchText: string,
+  order: number | null = null,
+): WebFlow {
+  return {
+    detail: {
+      id,
+      title,
+      description: null,
+      modTargets: ["core"],
+      modChannel: null,
+      verifiedAt: "2026-09-26",
+      version: 1,
+      sourceHash: `hash-${id}`,
+      updatedAt: "2026-10-11T00:00:00.000Z",
+      json: JSON.stringify({ id }),
+    },
+    order,
+    searchText,
+  };
+}
+
+export function devFlow(id: string, title: string, searchText: string): WebFlow {
+  const base = flow(id, title, searchText);
+  return {
+    ...base,
+    detail: { ...base.detail, modTargets: ["circulation", "breathing"], modChannel: "dev" },
+  };
+}
+
+/** デスクトップ版の検索のテスト（search.rs の flow_seeded）と同じ 2 本。 */
+export function seededFlows(): WebFlow[] {
+  return [
+    flow(
+      "casualty-first-contact",
+      "負傷者を見つけたら",
+      "最初の 60 秒でやること\n周囲は安全？\n止血帯で止血する",
+    ),
+    devFlow("cpr-flow", "心停止の対応", "CPR を始める"),
+  ];
+}

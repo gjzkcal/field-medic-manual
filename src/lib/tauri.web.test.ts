@@ -2,6 +2,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { bundledManuals } from "@/features/content/bundle";
+import { bundledFlows, flowIdOfFileName } from "@/features/triage/bundle";
+import { flowOfDetail, loadFlowTree } from "@/features/triage/load";
 import { isAppError } from "@/lib/app-error";
 import * as desktop from "@/lib/tauri";
 import * as web from "@/lib/tauri.web";
@@ -37,6 +39,29 @@ describe("tauri.web.ts", () => {
       expect(isAppError(error) && error.kind).toBe("not_found");
     });
 
+    it("同梱したフローをすべて一覧に出し、サブフローまで開ける", async () => {
+      const sources = await bundledFlows();
+      const flows = await web.triageList();
+      expect(flows.map((f) => f.id).sort()).toEqual(
+        sources.map((s) => flowIdOfFileName(s.fileName)).sort(),
+      );
+      for (const summary of flows) {
+        const tree = await loadFlowTree(summary.id, web.triageGet);
+        expect(tree.root.id).toBe(summary.id);
+      }
+      // 実行画面と同じく、json を zod で読み直せる
+      const first = flows[0];
+      expect(first).toBeDefined();
+      if (first !== undefined) {
+        expect(flowOfDetail(await web.triageGet(first.id)).title).toBe(first.title);
+      }
+    });
+
+    it("ないフローは not_found で失敗する（実行画面が「見つかりません」を出す）", async () => {
+      const error: unknown = await web.triageGet("no-such-flow").catch((e: unknown) => e);
+      expect(isAppError(error) && error.kind).toBe("not_found");
+    });
+
     it("同義語で検索でき、クイック表を読める", async () => {
       const hits = await web.searchQuery("TQ");
       expect(hits.some((h) => h.kind === "section")).toBe(true);
@@ -56,13 +81,14 @@ describe("tauri.web.ts", () => {
   it("Web 版にない機能は、空の結果か何もしない", async () => {
     expect(await web.favList()).toEqual([]);
     expect(await web.historyList(10)).toEqual([]);
-    expect(await web.triageList()).toEqual([]);
     expect(await web.checkForUpdate()).toBeNull();
     expect(web.currentWindowLabel()).toBe("main");
     const error: unknown = await web
       .favToggle({ kind: "flow", flowId: "x" })
       .catch((e: unknown) => e);
     expect(isAppError(error) && error.kind).toBe("invalid_input");
+    const saveError: unknown = await web.triageDelete("x").catch((e: unknown) => e);
+    expect(isAppError(saveError) && saveError.kind).toBe("invalid_input");
   });
 
   it("外部で開くのは http・https だけにする", async () => {

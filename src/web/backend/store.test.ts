@@ -1,8 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import type { NormalizedAsset, NormalizedDoc } from "@/features/content/types";
-import { bleeding, cpr, doc, EMPTY_QUICKREF, section, tourniquet } from "@/test/web-fixtures";
-import { buildStore, findDoc, listDocs, outlineDocs, tagCounts } from "@/web/backend/store";
+import { bleeding, cpr, doc, EMPTY_QUICKREF, flow, section, tourniquet } from "@/test/web-fixtures";
+import {
+  buildStore,
+  findDoc,
+  findFlow,
+  listDocs,
+  listFlows,
+  outlineDocs,
+  tagCounts,
+} from "@/web/backend/store";
 
 const NOW = "2026-10-11T00:00:00.000Z";
 
@@ -16,6 +24,29 @@ describe("buildStore", () => {
 
   it("同じファイル名の原稿が 2 つあれば失敗する", () => {
     expect(() => buildStore([bleeding(), bleeding()], EMPTY_QUICKREF, NOW)).toThrow();
+  });
+
+  it("フローは order のないものを後ろに、order、タイトル（大文字小文字を区別しない）の順に並べる", () => {
+    const store = buildStore([], EMPTY_QUICKREF, NOW, [
+      flow("no-order-b", "b", ""),
+      flow("second", "z", "", 20),
+      flow("no-order-a", "A", ""),
+      flow("first", "y", "", 10),
+    ]);
+    expect(listFlows(store).map((f) => f.id)).toEqual([
+      "first",
+      "second",
+      "no-order-a",
+      "no-order-b",
+    ]);
+    expect(findFlow(store, "second")?.json).toBe('{"id":"second"}');
+    expect(findFlow(store, "missing")).toBeUndefined();
+  });
+
+  it("同じ id のフローが 2 つあれば失敗する", () => {
+    expect(() =>
+      buildStore([], EMPTY_QUICKREF, NOW, [flow("a", "A", ""), flow("a", "B", "")]),
+    ).toThrow();
   });
 
   it("見出しのレベルから親を決める。導入部は親を持たず、親にもならない", () => {

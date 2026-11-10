@@ -1,6 +1,6 @@
-// Web 版で、変換した原稿とクイック表をメモリに持つ。
+// Web 版で、変換した原稿・クイック表・トリアージのフローをメモリに持つ。
 // デスクトップ版は Rust が SQLite に入れて返す形（DocSummary・DocDetail・DocOutline など）を、同じ規則でここで作る
-// （src-tauri/src/db/docs.rs の validate・insert_sections・list・outline・get、dict.rs の tag_list）。
+// （src-tauri/src/db/docs.rs の validate・insert_sections・list・outline・get、dict.rs の tag_list、triage.rs の list・get）。
 import type { NormalizedAsset, NormalizedDoc } from "@/features/content/types";
 import { webDocId } from "@/features/library/share-link";
 import type { DocDetail } from "@/lib/bindings/DocDetail";
@@ -11,6 +11,8 @@ import type { ModTarget } from "@/lib/bindings/ModTarget";
 import type { QuickrefTable } from "@/lib/bindings/QuickrefTable";
 import type { Section } from "@/lib/bindings/Section";
 import type { TagCount } from "@/lib/bindings/TagCount";
+import type { TriageDetail } from "@/lib/bindings/TriageDetail";
+import type { TriageSummary } from "@/lib/bindings/TriageSummary";
 import {
   asciiLower,
   compareBinary,
@@ -27,7 +29,18 @@ export interface WebStore {
   /** 一覧の順（order、タイトルの順） */
   docs: readonly DocDetail[];
   quickref: QuickrefTable;
+  /** 一覧の順（order、タイトルの順） */
+  flows: readonly WebFlow[];
   assets: ReadonlyMap<string, NormalizedAsset>;
+}
+
+/** 検証を通したフロー 1 本。デスクトップ版の triage_flows の 1 行にあたる。 */
+export interface WebFlow {
+  detail: TriageDetail;
+  /** 一覧の並びにだけ使う（TriageSummary は order を持たない） */
+  order: number | null;
+  /** 検索で探す文（デスクトップ版の triage_flows.search_text と同じ） */
+  searchText: string;
 }
 
 /**
@@ -39,6 +52,7 @@ export function buildStore(
   docs: readonly NormalizedDoc[],
   quickref: QuickrefTable,
   now: string,
+  flows: readonly WebFlow[] = [],
 ): WebStore {
   const tagNames = new TagNames();
   const assets = new Map<string, NormalizedAsset>();
@@ -77,7 +91,37 @@ export function buildStore(
       sections,
     };
   });
-  return { docs: details.sort(compareListOrder), quickref, assets };
+  const flowIds = new Set<string>();
+  for (const flow of flows) {
+    if (flowIds.has(flow.detail.id)) {
+      throw new Error(`同じ id のフローが 2 つあります: ${flow.detail.id}`);
+    }
+    flowIds.add(flow.detail.id);
+  }
+  return {
+    docs: details.sort((a, b) => compareListOrder(docOrderKey(a), docOrderKey(b))),
+    quickref,
+    flows: [...flows].sort((a, b) => compareListOrder(flowOrderKey(a), flowOrderKey(b))),
+    assets,
+  };
+}
+
+export function listFlows(store: WebStore): TriageSummary[] {
+  return store.flows.map(({ detail }) => ({
+    id: detail.id,
+    title: detail.title,
+    description: detail.description,
+    modTargets: detail.modTargets,
+    modChannel: detail.modChannel,
+    verifiedAt: detail.verifiedAt,
+    version: detail.version,
+    sourceHash: detail.sourceHash,
+    updatedAt: detail.updatedAt,
+  }));
+}
+
+export function findFlow(store: WebStore, id: string): TriageDetail | undefined {
+  return store.flows.find((f) => f.detail.id === id)?.detail;
 }
 
 export function listDocs(store: WebStore): DocSummary[] {
@@ -151,10 +195,24 @@ function toSummary(doc: DocDetail): DocSummary {
   };
 }
 
-/** order のない文書を後ろに、order、タイトル（大文字小文字を区別しない）、id の順。 */
-function compareListOrder(a: DocDetail, b: DocDetail): number {
-  const ao = a.meta.order;
-  const bo = b.meta.order;
+interface ListOrderKey {
+  order: number | null;
+  title: string;
+  id: string;
+}
+
+function docOrderKey(doc: DocDetail): ListOrderKey {
+  return { order: doc.meta.order, title: doc.title, id: doc.id };
+}
+
+function flowOrderKey(flow: WebFlow): ListOrderKey {
+  return { order: flow.order, title: flow.detail.title, id: flow.detail.id };
+}
+
+/** order のないものを後ろに、order、タイトル（大文字小文字を区別しない）、id の順。 */
+function compareListOrder(a: ListOrderKey, b: ListOrderKey): number {
+  const ao = a.order;
+  const bo = b.order;
   if (ao === null || bo === null) {
     if (ao !== bo) {
       return ao === null ? 1 : -1;

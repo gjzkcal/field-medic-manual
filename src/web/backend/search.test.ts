@@ -1,9 +1,9 @@
 // デスクトップ版の検索のテスト（src-tauri/src/db/search.rs）のうち、FTS5 に固有でないものを移したもの。
-// フローは Web 版にないので、フローを含む並びの確認はフローを除いた並びで確かめる。
 import { describe, expect, it } from "vitest";
 
 import { MARK_START } from "@/features/search/snippet";
 import type { NormalizedDoc } from "@/features/content/types";
+import type { FlowHit } from "@/lib/bindings/FlowHit";
 import type { QuickrefHit } from "@/lib/bindings/QuickrefHit";
 import type { SearchFilter } from "@/lib/bindings/SearchFilter";
 import type { SearchHit } from "@/lib/bindings/SearchHit";
@@ -15,6 +15,7 @@ import {
   EMPTY_QUICKREF,
   quickrefTable,
   section,
+  seededFlows,
   tourniquet,
 } from "@/test/web-fixtures";
 import { searchStore } from "@/web/backend/search";
@@ -22,12 +23,17 @@ import { buildStore, type WebStore } from "@/web/backend/store";
 
 const NOW = "2026-10-11T00:00:00.000Z";
 
-function seeded(extra: NormalizedDoc[] = [], withQuickref = false): WebStore {
+function seeded(extra: NormalizedDoc[] = [], withQuickref = false, withFlows = false): WebStore {
   return buildStore(
     [bleeding(), cpr(), tourniquet(), ...extra],
     withQuickref ? quickrefTable() : EMPTY_QUICKREF,
     NOW,
+    withFlows ? seededFlows() : [],
   );
+}
+
+function flowSeeded(): WebStore {
+  return seeded([], false, true);
 }
 
 function sections(hits: SearchHit[]): SectionHit[] {
@@ -46,6 +52,14 @@ function kinds(store: WebStore, query: string, filter: SearchFilter = {}): strin
   return searchStore(store, query, { filter }).map((h) =>
     h.kind === "section" ? `section:${h.anchor}` : `${h.kind}:${h.id}`,
   );
+}
+
+function firstFlow(store: WebStore, query: string): FlowHit {
+  const hit = searchStore(store, query).find((h) => h.kind === "flow");
+  if (hit?.kind !== "flow") {
+    throw new Error(`「${query}」でフローが当たらない`);
+  }
+  return hit;
 }
 
 function firstQuickref(store: WebStore, query: string): QuickrefHit {
@@ -222,6 +236,47 @@ describe("searchStore（クイック表）", () => {
     );
     expect(kinds(store, "出血", { modTargets: ["core"] })).toContain("quickref:limb-bleeding");
     // タグで絞るとクイック表は出ない
+    expect(kinds(store, "止血帯", { tags: ["止血帯"] })).toEqual(["section:use-tourniquet"]);
+  });
+});
+
+describe("searchStore（フロー）", () => {
+  it("タイトルに当たったフローを節より先にする", () => {
+    expect(kinds(flowSeeded(), "負傷者")).toEqual(["flow:casualty-first-contact"]);
+    const found = kinds(flowSeeded(), "心停止");
+    expect(found[0]).toBe("flow:cpr-flow");
+    expect(found).toContain("section:cpr-steps");
+  });
+
+  it("本文だけに当たったフローは節の後ろにする", () => {
+    expect(kinds(flowSeeded(), "止血帯")).toEqual([
+      "section:use-tourniquet",
+      "flow:casualty-first-contact",
+    ]);
+    const hit = firstFlow(flowSeeded(), "止血帯");
+    expect(hit.snippet).toContain(MARK_START);
+    expect(hit.synonymOnly).toBe(false);
+  });
+
+  it("本文だけに当たったフローは、本文だけに当たったクイック表の行より後ろにする", () => {
+    expect(kinds(seeded([], true, true), "止血帯")).toEqual([
+      "section:use-tourniquet",
+      "quickref:limb-bleeding",
+      "flow:casualty-first-contact",
+    ]);
+  });
+
+  it("同義語で当たる", () => {
+    const hit = firstFlow(flowSeeded(), "TQ");
+    expect(hit.id).toBe("casualty-first-contact");
+    expect(hit.synonymOnly).toBe(true);
+  });
+
+  it("絞り込みに従う", () => {
+    const store = flowSeeded();
+    expect(kinds(store, "心停止", { modChannel: "release" })).not.toContain("flow:cpr-flow");
+    expect(kinds(store, "心停止", { modTargets: ["breathing"] })).toEqual(["flow:cpr-flow"]);
+    // フローにタグはないので、タグで絞るとフローは出ない
     expect(kinds(store, "止血帯", { tags: ["止血帯"] })).toEqual(["section:use-tourniquet"]);
   });
 });

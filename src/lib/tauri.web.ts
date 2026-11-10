@@ -1,7 +1,7 @@
 // Web 版（vite --mode web）で src/lib/tauri.ts の代わりに読む実装。関数の名前と型は tauri.ts とそろえる
 // （各関数に `typeof Desktop.xxx` の型を付け、足し忘れはテストの型の突き合わせで見つける）。
-// 画面は同じものを使い、Rust の代わりに、同梱した原稿をブラウザで変換したメモリの表から返す。
-// Web 版にない機能（トリアージ・お気に入り・履歴・ホットキー・小窓・更新）は、空の結果か何もしない関数にする。
+// 画面は同じものを使い、Rust の代わりに、同梱した原稿とフローを変換したメモリの表から返す。
+// Web 版にない機能（フローの保存・お気に入り・履歴・ホットキー・小窓・更新）は、空の結果か何もしない関数にする。
 // 負傷者の記録は localStorage に置く。
 import { version } from "../../package.json";
 import type * as Desktop from "./tauri";
@@ -9,7 +9,15 @@ import type * as Desktop from "./tauri";
 import { isExternalUrl } from "@/lib/external-url";
 import { fromPrebuilt } from "@/web/backend/prebuilt";
 import { searchStore } from "@/web/backend/search";
-import { findDoc, listDocs, outlineDocs, tagCounts, type WebStore } from "@/web/backend/store";
+import {
+  findDoc,
+  findFlow,
+  listDocs,
+  listFlows,
+  outlineDocs,
+  tagCounts,
+  type WebStore,
+} from "@/web/backend/store";
 import { readLocalSetting, writeLocalSetting } from "@/web/local-settings";
 import { LOCAL_CASUALTIES_KEY } from "@/web/storage-keys";
 import { WebAppError } from "@/web/web-error";
@@ -96,9 +104,14 @@ export const synonymList: typeof Desktop.synonymList = () => Promise.resolve([])
 export const synonymSave: typeof Desktop.synonymSave = () => unsupported("同義語の編集");
 export const synonymDelete: typeof Desktop.synonymDelete = () => unsupported("同義語の編集");
 
-export const triageList: typeof Desktop.triageList = () => Promise.resolve([]);
-export const triageGet: typeof Desktop.triageGet = (id) =>
-  Promise.reject(new WebAppError("not_found", `Web 版にはトリアージのフローがありません: ${id}`));
+export const triageList: typeof Desktop.triageList = async () => listFlows(await getStore());
+export const triageGet: typeof Desktop.triageGet = async (id) => {
+  const flow = findFlow(await getStore(), id);
+  if (flow === undefined) {
+    throw new WebAppError("not_found", `フローが見つかりません: ${id}`);
+  }
+  return flow;
+};
 export const triageUpsert: typeof Desktop.triageUpsert = () => unsupported("フローの保存");
 export const triageDelete: typeof Desktop.triageDelete = () => unsupported("フローの削除");
 

@@ -3,7 +3,7 @@
 import type { NormalizedAsset } from "@/features/content/types";
 import type { DocDetail } from "@/lib/bindings/DocDetail";
 import type { QuickrefTable } from "@/lib/bindings/QuickrefTable";
-import type { WebStore } from "@/web/backend/store";
+import type { WebFlow, WebStore } from "@/web/backend/store";
 
 export interface PrebuiltAsset {
   id: string;
@@ -16,6 +16,7 @@ export interface PrebuiltAsset {
 export interface PrebuiltStore {
   docs: DocDetail[];
   quickref: QuickrefTable;
+  flows: WebFlow[];
   assets: PrebuiltAsset[];
 }
 
@@ -23,6 +24,7 @@ export function toPrebuilt(store: WebStore): PrebuiltStore {
   return {
     docs: [...store.docs],
     quickref: store.quickref,
+    flows: [...store.flows],
     assets: [...store.assets.values()].map((asset) => ({
       id: asset.id,
       fileName: asset.fileName,
@@ -36,6 +38,7 @@ export function fromPrebuilt(prebuilt: PrebuiltStore): WebStore {
   return {
     docs: prebuilt.docs,
     quickref: prebuilt.quickref,
+    flows: prebuilt.flows,
     assets: new Map(
       prebuilt.assets.map((asset): [string, NormalizedAsset] => [
         asset.id,

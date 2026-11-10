@@ -74,7 +74,7 @@ export function AboutDetails(): JSX.Element {
       <AboutSection title="マニュアルの出典">
         <p>
           {IS_WEB
-            ? "このサイトのマニュアル・クイック表と、アプリに同梱のトリアージのフローは"
+            ? "このサイトのマニュアル・クイック表・トリアージのフローは"
             : "同梱のマニュアル・クイック表・トリアージのフローは"}
           、ACE Medical のソースコードとドキュメント（acemod/ACE-Anvil、GPL-2.0-or-later、Copyright
           (C) acemod）を作者が読んで要約・解説したものです。ACE の公式のものではなく、ACE

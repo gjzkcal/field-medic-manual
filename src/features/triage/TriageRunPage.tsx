@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { recordHistory } from "@/features/prefs/prefs-store";
+import { IS_WEB } from "@/lib/platform";
 import { useFlowSync } from "@/features/triage/sync";
 import { useFlowTree } from "@/features/triage/use-flows";
 import { FlowRunner } from "@/features/triage/view/FlowRunner";
@@ -21,7 +22,10 @@ import { FlowRunner } from "@/features/triage/view/FlowRunner";
 export function TriageRunPage(): JSX.Element {
   const { id = "" } = useParams();
   const load = useFlowTree(id);
-  const syncing = useFlowSync((s) => s.state.status === "syncing" || s.state.status === "idle");
+  // Web 版は起動時の同期をしない（フローは最初から表にある）ので、idle のままでも待たない
+  const syncing = useFlowSync(
+    (s) => s.state.status === "syncing" || (!IS_WEB && s.state.status === "idle"),
+  );
   const ready = load.status === "ready";
   usePageTitle(ready ? load.root.title : "トリアージ");
 
