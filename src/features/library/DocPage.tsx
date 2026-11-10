@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useEffectEvent,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -25,7 +26,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { manualSourcePath } from "@/features/content/path";
 import { decodeAnchor, docHref, highlightTermsOf, resolveLink } from "@/features/library/link";
+import { shareUrl } from "@/features/library/share-link";
 import { AssetUrlCache } from "@/features/library/viewer/asset-urls";
+import { CopyLinkButton } from "@/features/library/viewer/CopyLinkButton";
 import { DocFooter } from "@/features/library/viewer/DocFooter";
 import { DocTitleMeta } from "@/features/library/viewer/DocTitleMeta";
 import { DocToc } from "@/features/library/viewer/DocToc";
@@ -244,6 +247,15 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
     focusTitle();
   }, [doc.id]);
 
+  // Web 版の URL は原稿のファイル名から作るので、元の原稿が分からない文書ではリンクのボタンを出さない。
+  // h1 は文書の表題なので、節ではなく文書のリンクにする（上の帯のボタンと同じ）
+  const sourcePath = doc.sourcePath;
+  const sectionShareUrl = useCallback(
+    (level: number, anchor: string) =>
+      sourcePath === null ? null : shareUrl(sourcePath, level <= 1 ? null : anchor),
+    [sourcePath],
+  );
+
   const activeAnchor = useActiveAnchor(
     viewport,
     anchors,
@@ -375,9 +387,15 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
         <MetaBar
           docId={doc.id}
           title={doc.title}
+          shareUrl={sourcePath === null ? null : shareUrl(sourcePath, null)}
           toc={
             tocHeadings.length > 0 && (
-              <DocTocSheet docId={doc.id} headings={tocHeadings} activeAnchor={activeAnchor} />
+              <DocTocSheet
+                docId={doc.id}
+                headings={tocHeadings}
+                activeAnchor={activeAnchor}
+                shareUrlOf={sectionShareUrl}
+              />
             )
           }
           notice={notice}
@@ -414,6 +432,9 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
                     level={section.level}
                     anchor={section.anchor}
                     title={section.title}
+                    shareUrl={
+                      section.level <= 1 ? null : sectionShareUrl(section.level, section.anchor)
+                    }
                     register={registerHeading}
                   />
                 )}
@@ -436,7 +457,12 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
       </div>
       <div className="hidden w-56 shrink-0 border-l @3xl:block">
         <ScrollArea className="h-full">
-          <DocToc docId={doc.id} headings={tocHeadings} activeAnchor={activeAnchor} />
+          <DocToc
+            docId={doc.id}
+            headings={tocHeadings}
+            activeAnchor={activeAnchor}
+            shareUrlOf={sectionShareUrl}
+          />
         </ScrollArea>
       </div>
     </div>
@@ -447,19 +473,39 @@ interface SectionHeadingProps {
   level: number;
   anchor: string;
   title: string;
+  /** 節へのリンクをコピーするボタンの URL。h1（文書の表題）は上の帯のボタンで足りるので null */
+  shareUrl: string | null;
   register: (anchor: string, el: HTMLElement | null) => (() => void) | undefined;
 }
 
-function SectionHeading({ level, anchor, title, register }: SectionHeadingProps): JSX.Element {
+function SectionHeading({
+  level,
+  anchor,
+  title,
+  shareUrl: url,
+  register,
+}: SectionHeadingProps): JSX.Element {
   const Tag = HEADING_TAGS[Math.min(Math.max(level, 1), HEADING_TAGS.length) - 1] ?? "h6";
+  const titleId = useId();
   return (
     <Tag
       ref={(el: HTMLHeadingElement | null) => register(anchor, el)}
       data-anchor={anchor}
       tabIndex={-1}
-      className="outline-none"
+      // ボタンは見出しの外に出すと、包む要素で本文の見出しの余白の重なり方が変わるので中に置く。
+      // 見出しの名前はボタンの名前を含めず、表題だけにする（見出しの一覧で読まれる名前が長くならないように）
+      aria-labelledby={url === null ? undefined : titleId}
+      className="group/link-target outline-none"
     >
-      {title}
+      <span id={titleId}>{title}</span>
+      {url !== null && (
+        <CopyLinkButton
+          url={url}
+          label={`「${title}」`}
+          reveal="hover"
+          className="ms-1.5 align-middle"
+        />
+      )}
     </Tag>
   );
 }

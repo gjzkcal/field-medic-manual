@@ -11,13 +11,19 @@ interface DocTocSheetProps {
   docId: string;
   headings: readonly OutlineHeading[];
   activeAnchor: string | null;
+  shareUrlOf: (level: number, anchor: string) => string | null;
 }
 
 /**
  * 右の目次が収まらない幅（小窓・スマホ・拡大したとき）で、上の帯から目次を開くボタン。
  * 幅を詰めると目次が消えて節へ跳べなくなるのを防ぐ（WCAG 1.4.10）。目次が見えている幅では出さない
  */
-export function DocTocSheet({ docId, headings, activeAnchor }: DocTocSheetProps): JSX.Element {
+export function DocTocSheet({
+  docId,
+  headings,
+  activeAnchor,
+  shareUrlOf,
+}: DocTocSheetProps): JSX.Element {
   const [open, setOpen] = useState(false);
   // 項目で閉じたときは、跳んだ先の見出しへビューアが移したフォーカスを残す（既定ではこのボタンへ戻ってしまう）
   const navigatedRef = useRef(false);
@@ -44,6 +50,7 @@ export function DocTocSheet({ docId, headings, activeAnchor }: DocTocSheetProps)
             docId={docId}
             headings={headings}
             activeAnchor={activeAnchor}
+            shareUrlOf={shareUrlOf}
             showLabel={false}
             onNavigate={() => {
               navigatedRef.current = true;

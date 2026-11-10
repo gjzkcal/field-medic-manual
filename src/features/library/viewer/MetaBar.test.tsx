@@ -13,7 +13,15 @@ function renderAt(): ReturnType<typeof createMemoryRouter> {
       { path: "/search", element: <Link to="/doc/d1">節を開く</Link> },
       {
         path: "/doc/:id",
-        element: <MetaBar docId="d1" title="止血" notice={null} onDismissNotice={vi.fn()} />,
+        element: (
+          <MetaBar
+            docId="d1"
+            title="止血"
+            shareUrl="https://gjzkcal.github.io/field-medic-manual/doc/hemorrhage"
+            notice={null}
+            onDismissNotice={vi.fn()}
+          />
+        ),
       },
     ],
     { initialEntries: ["/doc/d1"] },

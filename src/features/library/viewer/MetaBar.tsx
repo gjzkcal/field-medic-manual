@@ -5,12 +5,15 @@ import { Link, useLocation, useNavigate } from "react-router";
 import { LinkButton } from "@/components/LinkButton";
 import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { CopyLinkButton } from "@/features/library/viewer/CopyLinkButton";
 import { ViewerSettingsPopover } from "@/features/library/viewer/ViewerSettingsPopover";
 import { FavoriteButton } from "@/features/prefs/FavoriteButton";
 
 interface MetaBarProps {
   docId: string;
   title: string;
+  /** 文書（節ではなく全体）へのリンクをコピーするボタンの URL */
+  shareUrl: string | null;
   /** 狭い幅で右の目次が隠れたときに、代わりに目次を開くボタン */
   toc?: ReactNode;
   /** リンクを開けなかったときなどの知らせ */
@@ -19,16 +22,26 @@ interface MetaBarProps {
 }
 
 /**
- * 本文の上に固定する帯。本文の幅を削らないよう、戻る・タイトル・お気に入り・表示の設定だけにする。
+ * 本文の上に固定する帯。本文の幅を削らないよう、戻る・タイトル・リンクのコピー・お気に入り・表示の設定だけにする。
  * モジュールやタグはタイトルの下（DocTitleMeta）、版と確認日は末尾（DocFooter）に置く。
  */
-export function MetaBar({ docId, title, toc, notice, onDismissNotice }: MetaBarProps): JSX.Element {
+export function MetaBar({
+  docId,
+  title,
+  shareUrl,
+  toc,
+  notice,
+  onDismissNotice,
+}: MetaBarProps): JSX.Element {
   return (
     <div className="flex shrink-0 flex-col gap-2 border-b px-4 py-2">
       <div className="flex items-center gap-3">
         <BackButton />
         <span className="min-w-0 flex-1 truncate text-base font-semibold">{title}</span>
         {toc}
+        {shareUrl !== null && (
+          <CopyLinkButton url={shareUrl} label="このマニュアル" size="icon-sm" />
+        )}
         <FavoriteButton target={{ kind: "document", documentId: docId }} label="このマニュアル" />
         <ViewerSettingsPopover />
       </div>

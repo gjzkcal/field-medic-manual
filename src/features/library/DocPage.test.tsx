@@ -443,6 +443,57 @@ describe("DocPage", () => {
     );
   });
 
+  it("見出し・目次・上の帯から、Web 版の URL（id は原稿のファイル名、hl なし）をコピーする", async () => {
+    const writeText = vi.fn<(text: string) => Promise<void>>().mockResolvedValue(undefined);
+    // jsdom には Clipboard API が無い
+    Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+    vi.stubGlobal("isSecureContext", true);
+    try {
+      renderDoc("/doc/d1?hl=止血#止血帯を使う");
+      const heading = await screen.findByRole("heading", { level: 2, name: "止血帯を使う" });
+      const sectionUrl = `https://gjzkcal.github.io/field-medic-manual/doc/hemorrhage#${encodeURIComponent("止血帯を使う")}`;
+
+      fireEvent.click(
+        within(heading).getByRole("button", { name: "「止血帯を使う」へのリンクをコピー" }),
+      );
+      await waitFor(() => {
+        expect(writeText).toHaveBeenLastCalledWith(sectionUrl);
+      });
+      // ボタンは見出しの中に置くが、見出しの名前には入れない（上の findByRole の name が表題だけで当たる）
+      // 文書の表題（h1）の見出しには付けず、上の帯のボタンで文書のリンクを写す
+      const h1 = screen.getByRole("heading", { level: 1, name: "止血" });
+      expect(within(h1).queryByRole("button")).toBeNull();
+
+      const toc = screen.getByRole("navigation", { name: "目次" });
+      fireEvent.click(
+        within(toc).getByRole("button", { name: "「包帯を巻く」へのリンクをコピー" }),
+      );
+      await waitFor(() => {
+        expect(writeText).toHaveBeenLastCalledWith(
+          `https://gjzkcal.github.io/field-medic-manual/doc/hemorrhage#${encodeURIComponent("包帯を巻く")}`,
+        );
+      });
+      // 目次の h1 の項目は、文書のリンクにする
+      fireEvent.click(within(toc).getByRole("button", { name: "「止血」へのリンクをコピー" }));
+      await waitFor(() => {
+        expect(writeText).toHaveBeenLastCalledWith(
+          "https://gjzkcal.github.io/field-medic-manual/doc/hemorrhage",
+        );
+      });
+
+      writeText.mockClear();
+      fireEvent.click(screen.getByRole("button", { name: "このマニュアルへのリンクをコピー" }));
+      await waitFor(() => {
+        expect(writeText).toHaveBeenCalledWith(
+          "https://gjzkcal.github.io/field-medic-manual/doc/hemorrhage",
+        );
+      });
+      expect(await axeViolations(document.body)).toEqual([]);
+    } finally {
+      Reflect.deleteProperty(navigator, "clipboard");
+    }
+  });
+
   it("検索結果から開いたときは検索語をハイライトし、目次で移ると消す", async () => {
     // jsdom には CSS Custom Highlight API がないので、登録された範囲だけを見られる代わりを置く
     const highlights = new Map<string, { ranges: Range[] }>();
