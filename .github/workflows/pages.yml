@@ -63,6 +63,13 @@ jobs:
             echo "::error::原稿は $manuals 本ですが、dist-web/doc の写しは $pages 個です"
             exit 1
           fi
+          # フローも同じく、写しが無いと実行画面の URL を直接開いたときに HTTP 404 で返る
+          flows=$(ls content/flows/*.flow.yaml | wc -l)
+          flow_pages=$(ls dist-web/triage/*.html | wc -l)
+          if [ "$flows" -ne "$flow_pages" ]; then
+            echo "::error::フローは $flows 本ですが、dist-web/triage の写しは $flow_pages 個です"
+            exit 1
+          fi
           if grep -rl "__TAURI" dist-web; then
             echo "::error::Web 版のビルドに Tauri の API が入っています"
             exit 1

@@ -1,5 +1,6 @@
 // Web 版（GitHub Pages）のエントリ。vite --mode web のときに index.html がこのファイルを読む。
 // デスクトップ版のエントリ（src/main.tsx）と違い、小窓・同梱物の DB への同期・自動更新・お気に入りを起動しない
+// （原稿・クイック表・フローは、ビルドのときに変換した表を最初から持つ）
 import "@/index.css";
 
 import { StrictMode } from "react";

@@ -2,6 +2,7 @@
 // デスクトップ版は 3 文字以上の語を FTS5 の bm25 で並べるが、Web 版はすべての語を部分一致で探して当たった場所で並べる
 // （原稿は数十本なので全件を見ても十分速く、全文索引のライブラリを足さずに済むため）。そのため 3 文字以上の語では並びが変わることがある。
 import type { DocDetail } from "@/lib/bindings/DocDetail";
+import type { FlowHit } from "@/lib/bindings/FlowHit";
 import type { ModTarget } from "@/lib/bindings/ModTarget";
 import type { QuickrefHit } from "@/lib/bindings/QuickrefHit";
 import type { QuickrefRow } from "@/lib/bindings/QuickrefRow";
@@ -10,7 +11,7 @@ import type { SearchHit } from "@/lib/bindings/SearchHit";
 import type { Section } from "@/lib/bindings/Section";
 import type { SectionHit } from "@/lib/bindings/SectionHit";
 import type { SearchOptions } from "@/lib/tauri";
-import { sectionKeywords, type WebStore } from "@/web/backend/store";
+import { sectionKeywords, type WebFlow, type WebStore } from "@/web/backend/store";
 import {
   expandTerm,
   SEED_SYNONYMS,
@@ -19,6 +20,7 @@ import {
 } from "@/web/backend/synonyms";
 import {
   compareBinary,
+  compareNoCase,
   containsCi,
   equalsCi,
   firstNonZero,
@@ -34,8 +36,8 @@ const SYNONYM_PENALTY = 0.8;
 const SNIPPET_CONTEXT_CHARS = 20;
 
 /**
- * 節とクイック表を検索する。
- * 並びは「症状に当たったクイック表の行 → 節 → 本文だけに当たった行」。Web 版にはトリアージのフローがないので出さない。
+ * 節・クイック表・トリアージのフローを検索する。
+ * 並びは「症状に当たったクイック表の行 → タイトルに当たったフロー → 節 → 本文だけに当たった行 → 本文だけに当たったフロー」。
  */
 export function searchStore(
   store: WebStore,
@@ -54,11 +56,14 @@ export function searchStore(
 
   const sections = searchSections(store, groups, alternatives, filter).slice(0, limit);
   const rows = searchQuickref(store, groups, alternatives, filter).slice(0, limit);
+  const flows = searchFlows(store, groups, alternatives, filter).slice(0, limit);
   // 症状に当たった行は「この症状ならこれ」の答えそのものなので最も上に置く
   return [
     ...rows.filter((r) => r.symptomMatch).map((r) => r.hit),
+    ...flows.filter((f) => f.titleMatch).map((f) => f.hit),
     ...sections,
     ...rows.filter((r) => !r.symptomMatch).map((r) => r.hit),
+    ...flows.filter((f) => !f.titleMatch).map((f) => f.hit),
   ].slice(0, limit);
 }
 
@@ -235,4 +240,59 @@ function searchQuickref(
 
 function synonymOnlyOf(hit: SearchHit): boolean {
   return hit.synonymOnly;
+}
+
+/** フローをタイトルとノードの文で探す（デスクトップ版の search_flows）。titleMatch は、すべての語がタイトルに当たったか。 */
+function searchFlows(
+  store: WebStore,
+  groups: readonly TermGroup[],
+  alternatives: readonly string[],
+  filter: SearchFilter,
+): { titleMatch: boolean; hit: SearchHit }[] {
+  // フローにタグはないので、タグで絞り込んでいるときは出さない
+  if (normalizeTags(filter.tags ?? []).length > 0) {
+    return [];
+  }
+  const found: { titleMatch: boolean; hit: FlowHit }[] = [];
+  for (const flow of store.flows.filter((f) => flowMatchesFilter(f, filter))) {
+    const { title } = flow.detail;
+    const fields = [title, flow.searchText];
+    if (!groups.every((g) => fields.some((f) => foundIn(g, f)))) {
+      continue;
+    }
+    const titleMatch = groups.every((g) => foundIn(g, title));
+    const synonymOnly = groups.some((g) => !fields.some((f) => containsCi(f, g.original)));
+    const score = titleMatch ? 3 : 1;
+    found.push({
+      titleMatch,
+      hit: {
+        id: flow.detail.id,
+        title,
+        snippet: makeSnippet(flow.searchText, alternatives, SNIPPET_CONTEXT_CHARS),
+        score: synonymOnly ? score * SYNONYM_PENALTY : score,
+        synonymOnly,
+      },
+    });
+  }
+  // デスクトップ版の SQL の並び（タイトル、id）にしてから、同義語だけの当たりを後ろに、点の高い順に（sort は安定）
+  found.sort((a, b) =>
+    firstNonZero(compareNoCase(a.hit.title, b.hit.title), compareBinary(a.hit.id, b.hit.id)),
+  );
+  found.sort((a, b) =>
+    firstNonZero(Number(a.hit.synonymOnly) - Number(b.hit.synonymOnly), b.hit.score - a.hit.score),
+  );
+  return found.map(({ titleMatch, hit }) => ({ titleMatch, hit: { kind: "flow", ...hit } }));
+}
+
+function flowMatchesFilter(flow: WebFlow, filter: SearchFilter): boolean {
+  const targets = filter.modTargets ?? [];
+  // デスクトップ版と同じく、対象の MOD を持たないフローは MOD で絞り込むと出ない（クイック表の行と違い Core として扱わない）
+  if (targets.length > 0 && !flow.detail.modTargets.some((t) => targets.includes(t))) {
+    return false;
+  }
+  return (
+    filter.modChannel === undefined ||
+    flow.detail.modChannel === null ||
+    flow.detail.modChannel === filter.modChannel
+  );
 }

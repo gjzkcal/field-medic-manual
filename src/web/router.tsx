@@ -5,6 +5,8 @@ import { LazyCasualtiesPage } from "@/features/casualties/LazyCasualtiesPage";
 import { DocPage } from "@/features/library/DocPage";
 import { LibraryPage } from "@/features/library/LibraryPage";
 import { QuickrefPage } from "@/features/quickref/QuickrefPage";
+import { TriageListPage } from "@/features/triage/TriageListPage";
+import { TriageRunPage } from "@/features/triage/TriageRunPage";
 import { WebAboutPage } from "@/web/WebAboutPage";
 import { WebLayout } from "@/web/WebLayout";
 import { WebSettingsPage } from "@/web/WebSettingsPage";
@@ -27,10 +29,12 @@ export const webRouter = createBrowserRouter(
             { path: "library", element: <LibraryPage /> },
             { path: "doc/:id", element: <DocPage /> },
             { path: "quickref", element: <QuickrefPage /> },
+            { path: "triage", element: <TriageListPage /> },
+            { path: "triage/:id", element: <TriageRunPage /> },
             { path: "casualties", element: <LazyCasualtiesPage /> },
             { path: "settings", element: <WebSettingsPage /> },
             { path: "about", element: <WebAboutPage /> },
-            // デスクトップ版の URL（/triage/… など）を共有されたときも、一覧から始められるようにする
+            // 知らない URL（打ち間違いや、なくなった画面の URL）を開いたときも、一覧から始められるようにする
             { path: "*", element: <Navigate to="/library" replace /> },
           ],
         },

@@ -3,8 +3,9 @@ import type { JSX } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { useViewerSettings } from "@/features/settings/viewer-settings";
+import { IS_WEB } from "@/lib/platform";
 
-/** トリアージの実行画面のキー操作。デスクトップ版だけ（Web 版にトリアージは無い）。 */
+/** トリアージの実行画面のキー操作。 */
 export function TriageSettingsCard(): JSX.Element {
   const triageKeys = useViewerSettings((s) => s.settings.triageKeys);
   const update = useViewerSettings((s) => s.update);
@@ -17,7 +18,8 @@ export function TriageSettingsCard(): JSX.Element {
           <h2>トリアージ</h2>
         </CardTitle>
         <CardDescription>
-          実行画面と小窓のキー操作。オフにしても、ボタンと Enter・Backspace・Esc は使えます。
+          {IS_WEB ? "実行画面" : "実行画面と小窓"}
+          のキー操作。オフにしても、ボタンと Enter・Backspace・Esc は使えます。
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">

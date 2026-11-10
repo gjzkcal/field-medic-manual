@@ -23,6 +23,7 @@ const host = process.env["TAURI_DEV_HOST"];
 const WEB_STATIC_ROUTES: Readonly<Record<string, string>> = {
   library: "ライブラリ",
   quickref: "クイック表",
+  triage: "トリアージ",
   casualties: "負傷者",
   settings: "設定",
   about: "このサイトについて",
@@ -64,7 +65,7 @@ const WEB_CSP = [
 
 /**
  * ブラウザ向けの Web 版（`vite --mode web`）だけの設定。
- * index.html のエントリを Web 版のもの（小窓・トリアージの同期・自動更新を読まない）に替えて読み込み中の表示を置き、
+ * index.html のエントリを Web 版のもの（小窓・同梱物の DB への同期・自動更新を読まない）に替えて読み込み中の表示を置き、
  * 公開するビルドには CSP と favicon を入れ、GitHub Pages でディープリンクを開けるように 404.html とルートごとの写しを置く。
  */
 function webPlugin(): Plugin {
@@ -148,6 +149,17 @@ function webPlugin(): Plugin {
           writeFileSync(join(docDir, `${basename(name, ".md")}.html`), withTitle(title));
         }
       }
+      // フローの id はファイル名の <id>.flow.yaml（同梱のフローの検査 src/features/triage/flows.test.ts で一致を確かめている）
+      const triageDir = join(dir, "triage");
+      mkdirSync(triageDir, { recursive: true });
+      const flows = fileURLToPath(new URL("./content/flows", import.meta.url));
+      for (const name of readdirSync(flows)) {
+        const id = FLOW_FILE.exec(name)?.[1];
+        if (id !== undefined) {
+          const title = topLevelTitle(readFileSync(join(flows, name), "utf8")) ?? id;
+          writeFileSync(join(triageDir, `${id}.html`), withTitle(title));
+        }
+      }
     },
   };
 }
@@ -161,6 +173,18 @@ function frontMatterTitle(markdown: string): string | null {
   const frontMatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(markdown)?.[1];
   const title =
     frontMatter === undefined ? undefined : /^title:\s*(.+?)\s*$/m.exec(frontMatter)?.[1];
+  return title === undefined ? null : title.replace(/^(["'])(.*)\1$/, "$2");
+}
+
+// src/features/triage/bundle.ts の FLOW_FILE と同じ（vite.config.ts は @/ の import を解決できない）
+const FLOW_FILE = /^(.+)\.flow\.(?:yaml|json)$/;
+
+/**
+ * フローの最上位の title。表題だけが要るので YAML の全体は読まない（フローの表題は行頭の 1 行の素の文字列で、ノードのキーは字下げしてある）。
+ * JSON のフローは当たらず、呼び出し側が id で代える
+ */
+function topLevelTitle(text: string): string | null {
+  const title = /^title:\s*(.+?)\s*$/m.exec(text)?.[1];
   return title === undefined ? null : title.replace(/^(["'])(.*)\1$/, "$2");
 }
 

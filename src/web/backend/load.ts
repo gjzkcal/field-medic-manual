@@ -1,4 +1,4 @@
-// 同梱した原稿とクイック表を変換して、Web 版の表を作る。本番はビルドのときに Node で（build-time.ts）、
+// 同梱した原稿・クイック表・トリアージのフローを変換して、Web 版の表を作る。本番はビルドのときに Node で（build-time.ts）、
 // 開発サーバーとテストはブラウザ（jsdom）で、最初に使われたときに動く。
 // デスクトップ版と同じ変換（Markdown → 無害化した HTML の節）を使うので、表示も検索もアプリと同じ原稿の内容になる。
 import { bundledManuals, readBundledData, readBundledImage } from "@/features/content/bundle";
@@ -6,8 +6,11 @@ import { convertManual } from "@/features/content/markdown";
 import type { NormalizedDoc, ReadImage } from "@/features/content/types";
 import { bundledQuickref, readQuickrefSource } from "@/features/quickref/bundle";
 import { toQuickrefRows } from "@/features/quickref/schema";
+import { bundledFlows, flowSearchText, readFlowSource } from "@/features/triage/bundle";
+import type { Flow } from "@/features/triage/schema";
+import { validateFlows } from "@/features/triage/validate";
 import type { QuickrefTable } from "@/lib/bindings/QuickrefTable";
-import { buildStore, type WebStore } from "@/web/backend/store";
+import { buildStore, type WebFlow, type WebStore } from "@/web/backend/store";
 
 const EMPTY_QUICKREF: QuickrefTable = {
   sourceHash: null,
@@ -26,7 +29,49 @@ export async function loadWebStore(readImage: ReadImage = readBundledImage): Pro
     // 1 本ごとに描画へ制御を返し、読み込み中の表示を止めないようにする
     await new Promise((resolve) => setTimeout(resolve, 0));
   }
-  return buildStore(docs, await loadQuickref(), new Date().toISOString());
+  const now = new Date().toISOString();
+  return buildStore(docs, await loadQuickref(), now, await loadFlows(now));
+}
+
+/**
+ * デスクトップ版の起動時の同期（features/triage/sync.ts）は検証エラーのフローを飛ばして残りを入れるが、
+ * Web 版は前回の内容を持たないので、1 本でもエラーがあればビルドを止める（壊れたフローを黙って欠いたまま公開しない）。
+ */
+async function loadFlows(updatedAt: string): Promise<WebFlow[]> {
+  const read: { fileName: string; hash: string; flow: Flow }[] = [];
+  for (const source of await bundledFlows()) {
+    const result = await readFlowSource(source);
+    if (!result.ok) {
+      throw new Error(`フロー ${source.fileName} を読めません: ${result.messages.join(" / ")}`);
+    }
+    read.push({ fileName: source.fileName, hash: source.hash, flow: result.flow });
+  }
+  const issues = validateFlows(read.map((r) => r.flow));
+  return read.map(({ fileName, hash, flow }, i): WebFlow => {
+    const errors = (issues[i] ?? []).filter((issue) => issue.level === "error");
+    if (errors.length > 0) {
+      throw new Error(
+        `フロー ${fileName} に誤りがあります: ${errors.map((e) => `${e.code}: ${e.message}`).join(" / ")}`,
+      );
+    }
+    return {
+      detail: {
+        id: flow.id,
+        title: flow.title,
+        description: flow.description ?? null,
+        modTargets: flow.modTarget ?? [],
+        modChannel: flow.modChannel ?? null,
+        verifiedAt: flow.verifiedAt ?? null,
+        version: flow.version ?? 1,
+        sourceHash: hash,
+        updatedAt,
+        // 実行画面は DB の json と同じく、この文字列を zod で読み直す
+        json: JSON.stringify(flow),
+      },
+      order: flow.order ?? null,
+      searchText: flowSearchText(flow),
+    };
+  });
 }
 
 async function loadQuickref(): Promise<QuickrefTable> {
