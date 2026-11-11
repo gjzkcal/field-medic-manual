@@ -3,11 +3,12 @@
 //! 索引（system プロンプト）は thinking の署名に結び付くので、会話の途中で作り直すと次の要求が 400 になる。
 //! 原稿は起動時の同期が終わってからしか変わらないので、写しを持っても古くならない。
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet, VecDeque};
 
 use rusqlite::Connection;
+use serde_json::Value;
 
-use crate::db::{dict, docs, quickref};
+use crate::db::{dict, docs, quickref, triage};
 use crate::error::AppError;
 use crate::model::{ModTarget, QuickrefRow};
 
@@ -36,10 +37,23 @@ pub struct CorpusDoc {
     pub sections: Vec<CorpusSection>,
 }
 
+/// トリアージのフロー。AI が作者の手順で答えられるよう、手順を読める行にして持つ。
+#[derive(Debug, Clone)]
+pub struct CorpusFlow {
+    pub id: String,
+    pub title: String,
+    pub description: Option<String>,
+    /// この MOD をすべて入れているときのフロー
+    pub mods: Vec<ModTarget>,
+    /// 始まりから辿った順の手順（1 行 1 ノード）
+    pub lines: Vec<String>,
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct Corpus {
     pub docs: Vec<CorpusDoc>,
     pub quickref: Vec<QuickrefRow>,
+    pub flows: Vec<CorpusFlow>,
     pub synonyms: Vec<Vec<String>>,
     by_id: HashMap<i64, (usize, usize)>,
     by_source: HashMap<String, (usize, usize)>,
@@ -61,6 +75,11 @@ pub fn quickref_source(id: &str) -> String {
     format!("quickref:{id}")
 }
 
+#[must_use]
+pub fn flow_source(id: &str) -> String {
+    format!("flow:{id}")
+}
+
 impl Corpus {
     #[must_use]
     pub fn new(
@@ -79,6 +98,7 @@ impl Corpus {
         Self {
             docs,
             quickref,
+            flows: Vec::new(),
             synonyms,
             by_id,
             by_source,
@@ -114,6 +134,17 @@ impl Corpus {
             );
         }
         Some((doc, list))
+    }
+
+    #[must_use]
+    pub fn with_flows(mut self, flows: Vec<CorpusFlow>) -> Self {
+        self.flows = flows;
+        self
+    }
+
+    #[must_use]
+    pub fn flow(&self, id: &str) -> Option<&CorpusFlow> {
+        self.flows.iter().find(|f| f.id == id)
     }
 
     #[must_use]
@@ -209,7 +240,175 @@ pub fn load(conn: &Connection) -> Result<Corpus, AppError> {
         .map(|g| g.terms)
         .filter(|terms| terms.len() > 1)
         .collect();
-    Ok(Corpus::new(docs, quickref, synonyms))
+    let flows = triage::list(conn)?
+        .into_iter()
+        .map(|summary| {
+            let detail = triage::get(conn, &summary.id)?;
+            // 形は保存のときに検査済み。読めなければ手順なしで題だけ渡す
+            let json: Value = serde_json::from_str(&detail.json).unwrap_or(Value::Null);
+            Ok(CorpusFlow {
+                id: summary.id,
+                title: summary.title,
+                description: summary.description,
+                // core と general は常に有効なので、条件として AI に見せない（どのフローにも「Core あり」が付くため）
+                mods: summary
+                    .mod_targets
+                    .into_iter()
+                    .filter(|m| !ALWAYS_ACTIVE.contains(m))
+                    .collect(),
+                lines: flow_lines(&json),
+            })
+        })
+        .collect::<Result<Vec<_>, AppError>>()?;
+    Ok(Corpus::new(docs, quickref, synonyms).with_flows(flows))
+}
+
+/// フローの JSON を、始まりから辿った順の行にする。どのノードからどこへ進むかを AI が追えるよう、行の頭に id を付ける。
+fn flow_lines(flow: &Value) -> Vec<String> {
+    let Some(nodes) = flow.get("nodes").and_then(Value::as_object) else {
+        return Vec::new();
+    };
+    let start = flow
+        .get("start")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    let mut order: Vec<&str> = Vec::new();
+    let mut seen: HashSet<&str> = HashSet::new();
+    let mut queue = VecDeque::from([start]);
+    while let Some(id) = queue.pop_front() {
+        let Some(node) = nodes.get(id) else {
+            continue;
+        };
+        if !seen.insert(id) {
+            continue;
+        }
+        order.push(id);
+        queue.extend(node_targets(node));
+    }
+    // 始まりから辿れないノードも落とさない
+    order.extend(
+        nodes
+            .keys()
+            .map(String::as_str)
+            .filter(|id| !seen.contains(id)),
+    );
+    order
+        .into_iter()
+        .filter_map(|id| nodes.get(id).map(|node| node_line(id, node)))
+        .collect()
+}
+
+fn str_field<'a>(node: &'a Value, key: &str) -> &'a str {
+    node.get(key).and_then(Value::as_str).unwrap_or_default()
+}
+
+fn node_targets(node: &Value) -> Vec<&str> {
+    let mut out = Vec::new();
+    for key in ["next", "else"] {
+        if let Some(next) = node.get(key).and_then(Value::as_str) {
+            out.push(next);
+        }
+    }
+    if let Some(next) = node
+        .get("ifMissing")
+        .and_then(|m| m.get("next"))
+        .and_then(Value::as_str)
+    {
+        out.push(next);
+    }
+    for key in ["choices", "cases"] {
+        if let Some(list) = node.get(key).and_then(Value::as_array) {
+            out.extend(
+                list.iter()
+                    .filter_map(|c| c.get("next").and_then(Value::as_str)),
+            );
+        }
+    }
+    out
+}
+
+fn node_line(id: &str, node: &Value) -> String {
+    let text = str_field(node, "text");
+    let help = str_field(node, "help");
+    let help = if help.is_empty() {
+        String::new()
+    } else {
+        format!(" 補足: {help}")
+    };
+    let next = node
+        .get("next")
+        .and_then(Value::as_str)
+        .map(|n| format!(" 次 → {n}"))
+        .unwrap_or_default();
+    match str_field(node, "type") {
+        "question" => {
+            let choices: Vec<String> = node
+                .get("choices")
+                .and_then(Value::as_array)
+                .map(|list| {
+                    list.iter()
+                        .map(|c| format!("{} → {}", str_field(c, "label"), str_field(c, "next")))
+                        .collect()
+                })
+                .unwrap_or_default();
+            format!("[{id}] 質問: {text}{help} 選択肢: {}", choices.join(" / "))
+        }
+        "action" => {
+            let items: Vec<&str> = node
+                .get("items")
+                .and_then(Value::as_array)
+                .map(|list| list.iter().filter_map(Value::as_str).collect())
+                .unwrap_or_default();
+            let items = if items.is_empty() {
+                String::new()
+            } else {
+                format!(" 物品: {}", items.join("、"))
+            };
+            let missing = node
+                .get("ifMissing")
+                .and_then(|m| m.get("next"))
+                .and_then(Value::as_str)
+                .map(|n| format!(" 物品がなければ → {n}"))
+                .unwrap_or_default();
+            format!("[{id}] 処置: {text}{help}{items}{missing}{next}")
+        }
+        "end" => format!(
+            "[{id}] 終わり（{}）: {text}{help}",
+            str_field(node, "outcome")
+        ),
+        "subflow" => format!(
+            "[{id}] 別のフロー {} を行う。終わったら{next}",
+            flow_source(str_field(node, "flowId"))
+        ),
+        "branch" => {
+            let cases: Vec<String> = node
+                .get("cases")
+                .and_then(Value::as_array)
+                .map(|list| {
+                    list.iter()
+                        .map(|c| {
+                            let mods: Vec<ModTarget> = c
+                                .get("mods")
+                                .cloned()
+                                .and_then(|m| serde_json::from_value(m).ok())
+                                .unwrap_or_default();
+                            format!(
+                                "{}なら → {}",
+                                condition_label(&mods, &[]).unwrap_or_default(),
+                                str_field(c, "next")
+                            )
+                        })
+                        .collect()
+                })
+                .unwrap_or_default();
+            format!(
+                "[{id}] 分岐: {}、それ以外 → {}",
+                cases.join("、"),
+                str_field(node, "else")
+            )
+        }
+        other => format!("[{id}] {other}: {text}{help}{next}"),
+    }
 }
 
 fn json_column(row: &rusqlite::Row<'_>, index: usize) -> rusqlite::Result<Vec<ModTarget>> {
@@ -320,6 +519,22 @@ pub mod fixtures {
             Vec::new(),
             vec![vec!["止血帯".to_owned(), "TQ".to_owned()]],
         )
+        .with_flows(vec![
+            CorpusFlow {
+                id: "pain".to_owned(),
+                title: "痛みを抑える".to_owned(),
+                description: Some("モルヒネを打つ".to_owned()),
+                mods: Vec::new(),
+                lines: vec!["[q] 質問: 痛い？ 選択肢: はい → a / いいえ → e".to_owned()],
+            },
+            CorpusFlow {
+                id: "circulation".to_owned(),
+                title: "循環".to_owned(),
+                description: None,
+                mods: vec![ModTarget::Circulation],
+                lines: Vec::new(),
+            },
+        ])
     }
 }
 
@@ -390,6 +605,33 @@ mod tests {
         let list = corpus.suggestions("doc:hemorrhage.md#止血帯の巻き方", 3);
         assert_eq!(list.len(), 3);
         assert!(list.iter().all(|s| s.starts_with("doc:hemorrhage.md#")));
+    }
+
+    #[test]
+    fn flow_lines_follow_the_steps_from_the_start() {
+        let flow = serde_json::json!({
+            "start": "q",
+            "nodes": {
+                "a": {"type": "action", "text": "打つ", "items": ["モルヒネ注射器"], "ifMissing": {"next": "e"}, "next": "e"},
+                "b": {"type": "branch", "cases": [{"mods": ["breathing"], "next": "s"}], "else": "e"},
+                "e": {"type": "end", "outcome": "ok", "text": "終わり"},
+                "q": {"type": "question", "text": "痛い？", "help": "白く点滅する", "choices": [
+                    {"label": "はい", "tone": "yes", "next": "a"},
+                    {"label": "いいえ", "tone": "no", "next": "b"}
+                ]},
+                "s": {"type": "subflow", "flowId": "pneumothorax", "next": "e"}
+            }
+        });
+        assert_eq!(
+            flow_lines(&flow),
+            vec![
+                "[q] 質問: 痛い？ 補足: 白く点滅する 選択肢: はい → a / いいえ → b",
+                "[a] 処置: 打つ 物品: モルヒネ注射器 物品がなければ → e 次 → e",
+                "[b] 分岐: Breathing ありなら → s、それ以外 → e",
+                "[e] 終わり（ok）: 終わり",
+                "[s] 別のフロー flow:pneumothorax を行う。終わったら 次 → e",
+            ]
+        );
     }
 
     #[test]

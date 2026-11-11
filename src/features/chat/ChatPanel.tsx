@@ -148,6 +148,7 @@ function ChatPanel(): JSX.Element {
   const conversation = useChatStore((s) => s.conversation);
   const send = useChatStore((s) => s.send);
   const answer = useChatStore((s) => s.answer);
+  const decide = useChatStore((s) => s.decide);
   const cancel = useChatStore((s) => s.cancel);
   const reset = useChatStore((s) => s.reset);
   const setOpen = useChatStore((s) => s.setPanelOpen);
@@ -274,6 +275,9 @@ function ChatPanel(): JSX.Element {
                               turn={turn}
                               onAnswer={(toolUseId, text) => {
                                 void answer(toolUseId, text);
+                              }}
+                              onDecide={(toolUseId, approve) => {
+                                void decide(toolUseId, approve);
                               }}
                             />
                           </MessageContent>

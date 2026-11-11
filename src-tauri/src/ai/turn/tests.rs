@@ -326,6 +326,109 @@ async fn ask_user_waits_for_the_answer() {
 }
 
 #[tokio::test]
+async fn casualty_proposal_waits_for_approval_and_reports_it() {
+    let env = Env::new();
+    let transport = FakeTransport::with(vec![
+        Ok(tool_response(
+            "t1",
+            "casualty_propose",
+            &json!({"summary": "A さんにモルヒネ", "ops": [
+                {"action": "add_casualty", "name": "A"},
+                {"action": "give_drug", "casualty": "new", "drug": "morphine"}
+            ]}),
+        )),
+        Ok(text_response("記録しました", "end_turn")),
+    ]);
+    let (result, ()) = tokio::join!(env.ask(&transport, input("A にモルヒネ打った")), async {
+        let id = wait_for_request(&env).await;
+        env.state
+            .resolve_pending(
+                &id,
+                ClientToolResult::CasualtyPropose {
+                    approved: true,
+                    error: None,
+                },
+            )
+            .expect("渡せる");
+    });
+    assert_eq!(result.expect("答える").status, TurnStatus::Completed);
+    assert!(env.events().iter().any(|e| matches!(
+        e,
+        ChatEvent::ClientRequest { request: ClientRequest::CasualtyPropose { ops, .. }, .. } if ops.len() == 2
+    )));
+    let bodies = transport.bodies();
+    let text = bodies[1]["messages"][2]["content"][0]["content"][0]["text"]
+        .as_str()
+        .unwrap_or_default()
+        .to_owned();
+    assert!(text.starts_with("利用者が承認し、記録しました"), "{text}");
+}
+
+#[tokio::test]
+async fn invalid_proposal_is_returned_to_the_ai_without_asking() {
+    let env = Env::new();
+    let transport = FakeTransport::with(vec![
+        Ok(tool_response(
+            "t1",
+            "casualty_propose",
+            &json!({"summary": "x", "ops": [
+                {"action": "give_saline", "casualty": "new"}
+            ]}),
+        )),
+        Ok(text_response("直します", "end_turn")),
+    ]);
+    let result = env
+        .ask(&transport, input("記録して"))
+        .await
+        .expect("答える");
+    assert_eq!(result.status, TurnStatus::Completed);
+    assert!(
+        !env.events()
+            .iter()
+            .any(|e| matches!(e, ChatEvent::ClientRequest { .. })),
+        "画面には出さない"
+    );
+    let bodies = transport.bodies();
+    let block = &bodies[1]["messages"][2]["content"][0];
+    assert_eq!(block["is_error"], true);
+}
+
+#[tokio::test]
+async fn casualty_read_returns_the_screen_text() {
+    let env = Env::new();
+    let transport = FakeTransport::with(vec![
+        Ok(tool_response("t1", "casualty_read", &json!({}))),
+        Ok(text_response("A さんは", "end_turn")),
+    ]);
+    let (result, ()) = tokio::join!(env.ask(&transport, input("次のモルヒネは？")), async {
+        let id = wait_for_request(&env).await;
+        env.state
+            .resolve_pending(
+                &id,
+                ClientToolResult::CasualtyRead {
+                    text: "負傷者「A」".to_owned(),
+                },
+            )
+            .expect("渡せる");
+    });
+    assert_eq!(result.expect("答える").status, TurnStatus::Completed);
+    let events = env.events();
+    assert!(events.iter().any(|e| matches!(
+        e,
+        ChatEvent::ToolActivity {
+            tool: ToolKind::CasualtyRead,
+            state: ToolState::Done,
+            ..
+        }
+    )));
+    let bodies = transport.bodies();
+    assert_eq!(
+        bodies[1]["messages"][2]["content"][0]["content"][0]["text"],
+        "負傷者「A」"
+    );
+}
+
+#[tokio::test]
 async fn cancel_while_waiting_discards_the_turn() {
     let env = Env::new();
     let transport = FakeTransport::with(vec![Ok(tool_response(

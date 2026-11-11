@@ -4,7 +4,7 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::model::ModTarget;
+use crate::model::{CasualtyDrug, ModTarget, TourniquetSite};
 
 /// 選べるモデル。値は API のモデル ID そのもの。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -140,6 +140,8 @@ pub enum ToolKind {
     SearchManual,
     ReadSection,
     WebSearch,
+    /// 負傷者の記録を読む（画面が答える）
+    CasualtyRead,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
@@ -163,6 +165,61 @@ pub enum ClientRequest {
         options: Vec<String>,
         multi_select: bool,
     },
+    /// 負傷者の記録を読む。画面が記録と薬の効きの計算を文にして返す（計算は負傷者の画面と同じものを使うため）
+    CasualtyRead,
+    /// 負傷者の記録への操作の提案。画面が承認のカードを出し、承認されたら記録する
+    CasualtyPropose {
+        summary: String,
+        ops: Vec<ProposedOp>,
+    },
+}
+
+/// AI が提案する、負傷者の記録への操作。`CasualtyOp` と同じ操作で、負傷者は id か、同じ提案の中で直前に作った負傷者を指す `"new"`。
+/// 作る負傷者の id は記録するまで決まらないため。フィールド名は AI が書くので 1 語にする。
+///
+/// NOTE: 種類のキーを `action` にし、記録の種類（`CasualtyEntry`）も入れ子にせず操作に平らにしている。
+/// strict のツールはキーを名前の順に書かせるので、種類のキーがどの形でも先頭に来ないと、AI が種類を先に書いたときに
+/// キーが 1 つだけの形（全消去）へ押し込まれる（実際の API で、記録の追加の提案が全消去になった）。
+/// `action` は、ほかのどのキーより名前の順で前に来る。
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(tag = "action", rename_all = "snake_case")]
+#[ts(export)]
+pub enum ProposedOp {
+    /// 名前が空なら、画面が「負傷者 N」を付ける
+    AddCasualty {
+        name: String,
+    },
+    RemoveCasualty {
+        casualty: String,
+    },
+    ClearAll,
+    GiveDrug {
+        casualty: String,
+        drug: CasualtyDrug,
+    },
+    GiveSaline {
+        casualty: String,
+    },
+    TourniquetOn {
+        casualty: String,
+        site: TourniquetSite,
+    },
+    TourniquetOff {
+        casualty: String,
+        site: TourniquetSite,
+    },
+    AddNote {
+        casualty: String,
+        text: String,
+    },
+    RemoveRecord {
+        casualty: String,
+        record: String,
+    },
+    SetPain {
+        casualty: String,
+        pain: bool,
+    },
 }
 
 /// `ClientRequest` への答え。
@@ -172,6 +229,13 @@ pub enum ClientRequest {
 pub enum ClientToolResult {
     /// 選んだ選択肢か、自由に書いた答え
     AskUser { answer: String },
+    /// 記録を読んだ結果の文
+    CasualtyRead { text: String },
+    /// 承認されたか。承認されて記録の途中で失敗したら error に理由
+    CasualtyPropose {
+        approved: bool,
+        error: Option<String>,
+    },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]

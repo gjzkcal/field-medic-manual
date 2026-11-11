@@ -5,6 +5,7 @@ import {
   answerText,
   applyEvent,
   citationUrl,
+  decideProposal,
   finishTurn,
   mergeTextRun,
   mergeWithMarks,
@@ -135,7 +136,9 @@ describe("出典とコピー", () => {
   it("原稿の出典は Web 版の URL にする", () => {
     expect(citationUrl(TQ)).toMatch(/\/doc\/tourniquet#%E5%B7%BB%E3%81%8F%E4%BD%8D%E7%BD%AE$/);
     expect(citationUrl(WEB)).toBe(WEB.url);
-    expect(citationUrl({ ...TQ, source: "flow:massive-bleeding" })).toBeNull();
+    expect(citationUrl({ ...TQ, source: "flow:massive-bleeding" })).toMatch(
+      /\/triage\/massive-bleeding$/,
+    );
   });
 
   it("コピーする文は番号付きの本文と出典の一覧で、図の囲みは外す", () => {
@@ -190,5 +193,45 @@ describe("parseAiSettings", () => {
       effort: "medium",
     });
     expect(parseAiSettings(null)).toEqual({ model: "claude-sonnet-5-5", effort: "medium" });
+  });
+});
+
+describe("負傷者の記録とフロー", () => {
+  it("記録の提案はカードとして足し、記録を読む要求は表示に足さない", () => {
+    const turn = apply([
+      { type: "client_request", toolUseId: "r1", request: { kind: "casualty_read" } },
+      {
+        type: "client_request",
+        toolUseId: "p1",
+        request: {
+          kind: "casualty_propose",
+          summary: "A にモルヒネ",
+          ops: [{ action: "clear_all" }],
+        },
+      },
+    ]);
+    expect(turn.items).toEqual([
+      {
+        kind: "propose",
+        toolUseId: "p1",
+        summary: "A にモルヒネ",
+        ops: [{ action: "clear_all" }],
+        status: "pending",
+        error: null,
+      },
+    ]);
+    expect(decideProposal(turn, "p1", "failed", "上限").items[0]).toMatchObject({
+      status: "failed",
+      error: "上限",
+    });
+  });
+
+  it("コピーする文では、フローへのリンクを Web 版の URL にする", () => {
+    const turn = apply([
+      { type: "text", block: 0, text: "[痛みを抑える](flow:pain)を開いてください。" },
+    ]);
+    expect(answerForCopy(turn)).toMatch(
+      /^痛みを抑える（https:\/\/.+\/triage\/pain）を開いてください。$/,
+    );
   });
 });

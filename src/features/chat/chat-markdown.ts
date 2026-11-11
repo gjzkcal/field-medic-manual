@@ -3,6 +3,7 @@
 // 生の HTML は通さず（rehype-raw を使わない）、リンクも文字にする（出典は画面がチップで示す）。
 import { markMath } from "@/features/content/math";
 import { sanitizeToFragment } from "@/features/content/sanitize";
+import { parseFlowLink } from "@/features/triage/links";
 
 export type AnswerPart = { kind: "markdown"; text: string } | { kind: "figure"; source: string };
 
@@ -51,6 +52,21 @@ export function revealPrefix(text: string, length: number): string {
     prefix = prefix.slice(0, figure);
   }
   return prefix;
+}
+
+const FLOW_HREF_PREFIX = "#flow:";
+
+/** 描いた DOM の中のフローへのリンクを、空の span に差し替える。span には、フローを開くボタンを portal で描く。 */
+export function placeFlowLinks(
+  root: HTMLElement,
+): { slot: HTMLElement; flowId: string; label: string }[] {
+  return Array.from(root.querySelectorAll(`a[href^="${FLOW_HREF_PREFIX}"]`)).map((anchor) => {
+    const slot = root.ownerDocument.createElement("span");
+    const flowId = (anchor.getAttribute("href") ?? "").slice(FLOW_HREF_PREFIX.length);
+    const label = anchor.textContent.trim();
+    anchor.replaceWith(slot);
+    return { slot, flowId, label };
+  });
 }
 
 /** 描いた DOM の中の引用の印を、空の span に差し替える。span には React の部品を portal で描く。 */
@@ -165,7 +181,17 @@ export async function renderChatMarkdown(markdown: string): Promise<DocumentFrag
   // 書き間違いの式は元のコードのまま残す（警告は回答の表示には要らない）
   await markMath(doc.body, []);
   for (const anchor of Array.from(doc.body.querySelectorAll("a"))) {
-    anchor.replaceWith(...Array.from(anchor.childNodes));
+    const link = parseFlowLink(anchor.getAttribute("href") ?? "");
+    if (link?.kind === "flow") {
+      // フローへのリンクだけは残し、描いた後にフローを開くボタンにする（placeFlowLinks）。
+      // 無害化は flow: の形を通さないので、ページ内のリンクの形にしておく
+      const kept = doc.createElement("a");
+      kept.setAttribute("href", `${FLOW_HREF_PREFIX}${link.flowId}`);
+      kept.append(...Array.from(anchor.childNodes));
+      anchor.replaceWith(kept);
+    } else {
+      anchor.replaceWith(...Array.from(anchor.childNodes));
+    }
   }
   return sanitizeToFragment(doc.body.innerHTML);
 }

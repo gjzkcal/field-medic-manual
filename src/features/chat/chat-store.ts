@@ -3,18 +3,33 @@
 import { create } from "zustand";
 
 import { useAiSettings, type AiSettings } from "@/features/chat/ai-settings";
+import { applyProposedOps } from "@/features/casualties/casualty-store";
+import { casualtyBrief } from "@/features/chat/casualty-brief";
 import {
   answerAsk,
   applyEvent,
+  decideProposal,
   failTurn,
   finishTurn,
   newTurn,
+  type AnswerItem,
   type ChatImageView,
   type ChatTurn,
 } from "@/features/chat/chat-turn";
-import { useModSettings } from "@/features/settings/mod-settings";
+import { modsActive } from "@/features/triage/runner";
+import { loadMedication } from "@/features/medication/bundle";
+import { activeMods, useModSettings } from "@/features/settings/mod-settings";
+import { useViewerSettings } from "@/features/settings/viewer-settings";
 import type { ChatImage } from "@/lib/bindings/ChatImage";
-import { aiChatCancel, aiChatReset, aiChatSend, aiChatToolResult, errorMessage } from "@/lib/tauri";
+import type { ClientToolResult } from "@/lib/bindings/ClientToolResult";
+import {
+  aiChatCancel,
+  aiChatReset,
+  aiChatSend,
+  aiChatToolResult,
+  casualtyList,
+  errorMessage,
+} from "@/lib/tauri";
 
 /** 送る画像（Rust へは base64、表示は Blob URL） */
 export interface PreparedImage {
@@ -34,11 +49,39 @@ interface ChatState {
   send: (text: string, images: readonly PreparedImage[]) => Promise<void>;
   edit: (turnId: number, text: string) => Promise<void>;
   answer: (toolUseId: string, answer: string) => Promise<void>;
+  /** AI の記録の提案を承認（記録する）か却下する */
+  decide: (toolUseId: string, approve: boolean) => Promise<void>;
   cancel: () => Promise<void>;
   reset: () => Promise<void>;
 }
 
 let nextTurnId = 1;
+
+async function sendResult(toolUseId: string, result: ClientToolResult): Promise<void> {
+  try {
+    await aiChatToolResult(toolUseId, result);
+  } catch {
+    // 待っている回答が止められた後に答えたときは、もう届ける先がない
+  }
+}
+
+/** AI が負傷者の記録を読みたいとき。負傷者の画面と同じ計算をして、文で返す。 */
+async function answerCasualtyRead(toolUseId: string): Promise<void> {
+  let text: string;
+  try {
+    const [casualties, medication] = await Promise.all([casualtyList(), loadMedication()]);
+    text = casualtyBrief({
+      casualties,
+      medication,
+      circulation: modsActive(["circulation"], activeMods(useModSettings.getState().settings)),
+      overdoseLine: useViewerSettings.getState().settings.overdoseLine,
+      nowMs: Date.now(),
+    });
+  } catch (error: unknown) {
+    text = `負傷者の記録を読めませんでした: ${errorMessage(error)}`;
+  }
+  await sendResult(toolUseId, { kind: "casualty_read", text });
+}
 
 function revokeImages(turns: readonly ChatTurn[]): void {
   for (const turn of turns) {
@@ -83,6 +126,9 @@ export const useChatStore = create<ChatState>()((set, get) => {
         },
         (event) => {
           updateTurn(turn.id, (t) => applyEvent(t, event));
+          if (event.type === "client_request" && event.request.kind === "casualty_read") {
+            void answerCasualtyRead(event.toolUseId);
+          }
         },
       );
       const finished = finishTurn(turn, result);
@@ -139,11 +185,30 @@ export const useChatStore = create<ChatState>()((set, get) => {
         return;
       }
       updateTurn(turn.id, (t) => answerAsk(t, toolUseId, answer));
-      try {
-        await aiChatToolResult(toolUseId, { kind: "ask_user", answer });
-      } catch {
-        // 待っている回答が止められた後に答えたときは、もう届ける先がない
+      await sendResult(toolUseId, { kind: "ask_user", answer });
+    },
+    decide: async (toolUseId, approve) => {
+      const turn = get().turns.find((t) =>
+        t.items.some((i) => i.kind === "propose" && i.toolUseId === toolUseId),
+      );
+      const item = turn?.items.find(
+        (i): i is Extract<AnswerItem, { kind: "propose" }> =>
+          i.kind === "propose" && i.toolUseId === toolUseId,
+      );
+      if (turn === undefined || item?.status !== "pending") {
+        return;
       }
+      if (!approve) {
+        updateTurn(turn.id, (t) => decideProposal(t, toolUseId, "rejected"));
+        await sendResult(toolUseId, { kind: "casualty_propose", approved: false, error: null });
+        return;
+      }
+      updateTurn(turn.id, (t) => decideProposal(t, toolUseId, "applying"));
+      const { error } = await applyProposedOps(item.ops);
+      updateTurn(turn.id, (t) =>
+        decideProposal(t, toolUseId, error === null ? "approved" : "failed", error),
+      );
+      await sendResult(toolUseId, { kind: "casualty_propose", approved: true, error });
     },
     cancel: async () => {
       await aiChatCancel().catch(() => {
