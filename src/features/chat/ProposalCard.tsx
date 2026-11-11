@@ -56,7 +56,7 @@ export function ProposalCard({ item, disabled, onDecide }: ProposalCardProps): J
           {ops.map((op, index) => (
             <li
               // 提案の中身は届いた後に変わらない
-              // eslint-disable-next-line @eslint-react/no-array-index-key -- 上の理由
+              // oxlint-disable-next-line react/no-array-index-key -- 上の理由
               key={index}
               className={op.destructive || op.missing ? "text-destructive" : undefined}
             >

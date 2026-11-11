@@ -39,7 +39,7 @@ export function ChatMarkdown({
         <MarkdownBlock
           // 塊は後ろに足されるだけで順番は変わらない。書きかけの塊が閉じても同じ番号のまま描き続け、
           // 閉じたときに描き直しで見た目が跳ばないようにする
-          // eslint-disable-next-line @eslint-react/no-array-index-key -- 上の理由
+          // oxlint-disable-next-line react/no-array-index-key -- 上の理由
           key={index}
           text={part}
           renderMark={renderMark}

@@ -588,7 +588,7 @@ describe("DocPage", () => {
   it("見つからない文書はその旨を出す", async () => {
     mockIPC((cmd) => {
       if (cmd === "doc_get") {
-        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- Tauri はコマンドのエラーを Error ではなく AppError の素のオブジェクトで reject する。それを再現する
+        // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- Tauri はコマンドのエラーを Error ではなく AppError の素のオブジェクトで reject する。それを再現する
         return Promise.reject({ kind: "not_found", message: "見つかりません: d9" });
       }
       return [];

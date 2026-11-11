@@ -23,7 +23,7 @@
     "tauri": "tauri",
     "tauri:dev": "tauri dev --config src-tauri/tauri.dev.conf.json",
     "typecheck": "tsc -b",
-    "lint": "tsc -b && eslint . --max-warnings 0 && prettier --check .",
+    "lint": "tsc -b && oxlint --deny-warnings --report-unused-disable-directives-severity error && prettier --check .",
     "format": "prettier --write .",
     "test": "vitest run",
     "version:set": "node scripts/set-version.ts",
@@ -61,8 +61,6 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
-    "@eslint-react/eslint-plugin": "^5.20.8",
-    "@eslint/js": "^10.0.1",
     "@tailwindcss/vite": "^4.3.3",
     "@tauri-apps/cli": "^2.12.0",
     "@testing-library/dom": "^10.4.2",
@@ -75,18 +73,14 @@
     "@vitejs/plugin-react": "^6.1.1",
     "ajv": "^8.20.0",
     "axe-core": "^4.14.0",
-    "eslint": "^10.11.0",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-react-hooks": "^7.1.1",
-    "eslint-plugin-react-refresh": "^0.5.7",
-    "globals": "^17.12.0",
     "jsdom": "^31.0.0",
+    "oxlint": "^1.92.0",
+    "oxlint-tsgolint": "^7.0.2006",
     "prettier": "^3.9.9",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "shadcn": "^4.22.1",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.3",
-    "typescript-eslint": "^8.70.1",
     "vite": "^8.3.0",
     "vitest": "^5.0.5"
   }

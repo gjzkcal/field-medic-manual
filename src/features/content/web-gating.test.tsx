@@ -37,7 +37,7 @@ describe("Web 版での出し分け", () => {
   it("ないフローを開くと、同期を待たずに「見つかりません」を出す", async () => {
     mockIPC((cmd) => {
       if (cmd === "triage_get") {
-        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- Tauri はコマンドのエラーを Error ではなく AppError の素のオブジェクトで reject する。それを再現する
+        // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- Tauri はコマンドのエラーを Error ではなく AppError の素のオブジェクトで reject する。それを再現する
         return Promise.reject({ kind: "not_found", message: "フロー no-such-flow" });
       }
       return [];

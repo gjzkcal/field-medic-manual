@@ -3,8 +3,8 @@
 import "react";
 
 declare module "react" {
-  // eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style -- 既存の interface にキーを足すモジュール拡張は Record 型では書けない
   interface CSSProperties {
+    // oxlint-disable-next-line typescript/consistent-indexed-object-style -- 既存の interface にキーを足すモジュール拡張は Record 型では書けない
     [key: `--${string}`]: string | number | undefined;
   }
 }
