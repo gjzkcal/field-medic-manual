@@ -140,6 +140,16 @@ export const casualtyList: typeof Desktop.casualtyList = async () =>
 export const casualtyApply: typeof Desktop.casualtyApply = async (op) =>
   (await import("@/web/casualty-storage")).applyAndSave(op);
 
+// AI チャットはデスクトップ版だけ（キーを置く資格情報マネージャーと、外へ送る Rust の側がないため）
+export const aiKeyStatus: typeof Desktop.aiKeyStatus = () => Promise.resolve("unavailable");
+export const aiKeySet: typeof Desktop.aiKeySet = () => unsupported("AI チャット");
+export const aiKeyClear: typeof Desktop.aiKeyClear = () => unsupported("AI チャット");
+export const aiKeyCheck: typeof Desktop.aiKeyCheck = () => unsupported("AI チャット");
+export const aiChatSend: typeof Desktop.aiChatSend = () => unsupported("AI チャット");
+export const aiChatToolResult: typeof Desktop.aiChatToolResult = () => unsupported("AI チャット");
+export const aiChatCancel: typeof Desktop.aiChatCancel = noop;
+export const aiChatReset: typeof Desktop.aiChatReset = noop;
+
 export const hotkeyList: typeof Desktop.hotkeyList = () => Promise.resolve([]);
 export const hotkeySet: typeof Desktop.hotkeySet = () => unsupported("ホットキー");
 

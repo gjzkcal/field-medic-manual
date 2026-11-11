@@ -14,7 +14,9 @@ const OVERLAY_WRITABLE_KEYS: [&str; 3] = ["viewer", "search", "quickref"];
 
 /// 画面から読み書きする設定のキー。`hotkeys` は `hotkey_list` / `hotkey_set` だけで扱うので含めない。
 /// 画面で新しい設定を保存するようにしたら、ここにも足す。
-const KNOWN_KEYS: [&str; 6] = ["viewer", "search", "quickref", "mods", "overlay", "window"];
+const KNOWN_KEYS: [&str; 7] = [
+    "viewer", "search", "quickref", "mods", "overlay", "window", "ai",
+];
 
 /// 設定の値の大きさの上限（JSON のバイト数）。どの設定も数百バイトなので、桁違いに大きいものは不正な値とみなす
 const MAX_VALUE_LEN: usize = 64 * 1024;
@@ -125,7 +127,7 @@ mod tests {
         for key in OVERLAY_WRITABLE_KEYS {
             assert!(check_writable(overlay::OVERLAY, key).is_ok());
         }
-        for key in ["window", "mods", "overlay"] {
+        for key in ["window", "mods", "overlay", "ai"] {
             assert!(matches!(
                 check_writable(overlay::OVERLAY, key),
                 Err(AppError::Forbidden(_))
@@ -135,7 +137,7 @@ mod tests {
 
     #[test]
     fn main_writes_other_keys() {
-        for key in ["viewer", "window", "mods", "overlay"] {
+        for key in ["viewer", "window", "mods", "overlay", "ai"] {
             assert!(check_writable(overlay::MAIN, key).is_ok());
         }
     }

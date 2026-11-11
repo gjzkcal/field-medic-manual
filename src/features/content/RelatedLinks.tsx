@@ -3,7 +3,7 @@ import { useState, type JSX } from "react";
 import { useNavigate } from "react-router";
 
 import { Button } from "@/components/ui/button";
-import { manualSourcePath } from "@/features/content/path";
+import { findDocByFile } from "@/features/content/link-target";
 import { docHref } from "@/features/library/link";
 import { useOutline } from "@/features/library/viewer/use-doc-data";
 import { quickrefHref } from "@/features/quickref/link";
@@ -43,7 +43,7 @@ export function RelatedLinks({ links, flowTitle }: RelatedLinksProps): JSX.Eleme
     setNotice(null);
     switch (link.kind) {
       case "doc": {
-        const doc = findDoc(outline, link.fileName);
+        const doc = findDocByFile(outline, link.fileName);
         if (doc === undefined) {
           setNotice(`リンク先のマニュアルが見つかりません: ${link.fileName}`);
           return;
@@ -93,10 +93,6 @@ export function RelatedLinks({ links, flowTitle }: RelatedLinksProps): JSX.Eleme
   );
 }
 
-function findDoc(outline: readonly DocOutline[], fileName: string): DocOutline | undefined {
-  return outline.find((d) => d.sourcePath === manualSourcePath(fileName));
-}
-
 function linkLabel(
   link: FlowLink,
   outline: readonly DocOutline[],
@@ -105,7 +101,7 @@ function linkLabel(
 ): string {
   switch (link.kind) {
     case "doc": {
-      const doc = findDoc(outline, link.fileName);
+      const doc = findDocByFile(outline, link.fileName);
       if (doc === undefined) {
         return link.fileName;
       }

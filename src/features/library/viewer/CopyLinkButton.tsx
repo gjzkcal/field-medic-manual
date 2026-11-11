@@ -1,14 +1,8 @@
-import { CheckIcon, LinkIcon } from "lucide-react";
-import { useEffect, useState, type JSX } from "react";
+import { LinkIcon } from "lucide-react";
+import type { JSX } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { copyText } from "@/lib/clipboard";
-import { errorMessage } from "@/lib/tauri";
+import { CopyButton } from "@/features/library/viewer/CopyButton";
 import { cn } from "@/lib/utils";
-
-// 押した結果を、押した場所を見たまま確かめられる長さだけ出す
-const COPIED_MS = 2000;
 
 interface CopyLinkButtonProps {
   url: string;
@@ -33,83 +27,19 @@ export function CopyLinkButton({
   size = "icon-xs",
   className,
 }: CopyLinkButtonProps): JSX.Element {
-  const [hoverOpen, setHoverOpen] = useState(false);
-  // 押すたびに時刻を変え、続けて押したときも表示の時間を数え直す
-  const [copiedAt, setCopiedAt] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (copiedAt === null) {
-      return undefined;
-    }
-    const timer = window.setTimeout(() => {
-      setCopiedAt(null);
-    }, COPIED_MS);
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [copiedAt]);
-
-  const copied = copiedAt !== null;
-  const text = `${label}へのリンクをコピー`;
   return (
-    <>
-      <Tooltip
-        // 押した結果は、マウスを離していても少しの間出しておく（「ボタンの横に短く出す」）
-        open={hoverOpen || copied || error !== null}
-        onOpenChange={(open) => {
-          setHoverOpen(open);
-          if (!open) {
-            setError(null);
-          }
-        }}
-      >
-        <TooltipTrigger
-          closeOnClick={false}
-          render={
-            <Button
-              variant="ghost"
-              size={size}
-              aria-label={text}
-              data-copied={copied ? "" : undefined}
-              className={cn(
-                "text-muted-foreground hover:text-foreground",
-                reveal === "hover" &&
-                  "opacity-0 group-hover/link-target:opacity-100 focus-visible:opacity-100 data-copied:opacity-100 [@media(hover:none)]:opacity-100",
-                className,
-              )}
-              onClick={() => {
-                copyText(url).then(
-                  () => {
-                    setError(null);
-                    setCopiedAt(Date.now());
-                  },
-                  (e: unknown) => {
-                    setCopiedAt(null);
-                    setError(errorMessage(e));
-                  },
-                );
-              }}
-            />
-          }
-        >
-          {copied ? <CheckIcon /> : <LinkIcon />}
-        </TooltipTrigger>
-        <TooltipContent>
-          {error !== null
-            ? `コピーできませんでした: ${error}`
-            : copied
-              ? "リンクをコピーしました"
-              : text}
-        </TooltipContent>
-      </Tooltip>
-      {/* ツールチップは読み上げに届かないことがあるので、結果は別に伝える */}
-      <span role="status" className="sr-only">
-        {copied ? "リンクをコピーしました" : ""}
-      </span>
-      <span role="alert" className="sr-only">
-        {error === null ? "" : `リンクをコピーできませんでした: ${error}`}
-      </span>
-    </>
+    <CopyButton
+      value={() => url}
+      label={`${label}へのリンクをコピー`}
+      doneLabel="リンクをコピーしました"
+      failLabel="リンクをコピーできませんでした"
+      icon={<LinkIcon />}
+      size={size}
+      className={cn(
+        reveal === "hover" &&
+          "opacity-0 group-hover/link-target:opacity-100 focus-visible:opacity-100 data-copied:opacity-100 [@media(hover:none)]:opacity-100",
+        className,
+      )}
+    />
   );
 }

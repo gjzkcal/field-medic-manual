@@ -7,6 +7,7 @@ import { App } from "@/app/App";
 import { startClientErrorLog } from "@/lib/client-error-log";
 import { waitForFirstScreen } from "@/app/reveal";
 import { startCasualtySync } from "@/features/casualties/casualty-store";
+import { loadAiSettings } from "@/features/chat/ai-settings";
 import { syncBundledManuals } from "@/features/content/sync";
 import { OverlayApp } from "@/features/overlay/OverlayApp";
 import { refreshPrefs } from "@/features/prefs/prefs-store";
@@ -66,6 +67,7 @@ if (isOverlay) {
 void loadSearchFilter();
 void loadOverlaySettings();
 void loadModSettings();
+void loadAiSettings();
 void loadQuickrefSettings();
 void refreshPrefs();
 startCasualtySync();

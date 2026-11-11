@@ -5,6 +5,7 @@ import { useNavigate } from "react-router";
 import { AppShell, type NavItem } from "@/app/AppShell";
 import { AppVersion } from "@/app/AppVersion";
 import { WindowControls } from "@/app/WindowControls";
+import { ChatPanelHost, ChatToggleButton } from "@/features/chat/ChatPanel";
 import { isAppPath } from "@/lib/app-path";
 import { onOpenHref } from "@/lib/tauri";
 
@@ -54,6 +55,16 @@ function useOpenHrefFromRust(): void {
 export function Layout(): JSX.Element {
   useOpenHrefFromRust();
   return (
-    <AppShell navItems={NAV_ITEMS} headerEnd={<WindowControls />} sidebarFooter={<AppVersion />} />
+    <AppShell
+      navItems={NAV_ITEMS}
+      headerEnd={
+        <>
+          <ChatToggleButton />
+          <WindowControls />
+        </>
+      }
+      sidebarFooter={<AppVersion />}
+      aside={<ChatPanelHost />}
+    />
   );
 }
