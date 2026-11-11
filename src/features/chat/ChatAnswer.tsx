@@ -8,6 +8,7 @@ import {
   MessageCircleQuestionIcon,
   SearchIcon,
   TriangleAlertIcon,
+  UsersIcon,
 } from "lucide-react";
 import { useState, type JSX, type SyntheticEvent } from "react";
 import { useNavigate } from "react-router";
@@ -40,6 +41,7 @@ import {
 import { splitFigures } from "@/features/chat/chat-markdown";
 import {
   answerForCopy,
+  chipLabel,
   citationKey,
   mergeWithMarks,
   turnCitations,
@@ -49,6 +51,7 @@ import {
 } from "@/features/chat/chat-turn";
 import { ChatMarkdown } from "@/features/chat/ChatMarkdown";
 import { FigureEmbed } from "@/features/chat/FigureEmbed";
+import { ProposalCard } from "@/features/chat/ProposalCard";
 import { useSmoothText } from "@/features/chat/use-smooth-text";
 import { internalHref } from "@/features/content/link-target";
 import { CopyButton } from "@/features/library/viewer/CopyButton";
@@ -68,10 +71,11 @@ const NOTICE_TEXT: Record<ChatNotice, string> = {
 interface ChatAnswerProps {
   turn: ChatTurn;
   onAnswer: (toolUseId: string, answer: string) => void;
+  onDecide: (toolUseId: string, approve: boolean) => void;
 }
 
 /** AI の回答。考えている途中・調べた様子・本文・聞き返し・出典・トークン数を、届いた順に出す。 */
-export function ChatAnswer({ turn, onAnswer }: ChatAnswerProps): JSX.Element {
+export function ChatAnswer({ turn, onAnswer, onDecide }: ChatAnswerProps): JSX.Element {
   const streaming = turn.state === "streaming";
   const groups = groupItems(turn.items);
   const citations = turnCitations(turn);
@@ -85,6 +89,13 @@ export function ChatAnswer({ turn, onAnswer }: ChatAnswerProps): JSX.Element {
           <AnswerText key={group.key} items={group.items} streaming={streaming} />
         ) : group.item.kind === "ask" ? (
           <AskUser key={group.key} item={group.item} disabled={!streaming} onAnswer={onAnswer} />
+        ) : group.item.kind === "propose" ? (
+          <ProposalCard
+            key={group.key}
+            item={group.item}
+            disabled={!streaming}
+            onDecide={onDecide}
+          />
         ) : null,
       )}
       {streaming && !hasText && (
@@ -267,6 +278,15 @@ function toolText(
         icon: <GlobeIcon />,
         title: `${running ? "語の意味を Web で調べています" : failed ? "Web で調べられませんでした" : "語の意味を Web で調べました"}${item.detail === "" ? "" : `: ${item.detail}`}`,
       };
+    case "casualty_read":
+      return {
+        icon: <UsersIcon />,
+        title: running
+          ? "負傷者の記録を読んでいます"
+          : failed
+            ? "負傷者の記録を読めませんでした"
+            : "負傷者の記録を読みました",
+      };
   }
 }
 
@@ -278,6 +298,9 @@ function sourceLabel(source: string): string {
   }
   if (link?.kind === "quickref") {
     return `クイック表（${link.rowId}）`;
+  }
+  if (link?.kind === "flow") {
+    return `フロー（${link.flowId}）`;
   }
   return source;
 }
@@ -335,7 +358,7 @@ function InlineCitations({ citations }: { citations: readonly ChatCitation[] }):
           key={key}
           citation={citation}
           quotes={quotes}
-          label={citation.kind === "manual" ? shortTitle(citation.title) : hostOf(citation.url)}
+          label={citation.kind === "manual" ? chipLabel(citation) : hostOf(citation.url)}
           inline
         />
       ))}
@@ -566,12 +589,4 @@ function AskUser({
       </QuestionnaireActions>
     </Questionnaire>
   );
-}
-
-/**
- * 「フェニレフリン > 効果」を「効果」のように、見出しの最後の段だけにする（文の中のチップを短くするため）。
- * source から作らないのは、クイック表の行の id（blood-loss など）が利用者には読めないため。
- */
-function shortTitle(title: string): string {
-  return title.split(" > ").at(-1) ?? title;
 }

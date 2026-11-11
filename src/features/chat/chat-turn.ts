@@ -9,6 +9,8 @@ import type { ChatEvent } from "@/lib/bindings/ChatEvent";
 import type { ChatNotice } from "@/lib/bindings/ChatNotice";
 import type { ChatTurnResult } from "@/lib/bindings/ChatTurnResult";
 import type { ChatUsage } from "@/lib/bindings/ChatUsage";
+import type { ClientRequest } from "@/lib/bindings/ClientRequest";
+import type { ProposedOp } from "@/lib/bindings/ProposedOp";
 import type { ToolKind } from "@/lib/bindings/ToolKind";
 import type { ToolState } from "@/lib/bindings/ToolState";
 import { WEB_BASE, WEB_ORIGIN } from "@/lib/web-site";
@@ -25,7 +27,18 @@ export type AnswerItem =
       options: string[];
       multiSelect: boolean;
       answer: string | null;
+    }
+  | {
+      kind: "propose";
+      toolUseId: string;
+      summary: string;
+      ops: ProposedOp[];
+      /** 承認を待っている・記録した・却下した・記録の途中で失敗した */
+      status: ProposalStatus;
+      error: string | null;
     };
+
+export type ProposalStatus = "pending" | "applying" | "approved" | "rejected" | "failed";
 
 export type TurnState = "streaming" | "done" | "truncated" | "refused" | "cancelled" | "error";
 
@@ -138,20 +151,7 @@ export function applyEvent(turn: ChatTurn, event: ChatEvent): ChatTurn {
       };
     }
     case "client_request":
-      return {
-        ...turn,
-        items: [
-          ...turn.items,
-          {
-            kind: "ask",
-            toolUseId: event.toolUseId,
-            question: event.request.question,
-            options: event.request.options,
-            multiSelect: event.request.multiSelect,
-            answer: null,
-          },
-        ],
-      };
+      return withRequest(turn, event.toolUseId, event.request);
     case "notice":
       return turn.notices.includes(event.notice)
         ? turn
@@ -161,12 +161,66 @@ export function applyEvent(turn: ChatTurn, event: ChatEvent): ChatTurn {
   }
 }
 
+/** 画面で答える要求を、表示に足す。 */
+function withRequest(turn: ChatTurn, toolUseId: string, request: ClientRequest): ChatTurn {
+  switch (request.kind) {
+    case "ask_user":
+      return {
+        ...turn,
+        items: [
+          ...turn.items,
+          {
+            kind: "ask",
+            toolUseId: toolUseId,
+            question: request.question,
+            options: request.options,
+            multiSelect: request.multiSelect,
+            answer: null,
+          },
+        ],
+      };
+    case "casualty_propose":
+      return {
+        ...turn,
+        items: [
+          ...turn.items,
+          {
+            kind: "propose",
+            toolUseId: toolUseId,
+            summary: request.summary,
+            ops: request.ops,
+            status: "pending",
+            error: null,
+          },
+        ],
+      };
+    // 記録を読む要求は、画面が黙って答える（読んだことは Rust が「調べた様子」に出す）
+    case "casualty_read":
+      return turn;
+  }
+}
+
 /** 聞き返しへの答えを表示に残す。 */
 export function answerAsk(turn: ChatTurn, toolUseId: string, answer: string): ChatTurn {
   return {
     ...turn,
     items: turn.items.map((item) =>
       item.kind === "ask" && item.toolUseId === toolUseId ? { ...item, answer } : item,
+    ),
+  };
+}
+
+/** 提案への答えを表示に残す。 */
+export function decideProposal(
+  turn: ChatTurn,
+  toolUseId: string,
+  status: ProposalStatus,
+  error: string | null = null,
+): ChatTurn {
+  return {
+    ...turn,
+    items: turn.items.map((item) =>
+      item.kind === "propose" && item.toolUseId === toolUseId ? { ...item, status, error } : item,
     ),
   };
 }
@@ -256,6 +310,29 @@ export function mergeWithMarks(items: readonly TextItem[]): {
   return { text, marks };
 }
 
+/** 文の中のチップの名前の上限（文字数）。長いと同じ文が何度も並んで本文が読みにくくなる */
+const MAX_CHIP_CHARS = 12;
+
+/**
+ * 文の中のチップの名前。「フェニレフリン > 効果」なら「効果」のように見出しの最後の段だけにし、長ければ縮める。
+ * クイック表の行は症状の文が長く途中で切ると意味が取れないので「クイック表」にする（載せれば全体が出る）。
+ * source から作らないのは、クイック表の行の id（blood-loss など）が利用者には読めないため。
+ */
+export function chipLabel(citation: Extract<ChatCitation, { kind: "manual" }>): string {
+  const last = citation.title.split(" > ").at(-1) ?? citation.title;
+  // 結合文字を途中で切らないよう、見た目の 1 文字ずつに分ける
+  const chars = Array.from(
+    new Intl.Segmenter("ja", { granularity: "grapheme" }).segment(last),
+    (g) => g.segment,
+  );
+  if (chars.length <= MAX_CHIP_CHARS) {
+    return last;
+  }
+  return citation.source.startsWith("quickref:")
+    ? "クイック表"
+    : `${chars.slice(0, MAX_CHIP_CHARS - 1).join("")}…`;
+}
+
 /** 回答の出典を重複なしで（届いた順）。 */
 export function turnCitations(turn: ChatTurn): ChatCitation[] {
   const seen = new Set<string>();
@@ -289,12 +366,18 @@ export function citationUrl(citation: ChatCitation): string | null {
       return shareUrl(manualSourcePath(link.fileName), link.anchor);
     case "quickref":
       return `${WEB_ORIGIN}${WEB_BASE.replace(/\/$/, "")}${quickrefHref(link.rowId)}`;
-    // フローのリンクは AI の出典にならず、外部のリンクは Web の出典として別に持つ
     case "flow":
+      return flowWebUrl(link.flowId);
+    // 外部のリンクは Web の出典として別に持つ
     case "external":
     case undefined:
       return null;
   }
+}
+
+/** フローの Web 版の URL（Web 版でもフローを開ける）。 */
+function flowWebUrl(flowId: string): string {
+  return `${WEB_ORIGIN}${WEB_BASE.replace(/\/$/, "")}/triage/${encodeURIComponent(flowId)}`;
 }
 
 /** 回答の中の出典の番号（1 始まり）。画面とコピーで同じ番号にする。 */
@@ -308,6 +391,11 @@ export function answerForCopy(turn: ChatTurn): string {
   const texts = turn.items.filter((item): item is TextItem => item.kind === "text");
   const body = mergeTextRun(texts, numberMarks(citationNumbering(turn)))
     .replace(/```figure[ \t]*\r?\n[^\n]*\r?\n```/g, "")
+    // フローへのリンクは、貼った先でも開けるよう Web 版の URL にする
+    .replace(
+      /\[([^\]]*)\]\(flow:([a-z0-9-]+)\)/g,
+      (_match, label: string, flowId: string) => `${label}（${flowWebUrl(flowId)}）`,
+    )
     .trim();
   const sources = turnCitations(turn).flatMap((citation, index) => {
     const url = citationUrl(citation);

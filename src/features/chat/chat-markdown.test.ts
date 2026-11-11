@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   citationMark,
   placeCitationMarks,
+  placeFlowLinks,
   renderChatMarkdown,
   revealPrefix,
   splitBlocks,
@@ -121,4 +122,23 @@ describe("revealPrefix", () => {
     expect(revealPrefix(figure, 12)).toBe("前\n\n");
     expect(revealPrefix(figure, figure.length - 1)).toBe(figure.slice(0, -1));
   });
+});
+
+describe("placeFlowLinks", () => {
+  it(
+    "フローへのリンクだけを残してボタンの場所にし、ほかのリンクは文字にする",
+    async () => {
+      const root = document.createElement("div");
+      root.append(
+        await renderChatMarkdown("[痛みを抑える](flow:pain) と [外部](https://example.com)"),
+      );
+      const flows = placeFlowLinks(root);
+      expect(flows.map(({ flowId, label }) => ({ flowId, label }))).toEqual([
+        { flowId: "pain", label: "痛みを抑える" },
+      ]);
+      expect(root.querySelector("a")).toBeNull();
+      expect(root.textContent).toContain("外部");
+    },
+    CONVERT_TIMEOUT_MS,
+  );
 });

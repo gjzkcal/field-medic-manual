@@ -4,10 +4,10 @@
 use serde::Deserialize;
 
 use crate::ai::corpus::{
-    Corpus, CorpusDoc, CorpusSection, condition_label, meets_mod_conditions, quickref_source,
-    section_source,
+    Corpus, CorpusDoc, CorpusFlow, CorpusSection, condition_label, flow_source,
+    meets_mod_conditions, quickref_source, section_source,
 };
-use crate::ai::types::ClientRequest;
+use crate::ai::types::{ClientRequest, ProposedOp};
 use crate::db::{Db, search};
 use crate::error::AppError;
 use crate::model::{ModTarget, QuickrefRow, SearchFilter, SearchHit};
@@ -15,10 +15,15 @@ use crate::model::{ModTarget, QuickrefRow, SearchFilter, SearchHit};
 pub const SEARCH_MANUAL: &str = "search_manual";
 pub const READ_SECTION: &str = "read_section";
 pub const ASK_USER: &str = "ask_user";
+pub const CASUALTY_READ: &str = "casualty_read";
+pub const CASUALTY_PROPOSE: &str = "casualty_propose";
+/// 同じ提案の中で直前に作った負傷者を指す
+pub const NEW_CASUALTY: &str = "new";
 
 /// 検索で返す節の数。多いと入力が増え、少ないと言い換えの取りこぼしが増える
 const MAX_SECTION_HITS: usize = 6;
 const MAX_QUICKREF_HITS: usize = 3;
+const MAX_FLOW_HITS: usize = 2;
 /// MOD で絞ると落ちる分を見込んで、検索からは多めに取る
 const SEARCH_CANDIDATES: u32 = 100;
 /// 検索の結果の 1 節あたりの上限（文字数）。長い節は `read_section` で全文を読ませる
@@ -32,6 +37,13 @@ const MAX_QUESTION_CHARS: usize = 300;
 const MAX_OPTION_CHARS: usize = 100;
 const MIN_OPTIONS: usize = 2;
 const MAX_OPTIONS: usize = 4;
+const MAX_SUMMARY_CHARS: usize = 300;
+/// 1 回の提案の操作の数。承認のカードで見て確かめられる数にする
+const MAX_PROPOSED_OPS: usize = 20;
+// 記録の保存の上限（db/casualties.rs）と同じ
+const MAX_CASUALTY_NAME_CHARS: usize = 40;
+const MAX_NOTE_CHARS: usize = 100;
+const MAX_ID_BYTES: usize = 64;
 
 /// 根拠になる文書 1 つ分（節 1 つ、またはクイック表の 1 行）。
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -133,7 +145,16 @@ fn pick_hits(
         .filter(|row| fits(&row.mods, &row.without_mods))
         .take(MAX_QUICKREF_HITS)
         .map(quickref_doc);
-    sections.chain(rows).collect()
+    let flows = hits
+        .iter()
+        .filter_map(|hit| match hit {
+            SearchHit::Flow(f) => corpus.flow(&f.id),
+            _ => None,
+        })
+        .filter(|flow| fits(&flow.mods, &[]))
+        .take(MAX_FLOW_HITS)
+        .map(flow_doc);
+    sections.chain(rows).chain(flows).collect()
 }
 
 /// `read_section` を実行する。MOD では絞らない（AI が節を名指しで求めたため）。
@@ -147,6 +168,12 @@ pub fn read_section(corpus: &Corpus, input: &serde_json::Value) -> ToolOutput {
         return corpus.quickref_row(id).map_or_else(
             || ToolOutput::Error(format!("クイック表に {source} はありません")),
             |row| ToolOutput::Sources(vec![quickref_doc(row)]),
+        );
+    }
+    if let Some(id) = source.strip_prefix("flow:") {
+        return corpus.flow(id).map_or_else(
+            || ToolOutput::Error(format!("{source} というフローはありません")),
+            |flow| ToolOutput::Sources(vec![flow_doc(flow)]),
         );
     }
     let Some((doc, list)) = corpus.section_with_descendants(source) else {
@@ -205,6 +232,104 @@ pub fn ask_user_request(input: &serde_json::Value) -> Result<ClientRequest, Stri
         question,
         options,
         multi_select: input.multi_select,
+    })
+}
+
+/// フロー 1 本。手順の行をそのまま段落にする（引用をノード単位にするため）。
+fn flow_doc(flow: &CorpusFlow) -> SourceDoc {
+    let mut lines = Vec::new();
+    if let Some(label) = condition_label(&flow.mods, &[]) {
+        lines.push(format!("（このフロー: {label}）"));
+    }
+    if let Some(description) = flow.description.as_deref().filter(|d| !d.is_empty()) {
+        lines.push(format!("概要: {description}"));
+    }
+    lines.extend(flow.lines.iter().cloned());
+    SourceDoc {
+        source: flow_source(&flow.id),
+        title: format!("フロー > {}", flow.title),
+        // 長いフローでも、段落（引用の単位）の数と文字数の上限は節と同じにする
+        paragraphs: paragraphs(&lines.join("\n"), MAX_READ_CHARS),
+    }
+}
+
+#[derive(Debug, Deserialize)]
+struct ProposeInput {
+    summary: String,
+    ops: Vec<ProposedOp>,
+}
+
+/// `casualty_propose` の入力を検査して、画面への要求にする。
+/// 長さの上限は記録の保存と同じ（超えると承認した後に保存で失敗するので、先に AI にやり直させる）。
+///
+/// # Errors
+///
+/// 入力の形が違う・範囲外のとき、AI に返す文面。
+pub fn casualty_propose_request(input: &serde_json::Value) -> Result<ClientRequest, String> {
+    let input = serde_json::from_value::<ProposeInput>(input.clone())
+        .map_err(|e| format!("入力の形が違います（summary と ops が要ります）: {e}"))?;
+    let summary = input.summary.trim().to_owned();
+    if summary.is_empty() || summary.chars().count() > MAX_SUMMARY_CHARS {
+        return Err(format!(
+            "summary は 1〜{MAX_SUMMARY_CHARS} 文字にしてください"
+        ));
+    }
+    if input.ops.is_empty() || input.ops.len() > MAX_PROPOSED_OPS {
+        return Err(format!("ops は 1〜{MAX_PROPOSED_OPS} 個にしてください"));
+    }
+    let mut created = false;
+    for (i, op) in input.ops.iter().enumerate() {
+        let n = i + 1;
+        let target = match op {
+            ProposedOp::AddCasualty { name } => {
+                if name.trim().chars().count() > MAX_CASUALTY_NAME_CHARS {
+                    return Err(format!(
+                        "{n} 個目: name は {MAX_CASUALTY_NAME_CHARS} 文字までにしてください"
+                    ));
+                }
+                created = true;
+                None
+            }
+            ProposedOp::ClearAll => None,
+            ProposedOp::AddNote { casualty, text } => {
+                let len = text.trim().chars().count();
+                if len == 0 || len > MAX_NOTE_CHARS {
+                    return Err(format!(
+                        "{n} 個目: メモは 1〜{MAX_NOTE_CHARS} 文字にしてください"
+                    ));
+                }
+                Some(casualty)
+            }
+            ProposedOp::RemoveRecord { casualty, record } => {
+                if record.trim().is_empty() {
+                    return Err(format!("{n} 個目: record（記録の id）が空です"));
+                }
+                Some(casualty)
+            }
+            ProposedOp::RemoveCasualty { casualty }
+            | ProposedOp::SetPain { casualty, .. }
+            | ProposedOp::GiveDrug { casualty, .. }
+            | ProposedOp::GiveSaline { casualty }
+            | ProposedOp::TourniquetOn { casualty, .. }
+            | ProposedOp::TourniquetOff { casualty, .. } => Some(casualty),
+        };
+        if let Some(casualty) = target {
+            let id = casualty.trim();
+            if id.is_empty() || id.len() > MAX_ID_BYTES {
+                return Err(format!(
+                    "{n} 個目: casualty は casualty_read の id か \"new\" にしてください"
+                ));
+            }
+            if id == NEW_CASUALTY && !created {
+                return Err(format!(
+                    "{n} 個目: \"new\" は、同じ ops の中で前に add_casualty があるときだけ使えます"
+                ));
+            }
+        }
+    }
+    Ok(ClientRequest::CasualtyPropose {
+        summary,
+        ops: input.ops,
     })
 }
 
@@ -312,6 +437,81 @@ mod tests {
             synonym_only: false,
             matched_terms: Vec::new(),
         })
+    }
+
+    fn flow_hit(id: &str) -> SearchHit {
+        SearchHit::Flow(crate::model::FlowHit {
+            id: id.to_owned(),
+            title: String::new(),
+            snippet: String::new(),
+            score: 0.0,
+            synonym_only: false,
+        })
+    }
+
+    #[test]
+    fn flows_are_searched_filtered_and_read_by_source() {
+        let corpus = fixtures::corpus();
+        let hits = [flow_hit("pain"), flow_hit("circulation")];
+        let found = pick_hits(&corpus, &hits, &[], false);
+        let sources: Vec<&str> = found.iter().map(|d| d.source.as_str()).collect();
+        assert_eq!(
+            sources,
+            vec!["flow:pain"],
+            "Circulation なしでは循環のフローを返さない"
+        );
+        let ToolOutput::Sources(docs) = read_section(&corpus, &json!({"source": "flow:pain"}))
+        else {
+            panic!("フローを読める");
+        };
+        assert_eq!(docs[0].title, "フロー > 痛みを抑える");
+        assert_eq!(
+            docs[0].paragraphs,
+            vec![
+                "概要: モルヒネを打つ",
+                "[q] 質問: 痛い？ 選択肢: はい → a / いいえ → e"
+            ]
+        );
+        assert!(matches!(
+            read_section(&corpus, &json!({"source": "flow:none"})),
+            ToolOutput::Error(_)
+        ));
+    }
+
+    #[test]
+    fn casualty_proposals_are_checked_before_asking() {
+        let ok = casualty_propose_request(&json!({"summary": " A に打った ", "ops": [
+            {"action": "add_casualty", "name": "A"},
+            {"action": "give_drug", "casualty": "new", "drug": "morphine"},
+            {"action": "tourniquet_on", "casualty": "c1", "site": "left_arm"},
+            {"action": "set_pain", "casualty": "c1", "pain": true},
+            {"action": "remove_record", "casualty": "c1", "record": "r1"},
+            {"action": "remove_casualty", "casualty": "c2"},
+            {"action": "clear_all"}
+        ]}));
+        let Ok(ClientRequest::CasualtyPropose { summary, ops }) = ok else {
+            panic!("正しい提案は通る: {ok:?}");
+        };
+        assert_eq!(summary, "A に打った");
+        assert_eq!(ops.len(), 7);
+        let err = |input: serde_json::Value| casualty_propose_request(&input).unwrap_err();
+        assert!(err(json!({"summary": "x", "ops": []})).contains("ops"));
+        assert!(
+            err(json!({"summary": "x", "ops": [{"action": "set_pain", "casualty": "new", "pain": true}]}))
+                .contains("\"new\"")
+        );
+        assert!(
+            err(json!({"summary": "x", "ops": [{"action": "add_casualty", "name": "あ".repeat(41)}]}))
+                .contains("40")
+        );
+        assert!(
+            err(json!({"summary": "x", "ops": [{"action": "add_note", "casualty": "c1", "text": " "}]}))
+                .contains("メモ")
+        );
+        assert!(
+            err(json!({"summary": "x", "ops": [{"action": "give_drug", "casualty": "c1", "drug": "aspirin"}]}))
+                .contains("形が違います")
+        );
     }
 
     #[test]

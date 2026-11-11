@@ -10,6 +10,7 @@ import { useChatStore } from "@/features/chat/chat-store";
 import { ChatPanelHost } from "@/features/chat/ChatPanel";
 import { useContentSync } from "@/features/content/sync";
 import type { ChatEvent } from "@/lib/bindings/ChatEvent";
+import type { Casualty } from "@/lib/bindings/Casualty";
 import type { DocOutline } from "@/lib/bindings/DocOutline";
 import { axeViolations } from "@/test/axe";
 import { CONVERT_TIMEOUT_MS } from "@/test/samples";
@@ -67,7 +68,16 @@ function arg(args: unknown, key: string): unknown {
 interface Backend {
   send: unknown[];
   toolResult: unknown[];
+  casualtyApply: unknown[];
 }
+
+const CASUALTY: Casualty = {
+  id: "c1",
+  name: "A",
+  createdAtMs: Date.now() - 60_000,
+  inPain: false,
+  records: [],
+};
 
 /**
  * ai_chat_send が呼ばれたら、before を Channel に流す。after があれば、聞き返しの答え（ai_chat_tool_result）を待ってから流す。
@@ -78,7 +88,7 @@ function mockBackend(options: {
   before?: ChatEvent[];
   after?: ChatEvent[];
 }): Backend {
-  const backend: Backend = { send: [], toolResult: [] };
+  const backend: Backend = { send: [], toolResult: [], casualtyApply: [] };
   let answered: () => void = () => {
     // 答えが来るまで何もしない
   };
@@ -91,6 +101,11 @@ function mockBackend(options: {
         return options.keyStatus ?? "set";
       case "doc_outline":
         return OUTLINE;
+      case "casualty_list":
+        return [CASUALTY];
+      case "casualty_apply":
+        backend.casualtyApply.push(args);
+        return [CASUALTY];
       case "ai_chat_tool_result":
         backend.toolResult.push(args);
         answered();
@@ -271,6 +286,94 @@ describe("ChatPanel", () => {
       });
       expect(await screen.findByText("回復体位にします。", {}, RENDER_WAIT)).toBeTruthy();
       expect(screen.getByText("呼吸はありますか？ → ある")).toBeTruthy();
+    },
+    CONVERT_TIMEOUT_MS * 2,
+  );
+
+  it(
+    "記録の提案は承認のカードに出し、承認したら記録して結果を Rust に返す",
+    async () => {
+      const backend = mockBackend({
+        before: [
+          {
+            type: "client_request",
+            toolUseId: "p1",
+            request: {
+              kind: "casualty_propose",
+              summary: "A にモルヒネを記録",
+              ops: [{ action: "give_drug", casualty: "c1", drug: "morphine" }],
+            },
+          },
+        ],
+        after: [{ type: "text", block: 1, text: "記録しました。" }],
+      });
+      renderPanel();
+      await ask("A にモルヒネ打った");
+
+      const approve = await screen.findByRole("button", { name: "承認して記録する" });
+      expect(screen.getByText("「A」に記録: モルヒネ")).toBeTruthy();
+      expect(screen.getByText("記録の時刻は、承認した時刻になります")).toBeTruthy();
+      expect(await axeViolations()).toEqual([]);
+      await waitFor(() => {
+        expect(approve.hasAttribute("disabled")).toBe(false);
+      });
+      fireEvent.click(approve);
+
+      await waitFor(() => {
+        expect(backend.toolResult).toEqual([
+          { toolUseId: "p1", result: { kind: "casualty_propose", approved: true, error: null } },
+        ]);
+      });
+      expect(backend.casualtyApply).toEqual([
+        { op: { op: "add_record", casualtyId: "c1", entry: { kind: "drug", drug: "morphine" } } },
+      ]);
+      expect(await screen.findByText("記録しました: A にモルヒネを記録")).toBeTruthy();
+    },
+    CONVERT_TIMEOUT_MS * 2,
+  );
+
+  it("却下したら記録せず、却下を返す", async () => {
+    const backend = mockBackend({
+      before: [
+        {
+          type: "client_request",
+          toolUseId: "p1",
+          request: {
+            kind: "casualty_propose",
+            summary: "全部消す",
+            ops: [{ action: "clear_all" }],
+          },
+        },
+      ],
+      after: [],
+    });
+    renderPanel();
+    await ask("全部消して");
+    fireEvent.click(await screen.findByRole("button", { name: "却下" }));
+    await waitFor(() => {
+      expect(backend.toolResult).toEqual([
+        { toolUseId: "p1", result: { kind: "casualty_propose", approved: false, error: null } },
+      ]);
+    });
+    expect(backend.casualtyApply).toEqual([]);
+  });
+
+  it(
+    "記録を読む要求には、画面が記録を文にして黙って答える",
+    async () => {
+      const backend = mockBackend({
+        before: [{ type: "client_request", toolUseId: "r1", request: { kind: "casualty_read" } }],
+        after: [{ type: "text", block: 1, text: "A さんは" }],
+      });
+      renderPanel();
+      await ask("A の状態は？");
+      await waitFor(() => {
+        expect(backend.toolResult).toHaveLength(1);
+      }, RENDER_WAIT);
+      expect(backend.toolResult[0]).toMatchObject({
+        toolUseId: "r1",
+        result: { kind: "casualty_read", text: expect.stringContaining("負傷者「A」") as unknown },
+      });
     },
     CONVERT_TIMEOUT_MS * 2,
   );

@@ -6,7 +6,9 @@ pub mod sse;
 
 use serde_json::{Map, Value, json};
 
-use crate::ai::tools::{ASK_USER, READ_SECTION, SEARCH_MANUAL, SourceDoc, ToolOutput};
+use crate::ai::tools::{
+    ASK_USER, CASUALTY_PROPOSE, CASUALTY_READ, READ_SECTION, SEARCH_MANUAL, SourceDoc, ToolOutput,
+};
 use crate::ai::types::{AiEffort, AiModel, ChatCitation, ChatImage, ChatUsage};
 
 /// 2026-10-21 版で temperature などが無くなり、引用付きの文を user に入れられなくなった。
@@ -22,6 +24,41 @@ const WEB_SEARCH_DOMAINS: [&str; 3] = [
     "community.bistudio.com",
 ];
 const WEB_SEARCH_MAX_USES: u32 = 2;
+
+/// 1 つの値だけを取る文字列（操作と記録の種類の見分けに使う）
+fn tag(value: &str) -> Value {
+    json!({"type": "string", "enum": [value]})
+}
+
+fn object(properties: &Value, required: &[&str]) -> Value {
+    json!({
+        "type": "object",
+        "properties": properties,
+        "required": required,
+        "additionalProperties": false
+    })
+}
+
+/// 提案する操作。`ProposedOp` の serde の形と同じにする（Rust で同じ型に読み直して検査する）。
+/// 種類のキー（action）を全部の形の先頭に置く理由は `ProposedOp` の注記
+fn proposed_op_schema() -> Value {
+    let casualty = json!({"type": "string", "description": "casualty_read の負傷者の id。同じ ops の中で前に add_casualty した負傷者は \"new\""});
+    let drug = json!({"type": "string", "enum": ["epinephrine", "morphine", "metoprolol", "naloxone", "phenylephrine", "ammonium_carbonate"]});
+    let site =
+        json!({"type": "string", "enum": ["left_arm", "right_arm", "left_leg", "right_leg"]});
+    json!({"anyOf": [
+        object(&json!({"action": tag("add_casualty"), "name": {"type": "string", "description": "40 文字まで。空なら画面が「負傷者 N」を付ける"}}), &["action", "name"]),
+        object(&json!({"action": tag("remove_casualty"), "casualty": casualty}), &["action", "casualty"]),
+        object(&json!({"action": tag("clear_all")}), &["action"]),
+        object(&json!({"action": tag("give_drug"), "casualty": casualty, "drug": drug}), &["action", "casualty", "drug"]),
+        object(&json!({"action": tag("give_saline"), "casualty": casualty}), &["action", "casualty"]),
+        object(&json!({"action": tag("tourniquet_on"), "casualty": casualty, "site": site}), &["action", "casualty", "site"]),
+        object(&json!({"action": tag("tourniquet_off"), "casualty": casualty, "site": site}), &["action", "casualty", "site"]),
+        object(&json!({"action": tag("add_note"), "casualty": casualty, "text": {"type": "string", "description": "100 文字まで"}}), &["action", "casualty", "text"]),
+        object(&json!({"action": tag("remove_record"), "casualty": casualty, "record": {"type": "string", "description": "casualty_read の記録の id"}}), &["action", "casualty", "record"]),
+        object(&json!({"action": tag("set_pain"), "casualty": casualty, "pain": {"type": "boolean", "description": "痛み・気胸あり"}}), &["action", "casualty", "pain"]),
+    ]})
+}
 
 /// ツールの定義。会話の間は同じものを送る（変えると thinking の署名が無効になる）。
 #[must_use]
@@ -66,6 +103,31 @@ pub fn tools(web_search: bool) -> Value {
                     "multi_select": {"type": "boolean", "description": "複数を選べるか"}
                 },
                 "required": ["question", "options", "multi_select"],
+                "additionalProperties": false
+            }
+        }),
+        json!({
+            "name": CASUALTY_READ,
+            "description": "利用者が負傷者の画面に付けている記録を読む。負傷者ごとの id・名前・痛み・記録（何分前に何をしたか）と、薬の効きと次に打てる目安（画面と同じ計算）を返す。記録の id は記録を消す提案で使う。",
+            "strict": true,
+            "input_schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+            }
+        }),
+        json!({
+            "name": CASUALTY_PROPOSE,
+            "description": "負傷者の記録への操作を提案する。画面に承認のカードが出て、利用者が承認したときだけ記録される（記録の時刻は承認した時刻）。結果（承認・却下・失敗）が返る。",
+            "strict": true,
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "summary": {"type": "string", "description": "承認のカードの見出し（何を記録するか、短く）"},
+                    "ops": {"type": "array", "items": proposed_op_schema(), "description": "上から順に行う操作。1〜20 個"}
+                },
+                "required": ["summary", "ops"],
                 "additionalProperties": false
             }
         }),
@@ -218,7 +280,35 @@ pub fn usage(map: &Map<String, Value>) -> ChatUsage {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ai::types::ImageMediaType;
+    use crate::ai::types::{ImageMediaType, ProposedOp};
+
+    #[test]
+    fn every_proposed_op_shape_starts_with_the_action_key() {
+        // strict のツールはキーを名前の順に書かせるので、種類のキーが先頭でない形があると、AI の出力がほかの形へ押し込まれる
+        let schema = proposed_op_schema();
+        let shapes = schema["anyOf"].as_array().expect("形の一覧");
+        assert_eq!(shapes.len(), 10, "ProposedOp の全部の形");
+        for shape in shapes {
+            let keys: Vec<&String> = shape["properties"]
+                .as_object()
+                .expect("properties")
+                .keys()
+                .collect();
+            let first = keys.iter().min().expect("キーがある");
+            assert_eq!(first.as_str(), "action", "{shape}");
+            // 形の見本が ProposedOp として読めること（スキーマと型の食い違いを見つける）
+            let mut sample = serde_json::Map::new();
+            for (key, prop) in shape["properties"].as_object().expect("properties") {
+                let value = match prop["type"].as_str() {
+                    Some("boolean") => json!(true),
+                    _ => prop["enum"].get(0).cloned().unwrap_or_else(|| json!("c1")),
+                };
+                sample.insert(key.clone(), value);
+            }
+            serde_json::from_value::<ProposedOp>(Value::Object(sample))
+                .unwrap_or_else(|e| panic!("{shape} を読めない: {e}"));
+        }
+    }
 
     #[test]
     fn web_search_is_restricted_and_optional() {

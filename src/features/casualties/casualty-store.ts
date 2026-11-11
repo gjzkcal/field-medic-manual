@@ -1,9 +1,12 @@
 // 負傷者の記録。本体はデスクトップ版は SQLite、Web 版は localStorage に置き、ここには画面に出す写しを持つ。
 import { create } from "zustand";
 
+import { nextCasualtyName } from "@/features/casualties/casualty-view";
 import { loadModSettings } from "@/features/settings/mod-settings";
 import type { Casualty } from "@/lib/bindings/Casualty";
+import type { CasualtyEntry } from "@/lib/bindings/CasualtyEntry";
 import type { CasualtyOp } from "@/lib/bindings/CasualtyOp";
+import type { ProposedOp } from "@/lib/bindings/ProposedOp";
 import {
   casualtyApply,
   casualtyList,
@@ -13,6 +16,8 @@ import {
 } from "@/lib/tauri";
 
 const MODS_SETTINGS_KEY = "mods";
+/** AI の提案の中で、同じ提案で作った負傷者を指す（Rust の `NEW_CASUALTY` と同じ） */
+export const NEW_CASUALTY = "new";
 
 interface CasualtyState {
   casualties: Casualty[];
@@ -48,6 +53,89 @@ function enqueue(task: () => Promise<Casualty[]>): Promise<void> {
  */
 export function loadCasualties(): Promise<void> {
   return enqueue(() => casualtyList());
+}
+
+/**
+ * AI が提案して利用者が承認した操作を、上から順に記録する。途中で失敗したら、そこで止めて理由を返す
+ * （それまでの操作は記録済み。どこまで記録できたかは AI に読み直させる）。
+ * 提案の中で作った負傷者は `"new"` で指されるので、作った直後の id に置き換える。
+ */
+export async function applyProposedOps(
+  ops: readonly ProposedOp[],
+): Promise<{ applied: number; error: string | null }> {
+  const result: { applied: number; error: string | null } = { applied: 0, error: null };
+  await enqueue(async () => {
+    let list = await casualtyList();
+    let created: string | null = null;
+    for (const op of ops) {
+      try {
+        list = await casualtyApply(toCasualtyOp(op, created, list));
+      } catch (error: unknown) {
+        result.error = errorMessage(error);
+        break;
+      }
+      if (op.action === "add_casualty") {
+        // 足した負傷者は一覧の末尾に入る
+        created = list.at(-1)?.id ?? null;
+      }
+      result.applied += 1;
+    }
+    return list;
+  });
+  return result;
+}
+
+/** 提案の操作を、記録の操作の形にする。 */
+export function toCasualtyOp(
+  op: ProposedOp,
+  created: string | null,
+  current: readonly Casualty[],
+): CasualtyOp {
+  const id = (casualty: string): string =>
+    casualty === NEW_CASUALTY ? (created ?? casualty) : casualty;
+  switch (op.action) {
+    case "add_casualty":
+      return {
+        op: "add_casualty",
+        name: op.name.trim() === "" ? nextCasualtyName(current.map((c) => c.name)) : op.name,
+      };
+    case "remove_casualty":
+      return { op: "remove_casualty", casualtyId: id(op.casualty) };
+    case "clear_all":
+      return { op: "clear_all" };
+    case "give_drug":
+    case "give_saline":
+    case "tourniquet_on":
+    case "tourniquet_off":
+    case "add_note":
+      return { op: "add_record", casualtyId: id(op.casualty), entry: proposedEntry(op) };
+    case "remove_record":
+      return { op: "remove_record", casualtyId: id(op.casualty), recordId: op.record };
+    case "set_pain":
+      return { op: "set_pain", casualtyId: id(op.casualty), inPain: op.pain };
+  }
+}
+
+/** 記録を足す提案の操作。AI 向けには、記録の種類を操作に平らにしてある（Rust の ProposedOp の注記）。 */
+export type RecordProposal = Extract<
+  ProposedOp,
+  { action: "give_drug" | "give_saline" | "tourniquet_on" | "tourniquet_off" | "add_note" }
+>;
+
+/** 記録を足す提案の、記録の中身。 */
+export function proposedEntry(op: RecordProposal): CasualtyEntry {
+  switch (op.action) {
+    case "give_drug":
+      return { kind: "drug", drug: op.drug };
+    case "give_saline":
+      return { kind: "saline" };
+    case "tourniquet_on":
+      return { kind: "tourniquet_on", site: op.site };
+    case "tourniquet_off":
+      return { kind: "tourniquet_off", site: op.site };
+    case "add_note":
+      return { kind: "note", text: op.text };
+  }
 }
 
 /** 記録を書く。失敗は `error` に入り、画面に出す。 */

@@ -19,10 +19,12 @@ use crate::ai::claude::{self, WEB_SEARCH};
 use crate::ai::conversation::{AiState, Fixed};
 use crate::ai::corpus::{self, Corpus};
 use crate::ai::prompt;
-use crate::ai::tools::{self, ASK_USER, READ_SECTION, SEARCH_MANUAL, ToolOutput};
+use crate::ai::tools::{
+    self, ASK_USER, CASUALTY_PROPOSE, CASUALTY_READ, READ_SECTION, SEARCH_MANUAL, ToolOutput,
+};
 use crate::ai::types::{
-    ChatEvent, ChatImage, ChatNotice, ChatSendInput, ChatTurnResult, ChatUsage, ClientToolResult,
-    ImageMediaType, ToolKind, ToolState, TurnStatus,
+    ChatEvent, ChatImage, ChatNotice, ChatSendInput, ChatTurnResult, ChatUsage, ClientRequest,
+    ClientToolResult, ImageMediaType, ToolKind, ToolState, TurnStatus,
 };
 use crate::db::Db;
 use crate::error::AppError;
@@ -39,6 +41,9 @@ const RETRY_BASE: Duration = Duration::from_secs(2);
 const STREAM_IDLE_TIMEOUT: Duration = Duration::from_mins(2);
 const MAX_TEXT_CHARS: usize = 4000;
 const MAX_ANSWER_CHARS: usize = 1000;
+/// 画面が返す負傷者の記録の文の上限。20 人 × 100 件の記録でも収まり、入力が際限なく増えない長さ
+const MAX_CASUALTY_TEXT_CHARS: usize = 30_000;
+const MAX_ERROR_CHARS: usize = 500;
 const MAX_IMAGES: usize = 3;
 /// API の 1 枚あたりの上限
 const MAX_IMAGE_BYTES: usize = 5 * 1024 * 1024;
@@ -455,6 +460,26 @@ impl<T: Transport> Run<'_, T> {
                 output
             }
             ASK_USER => self.ask(&id, &input, asks).await?,
+            CASUALTY_READ => {
+                self.activity(&id, ToolKind::CasualtyRead, "", ToolState::Running)?;
+                let output = match self.client_call(&id, ClientRequest::CasualtyRead).await? {
+                    ClientToolResult::CasualtyRead { text } => {
+                        ToolOutput::Text(text.chars().take(MAX_CASUALTY_TEXT_CHARS).collect())
+                    }
+                    _ => ToolOutput::Error("画面から記録を読めませんでした".to_owned()),
+                };
+                let state = if matches!(output, ToolOutput::Error(_)) {
+                    ToolState::Failed
+                } else {
+                    ToolState::Done
+                };
+                self.activity(&id, ToolKind::CasualtyRead, "", state)?;
+                output
+            }
+            CASUALTY_PROPOSE => match tools::casualty_propose_request(&input) {
+                Ok(request) => proposal_output(self.client_call(&id, request).await?),
+                Err(message) => ToolOutput::Error(message),
+            },
             _ => ToolOutput::Error(format!("{name} というツールはありません")),
         };
         Ok(claude::tool_result(&id, &output))
@@ -476,6 +501,25 @@ impl<T: Transport> Run<'_, T> {
             Err(message) => return Ok(ToolOutput::Error(message)),
         };
         *asks += 1;
+        let ClientToolResult::AskUser { answer } = self.client_call(id, request).await? else {
+            return Ok(ToolOutput::Error(
+                "画面から答えを受け取れませんでした".to_owned(),
+            ));
+        };
+        let answer: String = answer.trim().chars().take(MAX_ANSWER_CHARS).collect();
+        Ok(if answer.is_empty() {
+            ToolOutput::Text("（利用者は答えませんでした）".to_owned())
+        } else {
+            ToolOutput::Text(format!("利用者の答え: {answer}"))
+        })
+    }
+
+    /// 画面で実行するツール。要求を画面へ送り、`ai_chat_tool_result` で結果が返るまで待つ。
+    async fn client_call(
+        &mut self,
+        id: &str,
+        request: ClientRequest,
+    ) -> Result<ClientToolResult, Interrupted> {
         let rx = self
             .state
             .register_pending(self.turn_id, id)
@@ -486,17 +530,10 @@ impl<T: Transport> Run<'_, T> {
         }) {
             return Err(Interrupted::Cancelled);
         }
-        let result = tokio::select! {
-            r = rx => r.map_err(|_| Interrupted::Cancelled)?,
-            () = cancelled(&mut self.cancel) => return Err(Interrupted::Cancelled),
-        };
-        let ClientToolResult::AskUser { answer } = result;
-        let answer: String = answer.trim().chars().take(MAX_ANSWER_CHARS).collect();
-        Ok(if answer.is_empty() {
-            ToolOutput::Text("（利用者は答えませんでした）".to_owned())
-        } else {
-            ToolOutput::Text(format!("利用者の答え: {answer}"))
-        })
+        tokio::select! {
+            r = rx => r.map_err(|_| Interrupted::Cancelled),
+            () = cancelled(&mut self.cancel) => Err(Interrupted::Cancelled),
+        }
     }
 
     fn activity(
@@ -521,6 +558,29 @@ impl<T: Transport> Run<'_, T> {
     /// 進み具合の知らせ。届かなくても回答は続ける（使用量や知らせは、結果にも残るため）。
     fn emit_event(&self, event: ChatEvent) {
         let _ = (self.emit)(event);
+    }
+}
+
+/// 提案への答えを、AI に返す文にする。
+fn proposal_output(result: ClientToolResult) -> ToolOutput {
+    match result {
+        ClientToolResult::CasualtyPropose {
+            approved: true,
+            error: None,
+        } => ToolOutput::Text(
+            "利用者が承認し、記録しました（記録の時刻は承認した時刻です）。".to_owned(),
+        ),
+        ClientToolResult::CasualtyPropose {
+            approved: true,
+            error: Some(error),
+        } => ToolOutput::Text(format!(
+            "利用者は承認しましたが、記録の途中で失敗しました: {}。どこまで記録できたかは casualty_read で確かめてください。",
+            error.chars().take(MAX_ERROR_CHARS).collect::<String>()
+        )),
+        ClientToolResult::CasualtyPropose {
+            approved: false, ..
+        } => ToolOutput::Text("利用者は承認しませんでした。記録していません。".to_owned()),
+        _ => ToolOutput::Error("画面から承認の結果を受け取れませんでした".to_owned()),
     }
 }
 

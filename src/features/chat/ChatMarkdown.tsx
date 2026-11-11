@@ -3,10 +3,12 @@ import { createPortal } from "react-dom";
 
 import {
   placeCitationMarks,
+  placeFlowLinks,
   renderChatMarkdown,
   splitBlocks,
   splitCitationMarks,
 } from "@/features/chat/chat-markdown";
+import { FlowLinkButton } from "@/features/chat/FlowLinkButton";
 import { cn } from "@/lib/utils";
 
 interface ChatMarkdownProps {
@@ -50,6 +52,7 @@ export function ChatMarkdown({
 interface RenderedBlock {
   root: HTMLDivElement;
   slots: { slot: HTMLElement; index: number }[];
+  flows: { slot: HTMLElement; flowId: string; label: string }[];
   generation: number;
 }
 
@@ -106,7 +109,13 @@ function MarkdownBlock({
             return;
           }
           const slots = placeCitationMarks(root);
-          setRendered((prev) => ({ root, slots, generation: (prev?.generation ?? 0) + 1 }));
+          const flows = placeFlowLinks(root);
+          setRendered((prev) => ({
+            root,
+            slots,
+            flows,
+            generation: (prev?.generation ?? 0) + 1,
+          }));
           // 組むのは 1 ms ほどなので、次のフレームで最新の文を組み直す（1 フレームに 1 回まで）
           frameRef.current = requestAnimationFrame(() => {
             runningRef.current = false;
@@ -133,6 +142,13 @@ function MarkdownBlock({
       <div ref={ref} hidden={rendered === null} />
       {/* 初めて描き終わるまでは文字のまま、同じ場所に出しておく */}
       {rendered === null && <PlainText text={text} renderMark={renderMark} />}
+      {rendered?.flows.map(({ slot, flowId, label }, i) =>
+        createPortal(
+          <FlowLinkButton flowId={flowId} label={label} />,
+          slot,
+          `flow-${String(rendered.generation)}-${String(i)}`,
+        ),
+      )}
       {rendered !== null &&
         renderMark !== undefined &&
         rendered.slots.map(({ slot, index }, i) =>
