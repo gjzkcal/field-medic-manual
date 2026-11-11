@@ -149,7 +149,6 @@
       matchUpdateTypes: ["minor", "patch"],
       matchPackageNames: [
         "oxlint",
-        "oxlint-tsgolint",
         "prettier",
         "prettier-plugin-*",
         "vitest",
@@ -168,10 +167,17 @@
       platformAutomerge: false,
     },
     {
-      // typescript-eslint が対応する範囲に合わせて 6.0 系に留めている（package.json の ~）。
-      // 6.0 系の patch だけを PR にし、typescript-eslint が対応したら手でここと package.json を変えて上げる
-      matchPackageNames: ["typescript"],
-      allowedVersions: "<6.1",
+      // oxlint-tsgolint は TypeScript の特定の版の上に作られ、版の番号もそれに合わせて付く（7.0.2006 は TypeScript 7.0.2 用）。
+      // tsc と lint の型の解釈がずれないよう、2 つを 1 つの PR で上げる。lint と test で壊れたと分かるので自動でマージする。
+      // 7.1 は tsgolint が対応してから、手でここと package.json の ~ を変えて上げる
+      matchManagers: ["npm"],
+      matchPackageNames: ["typescript", "oxlint-tsgolint"],
+      allowedVersions: "<7.1",
+      groupName: "TypeScript",
+      groupSlug: "typescript",
+      group: { commitMessageTopic: "TypeScript を{{#unless commitMessageExtra}}更新{{/unless}}" },
+      automerge: true,
+      platformAutomerge: false,
     },
     {
       // CI とリリースで使う Node（setup-node の node-version）の型に合わせる。Node を上げるときに一緒に上げる
