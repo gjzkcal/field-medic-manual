@@ -1,14 +1,20 @@
 // Rust 側の呼び出し（自作コマンドと Tauri のウィンドウ API）はすべてこのファイルを経由する。
 // コマンド名の文字列と戻り値の型を 1 か所にまとめ、呼び出し側で invoke の型引数を書き間違えないようにするため。
-import { invoke } from "@tauri-apps/api/core";
+import { Channel, invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check } from "@tauri-apps/plugin-updater";
 
+import type { AiKeyStatus } from "@/lib/bindings/AiKeyStatus";
+import type { AiModel } from "@/lib/bindings/AiModel";
 import type { Casualty } from "@/lib/bindings/Casualty";
 import type { CasualtyOp } from "@/lib/bindings/CasualtyOp";
+import type { ChatEvent } from "@/lib/bindings/ChatEvent";
+import type { ChatSendInput } from "@/lib/bindings/ChatSendInput";
+import type { ChatTurnResult } from "@/lib/bindings/ChatTurnResult";
+import type { ClientToolResult } from "@/lib/bindings/ClientToolResult";
 import type { DocDetail } from "@/lib/bindings/DocDetail";
 import type { DocOutline } from "@/lib/bindings/DocOutline";
 import type { DocSummary } from "@/lib/bindings/DocSummary";
@@ -177,6 +183,53 @@ export async function casualtyList(): Promise<Casualty[]> {
 /** 負傷者の記録への操作を 1 件適用し、全員の記録を返す。 */
 export async function casualtyApply(op: CasualtyOp): Promise<Casualty[]> {
   return invoke<Casualty[]>("casualty_apply", { op });
+}
+
+/** AI チャットの API キーが登録されているか。キーそのものは画面に返さない。 */
+export async function aiKeyStatus(): Promise<AiKeyStatus> {
+  return invoke<AiKeyStatus>("ai_key_status");
+}
+
+/** キーを Windows の資格情報マネージャーに保存する。形が違えば AppError（invalid_input）。 */
+export async function aiKeySet(key: string): Promise<void> {
+  return invoke<undefined>("ai_key_set", { key });
+}
+
+export async function aiKeyClear(): Promise<void> {
+  return invoke<undefined>("ai_key_clear");
+}
+
+/** 登録したキーで、選んだモデルを使えるかを確かめる。 */
+export async function aiKeyCheck(model: AiModel): Promise<void> {
+  return invoke<undefined>("ai_key_check", { model });
+}
+
+/**
+ * 質問を送り、答えが出るまで待つ。途中の様子（本文・引用・ツール・聞き返し）は `onEvent` に届く。
+ * Channel は画面の部品に出さず、ここで包む（Web 版に Tauri の API を持ち込まないため）。
+ */
+export async function aiChatSend(
+  input: ChatSendInput,
+  onEvent: (event: ChatEvent) => void,
+): Promise<ChatTurnResult> {
+  const channel = new Channel<ChatEvent>();
+  channel.onmessage = onEvent;
+  return invoke<ChatTurnResult>("ai_chat_send", { input, onEvent: channel });
+}
+
+/** AI からの聞き返しに答える。 */
+export async function aiChatToolResult(toolUseId: string, result: ClientToolResult): Promise<void> {
+  return invoke<undefined>("ai_chat_tool_result", { toolUseId, result });
+}
+
+/** 回答を止める。止めた質問は会話に残らない。 */
+export async function aiChatCancel(): Promise<void> {
+  return invoke<undefined>("ai_chat_cancel");
+}
+
+/** 会話を消す。 */
+export async function aiChatReset(): Promise<void> {
+  return invoke<undefined>("ai_chat_reset");
 }
 
 export async function hotkeyList(): Promise<HotkeyBinding[]> {

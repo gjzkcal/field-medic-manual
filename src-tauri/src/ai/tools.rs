@@ -208,8 +208,9 @@ pub fn ask_user_request(input: &serde_json::Value) -> Result<ClientRequest, Stri
     })
 }
 
+// title は引用の見出しとして画面にそのまま出るので、AI 向けのメモ（MOD の条件・図あり）は本文の頭に置く
 fn section_doc(doc: &CorpusDoc, section: &CorpusSection, max_chars: usize) -> SourceDoc {
-    let mut title = if section.level == 0 {
+    let title = if section.level == 0 {
         doc.title.clone()
     } else {
         format!("{} > {}", doc.title, section.title)
@@ -221,22 +222,24 @@ fn section_doc(doc: &CorpusDoc, section: &CorpusSection, max_chars: usize) -> So
     if section.has_figure {
         notes.push("図あり".to_owned());
     }
+    let mut lines = paragraphs(&section.text, max_chars);
     if !notes.is_empty() {
-        title = format!("{title}（{}）", notes.join("・"));
+        lines.insert(0, format!("（この節: {}）", notes.join("・")));
     }
     SourceDoc {
         source: section_source(&doc.file, &section.anchor),
         title,
-        paragraphs: paragraphs(&section.text, max_chars),
+        paragraphs: lines,
     }
 }
 
 fn quickref_doc(row: &QuickrefRow) -> SourceDoc {
-    let mut title = format!("クイック表 > {}（{}）", row.symptom, row.category);
+    let title = format!("クイック表 > {}", row.symptom);
+    let mut lines = vec![format!("分類: {}", row.category)];
     if let Some(label) = condition_label(&row.mods, &row.without_mods) {
-        title = format!("{title}（{label}）");
+        lines.push(format!("条件: {label}"));
     }
-    let mut lines = vec![format!("重症度: {}（1=軽度〜4=致命的）", row.severity)];
+    lines.push(format!("重症度: {}（1=軽度〜4=致命的）", row.severity));
     lines.extend(
         row.treatment
             .iter()
@@ -319,10 +322,7 @@ mod tests {
         let titles: Vec<&str> = with_circ.iter().map(|d| d.title.as_str()).collect();
         assert_eq!(
             titles,
-            vec![
-                "出血 > 止血帯を使う（図あり）",
-                "出血 > Circulation の止血（Circulation あり）"
-            ]
+            vec!["出血 > 止血帯を使う", "出血 > Circulation の止血"]
         );
         let all = pick_hits(&corpus, &hits, &[ModTarget::Circulation], true);
         assert_eq!(
@@ -337,9 +337,15 @@ mod tests {
         let corpus = fixtures::corpus();
         let docs = pick_hits(&corpus, &[section_hit(2)], &[], false);
         assert_eq!(docs[0].source, "doc:hemorrhage.md#止血帯を使う");
+        // 図ありのメモは、画面に引用の見出しとして出る title ではなく、本文の頭に置く
+        assert_eq!(docs[0].title, "出血 > 止血帯を使う");
         assert_eq!(
             docs[0].paragraphs,
-            vec!["腕か脚に巻く。", "巻いた時刻を覚える。"]
+            vec![
+                "（この節: 図あり）",
+                "腕か脚に巻く。",
+                "巻いた時刻を覚える。"
+            ]
         );
     }
 

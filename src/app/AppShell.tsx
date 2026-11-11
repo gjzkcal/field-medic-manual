@@ -41,6 +41,8 @@ interface AppShellProps {
   sidebarFooter: ReactNode;
   /** 狭い画面の引き出しだけで、ナビの末尾に足す項目（ヘッダーに置けなくなったものの移し先） */
   mobileNavEnd?: ReactNode;
+  /** 本文の右に並べるもの（デスクトップ版の AI チャットのパネル）。狭い画面では中身が自分で重ねて出す */
+  aside?: ReactNode;
 }
 
 // 自分で列ごとのスクロールを持つ画面。ビューアは本文だけをスクロールさせ、ツリーと目次を止めておくため
@@ -52,6 +54,7 @@ export function AppShell({
   headerEnd,
   sidebarFooter,
   mobileNavEnd,
+  aside,
 }: AppShellProps): JSX.Element {
   const { pathname } = useLocation();
   const sidebarOpen = useUiStore((state) => state.sidebarOpen);
@@ -88,7 +91,8 @@ export function AppShell({
         {headerEnd}
       </header>
       {/* Sidebar と SidebarInset は兄弟のまま置く（本文の余白をサイドバーの開閉に合わせる peer の指定が効くように） */}
-      <div className="flex min-h-0 flex-1">
+      {/* relative は、狭い画面で本文の上に重ねる AI チャットのパネル（aside）の基準にするため */}
+      <div className="relative flex min-h-0 flex-1">
         <ShellSidebar
           navItems={navItems}
           pathname={pathname}
@@ -110,6 +114,7 @@ export function AppShell({
             </ScrollArea>
           )}
         </SidebarInset>
+        {aside}
       </div>
     </SidebarProvider>
   );
