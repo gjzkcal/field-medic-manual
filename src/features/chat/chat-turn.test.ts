@@ -4,6 +4,7 @@ import {
   answerForCopy,
   answerText,
   applyEvent,
+  chipLabel,
   citationUrl,
   decideProposal,
   finishTurn,
@@ -233,5 +234,22 @@ describe("負傷者の記録とフロー", () => {
     expect(answerForCopy(turn)).toMatch(
       /^痛みを抑える（https:\/\/.+\/triage\/pain）を開いてください。$/,
     );
+  });
+});
+
+describe("chipLabel", () => {
+  it("見出しの最後の段にし、長ければクイック表は「クイック表」、ほかは頭を残して縮める", () => {
+    expect(chipLabel(TQ)).toBe("巻く位置");
+    expect(
+      chipLabel({
+        ...TQ,
+        source: "quickref:pain",
+        title: "クイック表 > 意識があって痛みがある（画面が白く点滅する）",
+      }),
+    ).toBe("クイック表");
+    expect(chipLabel({ ...TQ, title: "痛みと抑え方 > Circulation を入れている場合" })).toBe(
+      "Circulation…",
+    );
+    expect(chipLabel({ ...TQ, source: "quickref:x", title: "クイック表 > 出血" })).toBe("出血");
   });
 });

@@ -310,6 +310,29 @@ export function mergeWithMarks(items: readonly TextItem[]): {
   return { text, marks };
 }
 
+/** 文の中のチップの名前の上限（文字数）。長いと同じ文が何度も並んで本文が読みにくくなる */
+const MAX_CHIP_CHARS = 12;
+
+/**
+ * 文の中のチップの名前。「フェニレフリン > 効果」なら「効果」のように見出しの最後の段だけにし、長ければ縮める。
+ * クイック表の行は症状の文が長く途中で切ると意味が取れないので「クイック表」にする（載せれば全体が出る）。
+ * source から作らないのは、クイック表の行の id（blood-loss など）が利用者には読めないため。
+ */
+export function chipLabel(citation: Extract<ChatCitation, { kind: "manual" }>): string {
+  const last = citation.title.split(" > ").at(-1) ?? citation.title;
+  // 結合文字を途中で切らないよう、見た目の 1 文字ずつに分ける
+  const chars = Array.from(
+    new Intl.Segmenter("ja", { granularity: "grapheme" }).segment(last),
+    (g) => g.segment,
+  );
+  if (chars.length <= MAX_CHIP_CHARS) {
+    return last;
+  }
+  return citation.source.startsWith("quickref:")
+    ? "クイック表"
+    : `${chars.slice(0, MAX_CHIP_CHARS - 1).join("")}…`;
+}
+
 /** 回答の出典を重複なしで（届いた順）。 */
 export function turnCitations(turn: ChatTurn): ChatCitation[] {
   const seen = new Set<string>();

@@ -41,6 +41,7 @@ import {
 import { splitFigures } from "@/features/chat/chat-markdown";
 import {
   answerForCopy,
+  chipLabel,
   citationKey,
   mergeWithMarks,
   turnCitations,
@@ -357,7 +358,7 @@ function InlineCitations({ citations }: { citations: readonly ChatCitation[] }):
           key={key}
           citation={citation}
           quotes={quotes}
-          label={citation.kind === "manual" ? shortTitle(citation.title) : hostOf(citation.url)}
+          label={citation.kind === "manual" ? chipLabel(citation) : hostOf(citation.url)}
           inline
         />
       ))}
@@ -588,12 +589,4 @@ function AskUser({
       </QuestionnaireActions>
     </Questionnaire>
   );
-}
-
-/**
- * 「フェニレフリン > 効果」を「効果」のように、見出しの最後の段だけにする（文の中のチップを短くするため）。
- * source から作らないのは、クイック表の行の id（blood-loss など）が利用者には読めないため。
- */
-function shortTitle(title: string): string {
-  return title.split(" > ").at(-1) ?? title;
 }
