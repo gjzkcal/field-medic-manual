@@ -1,0 +1,116 @@
+# CodeQL で actions・JavaScript/TypeScript・Rust の脆弱性を解析し、Security → Code scanning に出す。
+# GitHub の default setup からこのワークフロー（advanced setup）に移した（2026-11-12）。default setup はトリガーもパスも変えられず、
+# PR のたびに Rust の解析（クエリの評価だけで 4 分、全体で 6〜7.5 分。Rust は差分だけの解析に未対応）が走って、PR で一番遅いチェックになっていたため。
+# PR では変更したファイルに関わる言語だけを解析し、main への push・週 1 回・手動では全部を解析する。
+# カテゴリは default setup と同じ /language:<言語> にして、それまでのアラートを引き継ぐ。
+# Rust を触らない PR では、PR の「Code scanning results」に Rust の解析が無い旨が出るが、必須のチェックではなく情報だけ。
+# main では毎回全部を解析するので、main のアラートは欠けない。
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # 月曜 9:00 JST（月曜 0:00 UTC）。audit.yml と Renovate の週 1 回にそろえる。新しいクエリで既存のコードを見直すため
+  schedule:
+    - cron: "0 0 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# 同じ PR に続けて push したら古い回を止める。main と週 1 回は最後まで解析する
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# 外部のアクションは ci.yml と同じくコミットの SHA で固定し、版はコメントに書く（Renovate がそろえて更新する）
+jobs:
+  # PR では、変更したファイルから解析する言語を選ぶ。PR 以外は 3 言語すべて
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      # PR の変更したファイルの一覧を API で取るため
+      pull-requests: read
+    outputs:
+      languages: ${{ steps.languages.outputs.languages }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: github.event_name == 'pull_request'
+
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        if: github.event_name == 'pull_request'
+        with:
+          # このファイルを変えたときは、3 言語とも通ることを PR で確かめる
+          filters: |
+            actions:
+              - ".github/workflows/**"
+            javascript-typescript:
+              - "src/**"
+              - "scripts/**"
+              - "*.ts"
+              - "*.js"
+              - "index.html"
+              - "package.json"
+              - "pnpm-lock.yaml"
+              - ".github/workflows/codeql.yml"
+            rust:
+              - "src-tauri/**"
+              - ".github/workflows/codeql.yml"
+
+      # matrix に渡す JSON の配列にする。どの言語にも当たらない PR（原稿や README だけ）は空にして解析を飛ばす
+      - name: Choose the languages to analyze
+        id: languages
+        env:
+          IS_PULL_REQUEST: ${{ github.event_name == 'pull_request' }}
+          ACTIONS: ${{ steps.filter.outputs.actions }}
+          JAVASCRIPT_TYPESCRIPT: ${{ steps.filter.outputs.javascript-typescript }}
+          RUST: ${{ steps.filter.outputs.rust }}
+        run: |
+          languages=()
+          if [ "$IS_PULL_REQUEST" != "true" ]; then
+            languages=(actions javascript-typescript rust)
+          else
+            if [ "$ACTIONS" = "true" ]; then languages+=(actions); fi
+            if [ "$JAVASCRIPT_TYPESCRIPT" = "true" ]; then languages+=(javascript-typescript); fi
+            if [ "$RUST" = "true" ]; then languages+=(rust); fi
+          fi
+          json=$(printf '"%s",' "${languages[@]}")
+          json="[${json%,}]"
+          if [ "${#languages[@]}" -eq 0 ]; then json="[]"; fi
+          echo "languages=$json" >> "$GITHUB_OUTPUT"
+          echo "解析する言語: $json"
+
+  analyze:
+    needs: changes
+    if: needs.changes.outputs.languages != '[]'
+    runs-on: ubuntu-latest
+    # Rust が 6〜7.5 分。キャッシュが外れた回や新しいクエリに余裕を持たせる
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      # 解析の結果を Code scanning にアップロードするため
+      security-events: write
+    strategy:
+      # 1 つの言語が落ちても残りを最後まで解析する
+      fail-fast: false
+      matrix:
+        language: ${{ fromJSON(needs.changes.outputs.languages) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          languages: ${{ matrix.language }}
+          # Rust もビルドせずに解析できる（ランナーの rustup と cargo を使う）
+          build-mode: none
+          # default setup は GitHub ホストのランナーで依存のキャッシュを有効にしていたので、そろえる
+          dependency-caching: true
+
+      - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          # default setup が使っていたカテゴリと同じにして、アラートを引き継ぐ
+          category: "/language:${{ matrix.language }}"
