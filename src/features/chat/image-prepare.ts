@@ -2,8 +2,11 @@
 // 画像は会話が続く間、毎回の入力に残るので、トークンを抑えるため長い辺を API が勧める大きさまで落とす。
 import type { PreparedImage } from "@/features/chat/chat-store";
 
-/** Claude API が、これより大きい画像は縮めてから読むとしている長い辺の大きさ */
-const MAX_EDGE = 1568;
+/**
+ * 長い辺の大きさ。API は 1568 px まで縮めずに読むが、トークンは面積に比例する（1280×720 で約 1,200 トークン）ので、
+ * ゲームの画面の数値が読める範囲で小さくする
+ */
+const MAX_EDGE = 1280;
 const JPEG_QUALITY = 0.85;
 export const MAX_IMAGES = 3;
 const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
