@@ -137,7 +137,7 @@ impl Env {
         let state = Arc::new(AiState::default());
         let fixed = Fixed {
             model: AiModel::ClaudeSonnet55,
-            effort: AiEffort::High,
+            effort: AiEffort::Medium,
             mods: Vec::new(),
             corpus: Arc::new(fixtures::corpus()),
             system: Arc::new("sys".to_owned()),
@@ -204,8 +204,7 @@ async fn text_answer_is_kept_and_sent_back_next_time() {
     let messages = bodies[1]["messages"].as_array().expect("配列");
     assert_eq!(messages.len(), 3, "前の質問と答えを送り返す");
     assert_eq!(messages[1]["content"][0]["text"], "止血帯を巻きます");
-    // 会話の設定は最初のものを使う（2 回目の入力の effort ではない）
-    assert_eq!(bodies[1]["output_config"]["effort"], "high");
+    assert_eq!(bodies[1]["output_config"]["effort"], "medium");
     assert_eq!(
         bodies[0]["system"][0]["text"],
         bodies[1]["system"][0]["text"]
@@ -738,4 +737,64 @@ fn webp_is_detected() {
         Some(ImageMediaType::Jpeg)
     );
     assert_eq!(detect_image(b"GIF89a"), None);
+}
+
+#[tokio::test]
+async fn effort_change_is_appended_as_a_system_message_and_not_sent_at_the_top_level() {
+    let env = Env::new();
+    let transport = FakeTransport::with(vec![
+        Ok(text_response("1", "end_turn")),
+        Ok(text_response("2", "end_turn")),
+        Ok(text_response("3", "end_turn")),
+    ]);
+    env.ask(&transport, input("q1")).await.expect("答える");
+    let mut low = input("q2");
+    low.effort = AiEffort::Low;
+    env.ask(&transport, low).await.expect("答える");
+    let mut again = input("q3");
+    again.effort = AiEffort::Low;
+    env.ask(&transport, again).await.expect("答える");
+    let bodies = transport.bodies();
+    assert_eq!(
+        bodies[1]["output_config"]["effort"], "medium",
+        "トップレベルは最初の値のまま"
+    );
+    let messages = bodies[1]["messages"].as_array().expect("配列");
+    assert_eq!(messages.len(), 4, "履歴 2 ＋ effort の変更 ＋ 質問");
+    assert_eq!(messages[2]["role"], "system");
+    assert_eq!(messages[2]["output_config"]["effort"], "low");
+    assert_eq!(messages[3]["content"][0]["text"], "q2");
+    let messages = bodies[2]["messages"].as_array().expect("配列");
+    assert_eq!(messages.len(), 6, "同じ effort なら足さない");
+    assert_eq!(env.history_len(), 7);
+}
+
+#[tokio::test]
+async fn effort_change_is_dropped_when_the_api_rejects_it() {
+    let env = Env::new();
+    let transport = FakeTransport::with(vec![
+        Ok(text_response("1", "end_turn")),
+        Err(failure(
+            AppError::AiRequest("unknown beta".to_owned()),
+            false,
+            false,
+        )),
+        Ok(text_response("2", "end_turn")),
+    ]);
+    env.ask(&transport, input("q1")).await.expect("答える");
+    let mut low = input("q2");
+    low.effort = AiEffort::Low;
+    let result = env.ask(&transport, low).await.expect("送り直して答える");
+    assert_eq!(result.status, TurnStatus::Completed);
+    let bodies = transport.bodies();
+    assert_eq!(bodies.len(), 3);
+    let retried = bodies[2]["messages"].as_array().expect("配列");
+    assert!(
+        retried.iter().all(|m| m["role"] != "system"),
+        "effort の変更を外して送り直す"
+    );
+    assert!(env.events().contains(&ChatEvent::Notice {
+        notice: ChatNotice::EffortChangeUnsupported
+    }));
+    assert_eq!(env.history_len(), 4, "会話には変更なしの履歴が残る");
 }

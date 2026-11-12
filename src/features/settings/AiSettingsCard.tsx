@@ -222,8 +222,8 @@ export function AiSettingsCard(): JSX.Element {
           </ToggleGroup>
           <p className="text-xs text-muted-foreground">
             高いほど考える量が増え、時間と費用が増えます。「推奨」は、このモデルでマニュアルの質問に十分な段階です。
-            Effort を選んでいなければ、モデルを変えたときに推奨の段階になります。モデルと Effort
-            の変更は、新しい会話から使われます。
+            Effort を選んでいなければ、モデルを変えたときに推奨の段階になります。Effort
+            の変更は次の質問から、モデルの変更は新しい会話から使われます。
           </p>
         </div>
         {storageError !== null && (

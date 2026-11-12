@@ -1,6 +1,7 @@
 import { clearMocks, mockIPC } from "@tauri-apps/api/mocks";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+import { useAiSettings } from "@/features/chat/ai-settings";
 import { useChatStore } from "@/features/chat/chat-store";
 
 const USAGE = {
@@ -64,15 +65,52 @@ describe("useChatStore", () => {
     expect(useChatStore.getState().notice).toContain("元の会話に戻しました");
   });
 
-  it("会話の最初の設定を、会話の間は使い続ける", async () => {
-    mockSend(false);
+  it("モデルは会話の最初の値を使い続け、Effort は今の設定を送る", async () => {
+    const inputs = mockSend(false);
     await useChatStore.getState().send("q1", []);
     expect(useChatStore.getState().conversation).toStrictEqual({
       model: "claude-sonnet-5-5",
       effort: "medium",
     });
+    useAiSettings.setState({
+      settings: { model: "claude-opus-5-5", effort: "low" },
+      customEffort: true,
+    });
+    await useChatStore.getState().send("q2", []);
+    expect(arg(inputs[1], "model")).toBe("claude-sonnet-5-5");
+    expect(arg(inputs[1], "effort")).toBe("low");
+    useAiSettings.setState({
+      settings: { model: "claude-sonnet-5-5", effort: "medium" },
+      customEffort: false,
+    });
     await useChatStore.getState().reset();
     expect(useChatStore.getState().conversation).toBeNull();
     expect(useChatStore.getState().turns).toStrictEqual([]);
+  });
+
+  it("キャッシュの保温は、会話があって回答中でないときだけ送り、使った分を合計する", async () => {
+    let keepAlives = 0;
+    mockIPC((cmd) => {
+      if (cmd === "ai_chat_send") {
+        return { status: { kind: "completed" }, usage: USAGE, turnIndex: 0 };
+      }
+      if (cmd === "ai_chat_keep_alive") {
+        keepAlives += 1;
+        return { ...USAGE, cacheReadTokens: 40000 };
+      }
+      return null;
+    });
+    await useChatStore.getState().keepAliveNow();
+    expect(keepAlives).toBe(0);
+    await useChatStore.getState().send("q1", []);
+    expect(useChatStore.getState().lastTurnEndAt).not.toBeNull();
+    await useChatStore.getState().keepAliveNow();
+    await useChatStore.getState().keepAliveNow();
+    expect(keepAlives).toBe(2);
+    expect(useChatStore.getState().keepAlive.count).toBe(2);
+    expect(useChatStore.getState().keepAlive.usage.cacheReadTokens).toBe(80000);
+    await useChatStore.getState().reset();
+    expect(useChatStore.getState().keepAlive.count).toBe(0);
+    expect(useChatStore.getState().lastRequestAt).toBeNull();
   });
 });

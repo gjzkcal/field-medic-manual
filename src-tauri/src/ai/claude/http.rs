@@ -10,8 +10,9 @@ use futures_util::{Stream, StreamExt};
 use reqwest::header::{CONTENT_TYPE, HeaderMap, HeaderValue, RETRY_AFTER};
 use serde_json::Value;
 
-use super::API_VERSION;
-use crate::ai::types::AiModel;
+use super::{API_VERSION, BETAS};
+use crate::ai::claude;
+use crate::ai::types::{AiModel, ChatUsage};
 use crate::error::AppError;
 
 const MESSAGES_URL: &str = "https://api.anthropic.com/v1/messages";
@@ -101,6 +102,34 @@ pub async fn check(key: &str, model: AiModel) -> Result<(), AppError> {
     }
 }
 
+/// ストリーミングなしで要求を送り、使用量だけを返す（キャッシュの期限を延ばす `max_tokens: 0` の要求に使う）。
+///
+/// # Errors
+///
+/// キーが無効なら `AiAuth`、要求が受け付けられなければ `AiRequest`、通信できなければ `Network`。
+pub async fn send_for_usage(key: &str, body: &Value) -> Result<ChatUsage, AppError> {
+    let response = client()?
+        .post(MESSAGES_URL)
+        .headers(headers(key)?)
+        .json(body)
+        .timeout(FIRST_BYTE_TIMEOUT)
+        .send()
+        .await
+        .map_err(|e| network_failure(&e).error)?;
+    if !response.status().is_success() {
+        return Err(status_failure(response).await.error);
+    }
+    let value: Value = response
+        .json()
+        .await
+        .map_err(|e| AppError::Network(format!("応答を読めませんでした（{e}）")))?;
+    Ok(value
+        .get("usage")
+        .and_then(Value::as_object)
+        .map(claude::usage)
+        .unwrap_or_default())
+}
+
 /// 要求の入力トークン数を数える（モデルは動かさない）。索引の大きさの計測と評価に使う。
 ///
 /// # Errors
@@ -154,6 +183,7 @@ fn headers(key: &str) -> Result<HeaderMap, AppError> {
     value.set_sensitive(true);
     map.insert("x-api-key", value);
     map.insert("anthropic-version", HeaderValue::from_static(API_VERSION));
+    map.insert("anthropic-beta", HeaderValue::from_static(BETAS));
     map.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
     Ok(map)
 }
@@ -261,6 +291,10 @@ mod tests {
         assert_eq!(
             map.get("anthropic-version").and_then(|v| v.to_str().ok()),
             Some(API_VERSION)
+        );
+        assert_eq!(
+            map.get("anthropic-beta").and_then(|v| v.to_str().ok()),
+            Some(BETAS)
         );
     }
 }

@@ -323,7 +323,7 @@ export function ChatPromptInput({
       </InputGroup>
       {settingsPending && (
         <p className="text-xs text-muted-foreground">
-          モデルと Effort の変更は、新しい会話から使われます
+          モデルの変更は、新しい会話から使われます（Effort は次の質問から）
         </p>
       )}
       {error !== null && (

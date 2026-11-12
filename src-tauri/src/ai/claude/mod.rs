@@ -14,6 +14,8 @@ use crate::ai::types::{AiEffort, AiModel, ChatCitation, ChatImage, ChatUsage};
 /// 2026-10-21 版で temperature などが無くなり、引用付きの文を user に入れられなくなった。
 /// このアプリはどちらも使わないので、新しい版に合わせておく（後で移す手間をなくすため）
 pub const API_VERSION: &str = "2026-10-21";
+/// 使う beta の機能。会話の途中で effort を変える system メッセージ（`effort_message`）に要る
+pub const BETAS: &str = "mid-conversation-output-config-2026-07-01";
 /// xhigh / max の effort では 64000 以上が要る（足りないと考えている途中で切れる）。ストリーミングなので大きくても時間切れにならない
 const MAX_TOKENS: u32 = 64000;
 pub const WEB_SEARCH: &str = "web_search";
@@ -176,6 +178,43 @@ pub fn request_body(
     body
 }
 
+/// 会話の途中で effort を変える system メッセージ（beta `mid-conversation-output-config-2026-07-01`）。
+/// 履歴に追記するだけなので、キャッシュも thinking の署名も保てる（要求のトップレベルの effort を変えるとどちらも切れる）。
+#[must_use]
+pub fn effort_message(effort: AiEffort) -> Value {
+    json!({"role": "system", "content": [], "output_config": {"effort": effort.as_str()}})
+}
+
+/// 履歴の時点で効いている effort。`effort_message` があれば最後のもの、なければ会話の最初の値。
+#[must_use]
+pub fn effective_effort(messages: &[Value], initial: AiEffort) -> AiEffort {
+    messages
+        .iter()
+        .rev()
+        .filter(|m| m.get("role").and_then(Value::as_str) == Some("system"))
+        .find_map(|m| m.get("output_config")?.get("effort").cloned())
+        .and_then(|v| serde_json::from_value(v).ok())
+        .unwrap_or(initial)
+}
+
+/// キャッシュの期限を延ばす要求の本文。`request_body` と同じ接頭辞にし（違うとキャッシュに当たらない）、
+/// 出力は作らせず、ストリーミングにしない（`max_tokens: 0` はストリーミングと組み合わせられない）。
+#[must_use]
+pub fn keep_alive_body(
+    model: AiModel,
+    effort: AiEffort,
+    system: &str,
+    tools: &Value,
+    messages: &[Value],
+) -> Value {
+    let mut body = request_body(model, effort, system, tools, messages, false);
+    if let Some(obj) = body.as_object_mut() {
+        obj.insert("max_tokens".to_owned(), json!(0));
+        obj.remove("stream");
+    }
+    body
+}
+
 /// `count_tokens` に送る本文。数えるのに要らないキー（`max_tokens`・`stream`・`output_config`・`cache_control`）は
 /// 入れない（`count_tokens` が受け付けない可能性があり、数にも影響しないため）。`system` や `tools` を省くと、残りの分だけを数えられる。
 #[must_use]
@@ -306,6 +345,59 @@ pub fn usage(map: &Map<String, Value>) -> ChatUsage {
 mod tests {
     use super::*;
     use crate::ai::types::{ImageMediaType, ProposedOp};
+
+    #[test]
+    fn effort_changes_are_read_back_from_the_history() {
+        let mut messages = vec![user_message("q1", &[])];
+        assert_eq!(
+            effective_effort(&messages, AiEffort::Medium),
+            AiEffort::Medium
+        );
+        messages.push(effort_message(AiEffort::Low));
+        messages.push(user_message("q2", &[]));
+        assert_eq!(effective_effort(&messages, AiEffort::Medium), AiEffort::Low);
+        let message = effort_message(AiEffort::High);
+        assert_eq!(message["role"], "system");
+        assert_eq!(message["content"], json!([]));
+        assert_eq!(message["output_config"]["effort"], "high");
+    }
+
+    #[test]
+    fn keep_alive_body_keeps_the_prefix_and_asks_for_no_output() {
+        let tools = tools(true);
+        let messages = vec![user_message("q", &[])];
+        let normal = request_body(
+            AiModel::ClaudeOpus55,
+            AiEffort::Low,
+            "sys",
+            &tools,
+            &messages,
+            false,
+        );
+        let keep = keep_alive_body(
+            AiModel::ClaudeOpus55,
+            AiEffort::Low,
+            "sys",
+            &tools,
+            &messages,
+        );
+        assert_eq!(keep["max_tokens"], json!(0));
+        assert!(keep.get("stream").is_none());
+        for key in [
+            "model",
+            "system",
+            "tools",
+            "messages",
+            "thinking",
+            "output_config",
+            "cache_control",
+        ] {
+            assert_eq!(
+                keep[key], normal[key],
+                "{key} は同じ（キャッシュの接頭辞をそろえる）"
+            );
+        }
+    }
 
     #[test]
     fn count_body_leaves_out_keys_that_do_not_affect_the_count() {

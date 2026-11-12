@@ -5,7 +5,7 @@ use tauri::{AppHandle, State};
 
 use crate::ai::claude::http::{self, HttpTransport};
 use crate::ai::types::{
-    AiKeyStatus, AiModel, ChatEvent, ChatSendInput, ChatTurnResult, ClientToolResult,
+    AiKeyStatus, AiModel, ChatEvent, ChatSendInput, ChatTurnResult, ChatUsage, ClientToolResult,
 };
 use crate::ai::{AiState, key, turn};
 use crate::db::Db;
@@ -89,6 +89,26 @@ pub async fn ai_chat_send(
     let transport = HttpTransport::new(load_key(&app).await?);
     let emit = move |event: ChatEvent| on_event.send(event).is_ok();
     turn::run(ai.inner(), &db, &transport, input, &emit).await
+}
+
+/// 会話のキャッシュの期限を延ばす。会話がない・回答中なら何もせず None。
+///
+/// 索引を含む接頭辞は 5 分で消え、次の質問で書き直すと読む場合の何倍も費用がかかる。
+/// 画面が、会話を開いている間だけ定期的に呼ぶ。返すのは、この要求で使ったトークン数（画面で合計に足す）。
+///
+/// # Errors
+///
+/// キーがない・API の失敗のとき。
+#[tauri::command]
+pub async fn ai_chat_keep_alive(
+    app: AppHandle,
+    ai: State<'_, Arc<AiState>>,
+) -> Result<Option<ChatUsage>, AppError> {
+    let Some(body) = ai.keep_alive_body()? else {
+        return Ok(None);
+    };
+    let key = load_key(&app).await?;
+    Ok(Some(http::send_for_usage(&key, &body).await?))
 }
 
 /// AI からの聞き返しに答える。

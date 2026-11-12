@@ -56,6 +56,7 @@
     "allow-ai-chat-send",
     "allow-ai-chat-tool-result",
     "allow-ai-chat-cancel",
-    "allow-ai-chat-reset"
+    "allow-ai-chat-reset",
+    "allow-ai-chat-keep-alive"
   ]
 }

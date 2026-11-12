@@ -35,7 +35,9 @@ export const AI_EFFORT_LABELS: Record<AiEffort, string> = {
 
 /**
  * モデルごとの推奨の Effort。利用者が Effort を選んでいなければ、これを使う。
- * 値は、同梱の評価セット（src-tauri/eval）で 3 モデルの答えの質がそろう最も安い段階にする。
+ * 値は、同梱の評価セット（src-tauri/eval、20 問）で 3 モデルの答えの質がそろう最も安い段階にする。
+ * 2026-11-13 の計測では、3 モデルとも medium だけが 20 問すべてを通り（low は 1〜2 問落ちる）、
+ * high は medium より良くならずに出力だけが 1.5〜2 倍になった。
  */
 export const AI_EFFORT_RECOMMENDED: Record<AiModel, AiEffort> = {
   "claude-opus-5-5": "medium",
