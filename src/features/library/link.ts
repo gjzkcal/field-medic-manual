@@ -8,8 +8,9 @@ export type ResolvedLink =
   | { kind: "doc"; fileName: string; anchor: string | null }
   | { kind: "unknown" };
 
-// 原稿は content/manuals/ の直下に並べるので、同じフォルダの md だけを内部リンクとして扱う
-const MANUAL_LINK = /^(?:\.\/)?([a-z0-9-]+\.md)(?:#(.*))?$/i;
+// 原稿は content/manuals/ の直下に並べるので、同じフォルダの md だけを内部リンクとして扱う。
+// i と u を一緒に付けると ſ（U+017F）と K（U+212A）もファイル名に当たるので、大文字小文字は文字クラスで書く
+const MANUAL_LINK = /^(?:\.\/)?([A-Za-z0-9-]+\.[Mm][Dd])(?:#(.*))?$/u;
 
 export function resolveLink(href: string): ResolvedLink {
   const trimmed = href.trim();

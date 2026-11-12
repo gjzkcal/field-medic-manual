@@ -35,12 +35,12 @@ export async function bundledManuals(): Promise<ManualSource[]> {
   // 本番ビルドの URL には中身のハッシュが入るので、画像だけを差し替えても原稿の変更として検出できる
   const imageFingerprint = Object.entries(IMAGE_URLS)
     .map(([path, url]) => `${path}=${url}`)
-    .sort()
+    .toSorted()
     .join("\n");
   // どの原稿がどの CSV を使うかは変換するまで分からないので、CSV の中身をすべての原稿のハッシュに混ぜる
   const dataFingerprint = Object.entries(DATA_TEXTS)
     .map(([path, text]) => `${path}\n${text}`)
-    .sort()
+    .toSorted()
     .join("\0");
   const manuals = await Promise.all(
     Object.entries(MANUAL_TEXTS).map(async ([path, text]) => ({
@@ -52,7 +52,7 @@ export async function bundledManuals(): Promise<ManualSource[]> {
       ),
     })),
   );
-  return manuals.sort((a, b) => a.fileName.localeCompare(b.fileName));
+  return manuals.toSorted((a, b) => a.fileName.localeCompare(b.fileName));
 }
 
 /** 同梱した画像を読む。パスはリポジトリのルートから（例: /content/manuals/images/a.png）。 */

@@ -155,7 +155,7 @@ type Group =
  */
 function groupItems(items: readonly AnswerItem[]): Group[] {
   const groups: Group[] = [];
-  items.forEach((item, index) => {
+  for (const [index, item] of items.entries()) {
     const key = `${item.kind}-${String(index)}`;
     if (item.kind === "thinking" || item.kind === "tool") {
       const last = groups.at(-1);
@@ -174,7 +174,7 @@ function groupItems(items: readonly AnswerItem[]): Group[] {
     } else {
       groups.push({ kind: "single", key, item });
     }
-  });
+  }
   return groups;
 }
 

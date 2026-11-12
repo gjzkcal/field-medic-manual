@@ -21,7 +21,7 @@ describe("groupByCategory", () => {
       doc("airway", "症状/処置"),
       doc("pain", "薬学/物品"),
     ]);
-    expect(ids(groups)).toEqual([
+    expect(ids(groups)).toStrictEqual([
       ["はじめに", ["about"]],
       ["症状/処置", ["bleeding", "airway"]],
       ["薬学/物品", ["pain"]],
@@ -30,7 +30,7 @@ describe("groupByCategory", () => {
 
   it("途切れて並んだ同じ分類は、最初に出た位置にまとめる", () => {
     const groups = groupByCategory([doc("a", "X"), doc("b", "Y"), doc("c", "X")]);
-    expect(ids(groups)).toEqual([
+    expect(ids(groups)).toStrictEqual([
       ["X", ["a", "c"]],
       ["Y", ["b"]],
     ]);
@@ -38,14 +38,14 @@ describe("groupByCategory", () => {
 
   it("分類のないものは位置にかかわらず末尾にまとめる", () => {
     const groups = groupByCategory([doc("a", null), doc("b", "X"), doc("c", null)]);
-    expect(ids(groups)).toEqual([
+    expect(ids(groups)).toStrictEqual([
       ["X", ["b"]],
       [null, ["a", "c"]],
     ]);
   });
 
   it("空の入力は空", () => {
-    expect(groupByCategory([])).toEqual([]);
+    expect(groupByCategory([])).toStrictEqual([]);
   });
 });
 

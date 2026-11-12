@@ -17,10 +17,10 @@ describe("AboutCard", () => {
     render(<AboutCard />);
 
     expect(await screen.findByText("v0.0.1")).toBeTruthy();
-    expect(screen.getByText(/GPL-3\.0-or-later/)).toBeTruthy();
-    expect(screen.getByText(/acemod\/ACE-Anvil、GPL-2\.0-or-later/)).toBeTruthy();
+    expect(screen.getByText(/GPL-3\.0-or-later/u)).toBeTruthy();
+    expect(screen.getByText(/acemod\/ACE-Anvil、GPL-2\.0-or-later/u)).toBeTruthy();
     expect(
-      screen.getByText(/not affiliated with or authorized by Bohemia Interactive/),
+      screen.getByText(/not affiliated with or authorized by Bohemia Interactive/u),
     ).toBeTruthy();
   });
 
@@ -31,11 +31,11 @@ describe("AboutCard", () => {
     render(<AboutCard />);
 
     expect(await screen.findByText("v0.0.1")).toBeTruthy();
-    expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual([
+    expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toStrictEqual([
       "このアプリについて",
     ]);
     expect(screen.getAllByRole("heading", { level: 3 }).length).toBeGreaterThan(0);
-    expect(screen.queryAllByRole("heading", { level: 4 })).toEqual([]);
+    expect(screen.queryAllByRole("heading", { level: 4 })).toStrictEqual([]);
   });
 
   it("「更新を確認」で最新なら、その旨を出す", async () => {

@@ -18,20 +18,25 @@ describe("tauri.web.ts", () => {
   it("デスクトップ版と同じ名前と型の関数を持つ", () => {
     // 関数を足し忘れたり型がずれたりすると、ここが tsc（pnpm lint）で落ちる
     const api: typeof desktop = web;
-    expect(Object.keys(api).sort()).toEqual(Object.keys(desktop).sort());
+    expect(Object.keys(api).toSorted()).toStrictEqual(Object.keys(desktop).toSorted());
   });
 
   describe("同梱した原稿", { timeout: CONVERT_TIMEOUT_MS * 2 }, () => {
     it("すべての原稿を一覧に出し、ファイル名の id で開ける", async () => {
       const manuals = await bundledManuals();
       const docs = await web.docList();
-      expect(docs.map((d) => `${d.id}.md`).sort()).toEqual(manuals.map((m) => m.fileName).sort());
+      expect(docs.map((d) => `${d.id}.md`).toSorted()).toStrictEqual(
+        manuals.map((m) => m.fileName).toSorted(),
+      );
       for (const summary of docs) {
         const detail = await web.docGet(summary.id);
-        expect(detail.sections.length, summary.id).toBeGreaterThan(0);
+        expect({ id: summary.id, hasSections: detail.sections.length > 0 }).toStrictEqual({
+          id: summary.id,
+          hasSections: true,
+        });
       }
       const outline = await web.docOutline();
-      expect(outline.map((d) => d.id)).toEqual(docs.map((d) => d.id));
+      expect(outline.map((d) => d.id)).toStrictEqual(docs.map((d) => d.id));
     });
 
     it("ない原稿は not_found で失敗する（ビューアが「見つかりません」を出す）", async () => {
@@ -42,8 +47,10 @@ describe("tauri.web.ts", () => {
     it("同梱したフローをすべて一覧に出し、サブフローまで開ける", async () => {
       const sources = await bundledFlows();
       const flows = await web.triageList();
-      expect(flows.map((f) => f.id).sort()).toEqual(
-        sources.map((s) => flowIdOfFileName(s.fileName)).sort(),
+      expect(flows.map((f) => f.id).toSorted((a, b) => a.localeCompare(b))).toStrictEqual(
+        sources
+          .map((s) => flowIdOfFileName(s.fileName) ?? "")
+          .toSorted((a, b) => a.localeCompare(b)),
       );
       for (const summary of flows) {
         const tree = await loadFlowTree(summary.id, web.triageGet);
@@ -51,10 +58,10 @@ describe("tauri.web.ts", () => {
       }
       // 実行画面と同じく、json を zod で読み直せる
       const first = flows[0];
-      expect(first).toBeDefined();
-      if (first !== undefined) {
-        expect(flowOfDetail(await web.triageGet(first.id)).title).toBe(first.title);
+      if (first === undefined) {
+        throw new Error("同梱したフローがありません");
       }
+      expect(flowOfDetail(await web.triageGet(first.id)).title).toBe(first.title);
     });
 
     it("ないフローは not_found で失敗する（実行画面が「見つかりません」を出す）", async () => {
@@ -73,14 +80,14 @@ describe("tauri.web.ts", () => {
   it("設定を localStorage に保存して読み戻す", async () => {
     expect(await web.settingsGet("viewer")).toBeNull();
     await web.settingsSet("viewer", { fontSize: "xl" });
-    expect(await web.settingsGet("viewer")).toEqual({ fontSize: "xl" });
+    expect(await web.settingsGet("viewer")).toStrictEqual({ fontSize: "xl" });
     // ほかのサイトと origin を共有するので、名前の付いたキーに入れる
     expect(localStorage.getItem("field-medic-manual:settings:viewer")).toBe('{"fontSize":"xl"}');
   });
 
   it("Web 版にない機能は、空の結果か何もしない", async () => {
-    expect(await web.favList()).toEqual([]);
-    expect(await web.historyList(10)).toEqual([]);
+    expect(await web.favList()).toStrictEqual([]);
+    expect(await web.historyList(10)).toStrictEqual([]);
     expect(await web.checkForUpdate()).toBeNull();
     expect(web.currentWindowLabel()).toBe("main");
     const error: unknown = await web
@@ -101,7 +108,7 @@ describe("tauri.web.ts", () => {
         "mailto:a@example.com",
       ]) {
         const error: unknown = await web.openExternal(url).catch((e: unknown) => e);
-        expect(isAppError(error) && error.kind, url).toBe("invalid_input");
+        expect([url, isAppError(error) && error.kind]).toStrictEqual([url, "invalid_input"]);
       }
       expect(open).not.toHaveBeenCalled();
       await web.openExternal("https://example.com/");
@@ -112,11 +119,11 @@ describe("tauri.web.ts", () => {
   });
 });
 
-describe("local-settings", () => {
-  function brokenStorage(): Storage {
-    throw new Error("SecurityError");
-  }
+function brokenStorage(): Storage {
+  throw new Error("SecurityError");
+}
 
+describe("local-settings", () => {
   it("読めなければ null にして、既定値で動かす", () => {
     expect(readLocalSetting("viewer", brokenStorage)).toBeNull();
   });

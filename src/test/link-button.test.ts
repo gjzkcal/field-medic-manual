@@ -14,6 +14,6 @@ describe("ボタンの見た目のリンク", () => {
     const found = readdirSync(src, { recursive: true, encoding: "utf8" })
       .filter((file) => file.endsWith(".tsx") && !file.endsWith("LinkButton.tsx"))
       .filter((file) => readFileSync(resolve(src, file), "utf8").includes("nativeButton={false}"));
-    expect(found).toEqual([]);
+    expect(found).toStrictEqual([]);
   });
 });

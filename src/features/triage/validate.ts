@@ -28,7 +28,7 @@ export interface FlowIssue {
 export const MIN_CHOICES = 2;
 export const MAX_CHOICES = 4;
 
-const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 
 export function hasErrors(issues: readonly FlowIssue[]): boolean {
   return issues.some((i) => i.level === "error");
@@ -278,7 +278,7 @@ function findCycles(edges: ReadonlyMap<string, readonly string[]>): string[][] {
       }
       if (component.length > 1 || (edges.get(id) ?? []).includes(id)) {
         const order = Array.from(edges.keys());
-        cycles.push(component.sort((a, b) => order.indexOf(a) - order.indexOf(b)));
+        cycles.push(component.toSorted((a, b) => order.indexOf(a) - order.indexOf(b)));
       }
     }
   }

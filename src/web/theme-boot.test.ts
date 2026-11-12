@@ -37,8 +37,8 @@ function run({ stored, osDark }: Run): string[] {
 
 describe("THEME_BOOT_SCRIPT", () => {
   it("保存したライト・ダークは OS によらずそのまま当てる", () => {
-    expect(run({ stored: '{"theme":"dark"}', osDark: false })).toEqual(["dark"]);
-    expect(run({ stored: '{"theme":"light"}', osDark: true })).toEqual([]);
+    expect(run({ stored: '{"theme":"dark"}', osDark: false })).toStrictEqual(["dark"]);
+    expect(run({ stored: '{"theme":"light"}', osDark: true })).toStrictEqual([]);
   });
 
   it("システム・保存なし・壊れた値・読めないときは OS に合わせる", () => {
@@ -50,8 +50,8 @@ describe("THEME_BOOT_SCRIPT", () => {
       '{"theme":"sepia"}',
       undefined,
     ]) {
-      expect(run({ stored, osDark: true })).toEqual(["dark"]);
-      expect(run({ stored, osDark: false })).toEqual([]);
+      expect(run({ stored, osDark: true })).toStrictEqual(["dark"]);
+      expect(run({ stored, osDark: false })).toStrictEqual([]);
     }
   });
 });

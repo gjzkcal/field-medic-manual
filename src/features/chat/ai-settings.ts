@@ -33,8 +33,8 @@ export const AI_EFFORT_LABELS: Record<AiEffort, string> = {
   max: "最大限",
 };
 
-export const AI_MODELS = Object.keys(AI_MODEL_LABELS).filter(isAiModel);
-export const AI_EFFORTS = Object.keys(AI_EFFORT_LABELS).filter(isAiEffort);
+export const AI_MODELS = Object.keys(AI_MODEL_LABELS).filter((key) => isAiModel(key));
+export const AI_EFFORTS = Object.keys(AI_EFFORT_LABELS).filter((key) => isAiEffort(key));
 
 export const DEFAULT_AI_SETTINGS: AiSettings = { model: "claude-sonnet-5-5", effort: "medium" };
 

@@ -29,7 +29,7 @@ import type {
   ReadImage,
 } from "@/features/content/types";
 
-const FRONT_MATTER = /^---\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/;
+const FRONT_MATTER = /^---\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/u;
 
 /**
  * Markdown を HTML にする。ライブラリは初めて使うときに読み込む（起動時に読み込むと起動が遅くなるため）。
@@ -175,7 +175,7 @@ const ALERT_TITLES: Record<string, string> = {
   WARNING: "警告",
   CAUTION: "注意",
 };
-const ALERT_MARKER = /^\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*/i;
+const ALERT_MARKER = /^\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*/iu;
 
 /** GFM の Alert（`> [!WARNING]`）を、ビューアで強調できるようクラス付きの blockquote にする。 */
 function markAlerts(body: HTMLElement): void {
@@ -276,10 +276,10 @@ async function markCharts(
       comment.remove();
     } else if (table === null) {
       const figure = body.ownerDocument.createElement("figure");
-      figure.setAttribute("data-chart", JSON.stringify(payload));
+      figure.dataset["chart"] = JSON.stringify(payload);
       comment.replaceWith(figure);
     } else {
-      table.setAttribute("data-chart", JSON.stringify(payload));
+      table.dataset["chart"] = JSON.stringify(payload);
       comment.remove();
     }
   }
@@ -301,7 +301,9 @@ async function chartPayload(
   const fromTable =
     table === null ? chartWithoutTable(parsed.spec) : chartFromTable(table, parsed.spec);
   if (fromTable.warnings.length > 0) {
-    fromTable.warnings.forEach(warn);
+    for (const reason of fromTable.warnings) {
+      warn(reason);
+    }
     return null;
   }
   if (parsed.spec.data === null) {
@@ -320,7 +322,9 @@ async function chartPayload(
   }
   const fromCsv = chartFromCsv(text, fromTable);
   if (fromCsv.warnings.length > 0) {
-    fromCsv.warnings.forEach(warn);
+    for (const reason of fromCsv.warnings) {
+      warn(reason);
+    }
     return null;
   }
   return { spec: parsed.spec, data: fromCsv.data };

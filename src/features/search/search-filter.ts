@@ -31,10 +31,10 @@ function stringsOf(value: unknown): string[] {
 export function parseSearchFilter(value: unknown): SearchFilterSettings {
   const record: Record<string, unknown> =
     typeof value === "object" && value !== null ? Object.fromEntries(Object.entries(value)) : {};
-  const modTargets = stringsOf(record["modTargets"]).filter(isModTarget);
+  const modTargets = new Set(stringsOf(record["modTargets"]).filter((t) => isModTarget(t)));
   return {
     // 並びを固定しておくと、同じ条件のときに検索し直さずに済む（依存の比較が文字列で一致するため）
-    modTargets: MOD_TARGET_VALUES.filter((t) => modTargets.includes(t)),
+    modTargets: MOD_TARGET_VALUES.filter((t) => modTargets.has(t)),
     tags: [...new Set(stringsOf(record["tags"]).map((t) => t.trim()))].filter((t) => t !== ""),
   };
 }

@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { AssetUrlCache } from "@/features/library/viewer/asset-urls";
+import { AssetUrlCache, type LoadAsset } from "@/features/library/viewer/asset-urls";
+
+const noop = (): void => undefined;
 
 let created: Blob[] = [];
 const revoked: string[] = [];
@@ -26,23 +28,23 @@ afterEach(() => {
 
 describe("AssetUrlCache", () => {
   it("同じ画像は 1 回だけ読み、MIME を付けた Blob にする", async () => {
-    const load = vi.fn(() => Promise.resolve(new ArrayBuffer(4)));
+    const load = vi.fn<LoadAsset>(() => Promise.resolve(new ArrayBuffer(4)));
     const cache = new AssetUrlCache(load, () => "image/svg+xml");
 
     const [a, b] = await Promise.all([cache.get("x"), cache.get("x")]);
 
     expect(a).toBe("blob:test/1");
     expect(b).toBe(a);
-    expect(load).toHaveBeenCalledTimes(1);
+    expect(load).toHaveBeenCalledOnce();
     expect(created[0]?.type).toBe("image/svg+xml");
   });
 
   it("revokeAll ですべて解放し、その後に読み終わったものもすぐ解放する", async () => {
-    let finish: (bytes: ArrayBuffer) => void = () => undefined;
+    let finish: (bytes: ArrayBuffer) => void = noop;
     const late = new Promise<ArrayBuffer>((resolve) => {
       finish = resolve;
     });
-    const load = vi.fn((id: string) =>
+    const load = vi.fn<LoadAsset>((id: string) =>
       id === "late" ? late : Promise.resolve(new ArrayBuffer(1)),
     );
     const cache = new AssetUrlCache(load, () => undefined);
@@ -50,14 +52,14 @@ describe("AssetUrlCache", () => {
     const first = await cache.get("x");
     const pending = cache.get("late");
     cache.revokeAll();
-    expect(revoked).toEqual([first]);
+    expect(revoked).toStrictEqual([first]);
 
     finish(new ArrayBuffer(1));
-    await expect(pending).rejects.toThrow();
+    await expect(pending).rejects.toThrow("画面を離れたため画像の表示をやめました");
     expect(revoked).toHaveLength(2);
 
     // 解放した後も、読み直せば使える（StrictMode で effect がやり直されたときのため）
-    await expect(cache.get("x")).resolves.toMatch(/^blob:test\//);
+    await expect(cache.get("x")).resolves.toMatch(/^blob:test\//u);
     expect(load).toHaveBeenCalledTimes(3);
   });
 

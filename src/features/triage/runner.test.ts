@@ -26,16 +26,16 @@ describe("replay", () => {
     const state = replay(root, lookup, []);
     expect(state.nodeId).toBe("q1");
     expect(state.node.type).toBe("question");
-    expect(state.options.map((o) => o.label)).toEqual(["選択肢1", "選択肢2"]);
-    expect(state.trail).toEqual([]);
+    expect(state.options.map((o) => o.label)).toStrictEqual(["選択肢1", "選択肢2"]);
+    expect(state.trail).toStrictEqual([]);
     expect(state.depth).toBe(0);
   });
 
   it("選択肢の番号をたどり、経路を残す", () => {
     const state = replay(root, lookup, [0]);
     expect(state.nodeId).toBe("a1");
-    expect(state.options.map((o) => o.label)).toEqual(["次へ"]);
-    expect(state.trail).toEqual([
+    expect(state.options.map((o) => o.label)).toStrictEqual(["次へ"]);
+    expect(state.trail).toStrictEqual([
       expect.objectContaining({ nodeId: "q1", text: "質問1", answer: "選択肢1", depth: 0 }),
     ]);
   });
@@ -44,17 +44,17 @@ describe("replay", () => {
     const state = replay(root, lookup, [0, 0]);
     expect(state.nodeId).toBe("e-ok");
     expect(state.node.type).toBe("end");
-    expect(state.options).toEqual([]);
-    expect(state.path).toEqual([0, 0]);
+    expect(state.options).toStrictEqual([]);
+    expect(state.path).toStrictEqual([0, 0]);
   });
 
   it("不正な番号の手前で止め、有効な経路だけを返す", () => {
-    expect(replay(root, lookup, [5]).path).toEqual([]);
-    expect(replay(root, lookup, [0, 1]).path).toEqual([0]);
+    expect(replay(root, lookup, [5]).path).toStrictEqual([]);
+    expect(replay(root, lookup, [0, 1]).path).toStrictEqual([0]);
     // end の先は進めない
     const state = replay(root, lookup, [1, 0, 0]);
     expect(state.nodeId).toBe("e-ok");
-    expect(state.path).toEqual([1]);
+    expect(state.path).toStrictEqual([1]);
   });
 
   it("戻るは経路を 1 つ短くしたもの", () => {
@@ -75,7 +75,7 @@ describe("replay", () => {
       },
       e: end("e"),
     });
-    expect(replay(flow, lookupOf(flow), []).options).toEqual([
+    expect(replay(flow, lookupOf(flow), []).options).toStrictEqual([
       { label: "はい", tone: "yes" },
       { label: "いいえ", tone: null },
     ]);
@@ -97,7 +97,7 @@ describe("replay", () => {
     const items = lookupOf(flow);
 
     it("「次へ」の次に、物品の名前をつないだ「持っていない」を出す", () => {
-      expect(replay(flow, items, []).options).toEqual([
+      expect(replay(flow, items, []).options).toStrictEqual([
         { label: "次へ", tone: null },
         { label: "止血帯・包帯を持っていない", tone: null },
       ]);
@@ -120,7 +120,7 @@ describe("replay", () => {
     it("ifMissing のない action では 2 番は選べない", () => {
       const state = replay(root, lookup, [0, 1]);
       expect(state.nodeId).toBe("a1");
-      expect(state.path).toEqual([0]);
+      expect(state.path).toStrictEqual([0]);
     });
   });
 
@@ -148,13 +148,13 @@ describe("replay", () => {
     it("サブフローの end では「元のフローへ戻る」を出し、戻ると next に進む", () => {
       const atEnd = replay(parent, lookup2, [0, 0]);
       expect(atEnd.nodeId).toBe("ce-warn");
-      expect(atEnd.options.map((o) => o.label)).toEqual(["元のフローへ戻る"]);
+      expect(atEnd.options.map((o) => o.label)).toStrictEqual(["元のフローへ戻る"]);
 
       const back = replay(parent, lookup2, [0, 0, 0]);
       expect(back.flow.id).toBe("parent");
       expect(back.nodeId).toBe("after");
       expect(back.depth).toBe(0);
-      expect(back.trail.map((t) => [t.flowId, t.nodeId, t.depth])).toEqual([
+      expect(back.trail.map((t) => [t.flowId, t.nodeId, t.depth])).toStrictEqual([
         ["parent", "q1", 0],
         ["child", "cq", 1],
         ["child", "ce-warn", 1],
@@ -169,7 +169,7 @@ describe("replay", () => {
     });
 
     it("サブフローが見つからなければ例外（読み込み側で先に確かめる前提）", () => {
-      expect(() => replay(parent, lookupOf(parent), [0])).toThrow(/child/);
+      expect(() => replay(parent, lookupOf(parent), [0])).toThrow(/child/u);
     });
 
     // 「気道と呼吸を確かめる」は「気道を開ける」と「気胸を確かめる」を呼ぶので、2 段の入れ子を経路で再生できること
@@ -182,31 +182,31 @@ describe("replay", () => {
       const lookup3 = lookupOf(top, middle, child);
 
       const inner = replay(top, lookup3, []);
-      expect([inner.flow.id, inner.nodeId, inner.depth]).toEqual(["child", "cq", 2]);
+      expect([inner.flow.id, inner.nodeId, inner.depth]).toStrictEqual(["child", "cq", 2]);
 
       // 子の end → 中の end → 上の after の順に「元のフローへ戻る」で上がる
       const midEnd = replay(top, lookup3, [1, 0]);
-      expect([midEnd.flow.id, midEnd.nodeId, midEnd.depth]).toEqual(["middle", "me", 1]);
+      expect([midEnd.flow.id, midEnd.nodeId, midEnd.depth]).toStrictEqual(["middle", "me", 1]);
       const after = replay(top, lookup3, [1, 0, 0]);
-      expect([after.flow.id, after.nodeId, after.depth]).toEqual(["top", "after", 0]);
-      expect(after.path).toEqual([1, 0, 0]);
+      expect([after.flow.id, after.nodeId, after.depth]).toStrictEqual(["top", "after", 0]);
+      expect(after.path).toStrictEqual([1, 0, 0]);
     });
   });
 });
 
 describe("parsePath / formatPath", () => {
   it("番号の列と文字列を相互に変える", () => {
-    expect(parsePath("0.1.0")).toEqual([0, 1, 0]);
+    expect(parsePath("0.1.0")).toStrictEqual([0, 1, 0]);
     expect(formatPath([0, 1, 0])).toBe("0.1.0");
-    expect(parsePath("")).toEqual([]);
-    expect(parsePath(null)).toEqual([]);
+    expect(parsePath("")).toStrictEqual([]);
+    expect(parsePath(null)).toStrictEqual([]);
   });
 
   it("数でない部分から先は捨てる", () => {
-    expect(parsePath("0.x.1")).toEqual([0]);
-    expect(parsePath("0.-1")).toEqual([0]);
-    expect(parsePath("0.1.5")).toEqual([0, 1, 5]);
-    expect(parsePath("0.1e3")).toEqual([0]);
+    expect(parsePath("0.x.1")).toStrictEqual([0]);
+    expect(parsePath("0.-1")).toStrictEqual([0]);
+    expect(parsePath("0.1.5")).toStrictEqual([0, 1, 5]);
+    expect(parsePath("0.1e3")).toStrictEqual([0]);
   });
 
   it("長すぎる経路は先頭だけを読む", () => {
@@ -250,7 +250,7 @@ describe("replay（branch）", () => {
   it("mods がすべて有効な最初の case へ自動で進み、経路とパンくずには載せない", () => {
     const both = replay(flow, modsLookup, [], new Set(["core", "circulation", "breathing"]));
     expect(both.nodeId).toBe("q-both");
-    expect(both.trail).toEqual([]);
+    expect(both.trail).toStrictEqual([]);
 
     const circulation = replay(flow, modsLookup, [], new Set(["core", "circulation"]));
     expect(circulation.nodeId).toBe("q-pulse");
@@ -261,7 +261,7 @@ describe("replay（branch）", () => {
     expect(core.nodeId).toBe("a-core");
     const next = replay(flow, modsLookup, [0]);
     expect(next.nodeId).toBe("e");
-    expect(next.trail.map((t) => t.nodeId)).toEqual(["a-core"]);
+    expect(next.trail.map((t) => t.nodeId)).toStrictEqual(["a-core"]);
   });
 
   it("core と general は渡さなくても有効", () => {

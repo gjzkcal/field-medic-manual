@@ -19,7 +19,7 @@ function secondsAfterOneDose(drug: DrugId, line: OverdoseLine, inPain: boolean):
 
 describe("何本まで打てるか", () => {
   it("原稿の本数を下回る最大の整数", () => {
-    expect(overdoseLimit(medication, "epinephrine", "unconscious", false)).toEqual({
+    expect(overdoseLimit(medication, "epinephrine", "unconscious", false)).toStrictEqual({
       kind: "limit",
       doses: 4,
       threshold: 4.36,
@@ -42,7 +42,7 @@ describe("何本まで打てるか", () => {
   });
 
   it("激痛のフェニレフリンは 1 本でも危ない", () => {
-    expect(overdoseLimit(medication, "phenylephrine", "unconscious", true)).toEqual({
+    expect(overdoseLimit(medication, "phenylephrine", "unconscious", true)).toStrictEqual({
       kind: "danger",
     });
     expect(overdoseLimit(medication, "phenylephrine", "arrest", false)).toMatchObject({
@@ -51,7 +51,7 @@ describe("何本まで打てるか", () => {
   });
 
   it("ナロキソンには過量投与がない", () => {
-    expect(overdoseLimit(medication, "naloxone", "arrest", true)).toEqual({ kind: "none" });
+    expect(overdoseLimit(medication, "naloxone", "arrest", true)).toStrictEqual({ kind: "none" });
   });
 });
 

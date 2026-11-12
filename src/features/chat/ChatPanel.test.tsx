@@ -65,6 +65,10 @@ function arg(args: unknown, key: string): unknown {
     : undefined;
 }
 
+function doNothing(): void {
+  // 答えが来るまで何もしない
+}
+
 interface Backend {
   send: unknown[];
   toolResult: unknown[];
@@ -89,9 +93,7 @@ function mockBackend(options: {
   after?: ChatEvent[];
 }): Backend {
   const backend: Backend = { send: [], toolResult: [], casualtyApply: [] };
-  let answered: () => void = () => {
-    // 答えが来るまで何もしない
-  };
+  let answered: () => void = doNothing;
   const waitAnswer = new Promise<void>((resolve) => {
     answered = resolve;
   });
@@ -231,12 +233,12 @@ describe("ChatPanel", () => {
       expect(screen.getByText("節を読みました: 巻く位置")).toBeTruthy();
       // 引用の場所には、その場所の節のチップが文の中に入る。出典の一覧は本文の下にあり、既定で閉じている
       expect(await screen.findByRole("button", { name: "巻く位置" }, RENDER_WAIT)).toBeTruthy();
-      expect(screen.queryByText(/\[1\]/)).toBeNull();
+      expect(screen.queryByText(/\[1\]/u)).toBeNull();
       expect(screen.queryByRole("button", { name: "止血帯 > 巻く位置" })).toBeNull();
       fireEvent.click(screen.getByRole("button", { name: "出典 1 件" }));
       expect(await screen.findByRole("button", { name: "止血帯 > 巻く位置" })).toBeTruthy();
       // キャッシュから読んだ分（料金が 1 割）は、入力の合計と分けて出す
-      expect(screen.getByText(/入力 1,200（キャッシュ 3\.0 万）・出力 80 トークン/)).toBeTruthy();
+      expect(screen.getByText(/入力 1,200（キャッシュ 3\.0 万）・出力 80 トークン/u)).toBeTruthy();
       expect(screen.getByText("AI の回答です。根拠の節を確かめてください")).toBeTruthy();
       expect(screen.getByRole("button", { name: "回答をコピー" })).toBeTruthy();
       expect(screen.getByRole("button", { name: "質問を直す" })).toBeTruthy();
@@ -246,7 +248,7 @@ describe("ChatPanel", () => {
         model: "claude-sonnet-5-5",
         effort: "medium",
       });
-      expect(await axeViolations()).toEqual([]);
+      expect(await axeViolations()).toStrictEqual([]);
     },
     CONVERT_TIMEOUT_MS * 2,
   );
@@ -275,12 +277,12 @@ describe("ChatPanel", () => {
       expect(await screen.findByText("呼吸はありますか？")).toBeTruthy();
       // 選択肢にない答えは、下の入力欄から送る
       expect(screen.getByRole("textbox", { name: "AI への答え" })).toBeTruthy();
-      expect(await axeViolations()).toEqual([]);
-      fireEvent.click(screen.getByRole("radio", { name: /ある/ }));
+      expect(await axeViolations()).toStrictEqual([]);
+      fireEvent.click(screen.getByRole("radio", { name: /ある/u }));
       fireEvent.click(screen.getByRole("button", { name: "答える" }));
 
       await waitFor(() => {
-        expect(backend.toolResult).toEqual([
+        expect(backend.toolResult).toStrictEqual([
           { toolUseId: "ask1", result: { kind: "ask_user", answer: "ある" } },
         ]);
       });
@@ -313,18 +315,18 @@ describe("ChatPanel", () => {
       const approve = await screen.findByRole("button", { name: "承認して記録する" });
       expect(screen.getByText("「A」に記録: モルヒネ")).toBeTruthy();
       expect(screen.getByText("記録の時刻は、承認した時刻になります")).toBeTruthy();
-      expect(await axeViolations()).toEqual([]);
+      expect(await axeViolations()).toStrictEqual([]);
       await waitFor(() => {
         expect(approve.hasAttribute("disabled")).toBe(false);
       });
       fireEvent.click(approve);
 
       await waitFor(() => {
-        expect(backend.toolResult).toEqual([
+        expect(backend.toolResult).toStrictEqual([
           { toolUseId: "p1", result: { kind: "casualty_propose", approved: true, error: null } },
         ]);
       });
-      expect(backend.casualtyApply).toEqual([
+      expect(backend.casualtyApply).toStrictEqual([
         { op: { op: "add_record", casualtyId: "c1", entry: { kind: "drug", drug: "morphine" } } },
       ]);
       expect(await screen.findByText("記録しました: A にモルヒネを記録")).toBeTruthy();
@@ -351,11 +353,11 @@ describe("ChatPanel", () => {
     await ask("全部消して");
     fireEvent.click(await screen.findByRole("button", { name: "却下" }));
     await waitFor(() => {
-      expect(backend.toolResult).toEqual([
+      expect(backend.toolResult).toStrictEqual([
         { toolUseId: "p1", result: { kind: "casualty_propose", approved: false, error: null } },
       ]);
     });
-    expect(backend.casualtyApply).toEqual([]);
+    expect(backend.casualtyApply).toStrictEqual([]);
   });
 
   it(
@@ -391,7 +393,7 @@ describe("ChatPanel", () => {
     renderPanel();
     await ask("?");
     // コピーのボタンも空の alert を持つので、文で探す
-    const message = await screen.findByText(/invalid x-api-key/);
+    const message = await screen.findByText(/invalid x-api-key/u);
     expect(message.closest("[role=alert]")).not.toBeNull();
   });
 });

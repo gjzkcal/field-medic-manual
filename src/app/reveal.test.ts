@@ -25,29 +25,31 @@ afterEach(() => {
 describe("revealMainWindow", () => {
   it("待っていなければ（小窓やテスト）メインを出さない", async () => {
     await revealMainWindow();
-    expect(calls).toEqual([]);
+    expect(calls).toStrictEqual([]);
   });
 
   it("待っていれば 1 回だけメインを出す", async () => {
     waitForFirstScreen();
     await revealMainWindow();
     await revealMainWindow();
-    expect(calls).toEqual(["main_window_ready"]);
+    expect(calls).toStrictEqual(["main_window_ready"]);
   });
 
   it("渡したものが済むまで出さない", async () => {
-    let finish = (): void => undefined;
+    const gate: { open?: () => void } = {};
     waitForFirstScreen(
       new Promise<void>((resolve) => {
-        finish = resolve;
+        gate.open = resolve;
       }),
     );
     const revealed = revealMainWindow();
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    expect(calls).toEqual([]);
-    finish();
+    await new Promise((resolve) => {
+      setTimeout(resolve, 10);
+    });
+    expect(calls).toStrictEqual([]);
+    gate.open?.();
     await revealed;
-    expect(calls).toEqual(["main_window_ready"]);
+    expect(calls).toStrictEqual(["main_window_ready"]);
   });
 
   it("フォントを読めなくても出す", async () => {
@@ -57,6 +59,6 @@ describe("revealMainWindow", () => {
     });
     waitForFirstScreen();
     await revealMainWindow();
-    expect(calls).toEqual(["main_window_ready"]);
+    expect(calls).toStrictEqual(["main_window_ready"]);
   });
 });

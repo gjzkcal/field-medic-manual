@@ -14,16 +14,24 @@ import {
 
 const NOW = "2026-10-11T00:00:00.000Z";
 
+const ordered = (title: string, file: string, order: number | null): NormalizedDoc => {
+  const d = doc(title, file, null, null, [], [section(1, title, "h", "本文")]);
+  d.meta.order = order;
+  return d;
+};
+
 describe("buildStore", () => {
   it("文書の id をファイル名（拡張子なし）にし、節の id を文書をまたいで一意にする", () => {
     const store = buildStore([tourniquet(), bleeding()], EMPTY_QUICKREF, NOW);
-    expect(listDocs(store).map((d) => d.id)).toEqual(["bleeding", "tourniquet"]);
+    expect(listDocs(store).map((d) => d.id)).toStrictEqual(["bleeding", "tourniquet"]);
     const ids = store.docs.flatMap((d) => d.sections.map((s) => s.id));
     expect(new Set(ids).size).toBe(ids.length);
   });
 
   it("同じファイル名の原稿が 2 つあれば失敗する", () => {
-    expect(() => buildStore([bleeding(), bleeding()], EMPTY_QUICKREF, NOW)).toThrow();
+    expect(() => buildStore([bleeding(), bleeding()], EMPTY_QUICKREF, NOW)).toThrow(
+      /同じ名前の原稿が 2 つあります/u,
+    );
   });
 
   it("フローは order のないものを後ろに、order、タイトル（大文字小文字を区別しない）の順に並べる", () => {
@@ -33,7 +41,7 @@ describe("buildStore", () => {
       flow("no-order-a", "A", ""),
       flow("first", "y", "", 10),
     ]);
-    expect(listFlows(store).map((f) => f.id)).toEqual([
+    expect(listFlows(store).map((f) => f.id)).toStrictEqual([
       "first",
       "second",
       "no-order-a",
@@ -46,7 +54,7 @@ describe("buildStore", () => {
   it("同じ id のフローが 2 つあれば失敗する", () => {
     expect(() =>
       buildStore([], EMPTY_QUICKREF, NOW, [flow("a", "A", ""), flow("a", "B", "")]),
-    ).toThrow();
+    ).toThrow(/同じ id のフローが 2 つあります/u);
   });
 
   it("見出しのレベルから親を決める。導入部は親を持たず、親にもならない", () => {
@@ -76,15 +84,10 @@ describe("buildStore", () => {
     expect(parent("a-1-x")).toBe("a-1");
     expect(parent("a-2")).toBe("a");
     expect(parent("b")).toBeUndefined();
-    expect(detail?.sections.map((s) => s.orderIndex)).toEqual([0, 1, 2, 3, 4, 5]);
+    expect(detail?.sections.map((s) => s.orderIndex)).toStrictEqual([0, 1, 2, 3, 4, 5]);
   });
 
   it("一覧は order のある文書を先に、order、タイトルの順に並べる", () => {
-    const ordered = (title: string, file: string, order: number | null): NormalizedDoc => {
-      const d = doc(title, file, null, null, [], [section(1, title, "h", "本文")]);
-      d.meta.order = order;
-      return d;
-    };
     const store = buildStore(
       [
         ordered("b", "b.md", null),
@@ -95,8 +98,8 @@ describe("buildStore", () => {
       EMPTY_QUICKREF,
       NOW,
     );
-    expect(listDocs(store).map((d) => d.title)).toEqual(["y", "z", "A", "b"]);
-    expect(outlineDocs(store).map((d) => d.title)).toEqual(["y", "z", "A", "b"]);
+    expect(listDocs(store).map((d) => d.title)).toStrictEqual(["y", "z", "A", "b"]);
+    expect(outlineDocs(store).map((d) => d.title)).toStrictEqual(["y", "z", "A", "b"]);
   });
 
   it("見出しの一覧は h1〜h3 だけで、本文の有無を持つ", () => {
@@ -114,7 +117,7 @@ describe("buildStore", () => {
       ],
     );
     const [outline] = outlineDocs(buildStore([d], EMPTY_QUICKREF, NOW));
-    expect(outline?.headings.map((h) => [h.anchor, h.hasBody])).toEqual([
+    expect(outline?.headings.map((h) => [h.anchor, h.hasBody])).toStrictEqual([
       ["h1", false],
       ["h3", true],
     ]);
@@ -131,9 +134,9 @@ describe("buildStore", () => {
     );
     const store = buildStore([d, bleeding()], EMPTY_QUICKREF, NOW);
     const detail = findDoc(store, "tags");
-    expect(detail?.meta.tags).toEqual(["A", "b"]);
+    expect(detail?.meta.tags).toStrictEqual(["A", "b"]);
     // 表記は最初に出てきたもの（文書の「b」）にそろえる
-    expect(detail?.sections[0]?.tags).toEqual(["b", "c"]);
+    expect(detail?.sections[0]?.tags).toStrictEqual(["b", "c"]);
     expect(tagCounts(store)).toContainEqual({ name: "b", documentCount: 1, sectionCount: 1 });
     expect(tagCounts(store)).toContainEqual({
       name: "圧迫止血",
@@ -163,7 +166,7 @@ describe("buildStore", () => {
     d.assets.push(asset);
     const store = buildStore([d], EMPTY_QUICKREF, NOW);
     expect(store.assets.get(asset.id)).toBe(asset);
-    expect(findDoc(store, "tourniquet")?.assets).toEqual([
+    expect(findDoc(store, "tourniquet")?.assets).toStrictEqual([
       { id: asset.id, mime: "image/png", fileName: "fig.png", size: 3 },
     ]);
   });

@@ -15,8 +15,8 @@ describe("zod の設定", () => {
       eager: true,
     });
     const direct = Object.entries(sources)
-      .filter(([, text]) => /from\s+["']zod(\/[^"']*)?["']/.test(text))
+      .filter(([, text]) => /from\s+["']zod(\/[^"']*)?["']/u.test(text))
       .map(([path]) => path);
-    expect(direct).toEqual(["/src/lib/zod.ts"]);
+    expect(direct).toStrictEqual(["/src/lib/zod.ts"]);
   });
 });

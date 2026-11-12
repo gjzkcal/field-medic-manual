@@ -4,7 +4,7 @@ import type { ModConditions } from "@/features/settings/mod-conditions";
 import { isSelectableMod, SELECTABLE_MODS } from "@/features/settings/mod-settings";
 import type { ModTarget } from "@/lib/bindings/ModTarget";
 
-const COLUMNS_COMMENT = /^\s*columns\s*[:：](.*)$/is;
+const COLUMNS_COMMENT = /^\s*columns\s*[:：](.*)$/isu;
 /** 列に条件を付けないときの書き方 */
 const NO_CONDITION = "-";
 
@@ -12,10 +12,10 @@ const NO_CONDITION = "-";
 export function parseModConditions(raw: string, where: string, warnings: string[]): ModConditions {
   const mods: ModTarget[] = [];
   const withoutMods: ModTarget[] = [];
-  for (const token of raw.split(/[,、\s]+/).filter((t) => t !== "")) {
+  for (const token of raw.split(/[,、\s]+/u).filter((t) => t !== "")) {
     // 日本語入力のまま書いた全角の ! も受ける
-    const without = /^[!！]/.test(token);
-    const name = token.replace(/^[!！]/, "").toLowerCase();
+    const without = /^[!！]/u.test(token);
+    const name = token.replace(/^[!！]/u, "").toLowerCase();
     // core と general は常に有効なので条件にならず、ここで不明として扱う
     if (!isSelectableMod(name)) {
       warnings.push(
@@ -65,7 +65,7 @@ export function markModColumns(body: HTMLElement, warnings: string[]): void {
       );
       continue;
     }
-    table.setAttribute("data-mod-columns", JSON.stringify(columns));
+    table.dataset["modColumns"] = JSON.stringify(columns);
   }
 }
 

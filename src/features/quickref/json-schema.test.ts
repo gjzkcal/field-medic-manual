@@ -50,7 +50,7 @@ describe("クイック表の JSON Schema", () => {
     expect(value).toMatchObject({ $schema: QUICKREF_SCHEMA_ID });
     const validate = new Ajv({ allErrors: true }).compile(JSON.parse(text));
     validate(value);
-    expect(validate.errors ?? []).toEqual([]);
+    expect(validate.errors ?? []).toStrictEqual([]);
   });
 
   it("書き間違いはスキーマでも見つかる", () => {

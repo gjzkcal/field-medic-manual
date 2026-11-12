@@ -12,7 +12,7 @@ const converted = await Promise.all(
   manuals.map(async (manual) => ({ manual, ...(await convertManual(manual, readRepoFile, readBundledData)) })),
 );
 function byOrder(): typeof converted {
-  return [...converted].sort((a, b) => (a.doc.meta.order ?? Infinity) - (b.doc.meta.order ?? Infinity));
+  return [...converted].toSorted((a, b) => (a.doc.meta.order ?? Infinity) - (b.doc.meta.order ?? Infinity));
 }
 const anchorsByFile = new Map(
   converted.map(({ manual, doc }) => [manual.fileName, new Set(doc.sections.map((s) => s.anchor))]),
@@ -26,7 +26,7 @@ describe("同梱した原稿", () => {
   it.each(converted.map((c) => [c.manual.fileName, c] as const))(
     "%s: 警告なしで変換でき、対象モジュールと確認日が書いてある",
     (_, { doc, warnings }) => {
-      expect(warnings).toEqual([]);
+      expect(warnings).toStrictEqual([]);
       expect(doc.meta.modTarget, "front matter の mod を書いてください").not.toBeNull();
       expect(doc.meta.verifiedAt, "front matter の verified_at を書いてください").not.toBeNull();
       expect(doc.sections.length).toBeGreaterThan(0);
@@ -57,12 +57,12 @@ describe("同梱した原稿", () => {
       expect(
         broken,
         "リンク切れです。他の原稿へは content/manuals/ のファイル名と見出しのアンカー（例: tourniquet.md#使い方）、同じ原稿の中は #アンカー で書きます",
-      ).toEqual([]);
+      ).toStrictEqual([]);
     },
   );
 
   // 組み合わせの節の見出しの形。AI キャラの話（### AI の場合）や「Circulation の有無で…」のような入れ物の見出しには当たらない
-  const COMBINATION_HEADING = /(?:Hitzones|Circulation|Breathing|AI) *(?:を入れている(?:場合|とき)|なし.*の場合)/;
+  const COMBINATION_HEADING = /(?:Hitzones|Circulation|Breathing|AI) *(?:を入れている(?:場合|とき)|なし.*の場合)/u;
   // 見出しの形は組み合わせの節だが、中身はどの組み合わせでも読ませたいので条件を付けないもの
   const UNCONDITIONAL_HEADINGS = new Set([
     // あり / なしを比べる表と、組み合わせに関係のない「AI の場合」を含む
@@ -84,12 +84,12 @@ describe("同梱した原稿", () => {
       expect(
         missing,
         "見出しの直後に <!-- mods: circulation -->（入れているとき）か <!-- mods: !circulation -->（入れていないとき）を書いてください",
-      ).toEqual([]);
+      ).toStrictEqual([]);
     },
   );
 
   // 組み合わせごとの列の見出しの形
-  const COMBINATION_COLUMN = /Circulation (?:あり|なし|を入れている)|Core だけ|Core \+ Circulation|Hitzones を足し/;
+  const COMBINATION_COLUMN = /Circulation (?:あり|なし|を入れている)|Core だけ|Core \+ Circulation|Hitzones を足し/u;
   // 列を切り替えない表（ファイル名か「ファイル名#節のアンカー」）
   const UNSWITCHED_TABLES = new Set([
     // 組み合わせを見比べるための表
@@ -110,7 +110,7 @@ describe("同梱した原稿", () => {
         container.innerHTML = section.html;
         for (const table of Array.from(container.querySelectorAll("table"))) {
           const header = Array.from(table.rows[0]?.cells ?? [], (cell) => cell.textContent);
-          if (header.some((text) => COMBINATION_COLUMN.test(text)) && !table.hasAttribute("data-mod-columns")) {
+          if (header.some((text) => COMBINATION_COLUMN.test(text)) && !Object.hasOwn(table.dataset, "modColumns")) {
             missing.push(`${section.title}: ${header.join(" | ")}`);
           }
         }
@@ -118,7 +118,7 @@ describe("同梱した原稿", () => {
       expect(
         missing,
         "表の直前に <!-- columns: - | circulation | !circulation --> のように列ごとの条件を書いてください（条件のない列は -）",
-      ).toEqual([]);
+      ).toStrictEqual([]);
     },
   );
 
@@ -127,7 +127,7 @@ describe("同梱した原稿", () => {
       doc.sections.filter((s) => s.title === "MOD による違い").map(() => manual.fileName),
     );
     // 既定の設定では配下の組み合わせの節が隠れ、中身のない見出しだけが残るため。組み合わせの節は関係する節の h3 に置く
-    expect(wrappers, "組み合わせの節は、効果・効き方など関係する節の h3 に置いてください").toEqual([]);
+    expect(wrappers, "組み合わせの節は、効果・効き方など関係する節の h3 に置いてください").toStrictEqual([]);
   });
 
   it.each(converted.map((c) => [c.manual.fileName, c] as const))(
@@ -140,27 +140,27 @@ describe("同梱した原稿", () => {
       expect(doc.meta.aceCommit, "front matter の ace_commit を書いてください").not.toBeNull();
       expect(doc.meta.gameVersion, "front matter の game_version を書いてください").not.toBeNull();
       // 版の違いの説明（「ソースの dev ブランチ `…` では〜」）に書いたコミット。数字だけの値は設定値などと紛れるので除く
-      const cited = [...manual.text.matchAll(/`([0-9a-f]{7,40})`/g)]
+      const cited = [...manual.text.matchAll(/`([0-9a-f]{7,40})`/gu)]
         .map((m) => m[1] ?? "")
-        .filter((hash) => /[a-f]/.test(hash) && /\d/.test(hash));
+        .filter((hash) => /[a-f]/u.test(hash) && /\d/u.test(hash));
       expect(
         cited.filter((hash) => hash !== doc.meta.aceCommit),
         "本文のコミットを front matter の ace_commit に合わせてください",
-      ).toEqual([]);
+      ).toStrictEqual([]);
     },
   );
 
   it.each(converted.map((c) => [c.manual.fileName, c] as const))(
     "%s: 冒頭の NOTE は 1 文ずつ改行して表示する",
     (_, { manual, doc }) => {
-      const block = /^> \[!NOTE\]\n((?:> .*\n)+)/m.exec(manual.text)?.[1];
+      const block = /^> \[!NOTE\]\n((?:> .*\n)+)/mu.exec(manual.text)?.[1];
       expect(block, "冒頭に > [!NOTE] を書いてください").toBeDefined();
       // 行末の \ がないと、Markdown の決まりで行がつながって 1 段落に詰まって表示される
       const lines = (block ?? "").trimEnd().split("\n");
       expect(
         lines.slice(0, -1).filter((line) => !line.endsWith("\\")),
         "冒頭の NOTE の最後以外の行末に \\ を付けてください",
-      ).toEqual([]);
+      ).toStrictEqual([]);
       const container = document.createElement("div");
       container.innerHTML = doc.sections.map((s) => s.html).join("");
       expect(container.querySelector(".markdown-alert-note")?.querySelectorAll("br").length).toBe(lines.length - 1);
@@ -169,14 +169,14 @@ describe("同梱した原稿", () => {
 
   it("すべてに order があり、重複しない（ライブラリと見出しツリーの並び順）", () => {
     const missing = converted.filter((c) => c.doc.meta.order === null).map((c) => c.manual.fileName);
-    expect(missing, "front matter の order を書いてください").toEqual([]);
+    expect(missing, "front matter の order を書いてください").toStrictEqual([]);
     const orders = converted.map((c) => c.doc.meta.order);
     expect(new Set(orders).size, "order が重複しています").toBe(orders.length);
   });
 
   it("すべてに category があり、同じ分類は order の上で続けて並ぶ（ライブラリと見出しツリーの分類）", () => {
     const missing = converted.filter((c) => c.doc.meta.category === null).map((c) => c.manual.fileName);
-    expect(missing, "front matter の category を書いてください").toEqual([]);
+    expect(missing, "front matter の category を書いてください").toStrictEqual([]);
     // 途切れると、後ろの原稿が前の分類の見出しの下へ移り、order の順と画面の並びが食い違う
     const runs = byOrder().map((c) => c.doc.meta.category).filter((c, i, all) => i === 0 || c !== all[i - 1]);
     expect(new Set(runs).size, `同じ分類の原稿の間に別の分類の原稿があります: ${runs.join(" → ")}`).toBe(runs.length);
@@ -203,16 +203,16 @@ describe("同梱した原稿", () => {
     expect(
       rows.map((r) => r.fileName),
       "表の並びと order の順を合わせてください",
-    ).toEqual(expected.map((c) => c.manual.fileName));
+    ).toStrictEqual(expected.map((c) => c.manual.fileName));
     expect(
       rows.map((r) => [r.fileName, r.category]),
       "表を置いた小見出し（分類）と front matter の category を合わせてください",
-    ).toEqual(expected.map((c) => [c.manual.fileName, c.doc.meta.category]));
+    ).toStrictEqual(expected.map((c) => [c.manual.fileName, c.doc.meta.category]));
   });
 
   it("ファイル名は英小文字・数字・ハイフンだけ（sourcePath とリンクに使うため）", () => {
     for (const m of manuals) {
-      expect(m.fileName).toMatch(/^[a-z0-9-]+\.md$/);
+      expect(m.fileName).toMatch(/^[a-z0-9-]+\.md$/u);
     }
   });
 });

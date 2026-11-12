@@ -37,6 +37,9 @@ function doc(id: string, title: string, meta: Partial<DocSummary["meta"]>): DocS
   };
 }
 
+const headings = (): (string | null | undefined)[] =>
+  screen.queryAllByRole("region").map((r) => r.querySelector("h2")?.textContent);
+
 describe("LibraryPage", () => {
   it("一覧を出し、モジュールで絞り込み、文書へのリンクを張る", async () => {
     mockIPC((cmd) =>
@@ -89,7 +92,7 @@ describe("LibraryPage", () => {
       .getAllByRole("link")
       .map((a) => a.getAttribute("href"))
       .filter((href) => href?.startsWith("/doc/") === true);
-    expect(hrefs).toEqual(["/doc/about", "/doc/hemorrhage", "/doc/cardiac"]);
+    expect(hrefs).toStrictEqual(["/doc/about", "/doc/hemorrhage", "/doc/cardiac"]);
     expect(screen.getByRole("button", { name: "標準" }).getAttribute("aria-pressed")).toBe("true");
   });
 
@@ -115,9 +118,7 @@ describe("LibraryPage", () => {
 
     await screen.findByText("止血");
     // 分類ごとの領域の見出し
-    const headings = (): (string | null | undefined)[] =>
-      screen.queryAllByRole("region").map((r) => r.querySelector("h2")?.textContent);
-    expect(headings()).toEqual(["はじめに", "症状/処置", "その他"]);
+    expect(headings()).toStrictEqual(["はじめに", "症状/処置", "その他"]);
     // 分類の見出し（h2）の下のカードの表題は、その次の段
     expect(screen.getByRole("heading", { level: 3, name: "止血" })).toBeDefined();
     const group = screen.getByRole("region", { name: "症状/処置" });
@@ -126,11 +127,11 @@ describe("LibraryPage", () => {
 
     // 絞り込みで原稿がなくなった分類は見出しごと出さない
     fireEvent.click(screen.getByRole("button", { name: "Circulation" }));
-    expect(headings()).toEqual(["症状/処置"]);
+    expect(headings()).toStrictEqual(["症状/処置"]);
 
     fireEvent.click(screen.getByRole("button", { name: "Circulation" }));
     fireEvent.click(screen.getByRole("button", { name: "タイトル" }));
-    expect(headings()).toEqual([]);
+    expect(headings()).toStrictEqual([]);
     expect(screen.getByRole("heading", { level: 2, name: "止血" })).toBeDefined();
   });
 
@@ -148,14 +149,14 @@ describe("LibraryPage", () => {
     });
     render(<RouterProvider router={router} />);
     await screen.findByText("止血");
-    expect(await axeViolations()).toEqual([]);
+    expect(await axeViolations()).toStrictEqual([]);
 
     fireEvent.click(screen.getByRole("button", { name: "リスト表示" }));
-    expect(await axeViolations()).toEqual([]);
+    expect(await axeViolations()).toStrictEqual([]);
 
     fireEvent.click(screen.getByRole("button", { name: "古い内容だけ（90 日超・確認日なし）" }));
     fireEvent.click(screen.getByRole("button", { name: "Core" }));
     await screen.findByText("条件に合うマニュアルがありません");
-    expect(await axeViolations()).toEqual([]);
+    expect(await axeViolations()).toStrictEqual([]);
   });
 });

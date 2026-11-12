@@ -15,7 +15,7 @@ const targets = await loadLinkTargets();
 
 /** 設定で選べる MOD のすべての組み合わせ（16 通り） */
 function allCombinations(): SelectableMod[][] {
-  return Array.from({ length: 2 ** SELECTABLE_MODS.length }, (_, bits) =>
+  return Array.from({ length: 2 ** SELECTABLE_MODS.length }, (_value, bits) =>
     SELECTABLE_MODS.filter((_, i) => (bits & (1 << i)) !== 0),
   );
 }
@@ -23,7 +23,7 @@ function allCombinations(): SelectableMod[][] {
 describe("同梱したクイック表", () => {
   it("content/quickref.yaml があり、形が正しい（UTF-8・BOM なし、必須項目、重症度、id の重複など）", () => {
     expect(source, "content/quickref.yaml がありません").not.toBeNull();
-    expect(read?.ok === false ? read.messages : []).toEqual([]);
+    expect(read?.ok === false ? read.messages : []).toStrictEqual([]);
     expect(rows.length).toBeGreaterThan(0);
   });
 
@@ -38,7 +38,7 @@ describe("同梱したクイック表", () => {
       expect(
         links.filter(({ link }) => !linkTargetExists(link, targets)).map(({ text }) => text),
         "リンク切れです。doc: は content/manuals/ のファイル名と見出しのアンカー、flow: はフローの id、quickref: は行の id",
-      ).toEqual([]);
+      ).toStrictEqual([]);
     },
   );
 
@@ -62,6 +62,6 @@ describe("同梱したクイック表", () => {
     expect(
       [...new Set(clashes)],
       "同じ MOD の組み合わせで同じ症状の行が 2 つ出ます。mods（すべて入れているとき）と withoutMods（どれも入れていないとき）で出し分けてください",
-    ).toEqual([]);
+    ).toStrictEqual([]);
   });
 });

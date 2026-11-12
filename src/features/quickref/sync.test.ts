@@ -40,14 +40,14 @@ describe("syncQuickref", () => {
   it("ハッシュが同じなら何もしない", async () => {
     const db = fakeDb("h1");
     const result = await syncQuickref(source(TEXT, "h1"), db);
-    expect(result).toEqual({ ...emptySyncResult(), unchanged: 1 });
-    expect(db.saved).toEqual([]);
+    expect(result).toStrictEqual({ ...emptySyncResult(), unchanged: 1 });
+    expect(db.saved).toStrictEqual([]);
   });
 
   it("変わっていれば全行を置き換える", async () => {
     const db = fakeDb("old");
     const result = await syncQuickref(source(TEXT, "h2"), db);
-    expect(result).toEqual({ ...emptySyncResult(), updated: 1 });
+    expect(result).toStrictEqual({ ...emptySyncResult(), updated: 1 });
     expect(db.saved).toHaveLength(1);
     expect(db.saved[0]).toMatchObject({
       sourceHash: "h2",
@@ -69,7 +69,7 @@ describe("syncQuickref", () => {
       expect(result).toMatchObject({ added: 0, updated: 0, unchanged: 0 });
       expect(result.failed.length).toBeGreaterThan(0);
       expect(result.failed[0]?.fileName).toBe("quickref.yaml");
-      expect(db.saved).toEqual([]);
+      expect(db.saved).toStrictEqual([]);
     }
   });
 
@@ -80,14 +80,14 @@ describe("syncQuickref", () => {
     };
     const result = await syncQuickref(source(TEXT, "h2"), db);
     expect(result.updated).toBe(0);
-    expect(result.failed).toEqual([{ fileName: "quickref.yaml", message: "壊れた" }]);
+    expect(result.failed).toStrictEqual([{ fileName: "quickref.yaml", message: "壊れた" }]);
   });
 
   it("同梱のファイルがなければ、表を空にする（DB は同梱物の写し）", async () => {
     const db = fakeDb("old");
     const result = await syncQuickref(null, db);
     expect(result.removed).toBe(1);
-    expect(db.saved[0]?.rows).toEqual([]);
+    expect(db.saved[0]?.rows).toStrictEqual([]);
     const empty = fakeDb(db.saved[0]?.sourceHash ?? "");
     expect((await syncQuickref(null, empty)).unchanged).toBe(1);
   });

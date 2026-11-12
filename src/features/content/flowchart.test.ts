@@ -33,7 +33,7 @@ describe("parseFlowchart", () => {
         "  C -. 回復 .-> U;",
       ].join("\n"),
     );
-    expect(payload).toEqual({
+    expect(payload).toStrictEqual({
       direction: "TB",
       title: "血液と状態",
       nodes: [
@@ -56,12 +56,12 @@ describe("parseFlowchart", () => {
       'graph LR\nA["心停止（Circulation）<br/>[脈なし]"] --> B --> C; C-->A\nB[CPR<br>開始]',
     );
     expect(payload.direction).toBe("LR");
-    expect(payload.nodes).toEqual([
+    expect(payload.nodes).toStrictEqual([
       { id: "A", shape: "rect", lines: ["心停止（Circulation）", "[脈なし]"] },
       { id: "B", shape: "rect", lines: ["CPR", "開始"] },
       { id: "C", shape: "rect", lines: ["C"] },
     ]);
-    expect(payload.edges.map((e) => `${e.from}>${e.to}`)).toEqual(["A>B", "B>C", "C>A"]);
+    expect(payload.edges.map((e) => `${e.from}>${e.to}`)).toStrictEqual(["A>B", "B>C", "C>A"]);
   });
 
   it("書き間違いと使えない記法は行番号付きのエラーにする", () => {
@@ -84,7 +84,7 @@ describe("parseFlowchart", () => {
   });
 
   it("class で始まる id は記法の語と取り違えない", () => {
-    expect(parsed("flowchart TD\nclassA --> endB").nodes.map((n) => n.id)).toEqual([
+    expect(parsed("flowchart TD\nclassA --> endB").nodes.map((n) => n.id)).toStrictEqual([
       "classA",
       "endB",
     ]);
@@ -95,11 +95,11 @@ describe("parseFlowchart", () => {
   });
 });
 
-describe("markFlowcharts", () => {
-  function body(html: string): HTMLElement {
-    return new DOMParser().parseFromString(html, "text/html").body;
-  }
+function body(html: string): HTMLElement {
+  return new DOMParser().parseFromString(html, "text/html").body;
+}
 
+describe("markFlowcharts", () => {
   it("mermaid のコードブロックを figure にし、辺を文にしたリストを入れる", () => {
     const root = body(
       '<pre><code class="language-mermaid">flowchart TD\naccTitle: 流れ\nA[始め] --&gt;|条件| B[終わり]\nC[離れた]  --&gt; C\n</code></pre>',
@@ -107,11 +107,11 @@ describe("markFlowcharts", () => {
     const warnings: string[] = [];
     markFlowcharts(root, warnings);
 
-    expect(warnings).toEqual([]);
-    const figure = root.querySelector("figure[data-flowchart]");
+    expect(warnings).toStrictEqual([]);
+    const figure = root.querySelector<HTMLElement>("figure[data-flowchart]");
     expect(figure?.getAttribute("aria-label")).toBe("流れ");
-    expect(readFlowchartPayload(figure?.getAttribute("data-flowchart") ?? "")?.edges).toHaveLength(2);
-    expect(Array.from(figure?.querySelectorAll("li") ?? [], (li) => li.textContent)).toEqual([
+    expect(readFlowchartPayload(figure?.dataset["flowchart"] ?? "")?.edges).toHaveLength(2);
+    expect(Array.from(figure?.querySelectorAll("li") ?? [], (li) => li.textContent)).toStrictEqual([
       "始め → 終わり（条件）",
       "離れた → 離れた",
     ]);
@@ -144,7 +144,7 @@ describe("readFlowchartPayload", () => {
   };
 
   it("正しい形だけを受け取る", () => {
-    expect(readFlowchartPayload(JSON.stringify(valid))).toEqual(valid);
+    expect(readFlowchartPayload(JSON.stringify(valid))).toStrictEqual(valid);
     expect(readFlowchartPayload("{")).toBeNull();
     expect(readFlowchartPayload(JSON.stringify({ ...valid, extra: 1 }))).toBeNull();
     expect(

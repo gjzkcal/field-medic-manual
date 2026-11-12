@@ -12,7 +12,7 @@ export const QUICKREF_SCHEMA_ID = `./${QUICKREF_SCHEMA_FILE}`;
 /** マニュアルの原稿のタグ（front matter の tags）と同じ分類語から「管理者向け」を除いたもの。タブはファイルに出てきた順に並べる */
 export const QUICKREF_CATEGORIES = ["出血", "循環", "気道・呼吸", "意識", "薬・物品"] as const;
 
-const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 
 // core・general は常に有効なので、withoutMods に書くと決して出ない行になる。設定で選べる MOD だけを受け付ける
 const selectableMod = z
@@ -73,7 +73,7 @@ export const quickrefFileSchema = z
   .superRefine((file, ctx) => {
     // id はお気に入りとリンクの行き先なので、重なると別の行を開いてしまう
     const seen = new Set<string>();
-    file.rows.forEach((row, i) => {
+    for (const [i, row] of file.rows.entries()) {
       if (seen.has(row.id)) {
         ctx.addIssue({
           code: "custom",
@@ -82,7 +82,7 @@ export const quickrefFileSchema = z
         });
       }
       seen.add(row.id);
-    });
+    }
   })
   .meta({ title: "症状→処置 クイック表（Field Medic Manual）" });
 

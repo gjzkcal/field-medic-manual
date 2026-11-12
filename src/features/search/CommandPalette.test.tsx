@@ -45,13 +45,15 @@ const HITS = [hit(1, "止血帯を使う", ["止血帯"]), hit(2, "包帯を巻�
 
 let queries: { q: unknown; filter: unknown }[] = [];
 
+function scrollIntoView(): void {
+  // 位置の計算は jsdom ではできないので、呼べることだけを確かめる
+}
+
 beforeEach(() => {
   queries = [];
   useSearchFilter.setState({ filter: EMPTY_SEARCH_FILTER, changed: false, storageError: null });
   // jsdom にない API の代わり（cmdk が一覧の高さの監視と、選んだ項目までのスクロールに使う）
-  Element.prototype.scrollIntoView = function scrollIntoView(): void {
-    // 位置の計算は jsdom ではできないので、呼べることだけを確かめる
-  };
+  Element.prototype.scrollIntoView = scrollIntoView;
   vi.stubGlobal(
     "ResizeObserver",
     class {
@@ -87,46 +89,53 @@ function input(): HTMLElement {
 
 describe("CommandPalette", () => {
   it("入力が空のときは案内（または渡した中身）を出し、検索しない", () => {
-    const { rerender } = render(<CommandPalette onSelect={vi.fn()} />);
+    const { rerender } = render(<CommandPalette onSelect={vi.fn<(href: string) => void>()} />);
     expect(screen.getByText(/語を入力すると/u)).toBeTruthy();
-    rerender(<CommandPalette onSelect={vi.fn()} emptySlot={<p>最近見たもの</p>} />);
+    rerender(
+      <CommandPalette onSelect={vi.fn<(href: string) => void>()} emptySlot={<p>最近見たもの</p>} />,
+    );
     expect(screen.getByText("最近見たもの")).toBeTruthy();
-    expect(queries).toEqual([]);
+    expect(queries).toStrictEqual([]);
   });
 
   it("続けて打った入力は待ってから 1 回だけ検索し、結果とスニペットの強調を出す", async () => {
-    render(<CommandPalette onSelect={vi.fn()} />);
+    render(<CommandPalette onSelect={vi.fn<(href: string) => void>()} />);
     fireEvent.change(input(), { target: { value: "止" } });
     fireEvent.change(input(), { target: { value: "止血" } });
     fireEvent.change(input(), { target: { value: "止血帯 " } });
     await screen.findByText("止血帯を使う");
-    expect(queries).toEqual([{ q: "止血帯", filter: {} }]);
+    expect(queries).toStrictEqual([{ q: "止血帯", filter: {} }]);
     expect(screen.getAllByText("止血帯", { selector: "mark" })).toHaveLength(1);
   });
 
   it("↓ と Enter で選んだ結果の開く先を渡す（検索語はハイライト用に載せる）", async () => {
-    const onSelect = vi.fn();
+    const onSelect = vi.fn<(href: string) => void>();
     render(<CommandPalette onSelect={onSelect} />);
     fireEvent.change(input(), { target: { value: "止血" } });
     await screen.findByText("包帯を巻く");
     fireEvent.keyDown(input(), { key: "ArrowDown" });
     fireEvent.keyDown(input(), { key: "Enter" });
-    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect).toHaveBeenCalledOnce();
     expect(onSelect).toHaveBeenCalledWith(
       `/doc/d2?hl=${encodeURIComponent("止血")}#${encodeURIComponent("包帯を巻く")}`,
     );
   });
 
   it("お気に入りに入っている結果には星を付ける", async () => {
-    render(<CommandPalette onSelect={vi.fn()} isFavorite={(hit) => hit.id === 2} />);
+    render(
+      <CommandPalette
+        onSelect={vi.fn<(href: string) => void>()}
+        isFavorite={(favorite) => favorite.id === 2}
+      />,
+    );
     fireEvent.change(input(), { target: { value: "止血" } });
     await screen.findByText("包帯を巻く");
     expect(screen.getAllByRole("img", { name: "お気に入り" })).toHaveLength(1);
   });
 
   it("変換中の Enter と Ctrl+Enter では開かない。Ctrl+Enter はお気に入りに渡す", async () => {
-    const onSelect = vi.fn();
-    const onFavorite = vi.fn(() => Promise.resolve(true));
+    const onSelect = vi.fn<(href: string) => void>();
+    const onFavorite = vi.fn<(hit: SearchHit) => Promise<boolean>>(() => Promise.resolve(true));
     render(<CommandPalette onSelect={onSelect} onFavorite={onFavorite} />);
     fireEvent.change(input(), { target: { value: "止血" } });
     await screen.findByText("止血帯を使う");
@@ -143,7 +152,7 @@ describe("CommandPalette", () => {
   });
 
   it("該当がなければそう伝える。文は一覧（listbox）の外に出し、読み上げにも流す", async () => {
-    render(<CommandPalette onSelect={vi.fn()} />);
+    render(<CommandPalette onSelect={vi.fn<(href: string) => void>()} />);
     fireEvent.change(input(), { target: { value: "なし" } });
     await waitFor(() => {
       expect(screen.getByRole("status").textContent).toBe("「なし」に一致する項目はありません");
@@ -156,7 +165,7 @@ describe("CommandPalette", () => {
   });
 
   it("結果の件数を読み上げ、一覧には名前を付ける", async () => {
-    render(<CommandPalette onSelect={vi.fn()} />);
+    render(<CommandPalette onSelect={vi.fn<(href: string) => void>()} />);
     fireEvent.change(input(), { target: { value: "止血" } });
     await screen.findByText("止血帯を使う");
     expect(screen.getByRole("status").textContent).toBe(`${String(HITS.length)} 件`);
@@ -167,22 +176,22 @@ describe("CommandPalette", () => {
     useSearchFilter.setState({
       filter: { modTargets: ["core"], tags: [] },
     });
-    render(<CommandPalette onSelect={vi.fn()} />);
+    render(<CommandPalette onSelect={vi.fn<(href: string) => void>()} />);
     expect(screen.getByRole("button", { name: "絞り込み（1 件）" })).toBeTruthy();
     fireEvent.change(input(), { target: { value: "CPR" } });
     await waitFor(() => {
-      expect(queries).toEqual([{ q: "CPR", filter: { modTargets: ["core"] } }]);
+      expect(queries).toStrictEqual([{ q: "CPR", filter: { modTargets: ["core"] } }]);
     });
   });
 });
 
-describe("CommandPalette（上部の検索欄）", () => {
-  function list(): Element | null {
-    return document.querySelector("[cmdk-list]");
-  }
+function list(): Element | null {
+  return document.querySelector("[cmdk-list]");
+}
 
+describe("CommandPalette（上部の検索欄）", () => {
   it("フォーカスするまで一覧を出さず、Esc で閉じる", () => {
-    render(<CommandPalette variant="dropdown" onSelect={vi.fn()} />);
+    render(<CommandPalette variant="dropdown" onSelect={vi.fn<(href: string) => void>()} />);
     expect(list()).toBeNull();
     fireEvent.focus(input());
     expect(list()).not.toBeNull();
@@ -191,21 +200,21 @@ describe("CommandPalette（上部の検索欄）", () => {
   });
 
   it("結果の一覧と絞り込みを開いた状態で、axe の違反がない（WCAG 2.2 A・AA）", async () => {
-    render(<CommandPalette variant="dropdown" onSelect={vi.fn()} />);
+    render(<CommandPalette variant="dropdown" onSelect={vi.fn<(href: string) => void>()} />);
     fireEvent.focus(input());
-    expect(await axeViolations()).toEqual([]);
+    expect(await axeViolations()).toStrictEqual([]);
 
     fireEvent.change(input(), { target: { value: "止血" } });
     await screen.findByText("止血帯を使う");
-    expect(await axeViolations()).toEqual([]);
+    expect(await axeViolations()).toStrictEqual([]);
 
     fireEvent.click(screen.getByRole("button", { name: "絞り込み" }));
     await screen.findByRole("dialog", { name: "絞り込み" });
-    expect(await axeViolations()).toEqual([]);
+    expect(await axeViolations()).toStrictEqual([]);
   });
 
   it("1 回目の Esc では入力欄にフォーカスを残し、閉じた後の Esc で外す", () => {
-    render(<CommandPalette variant="dropdown" onSelect={vi.fn()} />);
+    render(<CommandPalette variant="dropdown" onSelect={vi.fn<(href: string) => void>()} />);
     input().focus();
     fireEvent.focus(input());
     fireEvent.keyDown(input(), { key: "Escape" });
@@ -218,7 +227,7 @@ describe("CommandPalette（上部の検索欄）", () => {
   it("フォーカスがパレットの外へ出たら閉じる（重ねた一覧で移った先を隠さない）", () => {
     render(
       <>
-        <CommandPalette variant="dropdown" onSelect={vi.fn()} />
+        <CommandPalette variant="dropdown" onSelect={vi.fn<(href: string) => void>()} />
         <button type="button">本文のボタン</button>
       </>,
     );
@@ -231,7 +240,7 @@ describe("CommandPalette（上部の検索欄）", () => {
   });
 
   it("閉じている間は入力欄が無い一覧を指さず、開いたら一覧を指す", () => {
-    render(<CommandPalette variant="dropdown" onSelect={vi.fn()} />);
+    render(<CommandPalette variant="dropdown" onSelect={vi.fn<(href: string) => void>()} />);
     expect(input().getAttribute("aria-expanded")).toBe("false");
     expect(input().hasAttribute("aria-controls")).toBe(false);
     fireEvent.focus(input());
@@ -245,7 +254,7 @@ describe("CommandPalette（上部の検索欄）", () => {
   it("外を押すと閉じ、絞り込みのポップオーバーの中を押しても閉じない", () => {
     render(
       <>
-        <CommandPalette variant="dropdown" onSelect={vi.fn()} />
+        <CommandPalette variant="dropdown" onSelect={vi.fn<(href: string) => void>()} />
         <div data-slot="popover-content">
           <button type="button">Dev</button>
         </div>
@@ -260,19 +269,19 @@ describe("CommandPalette（上部の検索欄）", () => {
   });
 
   it("選ぶと開く先を渡し、入力欄を空にして一覧を閉じる", async () => {
-    const onSelect = vi.fn();
+    const onSelect = vi.fn<(href: string) => void>();
     render(<CommandPalette variant="dropdown" onSelect={onSelect} />);
     fireEvent.focus(input());
     fireEvent.change(input(), { target: { value: "止血" } });
     await screen.findByText("止血帯を使う");
     fireEvent.keyDown(input(), { key: "Enter" });
-    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect).toHaveBeenCalledOnce();
     expect(input()).toHaveProperty("value", "");
     expect(list()).toBeNull();
   });
 
   it("空のときの中身から開いても、一覧を閉じて開く先を渡す", () => {
-    const onSelect = vi.fn();
+    const onSelect = vi.fn<(href: string) => void>();
     render(
       <CommandPalette variant="dropdown" onSelect={onSelect} emptySlot={<RecentFlowButton />} />,
     );

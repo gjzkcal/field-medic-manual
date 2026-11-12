@@ -1,7 +1,7 @@
 // V1〜V9（意味は validate.ts の IssueCode）の正常系と異常系。
 import { describe, expect, it } from "vitest";
 
-import { parseFlow } from "@/features/triage/schema";
+import { parseFlow, type Flow } from "@/features/triage/schema";
 import {
   hasErrors,
   validateFlow,
@@ -19,7 +19,6 @@ import {
   simpleFlow,
   subflow,
 } from "@/test/flows";
-import type { Flow } from "@/features/triage/schema";
 
 function validateAlone(flow: Flow): FlowIssue[] {
   return validateFlow(flow, new Map([[flow.id, flow]]));
@@ -31,7 +30,7 @@ function codes(issues: readonly FlowIssue[], level?: FlowIssue["level"]): IssueC
 
 describe("validateFlow", () => {
   it("正しいフローには何も出ない", () => {
-    expect(validateAlone(simpleFlow())).toEqual([]);
+    expect(validateAlone(simpleFlow())).toStrictEqual([]);
   });
 
   describe("V1: start が nodes にある", () => {
@@ -82,7 +81,7 @@ describe("validateFlow", () => {
         "a-alt": action("代わりの処置", "e"),
         e: end("e"),
       });
-      expect(validateAlone(flow)).toEqual([]);
+      expect(validateAlone(flow)).toStrictEqual([]);
     });
   });
 
@@ -130,8 +129,8 @@ describe("validateFlow", () => {
         e: end("e"),
       });
       const issues = validateAlone(flow);
-      const dead = issues.filter((i) => i.code === "V5").map((i) => i.nodeId);
-      expect(dead.sort()).toEqual(["a1", "a2"]);
+      const dead = issues.filter((i) => i.code === "V5").map((i) => i.nodeId ?? "");
+      expect(dead.toSorted((a, b) => a.localeCompare(b))).toStrictEqual(["a1", "a2"]);
       expect(hasErrors(issues)).toBe(true);
     });
 
@@ -151,7 +150,7 @@ describe("validateFlow", () => {
         a1: actionWithItems("止血帯を巻く", "a1", ["止血帯"], "e"),
         e: end("e"),
       });
-      expect(codes(validateAlone(flow), "error")).toEqual([]);
+      expect(codes(validateAlone(flow), "error")).toStrictEqual([]);
     });
 
     it("異常: end がないフロー", () => {
@@ -165,7 +164,7 @@ describe("validateFlow", () => {
         a1: action("処置して再評価", "q1"),
         e: end("e"),
       });
-      expect(codes(validateAlone(flow), "error")).toEqual([]);
+      expect(codes(validateAlone(flow), "error")).toStrictEqual([]);
     });
   });
 
@@ -203,7 +202,7 @@ describe("validateFlow", () => {
         [parent.id, parent],
         [child.id, child],
       ]);
-      expect(validateFlow(parent, all)).toEqual([]);
+      expect(validateFlow(parent, all)).toStrictEqual([]);
     });
 
     it("異常: 存在しないフロー", () => {
@@ -241,7 +240,10 @@ describe("validateFlow", () => {
 
     it("異常: 大文字、_、日本語、ハイフンの位置", () => {
       for (const id of ["Casualty", "a_b", "負傷者", "-a", "a-", "a--b", "a b"]) {
-        expect(codes(validateAlone(simpleFlow(id)), "error"), id).toContain("V8");
+        // 失敗したときにどの id か分かるよう、id を付けて比べる
+        expect(
+          codes(validateAlone(simpleFlow(id)), "error").map((code) => `${id}: ${code}`),
+        ).toContain(`${id}: V8`);
       }
     });
   });
@@ -254,7 +256,7 @@ describe("validateFlow（branch）", () => {
       q1: question("q1", "e", "e"),
       e: end("e"),
     });
-    expect(validateAlone(flow)).toEqual([]);
+    expect(validateAlone(flow)).toStrictEqual([]);
   });
 
   it("行き先が無ければ V2", () => {
@@ -291,12 +293,12 @@ describe("validateFlows", () => {
     const child = simpleFlow("child");
     const parent = makeFlow("parent", "sf", { sf: subflow("child", "e"), e: end("e") });
     const result = validateFlows([parent, child]);
-    expect(result).toEqual([[], []]);
+    expect(result).toStrictEqual([[], []]);
   });
 
   it("id の重複はエラー", () => {
     const result = validateFlows([simpleFlow("same"), simpleFlow("same")]);
-    expect(result.map((issues) => codes(issues))).toEqual([["duplicate"], ["duplicate"]]);
+    expect(result.map((issues) => codes(issues))).toStrictEqual([["duplicate"], ["duplicate"]]);
   });
 });
 
@@ -332,8 +334,8 @@ describe("parseFlow（形の検査）", () => {
     });
     expect(result.ok).toBe(false);
     const messages = result.ok ? [] : result.messages.join("\n");
-    expect(messages).toMatch(/nodes\.b\.cases\.0\.mods/);
-    expect(messages).toMatch(/nodes\.c\.cases/);
+    expect(messages).toMatch(/nodes\.b\.cases\.0\.mods/u);
+    expect(messages).toMatch(/nodes\.c\.cases/u);
   });
 
   it("違う形は、どこが違うかを返す", () => {
@@ -351,10 +353,10 @@ describe("parseFlow（形の検査）", () => {
     });
     expect(result.ok).toBe(false);
     const messages = result.ok ? [] : result.messages.join("\n");
-    expect(messages).toMatch(/modTarget\.0/);
-    expect(messages).toMatch(/nodes\.e\.outcome/);
-    expect(messages).toMatch(/nodes\.a\.links\.0/);
-    expect(messages).toMatch(/hlep/);
-    expect(messages).toMatch(/nodes\.x/);
+    expect(messages).toMatch(/modTarget\.0/u);
+    expect(messages).toMatch(/nodes\.e\.outcome/u);
+    expect(messages).toMatch(/nodes\.a\.links\.0/u);
+    expect(messages).toMatch(/hlep/u);
+    expect(messages).toMatch(/nodes\.x/u);
   });
 });

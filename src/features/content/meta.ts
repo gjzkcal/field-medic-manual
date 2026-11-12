@@ -16,7 +16,7 @@ export const MOD_TARGET_LABELS: Record<ModTarget, string> = {
 };
 export const MOD_CHANNEL_LABELS: Record<ModChannel, string> = { release: "Release", dev: "Dev" };
 
-export const MOD_TARGET_VALUES = Object.keys(MOD_TARGET_LABELS).filter(isModTarget);
+export const MOD_TARGET_VALUES = Object.keys(MOD_TARGET_LABELS).filter((key) => isModTarget(key));
 
 export function isModTarget(value: string): value is ModTarget {
   return Object.hasOwn(MOD_TARGET_LABELS, value);
@@ -92,7 +92,7 @@ export function toDocMeta(raw: RawMeta, warnings: string[]): DocMeta {
   if (raw.aceCommit !== undefined && raw.aceCommit !== null) {
     // 数字だけのハッシュは YAML が数値にして先頭の 0 などを落とすので、引用符で囲んだ文字列だけを受ける
     const commit = typeof raw.aceCommit === "string" ? raw.aceCommit.trim().toLowerCase() : null;
-    if (commit !== null && /^[0-9a-f]{7,40}$/.test(commit)) {
+    if (commit !== null && /^[0-9a-f]{7,40}$/u.test(commit)) {
       meta.aceCommit = commit;
     } else if (commit !== "") {
       warnings.push(`ace_commit は 16 進 7〜40 桁のコミットを引用符で囲んで書いてください: ${JSON.stringify(raw.aceCommit)}`);
@@ -126,13 +126,13 @@ export function toDocMeta(raw: RawMeta, warnings: string[]): DocMeta {
 export function parseTags(value: unknown): string[] {
   const items = Array.isArray(value)
     ? value.map((v: unknown) => scalarText(v) ?? "")
-    : (scalarText(value)?.split(/[,、，]/) ?? []);
+    : (scalarText(value)?.split(/[,、，]/u) ?? []);
   const tags = items.map((t) => t.trim()).filter((t) => t !== "");
   return [...new Set(tags)];
 }
 
 export function isIsoDate(value: string): boolean {
-  return /^\d{4}-\d{2}-\d{2}$/.test(value);
+  return /^\d{4}-\d{2}-\d{2}$/u.test(value);
 }
 
 /** 文字列・数値を空白を除いた文字列にする。空やそれ以外の型は undefined。YAML では `1.5` が数値になるため数値も受ける。 */

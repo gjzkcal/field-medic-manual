@@ -51,7 +51,7 @@ function ChartContainer({
   };
 }): React.JSX.Element {
   const uniqueId = React.useId();
-  const chartId = `chart-${id ?? uniqueId.replace(/:/g, "")}`;
+  const chartId = `chart-${id ?? uniqueId.replaceAll(":", "")}`;
   const value = React.useMemo(() => ({ config }), [config]);
   const colors: React.CSSProperties = {};
   for (const [key, item] of Object.entries(config)) {
@@ -148,7 +148,7 @@ function ChartTooltipContent({
         className,
       )}
     >
-      {!nestLabel ? tooltipLabel : null}
+      {nestLabel ? null : tooltipLabel}
       <div className="grid gap-1.5">
         {payload
           .filter((item) => item.type !== "none")
@@ -170,9 +170,7 @@ function ChartTooltipContent({
                   formatter(item.value, item.name, item, index, payload)
                 ) : (
                   <>
-                    {Icon !== undefined ? (
-                      <Icon />
-                    ) : (
+                    {Icon === undefined ? (
                       !hideIndicator && (
                         <div
                           className={cn(
@@ -191,6 +189,8 @@ function ChartTooltipContent({
                           }}
                         />
                       )
+                    ) : (
+                      <Icon />
                     )}
                     <div
                       className={cn(

@@ -65,7 +65,9 @@ function cellNumber(cell: string | undefined): number | null {
   if (cell === undefined || cell === "変化なし") {
     return null;
   }
-  return Number.parseFloat(cell.replace("−", "-").replace("+", ""));
+  // 「1.429 倍」のように単位が続くので、Number では読めない。先頭の数だけを取る
+  const match = /^-?\d+(?:\.\d+)?/u.exec(cell.replace("−", "-").replace("+", ""));
+  return match === null ? Number.NaN : Number(match[0]);
 }
 
 /** 山を過ぎて最大の半分まで下がる時刻を二分法で探す */
@@ -88,7 +90,7 @@ describe("薬の効き方の表", () => {
   const rows = drugRows("濃度の式", 1);
 
   it("5 つの薬がすべて表にある", () => {
-    expect(rows.map(([drug]) => drug).toSorted()).toEqual(
+    expect(rows.map(([drug]) => drug).toSorted()).toStrictEqual(
       medication.drugs.map((d) => d.id).toSorted(),
     );
   });
@@ -151,21 +153,22 @@ describe("過量投与の表", () => {
   const rows = drugRows("過量投与");
 
   it("5 つの薬がすべて表にある", () => {
-    expect(rows.map(([drug]) => drug).toSorted()).toEqual(
+    expect(rows.map(([drug]) => drug).toSorted()).toStrictEqual(
       medication.drugs.map((d) => d.id).toSorted(),
     );
   });
 
   it.each(rows)("%s: 意識喪失・心停止の本数が原稿と同じ", (id, cells) => {
     const doses = drugConfig(medication, id).overdoseDoses;
-    if (cells.slice(0, 4).every((cell) => cell === "20 本超")) {
-      expect(doses).toBeUndefined();
-      return;
-    }
-    expect(doses).toEqual({
-      unconscious: { noPain: cellNumber(cells[0]), severePain: cellNumber(cells[2]) },
-      arrest: { noPain: cellNumber(cells[1]), severePain: cellNumber(cells[3]) },
-    });
+    const overLimit = cells.slice(0, 4).every((cell) => cell === "20 本超");
+    expect(doses).toStrictEqual(
+      overLimit
+        ? undefined
+        : {
+            unconscious: { noPain: cellNumber(cells[0]), severePain: cellNumber(cells[2]) },
+            arrest: { noPain: cellNumber(cells[1]), severePain: cellNumber(cells[3]) },
+          },
+    );
   });
 });
 
@@ -175,7 +178,7 @@ describe("原稿の別の場所にある値", () => {
       .flatMap((e) => e.drugs)
       .flatMap((d) => d.antagonists ?? [])
       .map((a) => a.ec50);
-    expect(new Set(value)).toEqual(new Set([120]));
+    expect(new Set(value)).toStrictEqual(new Set([120]));
     expect(manualText("naloxone.md")).toContain("(1 + C_{\\text{nal}} \\div 120)");
   });
 
@@ -245,6 +248,6 @@ describe("効果の計算", () => {
 
 describe("値の読み込み", () => {
   it("不正な値は、どこが違うかを文言にして失敗する", () => {
-    expect(() => parseMedication({ drugs: [] })).toThrow(/薬の数値を読めません/);
+    expect(() => parseMedication({ drugs: [] })).toThrow(/薬の数値を読めません/u);
   });
 });

@@ -29,14 +29,14 @@ function readSource(...parts: string[]): string {
 
 /** build.rs の COMMANDS（権限にするコマンドの一覧） */
 function manifestCommands(): string[] {
-  const block = /const COMMANDS: &\[&str\] = &\[([\s\S]*?)\];/.exec(readSource("build.rs"))?.[1];
-  return [...(block ?? "").matchAll(/"([a-z_]+)"/g)].map((m) => m[1] ?? "");
+  const block = /const COMMANDS: &\[&str\] = &\[([\s\S]*?)\];/u.exec(readSource("build.rs"))?.[1];
+  return [...(block ?? "").matchAll(/"([a-z_]+)"/gu)].map((m) => m[1] ?? "");
 }
 
 /** lib.rs の generate_handler! に並べたコマンド */
 function handlerCommands(): string[] {
-  const block = /generate_handler!\[([\s\S]*?)\]/.exec(readSource("src", "lib.rs"))?.[1];
-  return [...(block ?? "").matchAll(/::([a-z_]+),/g)].map((m) => m[1] ?? "");
+  const block = /generate_handler!\[([\s\S]*?)\]/u.exec(readSource("src", "lib.rs"))?.[1];
+  return [...(block ?? "").matchAll(/::([a-z_]+),/gu)].map((m) => m[1] ?? "");
 }
 
 function permissionNames(file: string): string[] {
@@ -47,7 +47,7 @@ function permissionNames(file: string): string[] {
 describe("コマンドの登録", () => {
   it("generate_handler! のコマンドがすべて build.rs の COMMANDS にある", () => {
     expect(handlerCommands().length).toBeGreaterThan(0);
-    expect([...handlerCommands()].sort()).toEqual([...manifestCommands()].sort());
+    expect([...handlerCommands()].toSorted()).toStrictEqual([...manifestCommands()].toSorted());
   });
 
   it("AI チャットのコマンドはメインだけに許し、小窓には許さない", () => {
@@ -55,10 +55,10 @@ describe("コマンドの登録", () => {
       .filter((name) => name.startsWith("ai_"))
       .map((name) => `allow-${name.replaceAll("_", "-")}`);
     expect(aiPermissions.length).toBeGreaterThan(0);
-    expect(permissionNames("main.json")).toEqual(expect.arrayContaining(aiPermissions));
-    expect(permissionNames("overlay.json").filter((name) => name.startsWith("allow-ai-"))).toEqual(
-      [],
-    );
+    expect(permissionNames("main.json")).toStrictEqual(expect.arrayContaining(aiPermissions));
+    expect(
+      permissionNames("overlay.json").filter((name) => name.startsWith("allow-ai-")),
+    ).toStrictEqual([]);
   });
 });
 
@@ -77,14 +77,14 @@ describe.each(["main.json", "overlay.json"])("%s", (file) => {
   it("ログは client_log だけで書き、ログのプラグインを画面に開けない", () => {
     const names = permissions.map((p) => (typeof p === "string" ? p : p.identifier));
     expect(names).toContain("allow-client-log");
-    expect(names.filter((name) => name.startsWith("log:"))).toEqual([]);
+    expect(names.filter((name) => name.startsWith("log:"))).toStrictEqual([]);
   });
 
   it("外部で開ける URL を src/lib/external-url.ts と同じ種類に絞る", () => {
     const opener = permissions.find(
       (p) => typeof p !== "string" && p.identifier === "opener:allow-open-url",
     );
-    expect(typeof opener === "string" ? [] : opener?.allow.map((a) => a.url)).toEqual([
+    expect(typeof opener === "string" ? [] : opener?.allow.map((a) => a.url)).toStrictEqual([
       "https://*",
       "http://*",
     ]);

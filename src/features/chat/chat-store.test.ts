@@ -50,7 +50,7 @@ describe("useChatStore", () => {
     const first = useChatStore.getState().turns[0];
     expect(first?.turnIndex).toBe(0);
     await useChatStore.getState().edit(first?.id ?? -1, "q1b");
-    expect(useChatStore.getState().turns.map((t) => t.question)).toEqual(["q1b"]);
+    expect(useChatStore.getState().turns.map((t) => t.question)).toStrictEqual(["q1b"]);
     expect(inputs.at(-1)).toMatchObject({ text: "q1b", replaceFrom: 0 });
   });
 
@@ -60,19 +60,19 @@ describe("useChatStore", () => {
     await useChatStore.getState().send("q2", []);
     const first = useChatStore.getState().turns[0];
     await useChatStore.getState().edit(first?.id ?? -1, "q1b");
-    expect(useChatStore.getState().turns.map((t) => t.question)).toEqual(["q1", "q2"]);
+    expect(useChatStore.getState().turns.map((t) => t.question)).toStrictEqual(["q1", "q2"]);
     expect(useChatStore.getState().notice).toContain("元の会話に戻しました");
   });
 
   it("会話の最初の設定を、会話の間は使い続ける", async () => {
     mockSend(false);
     await useChatStore.getState().send("q1", []);
-    expect(useChatStore.getState().conversation).toEqual({
+    expect(useChatStore.getState().conversation).toStrictEqual({
       model: "claude-sonnet-5-5",
       effort: "medium",
     });
     await useChatStore.getState().reset();
     expect(useChatStore.getState().conversation).toBeNull();
-    expect(useChatStore.getState().turns).toEqual([]);
+    expect(useChatStore.getState().turns).toStrictEqual([]);
   });
 });

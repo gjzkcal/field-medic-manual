@@ -58,27 +58,28 @@ export function sectionVisibility(
     visible,
     forcedRoot: forcedRange === null ? null : (sections[forcedRange.start]?.anchor ?? null),
     hiddenCount: sections.length - visible.size,
-    hasConditions: sections.some(hasModConditions),
+    hasConditions: sections.some((section) => hasModConditions(section)),
     labeled,
   };
 }
+
+const conditionCount = (s: ModConditions): number => s.mods.length + s.withoutMods.length;
 
 /**
  * 条件が新しく付く節（自分の印で条件が増えた節）のアンカー。条件は親から子へ合わせてあるので、
  * 親より条件が多い節が印を書いた節になる。配下の話題の見出し（「心停止中の SpO2 の式」など）は含まない
  */
 export function conditionRoots(sections: readonly VisibilitySection[]): ReadonlySet<string> {
-  const count = (s: ModConditions): number => s.mods.length + s.withoutMods.length;
   const roots = new Set<string>();
-  sections.forEach((section, index) => {
+  for (const [index, section] of sections.entries()) {
     if (section.level === 0 || !hasModConditions(section)) {
-      return;
+      continue;
     }
     const parent = sections[parentIndex(sections, index)];
-    if (parent === undefined || count(parent) < count(section)) {
+    if (parent === undefined || conditionCount(parent) < conditionCount(section)) {
       roots.add(section.anchor);
     }
-  });
+  }
   return roots;
 }
 

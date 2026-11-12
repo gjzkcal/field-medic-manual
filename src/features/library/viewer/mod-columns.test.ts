@@ -11,7 +11,7 @@ function table(rows: string[][]): HTMLTableElement {
     { mods: [], withoutMods: ["circulation"] },
   ];
   const el = document.createElement("table");
-  el.setAttribute("data-mod-columns", JSON.stringify(columns));
+  el.dataset["modColumns"] = JSON.stringify(columns);
   for (const cells of rows) {
     const tr = el.insertRow();
     for (const text of cells) {
@@ -32,7 +32,7 @@ describe("hideModColumns", () => {
       ["血液", "（判定）", "（同左）", "0"],
     ]);
     hideModColumns(el, activeMods({ enabled: ["circulation"] }));
-    expect(texts(el)).toEqual([
+    expect(texts(el)).toStrictEqual([
       ["場面", "Circulation だけ"],
       ["通常", "0.3"],
       ["血液", "（判定）"],
@@ -41,8 +41,8 @@ describe("hideModColumns", () => {
 
   it("消す列がなければ「同左」もそのまま", () => {
     const el = table([["通常", "0.3", "同左", "0.3"]]);
-    el.setAttribute("data-mod-columns", "[]");
+    el.dataset["modColumns"] = "[]";
     hideModColumns(el, activeMods({ enabled: [] }));
-    expect(texts(el)).toEqual([["通常", "0.3", "同左", "0.3"]]);
+    expect(texts(el)).toStrictEqual([["通常", "0.3", "同左", "0.3"]]);
   });
 });

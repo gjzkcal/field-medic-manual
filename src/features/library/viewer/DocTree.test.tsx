@@ -51,7 +51,7 @@ describe("DocTree", () => {
     );
 
     const groups = screen.getAllByRole("group");
-    expect(groups.map((g) => g.firstElementChild?.textContent)).toEqual([
+    expect(groups.map((g) => g.firstElementChild?.textContent)).toStrictEqual([
       "はじめに",
       "症状/処置",
       "その他",

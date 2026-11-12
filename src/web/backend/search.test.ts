@@ -36,8 +36,8 @@ function flowSeeded(): WebStore {
   return seeded([], false, true);
 }
 
-function sections(hits: SearchHit[]): SectionHit[] {
-  return hits.flatMap((h) => (h.kind === "section" ? [h] : []));
+function sections(found: SearchHit[]): SectionHit[] {
+  return found.flatMap((h) => (h.kind === "section" ? [h] : []));
 }
 
 function hits(store: WebStore, query: string, filter: SearchFilter = {}): SectionHit[] {
@@ -73,7 +73,7 @@ function firstQuickref(store: WebStore, query: string): QuickrefHit {
 describe("searchStore（節）", () => {
   it("3 文字の語で当たり、スニペットを強調する", () => {
     const result = hits(seeded(), "止血帯");
-    expect(anchors(result)).toEqual(["use-tourniquet"]);
+    expect(anchors(result)).toStrictEqual(["use-tourniquet"]);
     expect(result[0]?.documentTitle).toBe("止血帯");
     expect(result[0]?.documentId).toBe("tourniquet");
     expect(result[0]?.synonymOnly).toBe(false);
@@ -81,8 +81,8 @@ describe("searchStore（節）", () => {
   });
 
   it("ASCII の語は大文字小文字を区別しない", () => {
-    expect(anchors(hits(seeded(), "CPR"))).toEqual(["cpr-steps"]);
-    expect(anchors(hits(seeded(), "cpr"))).toEqual(["cpr-steps"]);
+    expect(anchors(hits(seeded(), "CPR"))).toStrictEqual(["cpr-steps"]);
+    expect(anchors(hits(seeded(), "cpr"))).toStrictEqual(["cpr-steps"]);
   });
 
   it("2 文字の語はタイトルに当たった節を先にする", () => {
@@ -110,16 +110,16 @@ describe("searchStore（節）", () => {
   });
 
   it("空白（全角を含む）で区切った語は AND で結ぶ", () => {
-    expect(anchors(hits(seeded(), "止血帯 四肢"))).toEqual(["use-tourniquet"]);
-    expect(anchors(hits(seeded(), "止血帯　四肢"))).toEqual(["use-tourniquet"]);
+    expect(anchors(hits(seeded(), "止血帯 四肢"))).toStrictEqual(["use-tourniquet"]);
+    expect(anchors(hits(seeded(), "止血帯　四肢"))).toStrictEqual(["use-tourniquet"]);
     expect(hits(seeded(), "止血帯 CPR")).toHaveLength(0);
-    expect(anchors(hits(seeded(), "心停止 行う"))).toEqual(["cpr-steps"]);
+    expect(anchors(hits(seeded(), "心停止 行う"))).toStrictEqual(["cpr-steps"]);
     expect(hits(seeded(), "心停止 四肢")).toHaveLength(0);
   });
 
   it("空の入力では何も返さない", () => {
-    expect(searchStore(seeded(), "")).toEqual([]);
-    expect(searchStore(seeded(), " 　 ")).toEqual([]);
+    expect(searchStore(seeded(), "")).toStrictEqual([]);
+    expect(searchStore(seeded(), " 　 ")).toStrictEqual([]);
   });
 
   it("件数の上限を守る", () => {
@@ -129,8 +129,8 @@ describe("searchStore（節）", () => {
   it("同義語で広げる", () => {
     for (const query of ["TQ", "tq", "ターニケット", "Tourniquet"]) {
       const result = hits(seeded(), query);
-      expect(anchors(result), query).toEqual(["use-tourniquet"]);
-      expect(result[0]?.synonymOnly, query).toBe(true);
+      expect([query, anchors(result)]).toStrictEqual([query, ["use-tourniquet"]]);
+      expect([query, result[0]?.synonymOnly]).toStrictEqual([query, true]);
     }
   });
 
@@ -153,7 +153,7 @@ describe("searchStore（節）", () => {
       [section(1, "呼び方", "tq-name", "【要確認】ターニケットと呼ぶこともある。")],
     );
     const result = hits(seeded([literal]), "ターニケット");
-    expect(anchors(result)).toEqual(["tq-name", "use-tourniquet"]);
+    expect(anchors(result)).toStrictEqual(["tq-name", "use-tourniquet"]);
     expect(result[0]?.synonymOnly).toBe(false);
     expect(result[1]?.synonymOnly).toBe(true);
   });
@@ -167,15 +167,15 @@ describe("searchStore（節）", () => {
       [],
       [section(1, "Cascade", "noise", "cascade")],
     );
-    expect(anchors(hits(seeded([noise]), "心停止"))).toEqual(["cpr-steps"]);
+    expect(anchors(hits(seeded([noise]), "心停止"))).toStrictEqual(["cpr-steps"]);
   });
 
   it("節のタグでも当たる", () => {
-    expect(anchors(hits(seeded(), "圧迫止血"))).toEqual(["bleeding-signs"]);
+    expect(anchors(hits(seeded(), "圧迫止血"))).toStrictEqual(["bleeding-signs"]);
   });
 
   it("MOD で絞り込む。空の配列は条件なし", () => {
-    expect(anchors(hits(seeded(), "要確認", { modTargets: ["circulation"] }))).toEqual([
+    expect(anchors(hits(seeded(), "要確認", { modTargets: ["circulation"] }))).toStrictEqual([
       "cpr-steps",
     ]);
     expect(hits(seeded(), "要確認", { modTargets: [] })).toHaveLength(4);
@@ -189,9 +189,13 @@ describe("searchStore（節）", () => {
   });
 
   it("文書か節のタグで絞り込む", () => {
-    expect(anchors(hits(seeded(), "要確認", { tags: ["止血帯"] }))).toEqual(["use-tourniquet"]);
-    expect(anchors(hits(seeded(), "出血", { tags: ["#圧迫止血"] }))).toEqual(["bleeding-signs"]);
-    expect(anchors(hits(seeded(), "要確認", { tags: ["出血", "圧迫止血"] }))).toEqual([
+    expect(anchors(hits(seeded(), "要確認", { tags: ["止血帯"] }))).toStrictEqual([
+      "use-tourniquet",
+    ]);
+    expect(anchors(hits(seeded(), "出血", { tags: ["#圧迫止血"] }))).toStrictEqual([
+      "bleeding-signs",
+    ]);
+    expect(anchors(hits(seeded(), "要確認", { tags: ["出血", "圧迫止血"] }))).toStrictEqual([
       "bleeding-signs",
     ]);
   });
@@ -200,12 +204,12 @@ describe("searchStore（節）", () => {
 describe("searchStore（クイック表）", () => {
   it("症状に当たった行を先頭にする", () => {
     const store = seeded([], true);
-    expect(kinds(store, "気胸")).toEqual(["quickref:tension-ptx"]);
+    expect(kinds(store, "気胸")).toStrictEqual(["quickref:tension-ptx"]);
     const hit = firstQuickref(store, "気胸");
     expect(hit.title).toBe("緊張性気胸");
     expect(hit.category).toBe("気道・呼吸");
     expect(hit.severity).toBe(4);
-    expect(hit.mods).toEqual(["breathing"]);
+    expect(hit.mods).toStrictEqual(["breathing"]);
     const found = kinds(store, "出血");
     expect(found[0]).toBe("quickref:limb-bleeding");
     expect(found).toContain("section:bleeding");
@@ -213,7 +217,10 @@ describe("searchStore（クイック表）", () => {
 
   it("本文だけに当たった行は節の後ろにする", () => {
     const store = seeded([], true);
-    expect(kinds(store, "止血帯")).toEqual(["section:use-tourniquet", "quickref:limb-bleeding"]);
+    expect(kinds(store, "止血帯")).toStrictEqual([
+      "section:use-tourniquet",
+      "quickref:limb-bleeding",
+    ]);
     const hit = firstQuickref(store, "止血帯");
     expect(hit.snippet).toContain(MARK_START);
     expect(hit.synonymOnly).toBe(false);
@@ -228,28 +235,30 @@ describe("searchStore（クイック表）", () => {
   it("絞り込みに従う", () => {
     const store = seeded([], true);
     // Dev の表は出ない
-    expect(kinds(store, "気胸", { modChannel: "release" })).toEqual([]);
-    expect(kinds(store, "気胸", { modTargets: ["breathing"] })).toEqual(["quickref:tension-ptx"]);
+    expect(kinds(store, "気胸", { modChannel: "release" })).toStrictEqual([]);
+    expect(kinds(store, "気胸", { modTargets: ["breathing"] })).toStrictEqual([
+      "quickref:tension-ptx",
+    ]);
     // 条件のない行は Core として扱う
     expect(kinds(store, "出血", { modTargets: ["breathing"] })).not.toContain(
       "quickref:limb-bleeding",
     );
     expect(kinds(store, "出血", { modTargets: ["core"] })).toContain("quickref:limb-bleeding");
     // タグで絞るとクイック表は出ない
-    expect(kinds(store, "止血帯", { tags: ["止血帯"] })).toEqual(["section:use-tourniquet"]);
+    expect(kinds(store, "止血帯", { tags: ["止血帯"] })).toStrictEqual(["section:use-tourniquet"]);
   });
 });
 
 describe("searchStore（フロー）", () => {
   it("タイトルに当たったフローを節より先にする", () => {
-    expect(kinds(flowSeeded(), "負傷者")).toEqual(["flow:casualty-first-contact"]);
+    expect(kinds(flowSeeded(), "負傷者")).toStrictEqual(["flow:casualty-first-contact"]);
     const found = kinds(flowSeeded(), "心停止");
     expect(found[0]).toBe("flow:cpr-flow");
     expect(found).toContain("section:cpr-steps");
   });
 
   it("本文だけに当たったフローは節の後ろにする", () => {
-    expect(kinds(flowSeeded(), "止血帯")).toEqual([
+    expect(kinds(flowSeeded(), "止血帯")).toStrictEqual([
       "section:use-tourniquet",
       "flow:casualty-first-contact",
     ]);
@@ -259,7 +268,7 @@ describe("searchStore（フロー）", () => {
   });
 
   it("本文だけに当たったフローは、本文だけに当たったクイック表の行より後ろにする", () => {
-    expect(kinds(seeded([], true, true), "止血帯")).toEqual([
+    expect(kinds(seeded([], true, true), "止血帯")).toStrictEqual([
       "section:use-tourniquet",
       "quickref:limb-bleeding",
       "flow:casualty-first-contact",
@@ -275,8 +284,8 @@ describe("searchStore（フロー）", () => {
   it("絞り込みに従う", () => {
     const store = flowSeeded();
     expect(kinds(store, "心停止", { modChannel: "release" })).not.toContain("flow:cpr-flow");
-    expect(kinds(store, "心停止", { modTargets: ["breathing"] })).toEqual(["flow:cpr-flow"]);
+    expect(kinds(store, "心停止", { modTargets: ["breathing"] })).toStrictEqual(["flow:cpr-flow"]);
     // フローにタグはないので、タグで絞るとフローは出ない
-    expect(kinds(store, "止血帯", { tags: ["止血帯"] })).toEqual(["section:use-tourniquet"]);
+    expect(kinds(store, "止血帯", { tags: ["止血帯"] })).toStrictEqual(["section:use-tourniquet"]);
   });
 });

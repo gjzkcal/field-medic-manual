@@ -8,13 +8,13 @@ import { parseFlowLink } from "@/features/triage/links";
 export type AnswerPart = { kind: "markdown"; text: string } | { kind: "figure"; source: string };
 
 /** AI が根拠の節の図を出すときに書く囲み。中身は節の source（`doc:<ファイル名>#<アンカー>`）だけ */
-const FIGURE_FENCE = /^```figure[ \t]*\r?\n([^\n]*?)\r?\n```[ \t]*$/gm;
+const FIGURE_FENCE = /^```figure[ \t]*\r?\n([^\n]*?)\r?\n```[ \t]*$/gmu;
 
 // NOTE: 引用の場所の印は、私用領域の 2 文字で番号を挟む（例: U+E000 3 U+E001）。
 // Markdown の記号と重ならず、変換と無害化をそのまま通るので、描いた後の文字の中から探して部品に差し替える。
 const MARK_OPEN = "\uE000";
 const MARK_CLOSE = "\uE001";
-const MARK = /\uE000(\d+)\uE001/g;
+const MARK = /\uE000(\d+)\uE001/gu;
 
 export function citationMark(index: number): string {
   return `${MARK_OPEN}${String(index)}${MARK_CLOSE}`;
@@ -134,12 +134,12 @@ export function splitBlocks(text: string, streaming: boolean): { blocks: string[
       current.push(line);
       continue;
     }
-    if (outside && afterBlank && !/^\s/.test(line)) {
+    if (outside && afterBlank && !/^\s/u.test(line)) {
       blocks.push(current.join("\n"));
       current = [];
     }
     afterBlank = false;
-    const fenceMark = /^(`{3,}|~{3,})/.exec(trimmed)?.[1];
+    const fenceMark = /^(`{3,}|~{3,})/u.exec(trimmed)?.[1];
     if (outside && fenceMark !== undefined) {
       fence = fenceMark.slice(0, 3);
     } else if (fence !== null && trimmed.startsWith(fence)) {

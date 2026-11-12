@@ -67,7 +67,7 @@ export function FlowRunner({ root, lookup }: FlowRunnerProps): JSX.Element {
     ) {
       return;
     }
-    const digit = /^[1-9]$/.test(event.key) ? Number(event.key) : null;
+    const digit = /^[1-9]$/u.test(event.key) ? Number(event.key) : null;
     // 設定でオフにしたときは数字を素通しする（Enter・Backspace・Esc は文字のキーではないので残す）
     if (digit !== null && digit <= MAX_KEY_CHOICES && digitKeys) {
       if (digit <= state.options.length) {
@@ -102,10 +102,9 @@ export function FlowRunner({ root, lookup }: FlowRunnerProps): JSX.Element {
           event.preventDefault();
           restart();
         }
-        return;
+        break;
       default:
-        // ほかのキーはページのほかの部品（上部の検索欄の Ctrl+K など）に任せる
-        return;
+      // ほかのキーはページのほかの部品（上部の検索欄の Ctrl+K など）に任せる
     }
   });
   useEffect(() => {

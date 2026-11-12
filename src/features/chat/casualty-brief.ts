@@ -89,8 +89,8 @@ function casualtyText(casualty: Casualty, input: CasualtyBriefInput): string {
   if (casualty.records.length === 0) {
     lines.push("記録: なし");
   } else {
-    lines.push("記録（古い順。[記録の id] 経過 内容）:");
     lines.push(
+      "記録（古い順。[記録の id] 経過 内容）:",
       ...casualty.records.map(
         (r) => `- [${r.id}] ${spokenDuration(nowMs - r.atMs)} 前 ${entryLabel(r.entry)}`,
       ),

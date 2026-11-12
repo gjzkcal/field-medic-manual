@@ -1,8 +1,13 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["typescript"],
+  "plugins": ["typescript", "react", "import", "unicorn", "promise", "vitest", "oxc"],
+  // restriction と style は、プロジェクトの書き方とぶつかるもの（ES の版の制限、好みの書き方、大きさの制限）が
+  // 大半なので、カテゴリでは入れず、下の rules で選んで入れる。nursery は挙動が固まっていないので入れない
   "categories": {
-    "correctness": "off"
+    "correctness": "error",
+    "suspicious": "error",
+    "pedantic": "error",
+    "perf": "error"
   },
   "options": {
     "typeAware": true
@@ -209,7 +214,61 @@
     "typescript/switch-exhaustiveness-check": [
       "error",
       { "considerDefaultExhaustiveForUnions": false, "requireDefaultForNonUnion": true }
-    ]
+    ],
+
+    // restriction と style から選んで入れるもの
+    "import/no-unassigned-import": ["error", { "allow": ["**/*.css", "@/index.css", "react"] }],
+    "logical-assignment-operators": "error",
+    "no-duplicate-imports": "error",
+    "no-param-reassign": "error",
+    "no-script-url": "error",
+    "object-shorthand": "error",
+    "prefer-template": "error",
+    "react/jsx-curly-brace-presence": "error",
+    "typescript/no-import-type-side-effects": "error",
+    "unicorn/consistent-existence-index-check": "error",
+    "unicorn/no-array-for-each": "error",
+    "unicorn/prefer-export-from": "error",
+    "unicorn/prefer-structured-clone": "error",
+    "vitest/prefer-called-once": "error",
+    "vitest/prefer-called-with": "error",
+    "vitest/prefer-comparison-matcher": "error",
+    "vitest/prefer-import-in-mock": "error",
+    "vitest/prefer-mock-return-shorthand": "error",
+    "vitest/prefer-strict-equal": "error",
+
+    // 有効にしたカテゴリのうち、プロジェクトの書き方とぶつかるもの・ほかのルールと重なるもの
+    // React の props や DOM の型は readonly にできず、ほぼすべての関数で外すことになる
+    "typescript/prefer-readonly-parameter-types": "off",
+    // 型を使う typescript/require-await がある。こちらは Promise を返す関数まで誤って指摘する
+    "require-await": "off",
+    // unicorn/no-negated-condition と同じものを指摘する
+    "no-negated-condition": "off",
+    // getElementById は、動的な id を CSS のセレクタとしてエスケープせずに引ける
+    "unicorn/prefer-query-selector": "off",
+    // 網羅した switch（switch-exhaustiveness-check で確かめている）の後ろにも return を求める
+    "typescript/consistent-return": "off",
+    // 新しい JSX の変換では React を読み込まなくてよい
+    "react/react-in-jsx-scope": "off",
+    // zustand のストア（フック）を引数で渡し、受けた側で呼ぶ書き方まで止める
+    "react/hooks": "off",
+    // 読み直しのきっかけとして、わざと足した依存まで「余分」と指摘する
+    "react/exhaustive-effect-dependencies": "off",
+    // then の中で state を書くだけのときにも値を返すよう求める。返し忘れは no-floating-promises などで止まる
+    "promise/always-return": "off",
+    // DB への書き込みや段階を追う読み込みは、順番に待つ必要がある
+    "no-await-in-loop": "off",
+    // 直すと map の中で元のオブジェクトを書き換えることになる。件数の少ない配列で、不変性を崩してまで速くしない
+    "oxc/no-map-spread": "off",
+    // 表で回すテストや、結果の形で分けて確かめるテストでは条件分岐が要る
+    "vitest/no-conditional-in-test": "off",
+    // exactOptionalPropertyTypes の下では、undefined を明示しないと型が合わない箇所がある
+    "unicorn/no-useless-undefined": "off",
+    // 行数・依存の数・クラスの数の上限は、分け方の判断を機械的に縛るだけなので入れない
+    "max-lines": "off",
+    "max-lines-per-function": "off",
+    "max-classes-per-file": "off",
+    "import/max-dependencies": "off"
   },
   "overrides": [
     {
@@ -380,6 +439,13 @@
       "files": ["*.{js,ts}", "scripts/**/*.ts"],
       "env": {
         "node": true
+      }
+    },
+    {
+      // サニタイザやリンクの試験では、止めるべき javascript: の URL をわざと書く
+      "files": ["src/**/*.test.{ts,tsx}"],
+      "rules": {
+        "no-script-url": "off"
       }
     }
   ]

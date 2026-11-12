@@ -36,7 +36,7 @@ export function forecastChartData(forecasts: readonly DrugForecast[]): ChartData
       panel: "y",
       unit: "%",
     })),
-    points: [...rows.entries()].sort(([a], [b]) => a - b).map(([x, values]) => ({ x, values })),
+    points: [...rows.entries()].toSorted(([a], [b]) => a - b).map(([x, values]) => ({ x, values })),
   };
 }
 

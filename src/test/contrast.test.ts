@@ -20,7 +20,7 @@ const tailwind = readFileSync(
 );
 
 function tw(name: string): Rgba {
-  const value = new RegExp(`--color-${name}:\\s*([^;]+);`).exec(tailwind)?.[1];
+  const value = new RegExp(`--color-${name}:\\s*([^;]+);`, "u").exec(tailwind)?.[1];
   if (value === undefined) {
     throw new Error(`Tailwind の色 ${name} がありません`);
   }
@@ -123,14 +123,14 @@ function pairs(theme: keyof typeof THEMES): Pair[] {
     add(`foreground / search-hit (${s})`, c("foreground"), over(c("search-hit"), surface(s)), TEXT);
   }
   const tailwindColors = TAILWIND[theme];
-  tailwindColors.severityText.forEach((text, i) => {
+  for (const [i, text] of tailwindColors.severityText.entries()) {
     const tint = over(withAlpha(tw(SEVERITY_TINT[i] ?? ""), 0.15), surface("card"));
     add(`重症度 ${text} / 地`, tw(text), tint, TEXT);
-  });
-  tailwindColors.outcomeText.forEach((text, i) => {
+  }
+  for (const [i, text] of tailwindColors.outcomeText.entries()) {
     const tint = over(withAlpha(tw(OUTCOME_TINT[i] ?? ""), 0.1), background);
     add(`トリアージの結果 ${text} / 地`, tw(text), tint, TEXT);
-  });
+  }
 
   // 1.4.11 文字以外
   for (const s of ["background", "card", "popover", "muted"]) {
@@ -180,7 +180,7 @@ describe.each(["light", "dark"] as const)("%s のコントラスト（WCAG 2.2 A
       .map((p) => ({ ...p, ratio: contrast(p.fg, p.bg) }))
       .filter((p) => p.ratio < p.min)
       .map((p) => `${p.label}: ${p.ratio.toFixed(2)} < ${String(p.min)}`);
-    expect(failures).toEqual([]);
+    expect(failures).toStrictEqual([]);
   });
 });
 
@@ -192,18 +192,18 @@ describe("文字色の不透明度", () => {
     const fontSizes = new Set(["xs", "sm", "base", "lg", "xl"]);
     const src = resolve(REPO_ROOT, "src");
     const found = readdirSync(src, { recursive: true, encoding: "utf8" })
-      .filter((file) => /\.tsx?$/.test(file) && !file.includes(".test."))
+      .filter((file) => /\.tsx?$/u.test(file) && !file.includes(".test."))
       .flatMap((file) =>
         [
           ...readFileSync(resolve(src, file), "utf8").matchAll(
-            /\btext-([a-z][\w-]*)\/(?:\d+|\[[^\]]*\])/g,
+            /\btext-([a-z][\w-]*)\/(?:\d+|\[[^\]]*\])/gu,
           ),
         ]
           // text-sm/6 は文字の大きさと行の高さで、色ではない
           .filter((m) => m[1] !== undefined && !fontSizes.has(m[1]))
           .map((m) => `${file}: ${m[0]}`),
       );
-    expect(found).toEqual([]);
+    expect(found).toStrictEqual([]);
   });
 });
 

@@ -14,12 +14,13 @@ import {
   type Run,
 } from "./lighthouse.ts";
 
+const category = (score: number, auditId: string): Report["categories"][string] => ({
+  score,
+  auditRefs: [{ id: auditId, weight: 1 }],
+});
+
 /** 判定するカテゴリには監査を 1 つずつ持たせ、その点数をカテゴリの点数にする */
 function report(scores: { performance: number; accessibility: number }, lcp = 3000): Report {
-  const category = (score: number, auditId: string): Report["categories"][string] => ({
-    score,
-    auditRefs: [{ id: auditId, weight: 1 }],
-  });
   return parseReport(
     JSON.stringify({
       lighthouseVersion: "13.5.0",
@@ -88,14 +89,14 @@ describe("pagesFromBuild", () => {
         "doc/airway.html",
         "library.html",
       ]),
-    ).toEqual(["library", "quickref", "doc/airway", "doc/pain"]);
+    ).toStrictEqual(["library", "quickref", "doc/airway", "doc/pain"]);
   });
 });
 
 describe("parseShard", () => {
   it("i/n を 1 始まりの番号と分担の数にする", () => {
-    expect(parseShard("2/3")).toEqual({ index: 2, total: 3 });
-    expect(parseShard("1/1")).toEqual({ index: 1, total: 1 });
+    expect(parseShard("2/3")).toStrictEqual({ index: 2, total: 3 });
+    expect(parseShard("1/1")).toStrictEqual({ index: 1, total: 1 });
   });
 
   it.each(["0/3", "4/3", "1/0", "1", "a/3", "1.5/3", "-1/3", "1/3/5", ""])(
@@ -111,16 +112,16 @@ describe("shardPages", () => {
 
   it("順に配り、どのページもちょうど 1 つの分担に入る", () => {
     const shards = [1, 2, 3].map((index) => shardPages(pages, { index, total: 3 }));
-    expect(shards).toEqual([
+    expect(shards).toStrictEqual([
       ["library", "doc/b", "doc/e"],
       ["quickref", "doc/c"],
       ["doc/a", "doc/d"],
     ]);
-    expect(shards.flat().toSorted()).toEqual(pages.toSorted());
+    expect(shards.flat().toSorted()).toStrictEqual(pages.toSorted());
   });
 
   it("分担が 1 つなら全ページ", () => {
-    expect(shardPages(pages, { index: 1, total: 1 })).toEqual(pages);
+    expect(shardPages(pages, { index: 1, total: 1 })).toStrictEqual(pages);
   });
 });
 
@@ -136,7 +137,7 @@ describe("summarize", () => {
     expect(row?.runs).toBe(3);
     expect(row?.scores.performance).toBe(80);
     expect(row?.metrics["largest-contentful-paint"]).toBe(4000);
-    expect(row?.failedAudits).toEqual([]);
+    expect(row?.failedAudits).toStrictEqual([]);
   });
 
   it("Performance が低くても失敗にせず、A11y・BP・SEO が 100 を切ったら失敗にする", () => {
@@ -144,8 +145,8 @@ describe("summarize", () => {
       ...runs("/slow", [report({ performance: 30, accessibility: 100 })]),
       ...runs("/contrast", [report({ performance: 100, accessibility: 95 })]),
     ]);
-    expect(failingRows(rows).map((r) => r.page)).toEqual(["/contrast"]);
-    expect(rows[1]?.failedAudits).toEqual([
+    expect(failingRows(rows).map((r) => r.page)).toStrictEqual(["/contrast"]);
+    expect(rows[1]?.failedAudits).toStrictEqual([
       "accessibility: color-contrast（color-contrast の題名）",
     ]);
   });
@@ -167,7 +168,7 @@ describe("summarize", () => {
       audits: { ...r.audits, "valid-source-maps": audit("valid-source-maps", 0) },
     };
     const [row] = summarize(runs("/x", [withSourceMaps]));
-    expect(row?.failedAudits).toEqual([]);
+    expect(row?.failedAudits).toStrictEqual([]);
   });
 
   it("カテゴリの点数が null（測れなかった）なら 0 にする", () => {
@@ -182,9 +183,9 @@ describe("summarize", () => {
 
   it("測っていないカテゴリと指標は持たず、判定にも使わない", () => {
     const [row] = summarize(runs("/library", [gateReport(100)]));
-    expect(row?.scores).toEqual({ accessibility: 100, "best-practices": 100, seo: 100 });
-    expect(row?.metrics).toEqual({});
-    expect(failingRows(row === undefined ? [] : [row])).toEqual([]);
+    expect(row?.scores).toStrictEqual({ accessibility: 100, "best-practices": 100, seo: 100 });
+    expect(row?.metrics).toStrictEqual({});
+    expect(failingRows(row === undefined ? [] : [row])).toStrictEqual([]);
   });
 
   it("同じページの回でカテゴリがそろっていなければ例外にする", () => {

@@ -1,6 +1,12 @@
 // フローチャートの配置。dagre でノードと辺の位置を決める。
 // 長さの単位は「文字 16px のときの px」。SVG の viewBox をこの単位にし、幅を em で指定すると、文字サイズの設定に図ごと追従する。
-import dagre, { type EdgeLabel, type GraphLabel, type NodeLabel } from "@dagrejs/dagre";
+import {
+  type EdgeLabel,
+  type GraphLabel,
+  graphlib,
+  layout as dagreLayout,
+  type NodeLabel,
+} from "@dagrejs/dagre";
 
 import type { FlowchartNode, FlowchartPayload } from "@/features/content/flowchart";
 
@@ -47,7 +53,7 @@ export interface FlowchartLayout {
 export type MeasureText = (text: string, fontSize: number) => number;
 
 export function layoutFlowchart(payload: FlowchartPayload, measure: MeasureText): FlowchartLayout {
-  const graph = new dagre.graphlib.Graph<GraphLabel, NodeLabel, EdgeLabel>({ multigraph: true });
+  const graph = new graphlib.Graph<GraphLabel, NodeLabel, EdgeLabel>({ multigraph: true });
   graph.setGraph({
     rankdir: payload.direction,
     nodesep: 28,
@@ -59,7 +65,7 @@ export function layoutFlowchart(payload: FlowchartPayload, measure: MeasureText)
   for (const node of payload.nodes) {
     graph.setNode(node.id, nodeSize(node, measure));
   }
-  payload.edges.forEach((edge, i) => {
+  for (const [i, edge] of payload.edges.entries()) {
     const size =
       edge.lines.length === 0
         ? { width: 0, height: 0 }
@@ -72,8 +78,8 @@ export function layoutFlowchart(payload: FlowchartPayload, measure: MeasureText)
             EDGE_LABEL_PAD_Y,
           );
     graph.setEdge(edge.from, edge.to, { ...size, labelpos: "c" }, `e${String(i)}`);
-  });
-  dagre.layout(graph);
+  }
+  dagreLayout(graph);
 
   const nodes = payload.nodes.map((node): PlacedNode => {
     const placed = graph.node(node.id);
@@ -148,7 +154,7 @@ function clipEnds(
   }
   const out = [...points];
   const second = out[1];
-  const beforeLast = out[out.length - 2];
+  const beforeLast = out.at(-2);
   if (from?.node.shape === "diamond" && second !== undefined) {
     out[0] = diamondEdge(from, second);
   }
@@ -158,9 +164,9 @@ function clipEnds(
   return out;
 }
 
-function diamondEdge(node: PlacedNode, toward: Point): Point {
-  const dx = toward.x - node.x;
-  const dy = toward.y - node.y;
+function diamondEdge(node: PlacedNode, target: Point): Point {
+  const dx = target.x - node.x;
+  const dy = target.y - node.y;
   const halfW = node.width / 2;
   const halfH = node.height / 2;
   const scale = Math.abs(dx) / halfW + Math.abs(dy) / halfH;

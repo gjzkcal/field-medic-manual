@@ -9,17 +9,17 @@ import {
 
 describe("parseModSettings", () => {
   it("既定は Circulation と Breathing（作者の普段の組み合わせ）", () => {
-    expect(DEFAULT_MOD_SETTINGS).toEqual({ enabled: ["circulation", "breathing"] });
-    expect(parseModSettings(null)).toEqual(DEFAULT_MOD_SETTINGS);
-    expect(parseModSettings({ enabled: "circulation" })).toEqual(DEFAULT_MOD_SETTINGS);
+    expect(DEFAULT_MOD_SETTINGS).toStrictEqual({ enabled: ["circulation", "breathing"] });
+    expect(parseModSettings(null)).toStrictEqual(DEFAULT_MOD_SETTINGS);
+    expect(parseModSettings({ enabled: "circulation" })).toStrictEqual(DEFAULT_MOD_SETTINGS);
   });
 
   it("切り替えられない値と重複を捨て、決まった順に並べる", () => {
     expect(
       parseModSettings({ enabled: ["breathing", "core", "x", "hitzones", "breathing", 1] }),
-    ).toEqual({ enabled: ["hitzones", "breathing"] });
+    ).toStrictEqual({ enabled: ["hitzones", "breathing"] });
     // すべて切った状態（Core だけ）も保存できる
-    expect(parseModSettings({ enabled: [] })).toEqual({ enabled: [] });
+    expect(parseModSettings({ enabled: [] })).toStrictEqual({ enabled: [] });
   });
 });
 

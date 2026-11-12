@@ -25,7 +25,7 @@ describe("同梱したフロー", () => {
   it.each(read.map((r) => [r.source.fileName, r] as const))(
     "%s: 形が正しく、ファイル名が <id>.flow.yaml|json",
     (fileName, { result }) => {
-      expect(result.ok ? [] : result.messages).toEqual([]);
+      expect(result.ok ? [] : result.messages).toStrictEqual([]);
       expect(result.ok && flowIdOfFileName(fileName)).toBe(result.ok && result.flow.id);
     },
   );
@@ -34,7 +34,7 @@ describe("同梱したフロー", () => {
     "%s: V1〜V8 でエラーがない（再評価のループ V6 の警告だけは許す）",
     (id, flow) => {
       const issues = (issuesById.get(id) ?? []).filter((i) => i.code !== "V6");
-      expect(issues.map((i) => `${i.code}: ${i.message}`)).toEqual([]);
+      expect(issues.map((i) => `${i.code}: ${i.message}`)).toStrictEqual([]);
       expect(flow.modTarget?.length ?? 0, "modTarget を書いてください").toBeGreaterThan(0);
       expect(flow.verifiedAt, "verifiedAt を書いてください").toBeDefined();
     },
@@ -52,7 +52,7 @@ describe("同梱したフロー", () => {
       expect(
         missing,
         "現場で物品が足りなくてもフローが止まらないよう、ifMissing: { next: ... } を書いてください",
-      ).toEqual([]);
+      ).toStrictEqual([]);
     },
   );
 
@@ -67,7 +67,7 @@ describe("同梱したフロー", () => {
       expect(
         broken,
         "リンク切れです。doc: は content/manuals/ のファイル名と見出しのアンカー（例 doc:hemorrhage.md#止血帯を使う）、quickref: は content/quickref.yaml の行の id",
-      ).toEqual([]);
+      ).toStrictEqual([]);
     },
   );
 });

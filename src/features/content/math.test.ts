@@ -20,7 +20,7 @@ describe("式の変換", { timeout: CONVERT_TIMEOUT_MS }, () => {
 \text{成功率} = \frac{b - 0.2}{0.7 - 0.2}
 $$`,
     );
-    expect(warnings).toEqual([]);
+    expect(warnings).toStrictEqual([]);
     const box = new DOMParser().parseFromString(html, "text/html").querySelector(".manual-math");
     expect(box?.querySelector("math mfrac")).not.toBeNull();
     // 塊に分けても 1 つの式として読めるよう、式全体を名前にする
@@ -36,11 +36,11 @@ $$`,
 \text{回復の速さ} = 5 \times (0.8 + x) \times \text{回復倍率}\ \text{HP/s} \quad \text{（注記）}
 $$`,
     );
-    expect(warnings).toEqual([]);
+    expect(warnings).toStrictEqual([]);
     const box = new DOMParser().parseFromString(html, "text/html").querySelector(".manual-math");
     const parts = Array.from(box?.children ?? []).map((part) => [part.localName, part.textContent]);
     // 括弧の中の + では分けない
-    expect(parts).toEqual([
+    expect(parts).toStrictEqual([
       ["math", "回復の速さ="],
       ["math", "5×"],
       ["math", "(0.8+x)×"],
@@ -57,7 +57,7 @@ $$`,
 \begin{cases} 1 & x \\ 2 & y \end{cases}
 $$`,
     );
-    expect(warnings).toEqual([]);
+    expect(warnings).toStrictEqual([]);
     const box = new DOMParser().parseFromString(html, "text/html").querySelector(".manual-math");
     expect(box?.children).toHaveLength(1);
     expect(box?.querySelector("math mtable")).not.toBeNull();
@@ -74,7 +74,7 @@ $$`,
 |---|
 | $\sqrt{2}$ |`,
     );
-    expect(warnings).toEqual([]);
+    expect(warnings).toStrictEqual([]);
     const body = new DOMParser().parseFromString(html, "text/html").body;
     expect(body.querySelector("p > math:not([display])")).not.toBeNull();
     expect(body.querySelectorAll("li math")).toHaveLength(4);
@@ -90,7 +90,7 @@ $$`,
 
   it("インラインコードやコードブロックの中の $ は式にしない", async () => {
     const { html, warnings } = await convert("`$a$`\n\n```\n$$\nb\n$$\n```");
-    expect(warnings).toEqual([]);
+    expect(warnings).toStrictEqual([]);
     expect(html).not.toContain("<math");
     expect(html).toContain("<code>$a$</code>");
   });

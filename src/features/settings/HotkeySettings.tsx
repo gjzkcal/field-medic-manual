@@ -141,7 +141,6 @@ function HotkeyRow({
         if (result.accelerator !== binding.accelerator) {
           apply(result.accelerator);
         }
-        return;
     }
   }
 

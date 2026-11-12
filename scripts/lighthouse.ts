@@ -114,7 +114,9 @@ async function waitForServer(url: string): Promise<void> {
     } catch {
       // まだ起動していない
     }
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 500);
+    });
   }
   throw new Error(`サイトに接続できませんでした: ${url}`);
 }
@@ -261,7 +263,9 @@ async function measureAll(): Promise<Run[]> {
 
 // fail は process.exit で終わり finally を飛ばすので、preview を止めてから失敗にする
 const results = await measureAll()
-  .finally(() => preview?.kill())
+  .finally(() => {
+    preview?.kill();
+  })
   .catch((error: unknown) => fail(error instanceof Error ? error.message : String(error)));
 
 const rows = summarize(results);

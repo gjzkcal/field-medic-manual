@@ -29,9 +29,9 @@ const SPLIT_HEADINGS = "h1, h2, h3";
 const HEADING_LEVEL: Record<string, number> = { H1: 1, H2: 2, H3: 3 };
 // 見出しを含むこれらの要素は分割の邪魔になるので中身だけを並べ直す（Readability の出力や <section> で組んだページのため）
 const CONTAINERS = new Set(["DIV", "SECTION", "ARTICLE", "MAIN", "HEADER", "FOOTER", "ASIDE"]);
-const TAG_COMMENT = /^\s*tags\s*[:：](.*)$/is;
-const TAG_LINE = /^\s*(?:タグ|tags)\s*[:：](.*)$/is;
-const MODS_COMMENT = /^\s*mods\s*[:：](.*)$/is;
+const TAG_COMMENT = /^\s*tags\s*[:：](.*)$/isu;
+const TAG_LINE = /^\s*(?:タグ|tags)\s*[:：](.*)$/isu;
+const MODS_COMMENT = /^\s*mods\s*[:：](.*)$/isu;
 const NO_CONDITIONS: ModConditions = { mods: [], withoutMods: [] };
 
 /** HTML の文字列をセクションに分ける。DOMParser で作った文書はスクリプトを実行せず、画像なども読みに行かない。 */
@@ -171,10 +171,10 @@ function takeSectionMarkers(nodes: Node[], where: string, warnings: string[]): S
     const mods = comment === null ? undefined : MODS_COMMENT.exec(comment)?.[1];
     if (tags !== undefined) {
       markers.tags = parseTags(tags);
-    } else if (mods !== undefined) {
-      markers.conditions = parseModConditions(mods, where, warnings);
-    } else {
+    } else if (mods === undefined) {
       break;
+    } else {
+      markers.conditions = parseModConditions(mods, where, warnings);
     }
     nodes.splice(index, 1);
   }
@@ -247,7 +247,7 @@ async function importImages(
       assets.set(asset.id, asset);
       img.removeAttribute("src");
       img.removeAttribute("srcset");
-      img.setAttribute("data-asset-id", asset.id);
+      img.dataset["assetId"] = asset.id;
       continue;
     }
     if (isHttpUrl(src)) {
@@ -274,11 +274,12 @@ function imageLinkLabel(alt: string, src: string): string {
 }
 
 function isHttpUrl(src: string): boolean {
-  return /^https?:\/\//i.test(src);
+  // i と u を一緒に付けると ſ（U+017F）が s に当たるので、大文字小文字は文字クラスで書く
+  return /^[Hh][Tt]{2}[Pp][Ss]?:\/\//u.test(src);
 }
 
 async function dataUriToAsset(src: string, n: number): Promise<NormalizedAsset | null> {
-  const match = /^data:([^;,]+)((?:;[^;,]+)*?)(;base64)?,(.*)$/is.exec(src);
+  const match = /^data:([^;,]+)((?:;[^;,]+)*?)(;base64)?,(.*)$/isu.exec(src);
   const mime = match?.[1]?.toLowerCase();
   const payload = match?.[4];
   if (mime === undefined || payload === undefined || !mime.startsWith("image/")) {
@@ -287,7 +288,7 @@ async function dataUriToAsset(src: string, n: number): Promise<NormalizedAsset |
   const bytes =
     match?.[3] === undefined
       ? new TextEncoder().encode(decodeURIComponent(payload))
-      : Uint8Array.from(atob(payload), (c) => c.charCodeAt(0));
+      : Uint8Array.from(atob(payload), (c) => c.codePointAt(0) ?? 0);
   return {
     id: await sha256Hex(bytes),
     fileName: `image-${String(n)}.${extensionForMime(mime)}`,

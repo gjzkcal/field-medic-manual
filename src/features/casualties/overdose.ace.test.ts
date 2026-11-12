@@ -159,9 +159,9 @@ describe("時間をずらして打った場合: 画面の時刻に N 本を打�
     "$drug $line 痛み・気胸 $inPain 前の投与 $prior s",
     ({ drug, line, inPain, prior }) => {
       const limit = overdoseLimit(medication, drug, line, inPain);
+      // 激痛のフェニレフリンは「1 本でも危険」なので、時刻を出さない
+      expect(limit.kind === "limit" || (drug === "phenylephrine" && inPain)).toBe(true);
       if (limit.kind !== "limit") {
-        // 激痛のフェニレフリンは「1 本でも危険」なので、時刻を出さない
-        expect(drug === "phenylephrine" && inPain).toBe(true);
         return;
       }
       const priorSeconds = prior.split(",").map(Number);

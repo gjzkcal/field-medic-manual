@@ -59,7 +59,7 @@ export function buildStore(
   const ids = new Set<string>();
   let nextSectionId = 1;
   // 節の id は文書をまたいで一意にする（検索結果の key が section:<id> のため）。同期の順（ファイル名順）で振る
-  const sorted = [...docs].sort((a, b) => compareBinary(a.sourcePath, b.sourcePath));
+  const sorted = [...docs].toSorted((a, b) => compareBinary(a.sourcePath, b.sourcePath));
   const details = sorted.map((doc): DocDetail => {
     const id = webDocId(doc.sourcePath);
     if (ids.has(id)) {
@@ -85,7 +85,7 @@ export function buildStore(
       originalAssetId: null,
       assets: doc.assets
         .map((a) => ({ id: a.id, mime: a.mime, fileName: a.fileName, size: a.bytes.byteLength }))
-        .sort((a, b) =>
+        .toSorted((a, b) =>
           firstNonZero(compareBinary(a.fileName, b.fileName), compareBinary(a.id, b.id)),
         ),
       sections,
@@ -99,9 +99,9 @@ export function buildStore(
     flowIds.add(flow.detail.id);
   }
   return {
-    docs: details.sort((a, b) => compareListOrder(docOrderKey(a), docOrderKey(b))),
+    docs: details.toSorted((a, b) => compareListOrder(docOrderKey(a), docOrderKey(b))),
     quickref,
-    flows: [...flows].sort((a, b) => compareListOrder(flowOrderKey(a), flowOrderKey(b))),
+    flows: [...flows].toSorted((a, b) => compareListOrder(flowOrderKey(a), flowOrderKey(b))),
     assets,
   };
 }
@@ -173,7 +173,7 @@ export function tagCounts(store: WebStore): TagCount[] {
       }
     }
   }
-  return [...counts.values()].sort((a, b) => compareNoCase(a.name, b.name));
+  return [...counts.values()].toSorted((a, b) => compareNoCase(a.name, b.name));
 }
 
 /** 検索で節のタグを探す列（デスクトップ版の sections.keywords と同じく空白でつなぐ）。 */
@@ -293,6 +293,6 @@ class TagNames {
         this.names.set(key, tag);
         return tag;
       })
-      .sort(compareNoCase);
+      .toSorted(compareNoCase);
   }
 }

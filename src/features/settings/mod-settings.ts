@@ -37,7 +37,7 @@ export function parseModSettings(value: unknown): ModSettings {
     return DEFAULT_MOD_SETTINGS;
   }
   const items: unknown[] = enabled;
-  const chosen = new Set(items.filter(isSelectableMod));
+  const chosen = new Set(items.filter((item) => isSelectableMod(item)));
   return { enabled: SELECTABLE_MODS.filter((mod) => chosen.has(mod)) };
 }
 

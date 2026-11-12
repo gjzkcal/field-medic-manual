@@ -58,7 +58,7 @@ function yamlStrings(value: unknown): string[] {
     return [value];
   }
   if (Array.isArray(value)) {
-    return value.flatMap(yamlStrings);
+    return value.flatMap((item) => yamlStrings(item));
   }
   if (typeof value === "object" && value !== null) {
     return Object.entries(value).flatMap(([key, v]) =>
@@ -146,12 +146,12 @@ const units = [...(await manualUnits()), ...(await quickrefUnits()), ...(await f
  */
 function displayNamePattern(name: string): RegExp {
   const body = name
-    .split(/%\d/)
-    .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .split(/%\d/u)
+    .map((part) => part.replaceAll(/[.*+?^${}()|[\]\\]/gu, "\\$&"))
     .join("\\S+");
-  const start = /^[A-Za-z0-9]/.test(name) ? "(?<![A-Za-z0-9_])" : "";
-  const end = /[A-Za-z0-9]$/.test(name) ? "(?![A-Za-z0-9_])" : "";
-  return new RegExp(`${start}${body}${end}`, "gi");
+  const start = /^[A-Za-z0-9]/u.test(name) ? "(?<![A-Za-z0-9_])" : "";
+  const end = /[A-Za-z0-9]$/u.test(name) ? "(?![A-Za-z0-9_])" : "";
+  return new RegExp(`${start}${body}${end}`, "giu");
 }
 
 /**
@@ -160,7 +160,7 @@ function displayNamePattern(name: string): RegExp {
  */
 function englishUsedAsName(text: string, en: string): string[] {
   return Array.from(text.matchAll(displayNamePattern(en)))
-    .filter((m) => !/[（(]$/.test(text.slice(0, m.index)))
+    .filter((m) => !/[（(]$/u.test(text.slice(0, m.index)))
     .map((m) => m[0]);
 }
 
@@ -179,23 +179,24 @@ function firstMentionAnnotated(text: string, manual: string, en: string): boolea
 
 describe("英語の表示名の見つけ方", () => {
   it("語の境界と、通知の数値の位置を扱う", () => {
-    expect(englishUsedAsName("Bandage を巻く", "Bandage")).toEqual(["Bandage"]);
-    expect(englishUsedAsName("Bandages", "Bandage")).toEqual([]);
-    expect(englishUsedAsName("ACE_Medical_Epinephrine", "Epinephrine")).toEqual([]);
-    expect(englishUsedAsName("「perform cpr」", "Perform CPR")).toEqual(["perform cpr"]);
-    expect(englishUsedAsName("You find a heart rate of 80", "You find a heart rate of %1")).toEqual(
-      ["You find a heart rate of 80"],
+    expect(englishUsedAsName("Bandage を巻く", "Bandage")).toStrictEqual(["Bandage"]);
+    expect(englishUsedAsName("Bandages", "Bandage")).toStrictEqual([]);
+    expect(englishUsedAsName("ACE_Medical_Epinephrine", "Epinephrine")).toStrictEqual([]);
+    expect(englishUsedAsName("「perform cpr」", "Perform CPR")).toStrictEqual(["perform cpr"]);
+    expect(
+      englishUsedAsName("You find a heart rate of 80", "You find a heart rate of %1"),
+    ).toStrictEqual(["You find a heart rate of 80"]);
+    expect(englishUsedAsName("patients", "Administered to unconscious patients.")).toStrictEqual(
+      [],
     );
-    expect(englishUsedAsName("patients", "Administered to unconscious patients.")).toEqual([]);
   });
 
   it("日本語の後の括弧の注記は数えず、名前として使った所だけを返す", () => {
-    expect(englishUsedAsName("「怪我が酷い（Too injured）」", "Too injured")).toEqual([]);
-    expect(englishUsedAsName("止血帯(Tourniquet)", "Tourniquet")).toEqual([]);
-    expect(englishUsedAsName("Too injured（怪我が酷い）と Too injured", "Too injured")).toEqual([
-      "Too injured",
-      "Too injured",
-    ]);
+    expect(englishUsedAsName("「怪我が酷い（Too injured）」", "Too injured")).toStrictEqual([]);
+    expect(englishUsedAsName("止血帯(Tourniquet)", "Tourniquet")).toStrictEqual([]);
+    expect(
+      englishUsedAsName("Too injured（怪我が酷い）と Too injured", "Too injured"),
+    ).toStrictEqual(["Too injured", "Too injured"]);
   });
 
   it("初出の併記は、最初に出た所だけを見る", () => {
@@ -239,7 +240,7 @@ describe("原稿・クイック表・フローの表示名", () => {
       expect(
         found,
         `ゲームを日本語にしていると「${term.ja}」と表示されます。日本語の表示名で書き、英語を添えるなら「${term.ja}（${term.en}）」の形にしてください（content/glossary.yaml の ${term.id}）`,
-      ).toEqual([]);
+      ).toStrictEqual([]);
     },
   );
 
@@ -270,7 +271,7 @@ describe("原稿・クイック表・フローの表示名", () => {
       expect(
         missing,
         `ゲームでは日本語にしていても「${term.en}」と英語で表示されます。最初に出る所を「${term.manual}（${term.en}）」の形にしてください（content/glossary.yaml の ${term.id}）`,
-      ).toEqual([]);
+      ).toStrictEqual([]);
     },
   );
 });

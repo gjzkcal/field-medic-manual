@@ -21,6 +21,6 @@ export function slugify(text: string): string {
   return text
     .trim()
     .toLowerCase()
-    .replace(/[^\p{L}\p{M}\p{N}\p{Pc}\- ]/gu, "")
-    .replace(/ /g, "-");
+    .replaceAll(/[^\p{L}\p{M}\p{N}\p{Pc}\- ]/gu, "")
+    .replaceAll(' ', "-");
 }

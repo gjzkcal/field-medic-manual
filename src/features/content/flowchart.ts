@@ -38,9 +38,9 @@ export type FlowchartNode = z.infer<typeof flowchartNodeSchema>;
 export type FlowchartEdge = z.infer<typeof flowchartEdgeSchema>;
 type Shape = FlowchartNode["shape"];
 
-const HEADER = /^(?:flowchart|graph)\s+(\S+)$/;
+const HEADER = /^(?:flowchart|graph)\s+(\S+)$/u;
 const DIRECTIONS: Record<string, FlowchartPayload["direction"]> = { TD: "TB", TB: "TB", LR: "LR" };
-const ACC_TITLE = /^accTitle\s*:\s*(.*)$/;
+const ACC_TITLE = /^accTitle\s*:\s*(.*)$/u;
 const UNSUPPORTED_KEYWORDS = new Set([
   "subgraph",
   "end",
@@ -52,7 +52,7 @@ const UNSUPPORTED_KEYWORDS = new Set([
   "direction",
   "accDescr",
 ]);
-const NODE_ID = /^[A-Za-z0-9_]+/;
+const NODE_ID = /^[A-Za-z0-9_]+/u;
 // 長い開きを先に試す（`([` を `(` と読まないため）
 const SHAPES: { open: string; close: string; shape: Shape }[] = [
   { open: "([", close: "])", shape: "stadium" },
@@ -61,8 +61,8 @@ const SHAPES: { open: string; close: string; shape: Shape }[] = [
   { open: "{", close: "}", shape: "diamond" },
 ];
 // 引用符なしの文字にこれらがあると、mermaid と読み方が食い違う（GitHub で別の図になる）ので引用符を求める
-const RESERVED_IN_TEXT = /[[\](){}"|]/;
-const LINE_BREAK = /<br\s*\/?>/i;
+const RESERVED_IN_TEXT = /[[\](){}"|]/u;
+const LINE_BREAK = /<br\s*\/?>/iu;
 
 class FlowchartError extends Error {}
 
@@ -77,7 +77,7 @@ interface NodeDraft {
 export function parseFlowchart(
   text: string,
 ): { payload: FlowchartPayload } | { error: string } {
-  const lines = text.split(/\r?\n/);
+  const lines = text.split(/\r?\n/u);
   let direction: FlowchartPayload["direction"] | null = null;
   let title: string | null = null;
   const nodes = new Map<string, NodeDraft>();
@@ -90,7 +90,7 @@ export function parseFlowchart(
     }
     const at = `${String(index + 1)} 行目`;
     if (direction === null) {
-      const header = HEADER.exec(line.replace(/;$/, ""));
+      const header = HEADER.exec(line.replace(/;$/u, ""));
       const value = header?.[1];
       if (value === undefined) {
         return { error: `${at}: 1 行目は「flowchart TD」か「flowchart LR」にしてください` };
@@ -112,7 +112,7 @@ export function parseFlowchart(
       continue;
     }
     // 語の後ろまで見る（`classA` のような id を `class` と取り違えないため）
-    const keyword = /^([A-Za-z]+)(?=[\s:{]|$)/.exec(line)?.[1];
+    const keyword = /^([A-Za-z]+)(?=[\s:{]|$)/u.exec(line)?.[1];
     if (keyword !== undefined && UNSUPPORTED_KEYWORDS.has(keyword)) {
       return { error: `${at}: 「${keyword}」は使えません` };
     }
@@ -241,7 +241,7 @@ function parseStatement(
   function readEdge(): { dashed: boolean; lines: string[] } {
     rest = rest.trimStart();
     // `-- 文字 -->` / `-. 文字 .->`（文字を矢印の間に書く形）
-    const inline = /^(--|-\.)\s+(.+?)\s+(-->|\.->)/.exec(rest);
+    const inline = /^(--|-\.)\s+(.+?)\s+(-->|\.->)/u.exec(rest);
     if (inline !== null) {
       const dashed = inline[1] === "-.";
       if ((inline[3] === ".->") !== dashed) {
@@ -271,7 +271,7 @@ function parseStatement(
 function splitLines(text: string): string[] {
   return text
     .split(LINE_BREAK)
-    .map((line) => line.replace(/\s+/g, " ").trim())
+    .map((line) => line.replaceAll(/\s+/gu, " ").trim())
     .filter((line) => line !== "");
 }
 
@@ -298,7 +298,7 @@ export function markFlowcharts(body: HTMLElement, warnings: string[]): void {
 
 function flowchartFigure(doc: Document, payload: FlowchartPayload): HTMLElement {
   const figure = doc.createElement("figure");
-  figure.setAttribute("data-flowchart", JSON.stringify(payload));
+  figure.dataset["flowchart"] = JSON.stringify(payload);
   if (payload.title !== null) {
     figure.setAttribute("aria-label", payload.title);
   }

@@ -25,7 +25,7 @@ export function describeOps(ops: readonly ProposedOp[], casualties: readonly Cas
       ? { name: "（見つからない負傷者）", missing: true }
       : { name: `「${casualty.name}」`, missing: false };
   };
-  return ops.map((op) => {
+  const describe = (op: ProposedOp): OpView => {
     switch (op.action) {
       case "add_casualty": {
         created = op.name.trim() === "" ? "名前は自動" : op.name.trim();
@@ -74,5 +74,6 @@ export function describeOps(ops: readonly ProposedOp[], casualties: readonly Cas
         };
       }
     }
-  });
+  };
+  return ops.map((op) => describe(op));
 }

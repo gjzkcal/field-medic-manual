@@ -13,5 +13,5 @@ export function webDocId(sourcePath: string): string {
  * 検索語のハイライト（hl）は、送った相手の読む邪魔になるので入れない。
  */
 export function shareUrl(sourcePath: string, anchor: string | null): string {
-  return `${WEB_ORIGIN}${WEB_BASE.replace(/\/$/, "")}${docHref(webDocId(sourcePath), anchor)}`;
+  return `${WEB_ORIGIN}${WEB_BASE.replace(/\/$/u, "")}${docHref(webDocId(sourcePath), anchor)}`;
 }

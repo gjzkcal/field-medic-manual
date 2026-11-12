@@ -6,7 +6,7 @@ import { SectionBody } from "@/features/library/viewer/SectionBody";
 import { activeMods } from "@/features/settings/mod-settings";
 
 // jsdom には描画の大きさがなく Recharts はグラフを描けないので、受け取った系列を文字で出す部品に差し替える
-vi.mock("@/features/library/viewer/ManualChart", () => ({
+vi.mock(import("@/features/library/viewer/ManualChart"), () => ({
   ManualChart: ({ spec, data }: { spec: ChartSpec; data: ChartData }) => (
     <p data-testid="chart">
       {spec.x}: {data.series.map((s) => s.label).join(", ")} / {String(data.points.length)} 点
@@ -60,6 +60,9 @@ function tableHtml(json: string): string {
 
 const resolveAsset = (): Promise<string> => Promise.reject(new Error("画像はない"));
 
+const cells = (container: HTMLElement): string[] =>
+  Array.from(container.querySelectorAll("th, td")).map((c) => c.textContent);
+
 describe("SectionBody", () => {
   it("data-chart の付いた表の直前に、埋め込まれた点でグラフを描き、表は残す", async () => {
     const { container } = render(
@@ -97,7 +100,7 @@ describe("SectionBody", () => {
   it("表なしのグラフの形が合わないときは、空の figure を残さない", () => {
     const { container } = render(
       <SectionBody
-        html={`<figure data-chart="{"></figure><p>本文</p>`}
+        html='<figure data-chart="{"></figure><p>本文</p>'
         resolveAsset={resolveAsset}
         active={null}
       />,
@@ -132,8 +135,6 @@ describe("SectionBody", () => {
       "<tbody><tr><td>総量</td><td>750 ml</td><td>1500 ml</td></tr></tbody>",
       "</table>",
     ].join("");
-    const cells = (container: HTMLElement): string[] =>
-      Array.from(container.querySelectorAll("th, td")).map((c) => c.textContent);
 
     const filtered = render(
       <SectionBody
@@ -142,7 +143,7 @@ describe("SectionBody", () => {
         active={activeMods({ enabled: ["circulation"] })}
       />,
     );
-    expect(cells(filtered.container)).toEqual(["項目", "Circulation あり", "総量", "750 ml"]);
+    expect(cells(filtered.container)).toStrictEqual(["項目", "Circulation あり", "総量", "750 ml"]);
     cleanup();
 
     const all = render(<SectionBody html={html} resolveAsset={resolveAsset} active={null} />);

@@ -122,6 +122,13 @@ function DocMessage({ title, description }: { title: string; description: string
   );
 }
 
+// 中クリックは click ではなく auxclick で届き、WebView2 では新しいウィンドウが開いてしまうので止める
+function handleBodyAuxClick(event: MouseEvent<HTMLElement>): void {
+  if (event.target instanceof Element && event.target.closest("a[href]") !== null) {
+    event.preventDefault();
+  }
+}
+
 interface DocViewerProps {
   doc: DocDetail;
   outline: readonly DocOutline[];
@@ -155,7 +162,7 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
   }, []);
 
   // URL のアンカー（ツリー・目次・内部リンクで変わる）の見出しへ移る。同じアンカーを 2 回押しても移るよう location.key も見る
-  const hashAnchor = decodeAnchor(location.hash.replace(/^#/, ""));
+  const hashAnchor = decodeAnchor(location.hash.replace(/^#/u, ""));
 
   const modSettings = useModSettings((s) => s.settings);
   const active = useMemo(() => activeMods(modSettings), [modSettings]);
@@ -358,14 +365,6 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
       }
       case "unknown":
         setNotice("このリンクは開けません。");
-        return;
-    }
-  }
-
-  // 中クリックは click ではなく auxclick で届き、WebView2 では新しいウィンドウが開いてしまうので止める
-  function handleBodyAuxClick(event: MouseEvent<HTMLElement>): void {
-    if (event.target instanceof Element && event.target.closest("a[href]") !== null) {
-      event.preventDefault();
     }
   }
 

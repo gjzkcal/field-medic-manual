@@ -38,6 +38,7 @@ startThemeSync();
 const viewerSettingsLoaded = loadViewerSettings();
 // テーマと文字サイズは、もう一方のウィンドウ（メイン / 小窓）で変えてもすぐ反映する。
 // 使っている MOD は startCasualtySync が追う。ほかの設定は小窓を出すたびに読み直すので（OverlayApp）、ここでは追わない
+// oxlint-disable-next-line unicorn/prefer-top-level-await -- 購読の登録を待つと、最初の描画がその分遅れる
 void onSettingsChanged((key) => {
   if (key === VIEWER_SETTINGS_KEY) {
     void loadViewerSettings(true);

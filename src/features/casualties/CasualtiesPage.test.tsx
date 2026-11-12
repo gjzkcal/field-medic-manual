@@ -11,6 +11,22 @@ import type { Casualty } from "@/lib/bindings/Casualty";
 import type { CasualtyEntry } from "@/lib/bindings/CasualtyEntry";
 import { axeViolations } from "@/test/axe";
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+const ENTRY_KINDS: ReadonlySet<unknown> = new Set([
+  "drug",
+  "saline",
+  "tourniquet_on",
+  "tourniquet_off",
+  "note",
+]);
+
+function isCasualtyEntry(value: unknown): value is CasualtyEntry {
+  return isRecord(value) && ENTRY_KINDS.has(value["kind"]);
+}
+
 /** Rust の代わりに手元で記録を持つ。時刻は Date.now なので、テストが進めた時計に合う */
 function fakeBackend(): { casualties: Casualty[] } {
   const state = { casualties: [] as Casualty[] };
@@ -26,8 +42,11 @@ function fakeBackend(): { casualties: Casualty[] } {
     if (command !== "casualty_apply") {
       return null;
     }
-    const { op } = payload as { op: Record<string, unknown> & { op: string } };
-    if (op.op === "add_casualty") {
+    const op = isRecord(payload) ? payload["op"] : undefined;
+    if (!isRecord(op)) {
+      throw new Error("casualty_apply に op がありません");
+    }
+    if (op["op"] === "add_casualty") {
       state.casualties = [
         ...state.casualties,
         {
@@ -38,30 +57,31 @@ function fakeBackend(): { casualties: Casualty[] } {
           records: [],
         },
       ];
-    } else if (op.op === "set_pain") {
+    } else if (op["op"] === "set_pain") {
       state.casualties = state.casualties.map((c) =>
         c.id === op["casualtyId"] ? { ...c, inPain: op["inPain"] === true } : c,
       );
-    } else if (op.op === "add_record") {
+    } else if (op["op"] === "add_record") {
+      const entry = op["entry"];
+      if (!isCasualtyEntry(entry)) {
+        throw new Error("add_record の entry が記録の形ではありません");
+      }
       state.casualties = state.casualties.map((c) =>
         c.id === op["casualtyId"]
           ? {
               ...c,
-              records: [
-                ...c.records,
-                { id: nextId(), atMs: Date.now(), entry: op["entry"] as CasualtyEntry },
-              ],
+              records: [...c.records, { id: nextId(), atMs: Date.now(), entry }],
             }
           : c,
       );
-    } else if (op.op === "remove_record") {
+    } else if (op["op"] === "remove_record") {
       state.casualties = state.casualties.map((c) => ({
         ...c,
         records: c.records.filter((r) => r.id !== op["recordId"]),
       }));
-    } else if (op.op === "remove_casualty") {
+    } else if (op["op"] === "remove_casualty") {
       state.casualties = state.casualties.filter((c) => c.id !== op["casualtyId"]);
-    } else if (op.op === "clear_all") {
+    } else if (op["op"] === "clear_all") {
       state.casualties = [];
     }
     return state.casualties;
@@ -122,7 +142,7 @@ describe("CasualtiesPage", () => {
     await screen.findByRole("heading", { level: 3, name: "生理食塩水" });
     fireEvent.click(screen.getByRole("button", { name: "左腕の止血帯" }));
     await screen.findByRole("heading", { level: 3, name: "止血帯（左腕）" });
-    expect(await axeViolations()).toEqual([]);
+    expect(await axeViolations()).toStrictEqual([]);
   });
 
   it("タイマーは残り時間を読み上げ続けない", async () => {
@@ -190,12 +210,12 @@ describe("CasualtiesPage", () => {
     press("モルヒネ");
     const heading = await screen.findByRole("heading", { level: 3, name: "モルヒネ" });
     const card = heading.closest("[data-slot=card]");
-    expect(card).not.toBeNull();
-    if (card instanceof HTMLElement) {
-      expect(within(card).getByText("次を打てるまで")).toBeDefined();
-      expect(within(card).queryByText("消えるまで")).toBeNull();
-      expect(within(card).queryByRole("progressbar")).toBeNull();
+    if (!(card instanceof HTMLElement)) {
+      throw new TypeError("薬のカードが見つかりません");
     }
+    expect(within(card).getByText("次を打てるまで")).toBeDefined();
+    expect(within(card).queryByText("消えるまで")).toBeNull();
+    expect(within(card).queryByRole("progressbar")).toBeNull();
     press("エピネフリン");
     await screen.findByRole("heading", { level: 3, name: "エピネフリン" });
     expect(screen.getByText("30 s")).toBeDefined();
@@ -249,10 +269,10 @@ describe("CasualtiesPage", () => {
       target: { value: "右胸" },
     });
     press("残す");
-    fireEvent.click(await screen.findByRole("button", { name: /記録（2 件）/ }));
-    const removal = await screen.findByRole("button", { name: /メモ: 右胸を取り消す/ });
+    fireEvent.click(await screen.findByRole("button", { name: /記録（2 件）/u }));
+    const removal = await screen.findByRole("button", { name: /メモ: 右胸を取り消す/u });
     fireEvent.click(removal);
-    await screen.findByRole("button", { name: /記録（1 件）/ });
+    expect(await screen.findByRole("button", { name: /記録（1 件）/u })).toBeDefined();
   });
 
   it("小窓では、足した後は操作を畳み、誰もいなくなると開く", async () => {
@@ -278,10 +298,10 @@ describe("CasualtiesPage", () => {
     render(<CasualtiesPage compact />);
     await addCasualty();
     press("モルヒネ");
-    await screen.findByRole("button", { name: /記録（1 件）/ });
+    await screen.findByRole("button", { name: /記録（1 件）/u });
     press("直前の記録を取り消す");
     await waitFor(() => {
-      expect(screen.queryByRole("button", { name: /記録（1 件）/ })).toBeNull();
+      expect(screen.queryByRole("button", { name: /記録（1 件）/u })).toBeNull();
     });
   });
 });

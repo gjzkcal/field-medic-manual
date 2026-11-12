@@ -29,7 +29,7 @@ describe("prefKey", () => {
       QUICKREF,
       { kind: "flow", flowId: "d1" } satisfies PrefTarget,
       { kind: "quickref", rowId: "first-contact" } satisfies PrefTarget,
-    ].map(prefKey);
+    ].map((target) => prefKey(target));
     expect(new Set(keys).size).toBe(keys.length);
   });
 

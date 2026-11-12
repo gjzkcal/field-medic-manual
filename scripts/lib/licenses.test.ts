@@ -49,7 +49,7 @@ describe("groupNpmLicenses", () => {
       { name: "c", version: "1.0.0", license: "MIT", texts: ["MIT text (c) Y"] },
       { name: "d", version: "1.0.0", license: "ISC", texts: [] },
     ]);
-    expect(groups.map((g) => [g.license, g.packages])).toEqual([
+    expect(groups.map((g) => [g.license, g.packages])).toStrictEqual([
       ["ISC", ["d 1.0.0"]],
       ["MIT", ["a 2.0.0", "b 1.0.0"]],
       ["MIT", ["c 1.0.0"]],
@@ -72,7 +72,7 @@ describe("groupCargoLicenses", () => {
         },
       ],
     });
-    expect(groups).toEqual([
+    expect(groups).toStrictEqual([
       { license: "MIT", packages: ["alpha 0.1.0", "zeta 1.0.0"], text: "MIT" },
     ]);
   });
@@ -96,8 +96,8 @@ describe("renderNotice", () => {
 describe("about.toml", () => {
   it("accepted が ALLOWED_LICENSES と一致する", () => {
     const toml = readFileSync(join(ROOT, "src-tauri", "about.toml"), "utf8");
-    const accepted = /accepted\s*=\s*\[([^\]]*)\]/.exec(toml)?.[1] ?? "";
-    const ids = [...accepted.matchAll(/"([^"]+)"/g)].map((m) => m[1]);
-    expect(ids).toEqual([...ALLOWED_LICENSES]);
+    const accepted = /accepted\s*=\s*\[([^\]]*)\]/u.exec(toml)?.[1] ?? "";
+    const ids = [...accepted.matchAll(/"([^"]+)"/gu)].map((m) => m[1]);
+    expect(ids).toStrictEqual([...ALLOWED_LICENSES]);
   });
 });

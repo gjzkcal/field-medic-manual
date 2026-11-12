@@ -80,13 +80,13 @@ export function safeAtMs(
   const monotoneFrom = Math.ceil(peak);
   let safeFrom: number | null = null;
   for (let start = 0; start <= expiry; start += 1) {
-    if (!isSafe(start)) {
-      safeFrom = null;
-    } else {
+    if (isSafe(start)) {
       safeFrom ??= start;
       if (start >= monotoneFrom) {
         break;
       }
+    } else {
+      safeFrom = null;
     }
   }
   return lastAtMs + (safeFrom ?? expiry) * MS + SAFETY_MARGIN_MS;

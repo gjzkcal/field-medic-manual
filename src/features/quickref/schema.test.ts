@@ -35,7 +35,7 @@ describe("parseQuickref", () => {
       return;
     }
     expect(result.file.modChannel).toBe("dev");
-    expect(toQuickrefRows(result.file)).toEqual([
+    expect(toQuickrefRows(result.file)).toStrictEqual([
       {
         id: "limb-bleeding",
         category: "出血",
@@ -58,52 +58,52 @@ describe("parseQuickref", () => {
 
   it("重症度は 4 つの言葉だけ", () => {
     const names = ["軽度", "中等度", "重度", "致命的"];
-    names.forEach((severity, i) => {
+    for (const [i, severity] of names.entries()) {
       const result = parseQuickref(file([row({ severity })]));
       expect(result.ok && toQuickrefRows(result.file)[0]?.severity).toBe(i + 1);
-    });
-    expect(messages(file([row({ severity: "重篤" })]))[0]).toMatch(/^rows\.0\.severity: /);
-    expect(messages(file([row({ severity: 4 })]))).not.toEqual([]);
+    }
+    expect(messages(file([row({ severity: "重篤" })]))[0]).toMatch(/^rows\.0\.severity: /u);
+    expect(messages(file([row({ severity: 4 })]))).not.toStrictEqual([]);
   });
 
   it("必須項目の抜けはどこが抜けたかを返す", () => {
     for (const key of ["id", "category", "symptom", "severity", "treatment", "links"]) {
-      expect(messages(file([omit(row(), key)])).join("\n"), key).toContain(`rows.0.${key}`);
+      expect(messages(file([omit(row(), key)])).join("\n")).toContain(`rows.0.${key}`);
     }
     expect(messages(omit(file([row()]), "verifiedAt")).join("\n")).toContain("verifiedAt");
-    expect(messages(file([]))).not.toEqual([]);
+    expect(messages(file([]))).not.toStrictEqual([]);
   });
 
   it("空の手順・リンクと、知らないキーはエラー", () => {
-    expect(messages(file([row({ treatment: [] })]))).not.toEqual([]);
-    expect(messages(file([row({ treatment: [" "] })]))).not.toEqual([]);
-    expect(messages(file([row({ links: [] })]))).not.toEqual([]);
-    expect(messages(file([row({ note: "typo" })]))).not.toEqual([]);
-    expect(messages({ ...file([row()]), title: "typo" })).not.toEqual([]);
+    expect(messages(file([row({ treatment: [] })]))).not.toStrictEqual([]);
+    expect(messages(file([row({ treatment: [" "] })]))).not.toStrictEqual([]);
+    expect(messages(file([row({ links: [] })]))).not.toStrictEqual([]);
+    expect(messages(file([row({ note: "typo" })]))).not.toStrictEqual([]);
+    expect(messages({ ...file([row()]), title: "typo" })).not.toStrictEqual([]);
   });
 
   it("id はスラッグで、重複しない", () => {
-    expect(messages(file([row({ id: "Limb_Bleeding" })]))).not.toEqual([]);
+    expect(messages(file([row({ id: "Limb_Bleeding" })]))).not.toStrictEqual([]);
     expect(messages(file([row(), row()])).join("\n")).toContain("重複");
   });
 
   it("カテゴリは決まった分類語だけ", () => {
-    expect(messages(file([row({ category: "痛み" })]))).not.toEqual([]);
+    expect(messages(file([row({ category: "痛み" })]))).not.toStrictEqual([]);
   });
 
   it("リンクの書式を確かめる", () => {
-    expect(messages(file([row({ links: ["doc:<documentId>"] })]))).not.toEqual([]);
+    expect(messages(file([row({ links: ["doc:<documentId>"] })]))).not.toStrictEqual([]);
     expect(
       messages(file([row({ links: ["flow:casualty-first-contact", "quickref:other-row"] })])),
-    ).toEqual([]);
+    ).toStrictEqual([]);
   });
 
   it("MOD の条件は設定で選べる MOD だけで、mods と withoutMods は重ならない", () => {
-    expect(messages(file([row({ mods: ["circulation"], withoutMods: ["breathing"] })]))).toEqual(
-      [],
-    );
-    expect(messages(file([row({ withoutMods: ["core"] })]))).not.toEqual([]);
-    expect(messages(file([row({ mods: ["general"] })]))).not.toEqual([]);
+    expect(
+      messages(file([row({ mods: ["circulation"], withoutMods: ["breathing"] })])),
+    ).toStrictEqual([]);
+    expect(messages(file([row({ withoutMods: ["core"] })]))).not.toStrictEqual([]);
+    expect(messages(file([row({ mods: ["general"] })]))).not.toStrictEqual([]);
     expect(
       messages(file([row({ mods: ["circulation"], withoutMods: ["circulation"] })])).join("\n"),
     ).toContain("circulation");

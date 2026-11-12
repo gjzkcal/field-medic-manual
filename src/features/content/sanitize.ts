@@ -29,7 +29,8 @@ const CONFIG: Config = {
   // src / srcset を残すと閲覧時に外部やローカルのファイルを読みに行く。画像は data-asset-id で参照する
   FORBID_ATTR: ["style", "src", "srcset"],
   // 既定は ftp・tel・sms なども通す。本文のリンクは openExternal で開ける種類（src/lib/external-url.ts）と相対パスだけにする
-  ALLOWED_URI_REGEXP: /^(?:https?:|[^a-z]|[a-z+.-]+(?:[^a-z+.:-]|$))/i,
+  // i と u を一緒に付けると ſ（U+017F）と K（U+212A）が英字に当たり、判定が変わる。大文字小文字は文字クラスで書く
+  ALLOWED_URI_REGEXP: /^(?:[Hh][Tt]{2}[Pp][Ss]?:|[^A-Za-z]|[A-Za-z+.-]+(?:[^A-Za-z+.:-]|$))/u,
   ALLOW_DATA_ATTR: false,
   // data-chart はグラフにする表の印、data-flowchart はフローチャートの中身（どちらも JSON）。ビューアは形を確かめてから使い、HTML としては扱わない
   ADD_ATTR: ["data-asset-id", "data-chart", "data-flowchart", "data-mod-columns"],
@@ -67,7 +68,7 @@ export function sanitizeHtml(dirty: string): SanitizedHtml {
 
 /** 見出しなどの短い文字列。HTML ではなく文字列として扱うので、空白をまとめるだけにする。 */
 export function cleanInlineText(text: string): string {
-  return text.replace(/\s+/g, " ").trim();
+  return text.replaceAll(/\s+/gu, " ").trim();
 }
 
 const BLOCK_TAGS = new Set([
@@ -110,11 +111,11 @@ export function toPlainText(root: Node): string {
   walk(root, out);
   return out
     .join("")
-    .replace(/[^\S\n]+/g, " ")
+    .replaceAll(/[^\S\n]+/gu, " ")
     .split("\n")
     .map((line) => line.trim())
     .join("\n")
-    .replace(/\n{3,}/g, "\n\n")
+    .replaceAll(/\n{3,}/gu, "\n\n")
     .trim();
 }
 

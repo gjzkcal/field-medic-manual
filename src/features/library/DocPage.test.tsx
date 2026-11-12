@@ -190,6 +190,10 @@ const OUTLINE: DocOutline[] = [
 const opened: unknown[] = [];
 const revoked: string[] = [];
 
+function scrollTo(): void {
+  // 位置の計算は jsdom ではできないので、呼べることだけを確かめる
+}
+
 beforeEach(() => {
   useModSettings.setState({ settings: DEFAULT_MOD_SETTINGS });
   opened.length = 0;
@@ -204,9 +208,7 @@ beforeEach(() => {
     configurable: true,
     value: (url: string) => revoked.push(url),
   });
-  Element.prototype.scrollTo = function scrollTo(): void {
-    // 位置の計算は jsdom ではできないので、呼べることだけを確かめる
-  };
+  Element.prototype.scrollTo = scrollTo;
   // Base UI の ScrollArea がスクロールバーの表示を切り替えるときに使う
   Element.prototype.getAnimations = (): Animation[] => [];
   vi.stubGlobal(
@@ -306,7 +308,7 @@ describe("DocPage", () => {
     const [drawn, broken] = Array.from(figures);
     const svg = drawn?.querySelector("svg");
     expect(svg?.getAttribute("aria-hidden")).toBe("true");
-    expect(Array.from(svg?.querySelectorAll("tspan") ?? [], (t) => t.textContent)).toEqual([
+    expect(Array.from(svg?.querySelectorAll("tspan") ?? [], (t) => t.textContent)).toStrictEqual([
       "包帯を巻く",
       "出血が",
       "止まる",
@@ -314,7 +316,7 @@ describe("DocPage", () => {
     ]);
     expect(svg?.querySelector("polygon")).not.toBeNull();
     expect(svg?.querySelector("path.manual-flowchart-edge")?.getAttribute("marker-end")).toMatch(
-      /^url\(#flowchart-arrow-[A-Za-z0-9_-]+\)$/,
+      /^url\(#flowchart-arrow-[A-Za-z0-9_-]+\)$/u,
     );
     expect(drawn?.querySelector(".manual-flowchart-text")?.textContent).toBe(
       "包帯を巻く → 出血が 止まる（10 s）",
@@ -329,7 +331,7 @@ describe("DocPage", () => {
 
     const img = await screen.findByAltText("図");
     await waitFor(() => {
-      expect(img.getAttribute("src")).toMatch(/^blob:test\//);
+      expect(img.getAttribute("src")).toMatch(/^blob:test\//u);
     });
     const url = img.getAttribute("src");
 
@@ -343,7 +345,9 @@ describe("DocPage", () => {
     fireEvent.click(await screen.findByText("出典"));
 
     await waitFor(() => {
-      expect(opened).toEqual([expect.objectContaining({ url: "https://anvil.acemod.org/dev/" })]);
+      expect(opened).toStrictEqual([
+        expect.objectContaining({ url: "https://anvil.acemod.org/dev/" }),
+      ]);
     });
     expect(router.state.location.pathname).toBe("/doc/d1");
   });
@@ -357,7 +361,7 @@ describe("DocPage", () => {
     fireEvent.click(link);
 
     await waitFor(() => {
-      expect(opened).toEqual([
+      expect(opened).toStrictEqual([
         expect.objectContaining({ url: "https://github.com/acemod/ACE-Anvil/commit/af008614" }),
       ]);
     });
@@ -383,7 +387,7 @@ describe("DocPage", () => {
     await waitFor(() => {
       expect(document.querySelector(".manual-flowchart svg")).not.toBeNull();
     });
-    expect(await axeViolations()).toEqual([]);
+    expect(await axeViolations()).toStrictEqual([]);
   });
 
   it("読み込みの途中で本文の領域にフォーカスがあれば、読み込めたら表題（h1）へ移す", async () => {
@@ -488,7 +492,7 @@ describe("DocPage", () => {
           "https://gjzkcal.github.io/field-medic-manual/doc/hemorrhage",
         );
       });
-      expect(await axeViolations(document.body)).toEqual([]);
+      expect(await axeViolations(document.body)).toStrictEqual([]);
     } finally {
       Reflect.deleteProperty(navigator, "clipboard");
     }
@@ -515,7 +519,7 @@ describe("DocPage", () => {
     await waitFor(() => {
       const ranges = highlights.get("search-hit")?.ranges ?? [];
       // 見出しと本文と、遅れて描かれる図の文字の 3 か所（目次の中は本文の外、図の文のリストは画面から隠しているので数えない）
-      expect(ranges.map(String)).toEqual(["包帯", "包帯", "包帯"]);
+      expect(ranges.map(String)).toStrictEqual(["包帯", "包帯", "包帯"]);
       expect(ranges[2]?.startContainer.parentElement?.closest("svg")).not.toBeNull();
     });
 

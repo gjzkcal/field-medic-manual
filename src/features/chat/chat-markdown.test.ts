@@ -19,17 +19,17 @@ function html(fragment: DocumentFragment): string {
 
 describe("splitBlocks", () => {
   it("空行で塊に分け、書いている途中なら最後の塊は書きかけにする", () => {
-    expect(splitBlocks("一段落目\n\n二段落", true)).toEqual({
+    expect(splitBlocks("一段落目\n\n二段落", true)).toStrictEqual({
       blocks: ["一段落目\n"],
       tail: "二段落",
     });
     // 次の塊が始まるまでは、最後の塊が閉じたか分からない（続きが字下げのこともある）
-    expect(splitBlocks("一段落目\n\n", true)).toEqual({ blocks: [], tail: "一段落目\n\n" });
-    expect(splitBlocks("一段落目\n\n二段落", false)).toEqual({
+    expect(splitBlocks("一段落目\n\n", true)).toStrictEqual({ blocks: [], tail: "一段落目\n\n" });
+    expect(splitBlocks("一段落目\n\n二段落", false)).toStrictEqual({
       blocks: ["一段落目\n", "二段落"],
       tail: "",
     });
-    expect(splitBlocks("", false)).toEqual({ blocks: [], tail: "" });
+    expect(splitBlocks("", false)).toStrictEqual({ blocks: [], tail: "" });
   });
 
   it("書きかけの表は塊にしない", () => {
@@ -39,18 +39,18 @@ describe("splitBlocks", () => {
 
   it("コードの囲み・式の中と、字下げした続きの前の空行では区切らない", () => {
     const code = "前\n\n```\nx\n\ny\n```\n\n後";
-    expect(splitBlocks(code, false).blocks).toEqual(["前\n", "```\nx\n\ny\n```\n", "後"]);
+    expect(splitBlocks(code, false).blocks).toStrictEqual(["前\n", "```\nx\n\ny\n```\n", "後"]);
     const math = "前\n\n$$\na\n\nb\n";
-    expect(splitBlocks(math, true)).toEqual({ blocks: ["前\n"], tail: "$$\na\n\nb\n" });
+    expect(splitBlocks(math, true)).toStrictEqual({ blocks: ["前\n"], tail: "$$\na\n\nb\n" });
     const list = "- 項目\n\n  続き\n\n次";
-    expect(splitBlocks(list, false).blocks).toEqual(["- 項目\n\n  続き\n", "次"]);
+    expect(splitBlocks(list, false).blocks).toStrictEqual(["- 項目\n\n  続き\n", "次"]);
   });
 });
 
 describe("splitFigures", () => {
   it("figure の囲みを図の部分にする", () => {
     const text = "止血帯を巻きます。\n\n```figure\ndoc:tourniquet.md#巻く位置\n```\n\n続き";
-    expect(splitFigures(text)).toEqual([
+    expect(splitFigures(text)).toStrictEqual([
       { kind: "markdown", text: "止血帯を巻きます。\n\n" },
       { kind: "figure", source: "doc:tourniquet.md#巻く位置" },
       { kind: "markdown", text: "\n\n続き" },
@@ -58,8 +58,8 @@ describe("splitFigures", () => {
   });
 
   it("図がなければ本文だけ", () => {
-    expect(splitFigures("本文")).toEqual([{ kind: "markdown", text: "本文" }]);
-    expect(splitFigures("")).toEqual([]);
+    expect(splitFigures("本文")).toStrictEqual([{ kind: "markdown", text: "本文" }]);
+    expect(splitFigures("")).toStrictEqual([]);
   });
 });
 
@@ -103,10 +103,10 @@ describe("placeCitationMarks", () => {
         ),
       );
       const slots = placeCitationMarks(root);
-      expect(slots.map((s) => s.index)).toEqual([0, 1]);
+      expect(slots.map((s) => s.index)).toStrictEqual([0, 1]);
       expect(slots[0]?.slot.parentElement?.tagName).toBe("P");
       expect(slots[1]?.slot.parentElement?.tagName).toBe("TD");
-      expect(root.textContent).not.toMatch(/[\uE000\uE001]/);
+      expect(root.textContent).not.toMatch(/[\uE000\uE001]/u);
     },
     CONVERT_TIMEOUT_MS,
   );
@@ -133,7 +133,7 @@ describe("placeFlowLinks", () => {
         await renderChatMarkdown("[痛みを抑える](flow:pain) と [外部](https://example.com)"),
       );
       const flows = placeFlowLinks(root);
-      expect(flows.map(({ flowId, label }) => ({ flowId, label }))).toEqual([
+      expect(flows.map(({ flowId, label }) => ({ flowId, label }))).toStrictEqual([
         { flowId: "pain", label: "痛みを抑える" },
       ]);
       expect(root.querySelector("a")).toBeNull();

@@ -47,23 +47,25 @@ const ids = (docs: readonly DocSummary[]): string[] => docs.map((d) => d.id);
 
 describe("filterDocs", () => {
   it("条件がなければすべて", () => {
-    expect(ids(filterDocs(DOCS, EMPTY_FILTER, NOW))).toEqual(["a", "b", "c"]);
+    expect(ids(filterDocs(DOCS, EMPTY_FILTER, NOW))).toStrictEqual(["a", "b", "c"]);
   });
 
   it("モジュールはいずれかに当てはまるもの", () => {
     const filter = { ...EMPTY_FILTER, modTargets: ["core", "breathing"] as const };
-    expect(ids(filterDocs(DOCS, filter, NOW))).toEqual(["a", "c"]);
+    expect(ids(filterDocs(DOCS, filter, NOW))).toStrictEqual(["a", "c"]);
   });
 
   it("タグはすべてを持つもの", () => {
-    expect(ids(filterDocs(DOCS, { ...EMPTY_FILTER, tags: ["出血", "止血帯"] }, NOW))).toEqual([
-      "a",
-    ]);
-    expect(ids(filterDocs(DOCS, { ...EMPTY_FILTER, tags: ["出血", "CPR"] }, NOW))).toEqual([]);
+    expect(ids(filterDocs(DOCS, { ...EMPTY_FILTER, tags: ["出血", "止血帯"] }, NOW))).toStrictEqual(
+      ["a"],
+    );
+    expect(ids(filterDocs(DOCS, { ...EMPTY_FILTER, tags: ["出血", "CPR"] }, NOW))).toStrictEqual(
+      [],
+    );
   });
 
   it("古い内容だけ", () => {
-    expect(ids(filterDocs(DOCS, { ...EMPTY_FILTER, staleOnly: true }, NOW))).toEqual(["c"]);
+    expect(ids(filterDocs(DOCS, { ...EMPTY_FILTER, staleOnly: true }, NOW))).toStrictEqual(["c"]);
   });
 });
 
@@ -76,18 +78,18 @@ describe("sortDocs", () => {
       doc("w", "AI の治療", "2026-09-20T00:00:00.000Z", {}),
     ];
     // 英字は漢字より前に並ぶ
-    expect(ids(sortDocs(docs, "order"))).toEqual(["z", "y", "w", "x"]);
+    expect(ids(sortDocs(docs, "order"))).toStrictEqual(["z", "y", "w", "x"]);
   });
 
   it("更新日は新しい順", () => {
-    expect(ids(sortDocs(DOCS, "updated"))).toEqual(["b", "c", "a"]);
+    expect(ids(sortDocs(DOCS, "updated"))).toStrictEqual(["b", "c", "a"]);
   });
 
   it("タイトルは日本語の順で、元の配列は変えない", () => {
     const before = ids(DOCS);
-    expect(sortDocs(DOCS, "title").map((d) => d.title)).toEqual(
-      [...DOCS.map((d) => d.title)].sort(new Intl.Collator("ja").compare),
+    expect(sortDocs(DOCS, "title").map((d) => d.title)).toStrictEqual(
+      DOCS.map((d) => d.title).toSorted(new Intl.Collator("ja").compare),
     );
-    expect(ids(DOCS)).toEqual(before);
+    expect(ids(DOCS)).toStrictEqual(before);
   });
 });
