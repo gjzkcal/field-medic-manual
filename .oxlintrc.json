@@ -311,6 +311,11 @@
     {
       "files": ["src/**/*.{ts,tsx}"],
       "plugins": ["react"],
+      // oxlint の react/* にないものだけ、@eslint-react を JS プラグインとして読んで足す。
+      // @eslint-react は TypeScript の JS の API を使うので、package.json の typescript は 6.0 の API の
+      // @typescript/typescript6 にしてある（tsc は @typescript/native の 7.0）。
+      // 型を使う no-leaked-conditional-rendering・no-unused-props は JS プラグインでは動かない
+      "jsPlugins": ["@eslint-react/eslint-plugin"],
       "env": {
         "browser": true
       },
@@ -359,7 +364,27 @@
         "react/no-object-type-as-default-prop": "error",
         "react/jsx-no-useless-fragment": "error",
         "react/button-has-type": "error",
-        "react/jsx-no-target-blank": "error"
+        "react/jsx-no-target-blank": "error",
+        "@eslint-react/jsx-no-children-prop-with-children": "error",
+        "@eslint-react/jsx-no-key-after-spread": "error",
+        "@eslint-react/jsx-no-leaked-dollar": "error",
+        "@eslint-react/jsx-no-leaked-semicolon": "error",
+        "@eslint-react/naming-convention-context-name": "error",
+        "@eslint-react/naming-convention-id-name": "error",
+        "@eslint-react/naming-convention-ref-name": "error",
+        "@eslint-react/no-context-provider": "error",
+        "@eslint-react/no-forward-ref": "error",
+        "@eslint-react/no-misused-capture-owner-stack": "error",
+        "@eslint-react/no-nested-lazy-component-declarations": "error",
+        "@eslint-react/no-unnecessary-use-prefix": "error",
+        "@eslint-react/no-use-context": "error",
+        "@eslint-react/use-state": "error",
+        "@eslint-react/web-api-no-leaked-event-listener": "error",
+        "@eslint-react/web-api-no-leaked-fetch": "error",
+        "@eslint-react/web-api-no-leaked-intersection-observer": "error",
+        "@eslint-react/web-api-no-leaked-interval": "error",
+        "@eslint-react/web-api-no-leaked-resize-observer": "error",
+        "@eslint-react/web-api-no-leaked-timeout": "error"
       }
     },
     {

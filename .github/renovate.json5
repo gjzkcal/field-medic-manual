@@ -149,6 +149,7 @@
       matchUpdateTypes: ["minor", "patch"],
       matchPackageNames: [
         "oxlint",
+        "@eslint-react/**",
         "prettier",
         "prettier-plugin-*",
         "vitest",
@@ -168,10 +169,17 @@
     },
     {
       // oxlint-tsgolint は TypeScript の特定の版の上に作られ、版の番号もそれに合わせて付く（7.0.2006 は TypeScript 7.0.2 用）。
-      // tsc と lint の型の解釈がずれないよう、2 つを 1 つの PR で上げる。lint と test で壊れたと分かるので自動でマージする。
+      // tsc と lint の型の解釈がずれないよう、まとめて 1 つの PR で上げる。lint と test で壊れたと分かるので自動でマージする。
+      // package.json では、tsc の 7.0 を @typescript/native（中身は typescript）、TypeScript の JS の API を使う
+      // @eslint-react 向けの 6.0 を typescript（中身は @typescript/typescript6）という別名で入れているので、両方の名前を書く。
       // 7.1 は tsgolint が対応してから、手でここと package.json の ~ を変えて上げる
       matchManagers: ["npm"],
-      matchPackageNames: ["typescript", "oxlint-tsgolint"],
+      matchPackageNames: [
+        "typescript",
+        "@typescript/native",
+        "@typescript/typescript6",
+        "oxlint-tsgolint",
+      ],
       allowedVersions: "<7.1",
       groupName: "TypeScript",
       groupSlug: "typescript",
