@@ -227,6 +227,41 @@ function webStorePlugin(prebuild: boolean): Plugin {
   };
 }
 
+// 部品ではないが、document・window・localStorage などを触るので jsdom が要るテスト。
+// node のプロジェクトで落ちたら（ReferenceError: document is not defined など）ここに足す
+const DOM_TESTS = [
+  "src/app/reveal.test.ts",
+  "src/features/chat/chat-markdown.test.ts",
+  "src/features/chat/chat-store.test.ts",
+  "src/features/chat/chat-turn.test.ts",
+  "src/features/chat/figures.test.ts",
+  "src/features/content/chart.test.ts",
+  "src/features/content/document.test.ts",
+  "src/features/content/flowchart.test.ts",
+  "src/features/content/manuals.test.ts",
+  "src/features/content/markdown.test.ts",
+  "src/features/content/math.test.ts",
+  "src/features/content/mod-marker.test.ts",
+  "src/features/content/sanitize.test.ts",
+  "src/features/content/sync.test.ts",
+  "src/features/glossary/glossary.test.ts",
+  "src/features/library/viewer/mod-columns.test.ts",
+  "src/features/medication/pharmacology.test.ts",
+  "src/features/prefs/prefs-store.test.ts",
+  "src/features/quickref/quickref.test.ts",
+  "src/features/search/highlight.test.ts",
+  "src/features/settings/theme.test.ts",
+  "src/features/settings/viewer-settings.test.ts",
+  "src/features/triage/flows.test.ts",
+  "src/features/updater/update-store.test.ts",
+  "src/lib/client-error-log.test.ts",
+  "src/lib/tauri.test.ts",
+  "src/lib/tauri.web.test.ts",
+  "src/web/backend/prebuilt.test.ts",
+  "src/web/framed.test.ts",
+  "src/web/theme-boot.test.ts",
+];
+
 // https://vite.dev/config/
 export default defineConfig(({ mode, command }) => {
   const web = mode === "web";
@@ -277,12 +312,31 @@ export default defineConfig(({ mode, command }) => {
     },
 
     test: {
-      environment: "jsdom",
-      include: ["src/**/*.test.{ts,tsx}", "scripts/**/*.test.ts"],
       restoreMocks: true,
       // 変換の結果を残すと、bundle.ts の import.meta.glob も展開した時のまま使われ、足した原稿が検査から漏れる。
       // 切っても全体で 1.5 s ほど遅くなるだけなので、検査の取りこぼしを防ぐほうを選ぶ
       fsModuleCache: false,
+      // jsdom の起動がテスト全体の時間の半分を占めていたので、DOM を使うファイルだけ jsdom にする。
+      // 部品（.tsx）は全部 DOM を使う。.ts は DOM_TESTS に挙げたものだけで、残りは node で動かす
+      projects: [
+        {
+          extends: true,
+          test: {
+            name: "node",
+            environment: "node",
+            include: ["src/**/*.test.ts", "scripts/**/*.test.ts"],
+            exclude: [...DOM_TESTS, "**/node_modules/**"],
+          },
+        },
+        {
+          extends: true,
+          test: {
+            name: "jsdom",
+            environment: "jsdom",
+            include: ["src/**/*.test.tsx", ...DOM_TESTS],
+          },
+        },
+      ],
     },
   };
 });
