@@ -7,8 +7,9 @@ use crate::ai::corpus::{
 };
 use crate::model::ModTarget;
 
-/// 索引に載せる本文の冒頭の長さ（文字数）。AI が意味で節を選ぶ手掛かりにする
-const LEAD_CHARS: usize = 100;
+/// 索引に載せる本文の冒頭の長さ（文字数）。AI が意味で節を選ぶ手掛かりにする。
+/// 100 字では索引が約 5.9 万トークンになり、入力の大半を占めた。見出し・タグ・同義語でも節は選べるので短くする
+const LEAD_CHARS: usize = 40;
 
 // WARNING: 「考えた過程を書き出して」のような指示を入れない。reasoning_extraction の拒否を招く（Claude API の資料）
 const RULES: &str = "\
