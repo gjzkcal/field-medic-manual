@@ -174,6 +174,29 @@ pub fn request_body(
     body
 }
 
+/// `count_tokens` に送る本文。数えるのに要らないキー（`max_tokens`・`stream`・`output_config`・`cache_control`）は
+/// 入れない（`count_tokens` が受け付けない可能性があり、数にも影響しないため）。`system` や `tools` を省くと、残りの分だけを数えられる。
+#[must_use]
+pub fn count_body(model: AiModel, system: Option<&str>, tools: Option<&Value>) -> Value {
+    let mut body = json!({
+        "model": model.id(),
+        "messages": [{"role": "user", "content": "."}],
+        "thinking": {"type": "adaptive"}
+    });
+    if let Some(obj) = body.as_object_mut() {
+        if let Some(system) = system {
+            obj.insert(
+                "system".to_owned(),
+                json!([{"type": "text", "text": system}]),
+            );
+        }
+        if let Some(tools) = tools {
+            obj.insert("tools".to_owned(), tools.clone());
+        }
+    }
+    body
+}
+
 /// 利用者の質問。画像は本文より前に置く（API の推奨）。
 #[must_use]
 pub fn user_message(text: &str, images: &[ChatImage]) -> Value {
@@ -281,6 +304,22 @@ pub fn usage(map: &Map<String, Value>) -> ChatUsage {
 mod tests {
     use super::*;
     use crate::ai::types::{ImageMediaType, ProposedOp};
+
+    #[test]
+    fn count_body_leaves_out_keys_that_do_not_affect_the_count() {
+        let tools = tools(true);
+        let body = count_body(AiModel::ClaudeHaiku55, Some("sys"), Some(&tools));
+        let obj = body.as_object().expect("オブジェクト");
+        for key in ["max_tokens", "stream", "output_config", "cache_control"] {
+            assert!(!obj.contains_key(key), "{key} は count_tokens に送らない");
+        }
+        assert_eq!(body["model"], "claude-haiku-5-5");
+        assert_eq!(body["system"][0]["text"], "sys");
+        assert_eq!(body["tools"], tools);
+        assert_eq!(body["messages"][0]["role"], "user");
+        let partial = count_body(AiModel::ClaudeSonnet55, None, None);
+        assert!(partial.get("system").is_none() && partial.get("tools").is_none());
+    }
 
     #[test]
     fn every_proposed_op_shape_starts_with_the_action_key() {

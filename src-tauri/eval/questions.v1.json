@@ -1,0 +1,247 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "tq-synonym",
+      "question": "TQ はどのくらい巻いたままでいい？",
+      "mods": ["circulation", "breathing"],
+      "tags": ["synonym", "fact"],
+      "expect": {
+        "citations": true,
+        "sources": ["doc:tourniquet.md#止血帯を巻いたままにしたとき", "doc:tourniquet.md#効き方"]
+      }
+    },
+    {
+      "id": "bleeding-wont-stop",
+      "question": "血が止まらない",
+      "mods": ["circulation", "breathing"],
+      "tags": ["synonym", "advice"],
+      "expect": {
+        "citations": true,
+        "sources": [
+          "doc:hemorrhage.md#出血の見分け方",
+          "doc:hemorrhage.md#止血に使う物品",
+          "quickref:limb-bleeding",
+          "flow:massive-bleeding"
+        ]
+      }
+    },
+    {
+      "id": "tourniquet-time",
+      "question": "止血帯を巻くのに何秒かかる？",
+      "mods": ["circulation", "breathing"],
+      "tags": ["fact"],
+      "expect": {
+        "citations": true,
+        "sources": ["doc:tourniquet.md#所要時間", "doc:treatment-times.md#止血帯の時間"]
+      }
+    },
+    {
+      "id": "phenylephrine-what",
+      "question": "フェニレフリンは何に効く？",
+      "mods": ["circulation", "breathing"],
+      "tags": ["fact"],
+      "expect": {
+        "citations": true,
+        "sources": [
+          "doc:phenylephrine.md#効果",
+          "doc:phenylephrine.md#効き方",
+          "doc:phenylephrine.md#概要"
+        ]
+      }
+    },
+    {
+      "id": "phenylephrine-when",
+      "question": "フェニレフリンはいつ撃てばいい？",
+      "mods": ["circulation", "breathing"],
+      "tags": ["advice"],
+      "expect": {
+        "citations": true,
+        "notListed": false,
+        "sources": [
+          "doc:phenylephrine.md#使い方",
+          "doc:phenylephrine.md#効果",
+          "doc:phenylephrine.md#効き方"
+        ]
+      }
+    },
+    {
+      "id": "phenylephrine-vs-saline",
+      "question": "止血は済んでいる。フェニレフリンと生理食塩水、どっちを先に打つ？",
+      "mods": ["circulation", "breathing"],
+      "tags": ["advice"],
+      "expect": {
+        "citations": true,
+        "notListed": false,
+        "sources": ["doc:phenylephrine.md#効果", "doc:saline.md#効果", "quickref:blood-loss"]
+      }
+    },
+    {
+      "id": "morphine-limit",
+      "question": "モルヒネは何本まで同時に打てる？",
+      "mods": ["circulation", "breathing"],
+      "tags": ["fact"],
+      "expect": {
+        "citations": true,
+        "sources": [
+          "doc:morphine.md#効き方",
+          "doc:morphine.md#circulation-を入れている場合",
+          "doc:morphine.md#効果",
+          "doc:drug-effects.md#過量投与",
+          "doc:morphine.md#使い方",
+          "quickref:morphine-overdose"
+        ]
+      }
+    },
+    {
+      "id": "morphine-record",
+      "question": "A さんにモルヒネを打った。記録して",
+      "mods": ["circulation", "breathing"],
+      "tags": ["casualty"],
+      "expect": {
+        "clientCalls": true
+      }
+    },
+    {
+      "id": "morphine-next-when",
+      "question": "次のモルヒネはいつ打てる？",
+      "mods": ["circulation", "breathing"],
+      "tags": ["casualty"],
+      "expect": {
+        "clientCalls": true
+      }
+    },
+    {
+      "id": "pain-flow",
+      "question": "痛みがある仲間はどうすればいい？",
+      "mods": ["circulation", "breathing"],
+      "tags": ["flow", "advice"],
+      "expect": {
+        "citations": true,
+        "flow": "pain",
+        "sources": ["quickref:pain", "flow:pain", "doc:pain.md#モルヒネで抑える"]
+      }
+    },
+    {
+      "id": "cardiac-arrest",
+      "question": "心停止したらどうする？",
+      "mods": ["circulation", "breathing"],
+      "tags": ["flow", "advice"],
+      "expect": {
+        "citations": true,
+        "sources": [
+          "doc:cardiac-arrest.md#cpr-を行う",
+          "quickref:cardiac-arrest",
+          "flow:cardiac-arrest"
+        ]
+      }
+    },
+    {
+      "id": "cpr-time",
+      "question": "CPR で蘇生するまで、どのくらい続ける？",
+      "mods": ["circulation", "breathing"],
+      "tags": ["fact"],
+      "expect": {
+        "citations": true,
+        "sources": [
+          "doc:cardiac-arrest.md#時間の流れ",
+          "doc:cardiac-arrest.md#cpr-を行う",
+          "doc:cardiac-arrest-system.md#蘇生までの時間",
+          "doc:cardiac-arrest.md#脳の損傷と残り時間",
+          "quickref:cpr-no-rosc"
+        ]
+      }
+    },
+    {
+      "id": "zombie-absent",
+      "question": "ゾンビに噛まれたらどうする？",
+      "mods": ["circulation", "breathing"],
+      "tags": ["absent"],
+      "expect": {
+        "notListed": true
+      }
+    },
+    {
+      "id": "king-lt-when",
+      "question": "King LT はいつ使う？",
+      "mods": ["circulation", "breathing"],
+      "tags": ["fact", "advice"],
+      "expect": {
+        "citations": true,
+        "sources": ["doc:king-lt.md#使い方", "doc:king-lt.md#効果", "quickref:apnea"]
+      }
+    },
+    {
+      "id": "unconscious-ask",
+      "question": "仲間が倒れて動かない",
+      "mods": ["circulation", "breathing"],
+      "tags": ["ask", "advice"],
+      "askAnswer": "呼吸はある",
+      "expect": {
+        "citations": true,
+        "sources": [
+          "quickref:unconscious",
+          "flow:casualty-first-contact",
+          "doc:consciousness.md#意識が戻る条件と時間"
+        ]
+      }
+    },
+    {
+      "id": "states-figure",
+      "question": "失血すると状態はどう変わる？図があれば見せて",
+      "mods": ["circulation", "breathing"],
+      "tags": ["figure", "fact"],
+      "expect": {
+        "citations": true,
+        "figure": true,
+        "sources": ["doc:states.md#5-つの状態", "doc:states.md#状態の閾値"]
+      }
+    },
+    {
+      "id": "mod-condition",
+      "question": "Circulation を入れていないとき、出血の見分け方はどう違う？",
+      "mods": [],
+      "tags": ["mod", "fact"],
+      "expect": {
+        "citations": true,
+        "sources": [
+          "doc:hemorrhage.md#circulation-なしcore-だけの場合",
+          "doc:hemorrhage.md#出血の見分け方"
+        ]
+      }
+    },
+    {
+      "id": "epinephrine-cpr",
+      "question": "CPR 中のエピネフリンの役割は？",
+      "mods": ["circulation", "breathing"],
+      "tags": ["fact"],
+      "expect": {
+        "citations": true,
+        "sources": ["doc:cardiac-arrest.md#エピネフリンの役割", "doc:epinephrine.md#cpr-での役割"]
+      }
+    },
+    {
+      "id": "ammonium-fails",
+      "question": "炭酸アンモニウムを使っても起きない",
+      "mods": ["circulation", "breathing"],
+      "tags": ["advice"],
+      "expect": {
+        "citations": true,
+        "sources": [
+          "quickref:ammonium-fails",
+          "doc:consciousness.md#炭酸アンモニウムで起こす",
+          "doc:consciousness.md#エピネフリンで起こす"
+        ]
+      }
+    },
+    {
+      "id": "real-injury",
+      "question": "本当に指を切って血が出てるんだけど、どうすればいい？",
+      "mods": ["circulation", "breathing"],
+      "tags": ["real"],
+      "expect": {
+        "citations": false
+      }
+    }
+  ]
+}

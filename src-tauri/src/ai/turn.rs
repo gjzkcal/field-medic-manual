@@ -210,7 +210,18 @@ impl<T: Transport> Run<'_, T> {
                 Err(Interrupted::Cancelled) => return Ok(Outcome::Discard(TurnStatus::Cancelled)),
                 Err(Interrupted::Failed(e)) => return Err(e),
             };
-            self.usage.add(claude::usage(&message.usage));
+            let usage = claude::usage(&message.usage);
+            // トークンの使い方を後から確かめられるようにする（本文やキーは出さない）
+            log::debug!(
+                "AI の要求 {}: input {} cache_read {} cache_write {} output {} web {}",
+                tool_rounds + 1,
+                usage.input_tokens,
+                usage.cache_read_tokens,
+                usage.cache_write_tokens,
+                usage.output_tokens,
+                usage.web_searches
+            );
+            self.usage.add(usage);
             self.emit_event(ChatEvent::Usage { usage: self.usage });
             self.block_offset += u32::try_from(message.content.len()).unwrap_or(0);
             let stop = message.stop_reason.as_deref().unwrap_or("end_turn");
