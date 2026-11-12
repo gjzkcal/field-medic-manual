@@ -84,7 +84,7 @@ export const medicationFileSchema = z
     if (ids.size !== DRUG_IDS.length) {
       ctx.addIssue({ code: "custom", path: ["drugs"], message: "薬の id が重複しています" });
     }
-    file.effects.forEach((effect, i) => {
+    for (const [i, effect] of file.effects.entries()) {
       if (effect.kind === "hill" && effect.maxEffect === undefined) {
         ctx.addIssue({
           code: "custom",
@@ -92,7 +92,7 @@ export const medicationFileSchema = z
           message: "頭打ちの効果には maxEffect を書いてください",
         });
       }
-    });
+    }
   })
   .meta({ title: "薬の数値（Field Medic Manual）" });
 

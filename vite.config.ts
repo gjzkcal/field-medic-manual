@@ -4,7 +4,6 @@ import { copyFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } fro
 import { readFile } from "node:fs/promises";
 import { basename, extname, join } from "node:path";
 import process from "node:process";
-import { promisify } from "node:util";
 import { fileURLToPath, URL } from "node:url";
 
 import tailwindcss from "@tailwindcss/vite";
@@ -170,22 +169,22 @@ function escapeHtml(text: string): string {
 
 /** 原稿の front matter の title。表題だけが要るので、YAML の全体は読まない（原稿の表題は 1 行の素の文字列） */
 function frontMatterTitle(markdown: string): string | null {
-  const frontMatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(markdown)?.[1];
+  const frontMatter = /^---\r?\n([\s\S]*?)\r?\n---/u.exec(markdown)?.[1];
   const title =
-    frontMatter === undefined ? undefined : /^title:\s*(.+?)\s*$/m.exec(frontMatter)?.[1];
-  return title === undefined ? null : title.replace(/^(["'])(.*)\1$/, "$2");
+    frontMatter === undefined ? undefined : /^title:\s*(.+?)\s*$/mu.exec(frontMatter)?.[1];
+  return title === undefined ? null : title.replace(/^(["'])(.*)\1$/u, "$2");
 }
 
 // src/features/triage/bundle.ts の FLOW_FILE と同じ（vite.config.ts は @/ の import を解決できない）
-const FLOW_FILE = /^(.+)\.flow\.(?:yaml|json)$/;
+const FLOW_FILE = /^(.+)\.flow\.(?:yaml|json)$/u;
 
 /**
  * フローの最上位の title。表題だけが要るので YAML の全体は読まない（フローの表題は行頭の 1 行の素の文字列で、ノードのキーは字下げしてある）。
  * JSON のフローは当たらず、呼び出し側が id で代える
  */
 function topLevelTitle(text: string): string | null {
-  const title = /^title:\s*(.+?)\s*$/m.exec(text)?.[1];
-  return title === undefined ? null : title.replace(/^(["'])(.*)\1$/, "$2");
+  const title = /^title:\s*(.+?)\s*$/mu.exec(text)?.[1];
+  return title === undefined ? null : title.replace(/^(["'])(.*)\1$/u, "$2");
 }
 
 const WEB_STORE_ID = "virtual:web-store";
@@ -212,7 +211,15 @@ function webStorePlugin(prebuild: boolean): Plugin {
       const output = fileURLToPath(new URL("./node_modules/.tmp/web-store.json", import.meta.url));
       mkdirSync(join(output, ".."), { recursive: true });
       const script = fileURLToPath(new URL("./scripts/web-prebuild.ts", import.meta.url));
-      await promisify(execFile)(process.execPath, [script, output]);
+      await new Promise<void>((resolve, reject) => {
+        execFile(process.execPath, [script, output], (error) => {
+          if (error instanceof Error) {
+            reject(error);
+          } else {
+            resolve();
+          }
+        });
+      });
       const json = await readFile(output, "utf8");
       // オブジェクトのリテラルより JSON.parse の文字列のほうが、ブラウザで速く読める
       return `export default JSON.parse(${JSON.stringify(json)});`;
@@ -229,7 +236,7 @@ export default defineConfig(({ mode, command }) => {
     ...(web
       ? [
           {
-            find: /^@\/lib\/tauri$/,
+            find: /^@\/lib\/tauri$/u,
             replacement: fileURLToPath(new URL("./src/lib/tauri.web.ts", import.meta.url)),
           },
         ]

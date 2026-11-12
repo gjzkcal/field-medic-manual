@@ -45,9 +45,15 @@ describe("フローの JSON Schema", () => {
       const value: unknown = source.fileName.endsWith(".json")
         ? JSON.parse(source.text)
         : parse(source.text);
-      expect(value, source.fileName).toMatchObject({ $schema: FLOW_SCHEMA_ID });
+      // 失敗したときにどのファイルか分かるよう、ファイル名を付けて比べる
+      expect({ file: source.fileName, value }).toMatchObject({
+        value: { $schema: FLOW_SCHEMA_ID },
+      });
       validate(value);
-      expect(validate.errors ?? [], source.fileName).toEqual([]);
+      expect({ file: source.fileName, errors: validate.errors ?? [] }).toStrictEqual({
+        file: source.fileName,
+        errors: [],
+      });
     }
   });
 

@@ -30,7 +30,7 @@ export function SearchFilterPopover(): JSX.Element {
     tagList()
       .then((list) => {
         if (!cancelled) {
-          setTags(list.map((t) => t.name).sort((a, b) => a.localeCompare(b, "ja")));
+          setTags(list.map((t) => t.name).toSorted((a, b) => a.localeCompare(b, "ja")));
           setTagError(null);
         }
       })

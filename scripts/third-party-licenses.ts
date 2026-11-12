@@ -46,12 +46,12 @@ const OTHER_NOTICES = [
   },
 ];
 
-const LICENSE_FILE = /^(licen[cs]e|copying|notice)([.-].*)?$/i;
+const LICENSE_FILE = /^(licen[cs]e|copying|notice)([.-].*)?$/iu;
 
 function licenseTexts(dir: string): string[] {
   return readdirSync(dir)
     .filter((name) => LICENSE_FILE.test(name))
-    .sort()
+    .toSorted()
     .map((name) => readFileSync(join(dir, name), "utf8"));
 }
 

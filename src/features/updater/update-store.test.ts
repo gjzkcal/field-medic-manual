@@ -25,15 +25,15 @@ describe("checkForUpdates", () => {
 
     const state = useUpdateStore.getState();
     expect(state.dialogOpen).toBe(true);
-    expect(state.status.kind).toBe("available");
-    if (state.status.kind === "available") {
-      expect(state.status.update.info).toEqual({
-        version: "0.0.2",
-        currentVersion: "0.0.1",
-        date: METADATA.date,
-        notes: "- 変更点",
-      });
+    if (state.status.kind !== "available") {
+      throw new TypeError(`状態が available ではありません: ${state.status.kind}`);
     }
+    expect(state.status.update.info).toStrictEqual({
+      version: "0.0.2",
+      currentVersion: "0.0.1",
+      date: METADATA.date,
+      notes: "- 変更点",
+    });
   });
 
   it("手動の確認で新しい版が無ければ「最新」にする", async () => {
@@ -69,7 +69,7 @@ describe("checkForUpdates", () => {
     await checkForUpdates({ manual: true });
 
     const { status } = useUpdateStore.getState();
-    expect(status).toEqual({ kind: "error", message: "error sending request" });
+    expect(status).toStrictEqual({ kind: "error", message: "error sending request" });
   });
 
   it("確認の途中でもう一度呼んでも、確認は 1 回だけ", async () => {
@@ -110,7 +110,7 @@ describe("installUpdate", () => {
 
     await installUpdate();
 
-    expect(calls).toEqual([
+    expect(calls).toStrictEqual([
       "plugin:updater|check",
       "plugin:updater|download_and_install",
       "plugin:process|restart",
@@ -129,9 +129,9 @@ describe("installUpdate", () => {
     await installUpdate();
 
     const { status } = useUpdateStore.getState();
-    expect(status.kind).toBe("available");
-    if (status.kind === "available") {
-      expect(status.installError).toBe("signature verification failed");
+    if (status.kind !== "available") {
+      throw new TypeError(`状態が available ではありません: ${status.kind}`);
     }
+    expect(status.installError).toBe("signature verification failed");
   });
 });

@@ -36,8 +36,8 @@ describe("UpdateDialog", () => {
     render(<UpdateDialog />);
 
     expect(screen.getByRole("heading", { name: "新しい版があります" })).toBeTruthy();
-    expect(screen.getByText(/v0\.0\.1 → v0\.0\.2/)).toBeTruthy();
-    expect(screen.getByText(/2026\/09\/30 21:00 JST/)).toBeTruthy();
+    expect(screen.getByText(/v0\.0\.1 → v0\.0\.2/u)).toBeTruthy();
+    expect(screen.getByText(/2026\/09\/30 21:00 JST/u)).toBeTruthy();
     expect(screen.getByText("- クイック表の誤字を直した")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "後で" }));
@@ -95,7 +95,7 @@ describe("UpdateDialog", () => {
     });
     const { rerender } = render(<UpdateDialog />);
     await screen.findByRole("dialog");
-    expect(await axeViolations()).toEqual([]);
+    expect(await axeViolations()).toStrictEqual([]);
 
     useUpdateStore.setState({
       status: {
@@ -109,7 +109,7 @@ describe("UpdateDialog", () => {
     expect(status.textContent).toBe("更新をダウンロードしています");
     // 押した「今すぐ更新」は押せなくなるので、フォーカスをダイアログの中の進み具合へ移す
     expect(document.activeElement).toBe(status.parentElement);
-    expect(await axeViolations()).toEqual([]);
+    expect(await axeViolations()).toStrictEqual([]);
   });
 
   it("失敗したときは理由を出す", () => {
@@ -119,7 +119,7 @@ describe("UpdateDialog", () => {
     });
     render(<UpdateDialog />);
 
-    expect(screen.getByText(/署名が一致しません/)).toBeTruthy();
+    expect(screen.getByText(/署名が一致しません/u)).toBeTruthy();
   });
 
   it("更新が無ければ何も出さない", () => {

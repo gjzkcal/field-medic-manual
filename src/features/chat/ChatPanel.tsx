@@ -122,6 +122,7 @@ export function ChatPanelHost(): JSX.Element | null {
     return null;
   }
   return (
+    // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- 中の部品にフォーカスがあるときの Esc を、ここでまとめて受ける
     <aside
       aria-label="AI に質問"
       className={
@@ -405,6 +406,7 @@ function Question({ turn, busy }: { turn: ChatTurn; busy: boolean }): JSX.Elemen
           value={draft}
           maxLength={MAX_QUESTION_CHARS}
           aria-label="質問を直す"
+          // oxlint-disable-next-line jsx-a11y/no-autofocus -- 「質問を直す」を押して開く欄なので、押した人が次に打つ所へフォーカスを移す
           autoFocus
           onChange={(event) => {
             setDraft(event.target.value);

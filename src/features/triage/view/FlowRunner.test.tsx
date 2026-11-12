@@ -107,6 +107,12 @@ function press(key: string): void {
   fireEvent.keyDown(window, { key });
 }
 
+function badges(): string[] {
+  return screen
+    .getAllByRole("list", { name: "TCCC・MARCH PAWS の段階" })
+    .flatMap((list) => [...list.querySelectorAll("li")].map((li) => li.textContent));
+}
+
 beforeEach(() => {
   mockIPC((cmd) => (cmd === "doc_outline" ? OUTLINE : null));
 });
@@ -137,7 +143,7 @@ describe("FlowRunner", () => {
 
     press("2");
     expect(heading()).toBe("気道を確かめた");
-    expect(screen.getByRole("button", { name: /元のフローへ戻る/ })).toBeDefined();
+    expect(screen.getByRole("button", { name: /元のフローへ戻る/u })).toBeDefined();
 
     press("1");
     expect(heading()).toBe("安定。定期的に再評価する");
@@ -147,7 +153,7 @@ describe("FlowRunner", () => {
 
   it("物品を使う処置では 2 で「持っていない」の行き先へ進み、Enter は「次へ」のまま", () => {
     const router = renderRunner("/triage/root?path=0");
-    expect(screen.getByRole("button", { name: /止血帯を持っていない/ })).toBeDefined();
+    expect(screen.getByRole("button", { name: /止血帯を持っていない/u })).toBeDefined();
 
     press("2");
     expect(heading()).toBe("止血帯なしで対処する");
@@ -165,7 +171,7 @@ describe("FlowRunner", () => {
     press("Backspace");
     expect(heading()).toBe("気道がふさがっている？");
 
-    fireEvent.click(screen.getByRole("button", { name: /周囲は安全？/ }));
+    fireEvent.click(screen.getByRole("button", { name: /周囲は安全？/u }));
     expect(heading()).toBe("周囲は安全？");
 
     press("1");
@@ -185,11 +191,13 @@ describe("FlowRunner", () => {
   it("長い経路は古い歩を畳み、押すと全部出す", () => {
     // 「いいえ」で同じ質問に 5 回戻ってから進む
     renderRunner("/triage/root?path=1.1.1.1.1.0");
-    expect(screen.queryAllByRole("button", { name: /周囲は安全？/ })).toHaveLength(3);
+    expect(screen.queryAllByRole("button", { name: /周囲は安全？/u })).toHaveLength(3);
     fireEvent.click(screen.getByRole("button", { name: "…ほか 3 歩" }));
-    expect(screen.queryAllByRole("button", { name: /周囲は安全？/ })).toHaveLength(6);
+    expect(screen.queryAllByRole("button", { name: /周囲は安全？/u })).toHaveLength(6);
     // 押したボタンは消えるので、広げた先頭の歩へフォーカスを移す
-    expect(document.activeElement).toBe(screen.getAllByRole("button", { name: /周囲は安全？/ })[0]);
+    expect(document.activeElement).toBe(
+      screen.getAllByRole("button", { name: /周囲は安全？/u })[0],
+    );
   });
 
   it("設定でキー操作をオフにすると、数字キーと Space を受けず、番号の印も出さない", () => {
@@ -200,11 +208,11 @@ describe("FlowRunner", () => {
     expect(heading()).toBe("周囲は安全？");
 
     // Enter・Backspace・Esc は文字のキーではないので残す。ボタンでも進める
-    fireEvent.click(screen.getByRole("button", { name: /はい/ }));
+    fireEvent.click(screen.getByRole("button", { name: /はい/u }));
     expect(heading()).toBe("止血帯で止血する");
     expect(screen.queryByText("Space")).toBeNull();
     press(" ");
-    expect(screen.getByRole("button", { name: /開始/ })).toBeDefined();
+    expect(screen.getByRole("button", { name: /開始/u })).toBeDefined();
     press("Backspace");
     expect(heading()).toBe("周囲は安全？");
   });
@@ -212,8 +220,8 @@ describe("FlowRunner", () => {
   it("危ない選択肢は、色だけでなく読み上げでも分かる", () => {
     renderRunner("/triage/root?path=0.0");
     expect(heading()).toBe("気道がふさがっている？");
-    expect(screen.getByRole("button", { name: /はい（危険）/ })).toBeDefined();
-    expect(screen.getByRole("button", { name: /いいえ/ }).textContent).not.toContain("危険");
+    expect(screen.getByRole("button", { name: /はい（危険）/u })).toBeDefined();
+    expect(screen.getByRole("button", { name: /いいえ/u }).textContent).not.toContain("危険");
   });
 
   it("URL の経路から続きを表示し、無効な部分は捨てる", () => {
@@ -255,13 +263,13 @@ describe("FlowRunner", () => {
     });
     renderRunner("/triage/root", flow);
     expect(heading()).toBe("脈がある？");
-    expect(screen.getByText(/Core \+ Circulation \+ Breathing/)).toBeDefined();
+    expect(screen.getByText(/Core \+ Circulation \+ Breathing/u)).toBeDefined();
     cleanup();
 
     useModSettings.setState({ settings: { enabled: ["breathing"] } });
     renderRunner("/triage/root", flow);
     expect(heading()).toBe("Core のエピネフリン");
-    expect(screen.getByText(/Core \+ Breathing/)).toBeDefined();
+    expect(screen.getByText(/Core \+ Breathing/u)).toBeDefined();
   });
 
   it("MARCH の文字をバッジで出す。ノードの march がフロー全体の march より優先する", async () => {
@@ -276,30 +284,26 @@ describe("FlowRunner", () => {
       { march: ["m"] },
     );
     renderRunner("/triage/root", flow);
-    const badges = (): string[] =>
-      screen
-        .getAllByRole("list", { name: "TCCC・MARCH PAWS の段階" })
-        .flatMap((list) => [...list.querySelectorAll("li")].map((li) => li.textContent));
-    expect(badges()).toEqual(["M 大出血"]);
-    expect(await axeViolations()).toEqual([]);
+    expect(badges()).toStrictEqual(["M 大出血"]);
+    expect(await axeViolations()).toStrictEqual([]);
 
     press("1");
     expect(heading()).toBe("回復体位にする");
-    expect(badges()).toEqual(["A 気道"]);
+    expect(badges()).toStrictEqual(["A 気道"]);
   });
 
   it("質問・タイマーのある処置・終わりの画面で、axe の違反がない（WCAG 2.2 A・AA）", async () => {
     renderRunner();
-    expect(await axeViolations()).toEqual([]);
+    expect(await axeViolations()).toStrictEqual([]);
 
     press("1");
     expect(heading()).toBe("止血帯で止血する");
-    await screen.findByRole("button", { name: /止血帯を使う/ });
-    expect(await axeViolations()).toEqual([]);
+    await screen.findByRole("button", { name: /止血帯を使う/u });
+    expect(await axeViolations()).toStrictEqual([]);
 
     cleanup();
     renderRunner("/triage/root?path=0.0.1.0");
     expect(heading()).toBe("安定。定期的に再評価する");
-    expect(await axeViolations()).toEqual([]);
+    expect(await axeViolations()).toStrictEqual([]);
   });
 });

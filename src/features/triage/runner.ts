@@ -104,7 +104,8 @@ function arrive(
 ): Position {
   let current = flow;
   let id = nodeId;
-  let frames = stack;
+  // 呼び出し元の stack を書き換えないよう、最初に 1 回だけ写してから積む
+  const frames = [...stack];
   for (let hops = 0; ; hops++) {
     const node = current.nodes[id];
     if (node === undefined) {
@@ -127,7 +128,7 @@ function arrive(
     if (frames.length >= MAX_DEPTH) {
       throw new Error(`サブフローが深すぎます（${node.flowId}）`);
     }
-    frames = [...frames, { flow: current, returnTo: node.next }];
+    frames.push({ flow: current, returnTo: node.next });
     current = child;
     id = child.start;
   }
@@ -231,7 +232,7 @@ export function parsePath(text: string | null): number[] {
     return path;
   }
   for (const part of text.split(".", MAX_PATH_STEPS)) {
-    if (!/^\d+$/.test(part)) {
+    if (!/^\d+$/u.test(part)) {
       break;
     }
     path.push(Number(part));

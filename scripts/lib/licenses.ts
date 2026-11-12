@@ -32,7 +32,7 @@ const ALLOWED: ReadonlySet<string> = new Set(ALLOWED_LICENSES);
  * OR はどれか 1 つ、AND はすべてが許可されていればよい。
  */
 export function isAllowedLicense(expression: string): boolean {
-  const tokens = expression.match(/\(|\)|[^\s()]+/g) ?? [];
+  const tokens = expression.match(/\(|\)|[^\s()]+/gu) ?? [];
   let pos = 0;
 
   const peek = (): string | undefined => tokens[pos];
@@ -44,7 +44,7 @@ export function isAllowedLicense(expression: string): boolean {
       next();
       // 右側も読み進めるため、短絡させずに評価する
       const right = parseAnd();
-      ok = ok || right;
+      ok ||= right;
     }
     return ok;
   }
@@ -54,7 +54,7 @@ export function isAllowedLicense(expression: string): boolean {
     while (peek() === "AND") {
       next();
       const right = parseAtom();
-      ok = ok && right;
+      ok &&= right;
     }
     return ok;
   }
@@ -116,7 +116,7 @@ export function groupNpmLicenses(packages: readonly NpmPackageLicense[]): Licens
 }
 
 function normalizeText(text: string): string {
-  return text.replace(/\r\n/g, "\n").trim();
+  return text.replaceAll("\r\n", "\n").trim();
 }
 
 /** `pnpm licenses list --prod --json` の出力 */
@@ -157,11 +157,11 @@ function sortGroups(groups: LicenseGroup[]): LicenseGroup[] {
   for (const group of groups) {
     group.packages.sort((a, b) => a.localeCompare(b, "en"));
   }
-  return groups.sort((a, b) => {
+  return groups.toSorted((a, b) => {
     const byLicense = a.license.localeCompare(b.license, "en");
-    return byLicense !== 0
-      ? byLicense
-      : (a.packages[0] ?? "").localeCompare(b.packages[0] ?? "", "en");
+    return byLicense === 0
+      ? (a.packages[0] ?? "").localeCompare(b.packages[0] ?? "", "en")
+      : byLicense;
   });
 }
 
@@ -175,6 +175,22 @@ export interface NoticeInput {
 const RULE = "=".repeat(78);
 const THIN_RULE = "-".repeat(78);
 
+const section = (title: string, groups: readonly LicenseGroup[]): string[] => [
+  RULE,
+  title,
+  RULE,
+  ...groups.flatMap((group) => [
+    "",
+    THIN_RULE,
+    `License: ${group.license}`,
+    `Used by: ${group.packages.join(", ")}`,
+    THIN_RULE,
+    "",
+    normalizeText(group.text),
+  ]),
+  "",
+];
+
 // 版を上げるたびに差分が出ないよう、アプリの版は書かない
 export function renderNotice({ npm, cargo, other }: NoticeInput): string {
   const header = [
@@ -184,21 +200,6 @@ export function renderNotice({ npm, cargo, other }: NoticeInput): string {
     "It includes the following third-party software under their own licenses.",
     "このアプリ本体は GPL-3.0-or-later です（LICENSE.txt）。",
     "以下のサードパーティのソフトウェアを含み、それぞれのライセンスに従って配布しています。",
-  ];
-  const section = (title: string, groups: readonly LicenseGroup[]): string[] => [
-    RULE,
-    title,
-    RULE,
-    ...groups.flatMap((group) => [
-      "",
-      THIN_RULE,
-      `License: ${group.license}`,
-      `Used by: ${group.packages.join(", ")}`,
-      THIN_RULE,
-      "",
-      normalizeText(group.text),
-    ]),
-    "",
   ];
   return [
     ...header,

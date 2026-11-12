@@ -212,8 +212,7 @@ export async function aiChatSend(
   input: ChatSendInput,
   onEvent: (event: ChatEvent) => void,
 ): Promise<ChatTurnResult> {
-  const channel = new Channel<ChatEvent>();
-  channel.onmessage = onEvent;
+  const channel = new Channel<ChatEvent>(onEvent);
   return invoke<ChatTurnResult>("ai_chat_send", { input, onEvent: channel });
 }
 

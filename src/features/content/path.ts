@@ -2,12 +2,12 @@
 // Node の path は WebView にないため自前で持つ。
 
 /** 同梱した原稿の sourcePath。同期で保存するときと、ビューアで内部リンクの行き先を探すときに同じ形を使う。 */
-export function manualSourcePath(fileName: string): string {
-  return `bundle://manuals/${fileName}`;
+export function manualSourcePath(manualFileName: string): string {
+  return `bundle://manuals/${manualFileName}`;
 }
 
 export function fileName(path: string): string {
-  return path.split(/[\\/]/).pop() ?? path;
+  return path.split(/[\\/]/u).pop() ?? path;
 }
 
 /** 拡張子を除いたファイル名。タイトルの初期値に使う。 */
@@ -30,18 +30,19 @@ export function extension(path: string): string {
  */
 export function resolveRelative(baseFile: string, relative: string): string | null {
   if (
-    /^[a-z][a-z0-9+.-]*:/i.test(relative) ||
+    // i と u を一緒に付けると ſ（U+017F）と K（U+212A）も英字に当たるので、大文字小文字は文字クラスで書く
+    /^[A-Za-z][A-Za-z0-9+.-]*:/u.test(relative) ||
     relative.startsWith("/") ||
     relative.startsWith("\\")
   ) {
     return null;
   }
   const separator = baseFile.includes("\\") ? "\\" : "/";
-  const parts = baseFile.split(/[\\/]/);
+  const parts = baseFile.split(/[\\/]/u);
   parts.pop();
   // ?query や #hash はファイル名の一部ではない
-  const clean = decodeUriSafe(relative.replace(/[?#].*$/, ""));
-  for (const part of clean.split(/[\\/]/)) {
+  const clean = decodeUriSafe(relative.replace(/[?#].*$/u, ""));
+  for (const part of clean.split(/[\\/]/u)) {
     if (part === "" || part === ".") {
       continue;
     }

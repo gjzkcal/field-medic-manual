@@ -34,7 +34,7 @@ const hitzones = activeMods({ enabled: ["hitzones"] });
 describe("sectionVisibility", () => {
   it("設定に合う節だけを出し、隠した数を数える", () => {
     const result = sectionVisibility(SECTIONS, hitzones, false, null);
-    expect([...result.visible]).toEqual(["intro", "title", "related"]);
+    expect([...result.visible]).toStrictEqual(["intro", "title", "related"]);
     expect(result.hiddenCount).toBe(4);
     expect(result.forcedRoot).toBeNull();
     expect(result.hasConditions).toBe(true);
@@ -74,7 +74,7 @@ describe("ラベルにする節", () => {
   it("絞り込み中は、条件が新しく付いた節のうち設定に合うものをラベルにする", () => {
     const result = sectionVisibility(SECTIONS, usual, false, null);
     // circ-detail は親と同じ条件（親の下の話題の見出し）なので見出しのまま
-    expect([...result.labeled]).toEqual(["circ", "breathing", "breathing-no-hz"]);
+    expect([...result.labeled]).toStrictEqual(["circ", "breathing", "breathing-no-hz"]);
   });
 
   it("すべて出すときと、直接開いた隠れる節はラベルにしない", () => {
@@ -84,7 +84,7 @@ describe("ラベルにする節", () => {
   });
 
   it("親より条件が増えた節を、条件が新しく付く節とする", () => {
-    expect([...conditionRoots(SECTIONS)]).toEqual(["circ", "breathing", "breathing-no-hz"]);
+    expect([...conditionRoots(SECTIONS)]).toStrictEqual(["circ", "breathing", "breathing-no-hz"]);
   });
 });
 
@@ -99,7 +99,7 @@ describe("入れ物の見出し", () => {
 
   it("本文がなく配下がすべて隠れる見出しは一緒に隠す", () => {
     const result = sectionVisibility(WRAPPED, usual, false, null);
-    expect([...result.visible]).toEqual(["title", "related"]);
+    expect([...result.visible]).toStrictEqual(["title", "related"]);
     expect(result.hiddenCount).toBe(2);
   });
 
@@ -111,6 +111,6 @@ describe("入れ物の見出し", () => {
 
   it("本文のある見出しは配下が隠れても残す", () => {
     const withBody = [s(2, "topic"), s(3, "hz", ["hitzones"])];
-    expect([...sectionVisibility(withBody, usual, false, null).visible]).toEqual(["topic"]);
+    expect([...sectionVisibility(withBody, usual, false, null).visible]).toStrictEqual(["topic"]);
   });
 });

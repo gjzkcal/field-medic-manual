@@ -46,15 +46,15 @@ describe("loadFlowTree", () => {
 
   it("サブフローが読めなければ失敗する", async () => {
     const root = makeFlow("root", "sf", { sf: subflow("missing", "e"), e: end("e") });
-    await expect(loadFlowTree("root", getterOf(root))).rejects.toThrow(/missing/);
+    await expect(loadFlowTree("root", getterOf(root))).rejects.toThrow(/missing/u);
   });
 
   it("形の違う JSON は失敗する", async () => {
     await expect(
       loadFlowTree("x", () => Promise.resolve(detail(JSON.stringify({ id: "x" })))),
-    ).rejects.toThrow(/形が正しくありません/);
+    ).rejects.toThrow(/形が正しくありません/u);
     await expect(loadFlowTree("x", () => Promise.resolve(detail("{壊れた")))).rejects.toThrow(
-      /JSON を読めません/,
+      /JSON を読めません/u,
     );
   });
 });

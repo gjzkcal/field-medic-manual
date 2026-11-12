@@ -29,7 +29,9 @@ export async function revealMainWindow(): Promise<void> {
     ready,
     Promise.race([
       document.fonts.load(FONT).catch(() => undefined),
-      new Promise((resolve) => setTimeout(resolve, FONT_WAIT_MS)),
+      new Promise((resolve) => {
+        setTimeout(resolve, FONT_WAIT_MS);
+      }),
     ]),
   ]);
   try {

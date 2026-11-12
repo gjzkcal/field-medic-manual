@@ -68,7 +68,7 @@ export function SectionBody({ html, resolveAsset, active }: SectionBodyProps): J
       fragment.querySelectorAll<HTMLElement>("table[data-chart], figure[data-chart]"),
     )) {
       const isTable = marked instanceof HTMLTableElement;
-      const payload = readChartPayload(marked.getAttribute("data-chart") ?? "");
+      const payload = readChartPayload(marked.dataset["chart"] ?? "");
       if (payload === null || payload.data.points.length < 2) {
         // 表なしのグラフの figure は中身が無く、描けなければ空の余白になるだけなので消す
         if (!isTable) {
@@ -88,7 +88,7 @@ export function SectionBody({ html, resolveAsset, active }: SectionBodyProps): J
     for (const figure of Array.from(
       fragment.querySelectorAll<HTMLElement>("figure[data-flowchart]"),
     )) {
-      const payload = readFlowchartPayload(figure.getAttribute("data-flowchart") ?? "");
+      const payload = readFlowchartPayload(figure.dataset["flowchart"] ?? "");
       if (payload === null) {
         continue;
       }
@@ -125,24 +125,26 @@ export function SectionBody({ html, resolveAsset, active }: SectionBodyProps): J
     for (const el of scrollers) {
       resize.observe(el);
     }
-    let cancelled = false;
-    for (const img of Array.from(container.querySelectorAll("img[data-asset-id]"))) {
-      const assetId = img.getAttribute("data-asset-id") ?? "";
+    const loading = new AbortController();
+    for (const img of Array.from(
+      container.querySelectorAll<HTMLImageElement>("img[data-asset-id]"),
+    )) {
+      const assetId = img.dataset["assetId"] ?? "";
       resolveAsset(assetId).then(
         (url) => {
-          if (!cancelled) {
+          if (!loading.signal.aborted) {
             img.setAttribute("src", url);
           }
         },
         () => {
-          if (!cancelled) {
+          if (!loading.signal.aborted) {
             img.replaceWith(missingImage(img.getAttribute("alt") ?? ""));
           }
         },
       );
     }
     return () => {
-      cancelled = true;
+      loading.abort();
       resize.disconnect();
     };
   }, [nodes, resolveAsset]);
@@ -179,7 +181,8 @@ export function SectionBody({ html, resolveAsset, active }: SectionBodyProps): J
 function markExternalLinks(fragment: DocumentFragment): void {
   for (const link of Array.from(fragment.querySelectorAll("a[href]"))) {
     // 相対パスのリンクはアプリの中で開くので印を付けない
-    if (!/^https?:/i.test(link.getAttribute("href") ?? "")) {
+    // i と u を一緒に付けると ſ（U+017F）が s に当たり、`httpſ:` も外のリンクになる。大文字小文字は文字クラスで書く
+    if (!/^[Hh][Tt]{2}[Pp][Ss]?:/u.test(link.getAttribute("href") ?? "")) {
       continue;
     }
     const note = link.ownerDocument.createElement("span");
@@ -215,26 +218,26 @@ function markScrollable(el: HTMLElement): void {
 }
 
 /** 表の名前にする段落。原稿は「…の推移:」のように、表の前の 1 文で何の表かを書いている */
-const TABLE_LEAD = /[:：]s*$/;
+const TABLE_LEAD = /[:：]s*$/u;
 
 /**
  * 表の直前の「…:」で終わる段落を、表の名前にする（WCAG 1.3.1）。読み上げで表へ跳んだときに、何の表かが分かるようにする。
  * 表の直前にグラフを描くときは、その figure を挟んでいてもよい
  */
 function nameTables(fragment: DocumentFragment, baseId: string): void {
-  Array.from(fragment.querySelectorAll("table")).forEach((table, index) => {
+  for (const [index, table] of Array.from(fragment.querySelectorAll("table")).entries()) {
     let lead = table.previousElementSibling;
     if (lead?.classList.contains("manual-chart") === true) {
       lead = lead.previousElementSibling;
     }
     if (lead?.localName !== "p" || !TABLE_LEAD.test(lead.textContent)) {
-      return;
+      continue;
     }
     if (lead.id === "") {
       lead.id = `${baseId}-table-${String(index)}`;
     }
     table.setAttribute("aria-labelledby", lead.id);
-  });
+  }
 }
 
 function missingImage(alt: string): HTMLElement {

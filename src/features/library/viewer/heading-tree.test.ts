@@ -22,7 +22,7 @@ describe("nestHeadings", () => {
       { level: 3, title: "A-2" },
       { level: 2, title: "B" },
     ];
-    expect(shape(nestHeadings(items))).toEqual([["表題", [["A", ["A-1", "A-2"]], "B"]]]);
+    expect(shape(nestHeadings(items))).toStrictEqual([["表題", [["A", ["A-1", "A-2"]], "B"]]]);
   });
 
   it("飛んだレベル（h1 の次に h3）や、h1 のない並びもすぐ上の見出しの下に入れる", () => {
@@ -31,6 +31,6 @@ describe("nestHeadings", () => {
       { level: 2, title: "A" },
       { level: 3, title: "A-1" },
     ];
-    expect(shape(nestHeadings(items))).toEqual(["先頭の h3", ["A", ["A-1"]]]);
+    expect(shape(nestHeadings(items))).toStrictEqual(["先頭の h3", ["A", ["A-1"]]]);
   });
 });

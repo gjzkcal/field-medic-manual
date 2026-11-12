@@ -8,7 +8,7 @@ export const CRATE_NAME = "field-medic-manual";
 
 // updater は latest.json の版を SemVer として比べるので、形の違う版を出さないようにする
 const SEMVER =
-  /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
+  /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/u;
 
 export function isSemver(version: string): boolean {
   return SEMVER.test(version);
@@ -20,7 +20,7 @@ export function versionFromTag(tag: string): string | null {
   return version !== null && isSemver(version) ? version : null;
 }
 
-const PACKAGE_JSON_VERSION = /^(\s*"version":\s*")([^"]*)(")/m;
+const PACKAGE_JSON_VERSION = /^(\s*"version":\s*")([^"]*)(")/mu;
 
 export function readPackageJsonVersion(text: string): string | null {
   return PACKAGE_JSON_VERSION.exec(text)?.[2] ?? null;
@@ -32,7 +32,7 @@ export function replacePackageJsonVersion(text: string, version: string): string
 }
 
 // [package] の節の中の version だけを対象にする（依存の version = "…" に当たらないように）
-const CARGO_TOML_VERSION = /(\[package\][^[]*?\nversion\s*=\s*")([^"]*)(")/;
+const CARGO_TOML_VERSION = /(\[package\][^[]*?\nversion\s*=\s*")([^"]*)(")/u;
 
 export function readCargoTomlVersion(text: string): string | null {
   return CARGO_TOML_VERSION.exec(text)?.[2] ?? null;
@@ -44,6 +44,7 @@ export function replaceCargoTomlVersion(text: string, version: string): string {
 
 const CARGO_LOCK_VERSION = new RegExp(
   `(\\[\\[package\\]\\]\\r?\\nname = "${CRATE_NAME}"\\r?\\nversion = ")([^"]*)(")`,
+  "u",
 );
 
 export function readCargoLockVersion(text: string): string | null {
@@ -87,16 +88,16 @@ export function readRepoVersions(root: string): RepoVersions {
 
 export const REPO_URL = "https://github.com/gjzkcal/field-medic-manual";
 
-const SECTION_HEADING = /^## \[([^\]]+)\]/;
+const SECTION_HEADING = /^## \[([^\]]+)\]/u;
 // CHANGELOG の末尾に置く比較リンクの定義（`[0.0.1]: https://…`）
-const LINK_DEFINITION = /^\[([^\]]+)\]:\s+(\S+)\s*$/;
+const LINK_DEFINITION = /^\[([^\]]+)\]:\s+(\S+)\s*$/u;
 
 /**
  * CHANGELOG.md からその版の節（`## [0.0.1] - 2026-09-29` の次の行から、次の `## ` の前まで）を取り出す。
  * Releases の本文と latest.json の notes になり、アプリの更新のダイアログに「変更点」として出る。
  */
 export function extractReleaseNotes(changelog: string, version: string): string | null {
-  const lines = changelog.split(/\r?\n/);
+  const lines = changelog.split(/\r?\n/u);
   const start = lines.findIndex((line) => line.startsWith(`## [${version}]`));
   if (start === -1) {
     return null;
@@ -110,7 +111,7 @@ export function extractReleaseNotes(changelog: string, version: string): string 
 
 /** 節の見出しの名前（`Unreleased`・`0.0.1` など）を上から順に返す */
 export function changelogSections(changelog: string): string[] {
-  return changelog.split(/\r?\n/).flatMap((line) => {
+  return changelog.split(/\r?\n/u).flatMap((line) => {
     const name = SECTION_HEADING.exec(line)?.[1];
     return name === undefined ? [] : [name];
   });
@@ -119,7 +120,7 @@ export function changelogSections(changelog: string): string[] {
 /** 末尾のリンクの定義を、名前 → URL で返す */
 export function changelogLinks(changelog: string): Map<string, string> {
   const links = new Map<string, string>();
-  for (const line of changelog.split(/\r?\n/)) {
+  for (const line of changelog.split(/\r?\n/u)) {
     const match = LINK_DEFINITION.exec(line);
     if (match?.[1] !== undefined && match[2] !== undefined) {
       links.set(match[1], match[2]);
@@ -134,7 +135,7 @@ export function changelogLinks(changelog: string): Map<string, string> {
  */
 export function expectedChangelogLinks(sections: readonly string[]): Map<string, string> {
   const links = new Map<string, string>();
-  sections.forEach((name, i) => {
+  for (const [i, name] of sections.entries()) {
     const older = sections[i + 1];
     const head = name === "Unreleased" ? "HEAD" : `v${name}`;
     if (older !== undefined) {
@@ -142,6 +143,6 @@ export function expectedChangelogLinks(sections: readonly string[]): Map<string,
     } else if (name !== "Unreleased") {
       links.set(name, `${REPO_URL}/releases/tag/v${name}`);
     }
-  });
+  }
   return links;
 }

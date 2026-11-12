@@ -45,7 +45,7 @@ describe("parseChartSpec", () => {
       spec(
         " x=経過; y=血液、 SpO2; y2=心拍数; ref=85, 75,−5; title=推移; data=data/a.csv; unit=nM ",
       ),
-    ).toEqual({
+    ).toStrictEqual({
       x: "経過",
       y: ["血液", "SpO2"],
       y2: ["心拍数"],
@@ -54,7 +54,7 @@ describe("parseChartSpec", () => {
       data: "data/a.csv",
       unit: "nM",
     });
-    expect(spec("x=経過;y=SpO2;")).toEqual({
+    expect(spec("x=経過;y=SpO2;")).toStrictEqual({
       x: "経過",
       y: ["SpO2"],
       y2: [],
@@ -95,7 +95,7 @@ describe("parseChartCell", () => {
     ["15 ml/s", [15]],
     ["93 mmHg", [93]],
   ])("%s は %j", (text, expected) => {
-    expect(parseChartCell(text)).toEqual(expected);
+    expect(parseChartCell(text)).toStrictEqual(expected);
   });
 
   it.each(["85% 未満", "約 3 分", "—", "", "Stable", "150 s 血液 25%"])(
@@ -119,17 +119,17 @@ describe("chartFromTable", () => {
 
   it("横軸の小さい順に点を並べ、a/b の列は上と下の 2 本に分ける", () => {
     const { data, warnings } = chartFromTable(table(html), spec("x=経過; y=SpO2; y2=血圧"));
-    expect(warnings).toEqual([]);
+    expect(warnings).toStrictEqual([]);
     expect(data.xLabel).toBe("経過");
     // 時間は秒にそろえるので、s と 分 が混ざっても単位は s
     expect(data.xUnit).toBe("s");
-    expect(data.series).toEqual([
+    expect(data.series).toStrictEqual([
       { key: "s0", label: "SpO2", panel: "y", unit: "%" },
       { key: "s1", label: "血圧（上）", panel: "y2", unit: null },
       { key: "s2", label: "血圧（下）", panel: "y2", unit: null },
     ]);
     // 横軸が「—」の行は捨て、「85% 未満」は点にしない
-    expect(data.points).toEqual([
+    expect(data.points).toStrictEqual([
       { x: 0, values: { s0: 97.1, s1: 119, s2: 79 } },
       { x: 16, values: { s1: 100, s2: 66 } },
       { x: 60, values: { s0: 80, s1: 90, s2: 60 } },
@@ -137,10 +137,10 @@ describe("chartFromTable", () => {
   });
 
   it("表にない列と、点が 2 つ未満の線は警告にする", () => {
-    expect(chartFromTable(table(html), spec("x=経過; y=脈")).warnings).toEqual([
+    expect(chartFromTable(table(html), spec("x=経過; y=脈")).warnings).toStrictEqual([
       "列「脈」が表にありません（表の列: 経過, SpO2, 血圧, 状態）",
     ]);
-    expect(chartFromTable(table(html), spec("x=経過; y=状態")).warnings).toEqual([
+    expect(chartFromTable(table(html), spec("x=経過; y=状態")).warnings).toStrictEqual([
       "「状態」の点が 2 つ未満です（数値のセルが足りません）",
     ]);
     // 横軸の列が無ければ、線ごとの「点が足りない」は重ねて出さない
@@ -148,11 +148,11 @@ describe("chartFromTable", () => {
   });
 
   it("表があるのに unit を書いたら警告にする（単位は表のセルから取るため）", () => {
-    const html = `<table>
+    const unitHtml = `<table>
       <thead><tr><th>経過</th><th>SpO2</th></tr></thead>
       <tbody><tr><td>0 s</td><td>97%</td></tr><tr><td>5 s</td><td>92%</td></tr></tbody>
     </table>`;
-    expect(chartFromTable(table(html), spec("x=経過; y=SpO2; unit=%")).warnings).toEqual([
+    expect(chartFromTable(table(unitHtml), spec("x=経過; y=SpO2; unit=%")).warnings).toStrictEqual([
       "表のグラフでは unit を書けません（単位は表のセルから取ります）",
     ]);
   });
@@ -161,10 +161,10 @@ describe("chartFromTable", () => {
 describe("chartWithoutTable", () => {
   it("線の名前は印の y、単位は unit、横軸は秒にし、点は CSV からそのまま取る", () => {
     const skeleton = chartWithoutTable(spec("x=経過; y=濃度; unit=nM; data=a.csv"));
-    expect(skeleton.warnings).toEqual([]);
+    expect(skeleton.warnings).toStrictEqual([]);
     const { data, warnings } = chartFromCsv("経過,濃度\n0,0\n1,30.5\n2,58\n", skeleton);
-    expect(warnings).toEqual([]);
-    expect(data).toEqual({
+    expect(warnings).toStrictEqual([]);
+    expect(data).toStrictEqual({
       xLabel: "経過",
       xUnit: "s",
       series: [{ key: "s0", label: "濃度", panel: "y", unit: "nM" }],
@@ -177,10 +177,10 @@ describe("chartWithoutTable", () => {
   });
 
   it("data が無い、y2 がある印は警告にする", () => {
-    expect(chartWithoutTable(spec("x=経過; y=濃度")).warnings).toEqual([
+    expect(chartWithoutTable(spec("x=経過; y=濃度")).warnings).toStrictEqual([
       "印のすぐ後に表がありません（表なしで描くときは data= で CSV を指してください）",
     ]);
-    expect(chartWithoutTable(spec("x=経過; y=濃度; y2=心拍数; data=a.csv")).warnings).toEqual([
+    expect(chartWithoutTable(spec("x=経過; y=濃度; y2=心拍数; data=a.csv")).warnings).toStrictEqual([
       "表なしのグラフでは y2 を使えません",
     ]);
   });
@@ -208,13 +208,13 @@ describe("chartFromCsv", () => {
       "90,,85,57",
     ].join("\r\n");
     const { data, warnings } = chartFromCsv(csv, fromTable());
-    expect(warnings).toEqual([]);
-    expect(data.series.map((s) => [s.label, s.unit])).toEqual([
+    expect(warnings).toStrictEqual([]);
+    expect(data.series.map((s) => [s.label, s.unit])).toStrictEqual([
       ["SpO2", "%"],
       ["血圧（上）", null],
       ["血圧（下）", null],
     ]);
-    expect(data.points).toEqual([
+    expect(data.points).toStrictEqual([
       { x: 0, values: { s0: 97.08, s1: 119, s2: 79 } },
       { x: 30, values: { s0: 88.4, s1: 100, s2: 66 } },
       { x: 60, values: { s0: 80.2, s1: 90, s2: 60 } },
@@ -226,14 +226,14 @@ describe("chartFromCsv", () => {
     expect(
       chartFromCsv("経過,SpO2,血圧（上）,血圧（下）\n0,97.2,119,79\n30,x,1,1", fromTable())
         .warnings,
-    ).toEqual([
+    ).toStrictEqual([
       "CSV の 3 行目の「x」は数値ではありません",
       "CSV の「SpO2」の点が 2 つ未満です",
       "表と CSV が食い違っています: 「経過」0 の「SpO2」が表は 97.1、CSV は 97.2",
       "CSV に「経過」が 60 の行がありません（表の行と突き合わせるため）",
     ]);
     // 横軸は名前ではなく 1 列目で読む（同じ CSV を、横軸の列名の違う表で使い回すため）
-    expect(chartFromCsv("時間,SpO2\n0,97.1\n60,80", fromTable()).warnings).toEqual([
+    expect(chartFromCsv("時間,SpO2\n0,97.1\n60,80", fromTable()).warnings).toStrictEqual([
       "CSV に列「血圧（上）」がありません（CSV の列: 時間, SpO2）",
       "CSV に列「血圧（下）」がありません（CSV の列: 時間, SpO2）",
     ]);
@@ -246,7 +246,7 @@ describe("chartFromCsv", () => {
 describe("readChartPayload", () => {
   it("形の合う JSON だけを読む", () => {
     const valid = { spec: spec("x=経過; y=SpO2"), data: fromTableData() };
-    expect(readChartPayload(JSON.stringify(valid))).toEqual(valid);
+    expect(readChartPayload(JSON.stringify(valid))).toStrictEqual(valid);
     expect(readChartPayload("{")).toBeNull();
     expect(readChartPayload(JSON.stringify({ ...valid, spec: { ...valid.spec, y: [] } }))).toBeNull();
     expect(readChartPayload(JSON.stringify({ ...valid, extra: 1 }))).toBeNull();

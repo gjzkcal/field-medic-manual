@@ -56,7 +56,7 @@ describe("syncManuals", { timeout: CONVERT_TIMEOUT_MS }, () => {
     );
 
     expect(result).toMatchObject({ added: 1, updated: 1, unchanged: 1, removed: 0, failed: [] });
-    expect(db.saved.map((d) => [d.sourcePath, d.sourceHash])).toEqual([
+    expect(db.saved.map((d) => [d.sourcePath, d.sourceHash])).toStrictEqual([
       ["bundle://manuals/changed.md", "h2"],
       ["bundle://manuals/new.md", "h3"],
     ]);
@@ -72,7 +72,7 @@ describe("syncManuals", { timeout: CONVERT_TIMEOUT_MS }, () => {
     const result = await syncManuals([manual("kept.md", "h")], db);
 
     expect(result.removed).toBe(3);
-    expect(db.deleted).toEqual(["gone", "sample", "nopath"]);
+    expect(db.deleted).toStrictEqual(["gone", "sample", "nopath"]);
   });
 
   it("保存に失敗した原稿があっても他の原稿は続け、警告は原稿ごとに返す", async () => {
@@ -87,9 +87,9 @@ describe("syncManuals", { timeout: CONVERT_TIMEOUT_MS }, () => {
       failing,
     );
 
-    expect(result.failed).toEqual([{ fileName: "bad.md", message: "壊れた" }]);
+    expect(result.failed).toStrictEqual([{ fileName: "bad.md", message: "壊れた" }]);
     expect(result.added).toBe(2);
-    expect(result.warnings).toEqual([
+    expect(result.warnings).toStrictEqual([
       { fileName: "warn.md", message: expect.stringContaining("mod の値が不明です") as unknown },
     ]);
   });

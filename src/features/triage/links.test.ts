@@ -4,17 +4,17 @@ import { parseFlowLink } from "@/features/triage/links";
 
 describe("parseFlowLink", () => {
   it("doc: はファイル名とアンカーに分ける", () => {
-    expect(parseFlowLink("doc:hemorrhage.md#止血帯を使う")).toEqual({
+    expect(parseFlowLink("doc:hemorrhage.md#止血帯を使う")).toStrictEqual({
       kind: "doc",
       fileName: "hemorrhage.md",
       anchor: "止血帯を使う",
     });
-    expect(parseFlowLink("doc:hemorrhage.md")).toEqual({
+    expect(parseFlowLink("doc:hemorrhage.md")).toStrictEqual({
       kind: "doc",
       fileName: "hemorrhage.md",
       anchor: null,
     });
-    expect(parseFlowLink("doc:cardiac-arrest.md#cpr-%E3%81%AE%E6%89%8B%E9%A0%86")).toEqual({
+    expect(parseFlowLink("doc:cardiac-arrest.md#cpr-%E3%81%AE%E6%89%8B%E9%A0%86")).toStrictEqual({
       kind: "doc",
       fileName: "cardiac-arrest.md",
       anchor: "cpr-の手順",
@@ -22,17 +22,17 @@ describe("parseFlowLink", () => {
   });
 
   it("flow: / quickref: / https: を読む", () => {
-    expect(parseFlowLink("flow:airway-breathing")).toEqual({
+    expect(parseFlowLink("flow:airway-breathing")).toStrictEqual({
       kind: "flow",
       flowId: "airway-breathing",
     });
-    expect(parseFlowLink("quickref:tension-ptx")).toEqual({
+    expect(parseFlowLink("quickref:tension-ptx")).toStrictEqual({
       kind: "quickref",
       rowId: "tension-ptx",
     });
     // 行の id はスラッグなので、それ以外の書き方は書き間違いとして扱う
     expect(parseFlowLink("quickref:Tension_PTX")).toBeNull();
-    expect(parseFlowLink("https://anvil.acemod.org/dev/")).toEqual({
+    expect(parseFlowLink("https://anvil.acemod.org/dev/")).toStrictEqual({
       kind: "external",
       url: "https://anvil.acemod.org/dev/",
     });
@@ -49,7 +49,7 @@ describe("parseFlowLink", () => {
       "hemorrhage.md#a",
       "",
     ]) {
-      expect(parseFlowLink(text), text).toBeNull();
+      expect({ text, link: parseFlowLink(text) }).toStrictEqual({ text, link: null });
     }
   });
 });

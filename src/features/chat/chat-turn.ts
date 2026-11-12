@@ -171,7 +171,7 @@ function withRequest(turn: ChatTurn, toolUseId: string, request: ClientRequest):
           ...turn.items,
           {
             kind: "ask",
-            toolUseId: toolUseId,
+            toolUseId,
             question: request.question,
             options: request.options,
             multiSelect: request.multiSelect,
@@ -186,7 +186,7 @@ function withRequest(turn: ChatTurn, toolUseId: string, request: ClientRequest):
           ...turn.items,
           {
             kind: "propose",
-            toolUseId: toolUseId,
+            toolUseId,
             summary: request.summary,
             ops: request.ops,
             status: "pending",
@@ -238,9 +238,9 @@ export function finishTurn(turn: ChatTurn, result: ChatTurnResult): ChatTurn {
       return {
         ...base,
         state: "refused",
-        message:
-          "この質問には答えられませんでした。言い方を変えて聞いてみてください" +
-          (result.status.explanation === null ? "" : `（${result.status.explanation}）`),
+        message: `この質問には答えられませんでした。言い方を変えて聞いてみてください${
+          result.status.explanation === null ? "" : `（${result.status.explanation}）`
+        }`,
       };
   }
 }
@@ -288,8 +288,8 @@ export function numberMarks(
   number: (citation: ChatCitation) => number,
 ): (citations: readonly ChatCitation[]) => string {
   return (citations) =>
-    [...new Set(citations.map(number))]
-      .sort((a, b) => a - b)
+    [...new Set(citations.map((citation) => number(citation)))]
+      .toSorted((a, b) => a - b)
       .map((n) => `[${String(n)}]`)
       .join("");
 }
@@ -365,7 +365,7 @@ export function citationUrl(citation: ChatCitation): string | null {
     case "doc":
       return shareUrl(manualSourcePath(link.fileName), link.anchor);
     case "quickref":
-      return `${WEB_ORIGIN}${WEB_BASE.replace(/\/$/, "")}${quickrefHref(link.rowId)}`;
+      return `${WEB_ORIGIN}${WEB_BASE.replace(/\/$/u, "")}${quickrefHref(link.rowId)}`;
     case "flow":
       return flowWebUrl(link.flowId);
     // 外部のリンクは Web の出典として別に持つ
@@ -377,12 +377,12 @@ export function citationUrl(citation: ChatCitation): string | null {
 
 /** フローの Web 版の URL（Web 版でもフローを開ける）。 */
 function flowWebUrl(flowId: string): string {
-  return `${WEB_ORIGIN}${WEB_BASE.replace(/\/$/, "")}/triage/${encodeURIComponent(flowId)}`;
+  return `${WEB_ORIGIN}${WEB_BASE.replace(/\/$/u, "")}/triage/${encodeURIComponent(flowId)}`;
 }
 
 /** 回答の中の出典の番号（1 始まり）。画面とコピーで同じ番号にする。 */
 export function citationNumbering(turn: ChatTurn): (citation: ChatCitation) => number {
-  const keys = turnCitations(turn).map(citationKey);
+  const keys = turnCitations(turn).map((citation) => citationKey(citation));
   return (citation) => keys.indexOf(citationKey(citation)) + 1;
 }
 
@@ -390,10 +390,10 @@ export function citationNumbering(turn: ChatTurn): (citation: ChatCitation) => n
 export function answerForCopy(turn: ChatTurn): string {
   const texts = turn.items.filter((item): item is TextItem => item.kind === "text");
   const body = mergeTextRun(texts, numberMarks(citationNumbering(turn)))
-    .replace(/```figure[ \t]*\r?\n[^\n]*\r?\n```/g, "")
+    .replaceAll(/```figure[ \t]*\r?\n[^\n]*\r?\n```/gu, "")
     // フローへのリンクは、貼った先でも開けるよう Web 版の URL にする
-    .replace(
-      /\[([^\]]*)\]\(flow:([a-z0-9-]+)\)/g,
+    .replaceAll(
+      /\[([^\]]*)\]\(flow:([a-z0-9-]+)\)/gu,
       (_match, label: string, flowId: string) => `${label}（${flowWebUrl(flowId)}）`,
     )
     .trim();

@@ -63,7 +63,7 @@ try {
     Uint8Array.from(await readFile(join(root, path))),
   );
   if (typeof json !== "string") {
-    throw new Error("buildPrebuiltJson が文字列を返しませんでした");
+    throw new TypeError("buildPrebuiltJson が文字列を返しませんでした");
   }
   await writeFile(output, json);
 } finally {

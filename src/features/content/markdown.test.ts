@@ -48,16 +48,21 @@ category: " 症状/処置 "
 ![図](images/diagram.png)
 `;
 
+const readData = (path: string): Promise<string> =>
+  path === "/content/manuals/data/spo2.csv"
+    ? Promise.resolve("# 注記\n経過,SpO2\n0,97.12\n5,91.96\n30,79.5\n60,75.7\n")
+    : Promise.reject(new Error(`想定外の CSV: ${path}`));
+
 describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
   it("front matter・見出し・節のタグ・表・Alert・画像を変換する", async () => {
     const { doc, warnings } = await convertManual(manual(SAMPLE, "hemorrhage.md"), readSampleImage, noData);
 
-    expect(warnings).toEqual([]);
+    expect(warnings).toStrictEqual([]);
     expect(doc.title).toBe("止血");
     expect(doc.sourceType).toBe("markdown");
     expect(doc.sourcePath).toBe("bundle://manuals/hemorrhage.md");
     expect(doc.sourceHash).toBe("h");
-    expect(doc.meta).toEqual({
+    expect(doc.meta).toStrictEqual({
       modTarget: "core",
       modChannel: null,
       modVersion: null,
@@ -68,13 +73,13 @@ describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
       order: 20,
       category: "症状/処置",
     });
-    expect(doc.sections.map((s) => [s.level, s.title])).toEqual([
+    expect(doc.sections.map((s) => [s.level, s.title])).toStrictEqual([
       [1, "止血"],
       [2, "出血の見分け方"],
       [2, "止血帯を使う"],
     ]);
     const [, signs, tourniquet] = doc.sections;
-    expect(signs?.tags).toEqual(["Bleeding", "Class"]);
+    expect(signs?.tags).toStrictEqual(["Bleeding", "Class"]);
     expect(signs?.html).toContain("<table>");
     expect(signs?.plainText).toContain("Class IV");
     expect(tourniquet?.html).toContain(
@@ -83,7 +88,7 @@ describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
     expect(tourniquet?.html).toContain('<p class="markdown-alert-title">警告</p>');
     expect(tourniquet?.html).not.toContain("[!WARNING]");
 
-    expect(doc.assets.map((a) => [a.fileName, a.mime])).toEqual([["diagram.png", "image/png"]]);
+    expect(doc.assets.map((a) => [a.fileName, a.mime])).toStrictEqual([["diagram.png", "image/png"]]);
     expect(tourniquet?.html).toContain(`data-asset-id="${doc.assets[0]?.id ?? ""}"`);
   });
 
@@ -92,7 +97,7 @@ describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
     expect(withH1.doc.title).toBe("見出し");
     const plain = await convertManual(manual("本文だけ"), noImages, noData);
     expect(plain.doc.title).toBe("x");
-    expect(plain.doc.sections.map((s) => s.level)).toEqual([0]);
+    expect(plain.doc.sections.map((s) => s.level)).toStrictEqual([0]);
   });
 
   it("不正なメタデータと読めない画像は警告にして変換を続ける", async () => {
@@ -145,11 +150,11 @@ describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
       noImages,
       noData,
     );
-    expect(warnings).toEqual([]);
+    expect(warnings).toStrictEqual([]);
     const html = doc.sections[0]?.html ?? "";
     const container = document.createElement("div");
     container.innerHTML = html;
-    expect(JSON.parse(container.querySelector("table")?.getAttribute("data-chart") ?? "")).toEqual(
+    expect(JSON.parse(container.querySelector("table")?.dataset["chart"] ?? "")).toStrictEqual(
       {
         spec: {
           x: "経過",
@@ -179,20 +184,16 @@ describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
     "| 経過 | SpO2 |\n|---|---|\n| 0 s | 97.1% |\n| 5 s | 92.0% |\n| 1 分 | 76% |\n";
 
   it("data= の CSV があれば点は CSV から取り、表の値と突き合わせる", async () => {
-    const readData = (path: string): Promise<string> =>
-      path === "/content/manuals/data/spo2.csv"
-        ? Promise.resolve("# 注記\n経過,SpO2\n0,97.12\n5,91.96\n30,79.5\n60,75.7\n")
-        : Promise.reject(new Error(`想定外の CSV: ${path}`));
     const { doc, warnings } = await convertManual(
       manual(`# A\n\n<!-- chart: x=経過; y=SpO2; data=data/spo2.csv -->\n\n${CSV_TABLE}`),
       noImages,
       readData,
     );
-    expect(warnings).toEqual([]);
+    expect(warnings).toStrictEqual([]);
     const container = document.createElement("div");
     container.innerHTML = doc.sections[0]?.html ?? "";
     const payload: unknown = JSON.parse(
-      container.querySelector("table")?.getAttribute("data-chart") ?? "",
+      container.querySelector("table")?.dataset["chart"] ?? "",
     );
     expect(payload).toMatchObject({
       spec: { data: "data/spo2.csv" },
@@ -208,14 +209,14 @@ describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
       noImages,
       () => Promise.resolve("経過,濃度\n0,0\n1,30.5\n2,58\n"),
     );
-    expect(warnings).toEqual([]);
+    expect(warnings).toStrictEqual([]);
     const container = document.createElement("div");
     container.innerHTML = doc.sections[0]?.html ?? "";
     const figure = container.querySelector("figure");
     expect(figure?.previousElementSibling?.textContent).toBe("濃度の推移:");
     expect(figure?.nextElementSibling?.textContent).toBe("次の段落");
     expect(figure?.textContent).toBe("");
-    const payload: unknown = JSON.parse(figure?.getAttribute("data-chart") ?? "");
+    const payload: unknown = JSON.parse(figure?.dataset["chart"] ?? "");
     expect(payload).toMatchObject({
       spec: { unit: "nM" },
       data: {
@@ -232,7 +233,7 @@ describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
       noImages,
       () => Promise.resolve("経過,SpO2\n0,97.1\n5,92.2\n60,74\n"),
     );
-    expect(warnings).toEqual([
+    expect(warnings).toStrictEqual([
       "グラフの印「chart: x=経過; y=SpO2; data=data/spo2.csv」: 表と CSV が食い違っています: 「経過」5 の「SpO2」が表は 92、CSV は 92.2",
       "グラフの印「chart: x=経過; y=SpO2; data=data/spo2.csv」: 表と CSV が食い違っています: 「経過」60 の「SpO2」が表は 76、CSV は 74",
     ]);
@@ -268,7 +269,7 @@ describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
       noImages,
       noData,
     );
-    expect(warnings).toEqual([]);
+    expect(warnings).toStrictEqual([]);
     const container = document.createElement("div");
     container.innerHTML = doc.sections[0]?.html ?? "";
     const figure = container.querySelector("figure[data-flowchart]");

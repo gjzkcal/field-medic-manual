@@ -27,7 +27,7 @@ describe("logClientError", () => {
     logClientError("処理", error);
 
     await vi.waitFor(() => {
-      expect(logged).toEqual(["処理: Error: 壊れた\n    at f (a.js:1:2)"]);
+      expect(logged).toStrictEqual(["処理: Error: 壊れた\n    at f (a.js:1:2)"]);
     });
   });
 
@@ -37,12 +37,12 @@ describe("logClientError", () => {
     logClientError("処理", { kind: "internal", message: "内部" });
 
     await vi.waitFor(() => {
-      expect(logged).toEqual(["処理: 内部"]);
+      expect(logged).toStrictEqual(["処理: 内部"]);
     });
   });
 
   it("ログのコマンドが失敗しても例外にしない", async () => {
-    const seen = vi.fn();
+    const seen = vi.fn<() => void>();
     mockIPC(() => {
       seen();
       throw new Error("書けない");
@@ -52,7 +52,7 @@ describe("logClientError", () => {
       logClientError("処理", "x");
     }).not.toThrow();
     await vi.waitFor(() => {
-      expect(seen).toHaveBeenCalled();
+      expect(seen).toHaveBeenCalledWith();
     });
   });
 });
@@ -66,7 +66,7 @@ describe("startClientErrorLog", () => {
     window.dispatchEvent(Object.assign(new Event("unhandledrejection"), { reason: "拒否の理由" }));
 
     await vi.waitFor(() => {
-      expect(logged).toEqual(["例外: 描画の例外", "処理されなかった失敗: 拒否の理由"]);
+      expect(logged).toStrictEqual(["例外: 描画の例外", "処理されなかった失敗: 拒否の理由"]);
     });
   });
 });

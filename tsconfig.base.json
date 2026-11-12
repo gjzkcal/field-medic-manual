@@ -7,6 +7,8 @@
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
     "noEmit": true,
+    // false にすると、依存の .d.ts が通らない（@reduxjs/toolkit は下の exactOptionalPropertyTypes に合わず、
+    // @tauri-apps/api は lib にない Symbol.asyncDispose を使う）。依存の型はこちらで直せないので、宣言ファイルの検査は省く
     "skipLibCheck": true,
 
     "strict": true,

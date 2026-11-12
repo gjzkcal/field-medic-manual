@@ -23,7 +23,7 @@ afterEach(() => {
 describe("RouteErrorPage", () => {
   it("内部の文面は画面に出さず、ログにだけ送る", async () => {
     // React と React Router が受け止めた例外を console に出す。テストの出力を汚さないよう止める
-    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.spyOn(console, "error").mockReturnValue(undefined);
     const logged: string[] = [];
     mockIPC((cmd, payload) => {
       if (cmd === "client_log" && payload !== undefined && "message" in payload) {

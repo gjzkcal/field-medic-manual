@@ -50,9 +50,9 @@ describe("resolveTheme", () => {
 describe("applyTheme", () => {
   it("ダークのときだけ dark のクラスを付ける（ライトは :root の色）", () => {
     applyTheme("dark", root);
-    expect([...root.classList]).toEqual(["dark"]);
+    expect([...root.classList]).toStrictEqual(["dark"]);
     applyTheme("light", root);
-    expect([...root.classList]).toEqual([]);
+    expect([...root.classList]).toStrictEqual([]);
   });
 
   it("ほかのクラス（小窓の overlay-window）は残す", () => {

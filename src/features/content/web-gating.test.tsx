@@ -9,7 +9,7 @@ import { FavoriteButton } from "@/features/prefs/FavoriteButton";
 import { TriageRunPage } from "@/features/triage/TriageRunPage";
 
 // Web 版のビルドと同じ状態にする（お気に入りがなく、フローの同期をしない）
-vi.mock("@/lib/platform", () => ({ IS_WEB: true }));
+vi.mock(import('@/lib/platform'), () => ({ IS_WEB: true }));
 
 afterEach(() => {
   cleanup();
@@ -31,13 +31,13 @@ describe("Web 版での出し分け", () => {
     renderInRouter(<RelatedLinks links={["flow:casualty-first-contact", "https://example.com/"]} />);
 
     expect(await screen.findByRole("button", { name: "https://example.com/" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: /フロー:/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /フロー:/u })).toBeTruthy();
   });
 
   it("ないフローを開くと、同期を待たずに「見つかりません」を出す", async () => {
     mockIPC((cmd) => {
       if (cmd === "triage_get") {
-        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- Tauri はコマンドのエラーを Error ではなく AppError の素のオブジェクトで reject する。それを再現する
+        // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- Tauri はコマンドのエラーを Error ではなく AppError の素のオブジェクトで reject する。それを再現する
         return Promise.reject({ kind: "not_found", message: "フロー no-such-flow" });
       }
       return [];

@@ -51,7 +51,7 @@ function wrappableBox(math: Element): HTMLElement {
   const items = topLevelItems(math);
   const chunks: Element[][] = [];
   let current: Element[] = [];
-  items.forEach((item, index) => {
+  for (const [index, item] of items.entries()) {
     current.push(item);
     const last = index === items.length - 1;
     const previous = items[index - 1];
@@ -61,7 +61,7 @@ function wrappableBox(math: Element): HTMLElement {
       chunks.push(current);
       current = [];
     }
-  });
+  }
   chunks.push(current);
 
   const box = doc.createElement("div");
@@ -69,7 +69,7 @@ function wrappableBox(math: Element): HTMLElement {
   // 塊ごとの <math> に分けると、読み上げでは 1 つの式が別々の式に聞こえるので、式全体を 1 行の文字列で名前にする
   box.setAttribute("role", "group");
   box.setAttribute("aria-label", mathToPlainText(math));
-  chunks.forEach((chunk, index) => {
+  for (const [index, chunk] of chunks.entries()) {
     if (index > 0) {
       // flex の箱の中の空白は表示されない。検索用の本文で、塊の境目の語がつながらないようにするためのもの
       box.append(" ");
@@ -77,7 +77,7 @@ function wrappableBox(math: Element): HTMLElement {
     const part = doc.createElementNS(MATHML_NS, "math");
     part.append(...chunk);
     box.append(part);
-  });
+  }
   return box;
 }
 
@@ -114,7 +114,7 @@ function isBreakingOperator(item: Element): boolean {
 }
 
 function isQuad(item: Element): boolean {
-  const width = /^([\d.]+)em$/.exec(item.getAttribute("width") ?? "");
+  const width = /^([\d.]+)em$/u.exec(item.getAttribute("width") ?? "");
   return item.localName === "mspace" && width?.[1] !== undefined && Number(width[1]) >= 1;
 }
 
@@ -127,18 +127,18 @@ export function isMathElement(node: Node): node is Element {
  * 存在しない語ができ、スニペットでも読めないので、分数・べき・添字を `÷` `^` `_` の 1 行の形にする。
  */
 export function mathToPlainText(math: Element): string {
-  return linear(math).replace(/\s+/g, " ").trim();
+  return linear(math).replaceAll(/\s+/gu, " ").trim();
 }
 
 /** 関数の適用などの見えない演算子（U+2061〜U+2064）。表示されないので検索の本文から除く */
-const INVISIBLE_OPERATORS = /[\u2061-\u2064]/g;
+const INVISIBLE_OPERATORS = /[\u2061-\u2064]/gu;
 const TOKEN_ELEMENTS = new Set(["mi", "mn", "mtext", "ms"]);
 /** 添字やべきの付いた 1 つの記号（`k_d` など）。それ自体で 1 項なので括弧で囲まない */
 const SCRIPTED_ELEMENTS = new Set(["msub", "msup", "msubsup", "msqrt"]);
 
 function linear(node: Node): string {
   if (node.nodeType === Node.TEXT_NODE) {
-    return (node.textContent ?? "").replace(INVISIBLE_OPERATORS, "");
+    return (node.textContent ?? "").replaceAll(INVISIBLE_OPERATORS, "");
   }
   if (!(node instanceof Element)) {
     return "";
@@ -167,15 +167,15 @@ function linear(node: Node): string {
         : `${group(first)}_${group(second)}^${group(third)}`;
     }
     case "msqrt":
-      return `√(${children.map(linear).join("").trim()})`;
+      return `√(${children.map((child) => linear(child)).join("").trim()})`;
     default:
-      return Array.from(node.childNodes).map(linear).join("");
+      return Array.from(node.childNodes).map((child) => linear(child)).join("");
   }
 }
 
 /** 二項演算子の前後に空白を入れ、元のインラインコードの式（`a × b`）と同じ読みやすさにする */
 function operator(mo: Element): string {
-  const text = mo.textContent.replace(INVISIBLE_OPERATORS, "");
+  const text = mo.textContent.replaceAll(INVISIBLE_OPERATORS, "");
   if (text === "") {
     return "";
   }
@@ -196,7 +196,7 @@ function group(node: Element): string {
   if (node.localName === "mrow" && children.length === 1 && children[0] !== undefined) {
     return group(children[0]);
   }
-  const text = linear(node).replace(/\s+/g, " ").trim();
+  const text = linear(node).replaceAll(/\s+/gu, " ").trim();
   // `\mathrm{EC}` のように文字だけが並ぶ項も 1 語として扱う
   const word = children.length > 0 && children.every((child) => TOKEN_ELEMENTS.has(child.localName));
   if (

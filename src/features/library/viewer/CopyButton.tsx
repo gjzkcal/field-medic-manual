@@ -92,7 +92,7 @@ export function CopyButton({
           {copied ? <CheckIcon /> : icon}
         </TooltipTrigger>
         <TooltipContent>
-          {error !== null ? `コピーできませんでした: ${error}` : copied ? doneLabel : label}
+          {error === null ? (copied ? doneLabel : label) : `コピーできませんでした: ${error}`}
         </TooltipContent>
       </Tooltip>
       {/* ツールチップは読み上げに届かないことがあるので、結果は別に伝える */}

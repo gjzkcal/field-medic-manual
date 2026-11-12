@@ -7,7 +7,7 @@ describe("同義語の初期値", () => {
     const groups = new Set([...SEED_SYNONYMS.values()].map((terms) => terms.join("|")));
     expect(groups.size).toBe(16);
     // COLLATE NOCASE の並び（tourniquet < tq）
-    expect(SEED_SYNONYMS.get("tq")).toEqual(["Tourniquet", "TQ", "ターニケット", "止血帯"]);
+    expect(SEED_SYNONYMS.get("tq")).toStrictEqual(["Tourniquet", "TQ", "ターニケット", "止血帯"]);
   });
 
   it("同義語に触れるマイグレーションは、表を作るものと初期値だけ", () => {
@@ -18,26 +18,31 @@ describe("同義語の初期値", () => {
       eager: true,
     });
     const touching = Object.entries(migrations)
-      .filter(([, sql]) => /synonym/i.test(sql))
+      .filter(([, sql]) => /synonym/iu.test(sql))
       .map(([path]) => path.split("/").pop());
-    expect(touching).toEqual(["0001_init.sql", "0002_seed_synonyms.sql"]);
+    expect(touching).toStrictEqual(["0001_init.sql", "0002_seed_synonyms.sql"]);
   });
 
   it("引用符の中の 2 つ続きの引用符を 1 つに戻す", () => {
     const index = parseSynonymSeed(
       "INSERT INTO synonyms (group_id, term) VALUES (1, 'a''b'), (1, 'c');",
     );
-    expect(index.get("c")).toEqual(["a'b", "c"]);
+    expect(index.get("c")).toStrictEqual(["a'b", "c"]);
   });
 
   it("語を読めなければ失敗する", () => {
-    expect(() => parseSynonymSeed("SELECT 1;")).toThrow();
+    expect(() => parseSynonymSeed("SELECT 1;")).toThrow(/INSERT INTO synonyms がありません/u);
   });
 });
 
 describe("expandTerm", () => {
   it("大文字小文字を区別せずに引き、入力した語を先頭にする", () => {
-    expect(expandTerm("tq").alternatives).toEqual(["tq", "Tourniquet", "ターニケット", "止血帯"]);
+    expect(expandTerm("tq").alternatives).toStrictEqual([
+      "tq",
+      "Tourniquet",
+      "ターニケット",
+      "止血帯",
+    ]);
   });
 
   it("3 文字以上の語には 3 文字未満の同義語を足さない", () => {
@@ -46,6 +51,6 @@ describe("expandTerm", () => {
   });
 
   it("辞書にない語はそのまま", () => {
-    expect(expandTerm("鯨")).toEqual({ original: "鯨", alternatives: ["鯨"] });
+    expect(expandTerm("鯨")).toStrictEqual({ original: "鯨", alternatives: ["鯨"] });
   });
 });

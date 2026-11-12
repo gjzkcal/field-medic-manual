@@ -8,7 +8,7 @@ const ELLIPSIS = "…";
 /** ASCII の英字だけを小文字にする。SQLite の LIKE と NOCASE は ASCII だけ大文字小文字を区別しないため。 */
 export function asciiLower(s: string): string {
   // 置き換えても長さが変わらないので、小文字にした文字列の位置を元の文字列にそのまま使える
-  return s.replace(/[A-Z]/g, (c) => c.toLowerCase());
+  return s.replaceAll(/[A-Z]/gu, (c) => c.toLowerCase());
 }
 
 export function equalsCi(a: string, b: string): boolean {
@@ -29,7 +29,7 @@ export const MAX_TERMS = 16;
 /** 検索クエリを語に分ける。全角スペースも区切りにする。大文字小文字だけ違う語は 1 つにまとめる。先頭の MAX_QUERY_CHARS 文字を読み、語は先頭から MAX_TERMS 個まで。 */
 export function splitTerms(query: string): string[] {
   const head = Array.from(query).slice(0, MAX_QUERY_CHARS).join("");
-  return normalizeTerms(head.split(/\s+/)).slice(0, MAX_TERMS);
+  return normalizeTerms(head.split(/\s+/u)).slice(0, MAX_TERMS);
 }
 
 /** 語の並びを正規化する。前後の空白を除き、空は捨て、大文字小文字だけ違う重複をまとめる。 */
@@ -46,7 +46,7 @@ export function normalizeTerms(terms: Iterable<string>): string[] {
 
 /** タグを正規化する。前後の空白と先頭の `#` を除き、空は捨て、大文字小文字だけ違う重複をまとめる。 */
 export function normalizeTags(tags: readonly string[]): string[] {
-  return normalizeTerms(tags.map((t) => t.trim().replace(/^#+/, "")));
+  return normalizeTerms(tags.map((t) => t.trim().replace(/^#+/u, "")));
 }
 
 /** `needle` が最初に現れる範囲（UTF-16 の位置）。ASCII だけ大文字小文字を区別しない。 */
@@ -55,7 +55,7 @@ export function findCi(haystack: string, needle: string): { start: number; end: 
     return null;
   }
   const start = asciiLower(haystack).indexOf(asciiLower(needle));
-  return start < 0 ? null : { start, end: start + needle.length };
+  return start === -1 ? null : { start, end: start + needle.length };
 }
 
 export function containsCi(haystack: string, needle: string): boolean {

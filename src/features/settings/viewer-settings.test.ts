@@ -27,7 +27,7 @@ describe("parseViewerSettings", () => {
         triageKeys: false,
         overdoseLine: "arrest",
       }),
-    ).toEqual({
+    ).toStrictEqual({
       fontSize: "xl",
       lineHeight: "loose",
       theme: "dark",
@@ -37,9 +37,11 @@ describe("parseViewerSettings", () => {
   });
 
   it("保存されていない・不正な項目だけ既定値に戻す", () => {
-    expect(parseViewerSettings(null)).toEqual(DEFAULT_VIEWER_SETTINGS);
-    expect(parseViewerSettings("xl")).toEqual(DEFAULT_VIEWER_SETTINGS);
-    expect(parseViewerSettings({ fontSize: "xxl", lineHeight: "loose", theme: "light" })).toEqual({
+    expect(parseViewerSettings(null)).toStrictEqual(DEFAULT_VIEWER_SETTINGS);
+    expect(parseViewerSettings("xl")).toStrictEqual(DEFAULT_VIEWER_SETTINGS);
+    expect(
+      parseViewerSettings({ fontSize: "xxl", lineHeight: "loose", theme: "light" }),
+    ).toStrictEqual({
       fontSize: DEFAULT_VIEWER_SETTINGS.fontSize,
       lineHeight: "loose",
       theme: "light",
@@ -91,7 +93,7 @@ describe("useViewerSettings", () => {
     mockIPC((cmd) => (cmd === "settings_get" ? { fontSize: "xl", lineHeight: "normal" } : null));
 
     await loadViewerSettings();
-    expect(useViewerSettings.getState().settings).toEqual({
+    expect(useViewerSettings.getState().settings).toStrictEqual({
       fontSize: "xl",
       lineHeight: "normal",
       theme: "system",
@@ -101,6 +103,6 @@ describe("useViewerSettings", () => {
 
     useViewerSettings.setState({ settings: DEFAULT_VIEWER_SETTINGS, changed: true });
     await loadViewerSettings();
-    expect(useViewerSettings.getState().settings).toEqual(DEFAULT_VIEWER_SETTINGS);
+    expect(useViewerSettings.getState().settings).toStrictEqual(DEFAULT_VIEWER_SETTINGS);
   });
 });

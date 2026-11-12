@@ -40,5 +40,5 @@ export function useSyncedLoad<T>(
       cancelled = true;
     };
   }, [key, syncStatus]);
-  return result !== null && result.key === key ? result.load : { status: "loading" };
+  return result?.key === key ? result.load : { status: "loading" };
 }

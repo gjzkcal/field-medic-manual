@@ -50,6 +50,14 @@ function renderOverlay(): ReturnType<typeof createMemoryRouter> {
   return router;
 }
 
+const hover = (): void => {
+  const tab = screen.getByRole("link", { name: "お気に入り" });
+  fireEvent.pointerEnter(tab, { pointerType: "mouse" });
+  fireEvent.mouseEnter(tab);
+  fireEvent.mouseMove(tab);
+};
+const tooltip = (): Element | null => document.querySelector("[data-slot=tooltip-content]");
+
 describe("OverlayLayout", () => {
   it("タブは名前の付いたナビゲーションの中のリンクで、今のタブを伝える。中身は main に置く", () => {
     renderOverlay();
@@ -69,14 +77,6 @@ describe("OverlayLayout", () => {
   });
 
   it("タブが絵だけの幅では、マウスを載せると名前を出す。文字が見える幅では出さない", async () => {
-    const hover = (): void => {
-      const tab = screen.getByRole("link", { name: "お気に入り" });
-      fireEvent.pointerEnter(tab, { pointerType: "mouse" });
-      fireEvent.mouseEnter(tab);
-      fireEvent.mouseMove(tab);
-    };
-    const tooltip = (): Element | null => document.querySelector("[data-slot=tooltip-content]");
-
     stubNarrow(true);
     renderOverlay();
     hover();
@@ -88,12 +88,14 @@ describe("OverlayLayout", () => {
     stubNarrow(false);
     renderOverlay();
     hover();
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 200);
+    });
     expect(tooltip()).toBeNull();
   });
 
   it("axe の違反がない（WCAG 2.2 A・AA）", async () => {
     renderOverlay();
-    expect(await axeViolations()).toEqual([]);
+    expect(await axeViolations()).toStrictEqual([]);
   });
 });

@@ -27,7 +27,9 @@ export async function loadWebStore(readImage: ReadImage = readBundledImage): Pro
     const { doc } = await convertManual(manual, readImage, readBundledData);
     docs.push(doc);
     // 1 本ごとに描画へ制御を返し、読み込み中の表示を止めないようにする
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0);
+    });
   }
   const now = new Date().toISOString();
   return buildStore(docs, await loadQuickref(), now, await loadFlows(now));

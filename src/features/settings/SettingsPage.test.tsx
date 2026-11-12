@@ -150,7 +150,7 @@ describe("SettingsPage", () => {
     fireEvent.keyDown(field, { key: "g", code: "KeyG", ctrlKey: true, altKey: true });
     expect(document.activeElement).toBe(field);
     await waitFor(() => {
-      expect(set).toEqual([{ action: "search", accelerator: "Ctrl+Alt+G" }]);
+      expect(set).toStrictEqual([{ action: "search", accelerator: "Ctrl+Alt+G" }]);
     });
     await waitFor(() => {
       expect(screen.getByText("「小窓で検索」を Ctrl + Alt + G にしました")).toBeDefined();
@@ -179,6 +179,6 @@ describe("SettingsPage", () => {
     render(<SettingsPage />);
     await screen.findByText("ほかのアプリが使っています");
     await screen.findByText("v0.0.1");
-    expect(await axeViolations()).toEqual([]);
+    expect(await axeViolations()).toStrictEqual([]);
   });
 });

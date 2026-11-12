@@ -206,7 +206,7 @@ function FilterBar({
 }: FilterBarProps): JSX.Element {
   // 原稿にないモジュールやタグを並べても選んだ結果が 0 件になるだけなので、原稿にあるものだけ出す
   const modTargets = MOD_TARGET_VALUES.filter((t) => docs.some((d) => d.meta.modTarget === t));
-  const tags = [...new Set(docs.flatMap((d) => d.meta.tags))].sort((a, b) =>
+  const tags = [...new Set(docs.flatMap((d) => d.meta.tags))].toSorted((a, b) =>
     a.localeCompare(b, "ja"),
   );
 

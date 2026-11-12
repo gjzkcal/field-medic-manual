@@ -60,12 +60,12 @@ describe("parseFilters / filtersToParams", () => {
     expect(params.toString()).toBe(
       new URLSearchParams({ cat: "意識", sev: "3,4", q: "NCD", all: "1", row: "ptx" }).toString(),
     );
-    expect(parseFilters(params)).toEqual({ ...filters, severities: [3, 4] });
+    expect(parseFilters(params)).toStrictEqual({ ...filters, severities: [3, 4] });
     expect(filtersToParams(NONE).toString()).toBe("");
   });
 
   it("不正な値は無視する", () => {
-    expect(parseFilters(new URLSearchParams("sev=0,4,x,9&all=yes"))).toEqual({
+    expect(parseFilters(new URLSearchParams("sev=0,4,x,9&all=yes"))).toStrictEqual({
       ...NONE,
       severities: [4],
     });
@@ -74,23 +74,25 @@ describe("parseFilters / filtersToParams", () => {
 
 describe("visibleRows", () => {
   it("使っている MOD に合う行だけを出し、「すべての組み合わせ」では全部を出す", () => {
-    expect(ids({})).toEqual(["limb", "ptx", "wake-ci", "pain"]);
-    expect(ids({}, activeMods({ enabled: [] }))).toEqual(["limb", "wake-core", "pain"]);
-    expect(ids({ showAll: true })).toEqual(["limb", "ptx", "wake-ci", "wake-core", "pain"]);
+    expect(ids({})).toStrictEqual(["limb", "ptx", "wake-ci", "pain"]);
+    expect(ids({}, activeMods({ enabled: [] }))).toStrictEqual(["limb", "wake-core", "pain"]);
+    expect(ids({ showAll: true })).toStrictEqual(["limb", "ptx", "wake-ci", "wake-core", "pain"]);
   });
 
   it("カテゴリ・重症度・キーワードで絞る", () => {
-    expect(ids({ category: "意識" })).toEqual(["wake-ci"]);
-    expect(ids({ severities: [4] })).toEqual(["limb", "ptx"]);
-    expect(ids({ severities: [1, 3] })).toEqual(["wake-ci", "pain"]);
-    expect(ids({ keyword: "ncd" }), "備考も探す・大文字小文字を区別しない").toEqual(["ptx"]);
-    expect(ids({ keyword: "包帯" }), "手順と物品も探す").toEqual([
+    expect(ids({ category: "意識" })).toStrictEqual(["wake-ci"]);
+    expect(ids({ severities: [4] })).toStrictEqual(["limb", "ptx"]);
+    expect(ids({ severities: [1, 3] })).toStrictEqual(["wake-ci", "pain"]);
+    expect(ids({ keyword: "ncd" }), "備考も探す・大文字小文字を区別しない").toStrictEqual(["ptx"]);
+    expect(ids({ keyword: "包帯" }), "手順と物品も探す").toStrictEqual([
       "limb",
       "ptx",
       "wake-ci",
       "pain",
     ]);
-    expect(ids({ keyword: "大出血　手足" }), "空白で区切った語はすべて含む").toEqual(["limb"]);
+    expect(ids({ keyword: "大出血　手足" }), "空白で区切った語はすべて含む").toStrictEqual([
+      "limb",
+    ]);
   });
 
   it("行を指して開いたときは、絞り込みを外し、MOD で隠れる行でもその行は出す", () => {
@@ -99,7 +101,13 @@ describe("visibleRows", () => {
       { ...NONE, rowId: "wake-core", severities: [1], category: "出血" },
       usual,
     );
-    expect(result.map((v) => v.row.id)).toEqual(["limb", "ptx", "wake-ci", "wake-core", "pain"]);
+    expect(result.map((v) => v.row.id)).toStrictEqual([
+      "limb",
+      "ptx",
+      "wake-ci",
+      "wake-core",
+      "pain",
+    ]);
     expect(result.find((v) => v.row.id === "wake-core")?.hiddenByMods).toBe(true);
     expect(result.find((v) => v.row.id === "limb")?.hiddenByMods).toBe(false);
   });
@@ -107,6 +115,6 @@ describe("visibleRows", () => {
 
 describe("categoriesOf", () => {
   it("ファイルに出てきた順に 1 回ずつ", () => {
-    expect(categoriesOf(ROWS)).toEqual(["出血", "気道・呼吸", "意識", "薬・物品"]);
+    expect(categoriesOf(ROWS)).toStrictEqual(["出血", "気道・呼吸", "意識", "薬・物品"]);
   });
 });

@@ -9,8 +9,8 @@ export interface Rgba {
   a: number;
 }
 
-const OKLCH = /^oklch\(\s*([\d.]+)(%?)\s+([\d.]+)\s+([\d.]+)\s*(?:\/\s*([\d.]+)(%?))?\s*\)$/;
-const HEX = /^#([0-9a-f]{6})$/i;
+const OKLCH = /^oklch\(\s*([\d.]+)(%?)\s+([\d.]+)\s+([\d.]+)\s*(?:\/\s*([\d.]+)(%?))?\s*\)$/u;
+const HEX = /^#([0-9a-f]{6})$/iu;
 
 export function parseColor(text: string): Rgba {
   const value = text.trim();

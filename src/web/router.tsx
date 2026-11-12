@@ -13,7 +13,7 @@ import { WebSettingsPage } from "@/web/WebSettingsPage";
 
 // 本文の URL は /doc/<id>?hl=<語>#<アンカー> なので、ハッシュで画面を切り替えるルーターは使えない。
 // GitHub Pages ではリポジトリ名の下に置かれるので、その下を起点にする（末尾の / は付けない決まり）
-const BASENAME = import.meta.env.BASE_URL.replace(/\/$/, "");
+const BASENAME = import.meta.env.BASE_URL.replace(/\/$/u, "");
 
 export const webRouter = createBrowserRouter(
   [

@@ -10,7 +10,8 @@ import { buildStore, type WebStore } from "@/web/backend/store";
 /** 同梱するときと同じく JSON の文字列にしても形が崩れないことを確かめてから、表に戻す */
 function roundTrip(store: WebStore): WebStore {
   const prebuilt = toPrebuilt(store);
-  expect(JSON.parse(JSON.stringify(prebuilt))).toEqual(prebuilt);
+  const json = JSON.stringify(prebuilt);
+  expect(JSON.parse(json)).toStrictEqual(prebuilt);
   return fromPrebuilt(prebuilt);
 }
 
@@ -20,7 +21,7 @@ describe("ビルドのときに変換した原稿の表", () => {
     { timeout: CONVERT_TIMEOUT_MS * 2 },
     async () => {
       const store = await loadWebStore();
-      expect(roundTrip(store)).toEqual(store);
+      expect(roundTrip(store)).toStrictEqual(store);
     },
   );
 
@@ -33,6 +34,6 @@ describe("ビルドのときに変換した原稿の表", () => {
     };
     const doc = { ...bleeding(), assets: [asset] };
     const store = buildStore([doc], EMPTY_QUICKREF, "2026-10-16T00:00:00.000Z");
-    expect(roundTrip(store).assets.get(asset.id)).toEqual(asset);
+    expect(roundTrip(store).assets.get(asset.id)).toStrictEqual(asset);
   });
 });

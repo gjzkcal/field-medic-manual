@@ -41,14 +41,14 @@ describe("薬の数値の JSON Schema", () => {
     expect(value).toMatchObject({ $schema: MEDICATION_SCHEMA_ID });
     const validate = new Ajv({ allErrors: true }).compile(JSON.parse(text));
     validate(value);
-    expect(validate.errors ?? []).toEqual([]);
+    expect(validate.errors ?? []).toStrictEqual([]);
   });
 
   it("書き間違いはスキーマでも見つかる", () => {
     const validate = new Ajv({ allErrors: true }).compile(JSON.parse(text));
     const value: unknown = parse(readFileSync(YAML_PATH, "utf8"));
     if (typeof value !== "object") {
-      throw new Error("YAML を読めません");
+      throw new TypeError("YAML を読めません");
     }
     expect(validate({ ...value, typo: 1 })).toBe(false);
     expect(validate({ ...value, salineSeconds: -1 })).toBe(false);

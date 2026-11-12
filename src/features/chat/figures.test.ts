@@ -18,7 +18,7 @@ describe("figuresOnly", () => {
     expect(out).not.toContain("本文");
     expect(out).not.toContain("ただの表");
     // figure の中の画像は figure ごと 1 回だけ
-    expect(out.match(/data-asset-id="a"/g)).toHaveLength(1);
+    expect(out.match(/data-asset-id="a"/gu)).toHaveLength(1);
   });
 
   it("図がなければ空", () => {

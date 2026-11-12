@@ -17,18 +17,18 @@ function key(
 
 describe("acceleratorFromKey", () => {
   it("Rust が保存する形（Ctrl+Alt+Shift+Super+キー）にそろえる", () => {
-    expect(acceleratorFromKey(key("KeyM", { ctrl: true, shift: true }))).toEqual({
+    expect(acceleratorFromKey(key("KeyM", { ctrl: true, shift: true }))).toStrictEqual({
       kind: "ok",
       accelerator: "Ctrl+Shift+M",
     });
-    expect(acceleratorFromKey(key("Digit2", { alt: true }))).toEqual({
+    expect(acceleratorFromKey(key("Digit2", { alt: true }))).toStrictEqual({
       kind: "ok",
       accelerator: "Alt+2",
     });
     expect(
       acceleratorFromKey(key("F5", { ctrl: true, alt: true, shift: true, meta: true })),
-    ).toEqual({ kind: "ok", accelerator: "Ctrl+Alt+Shift+Super+F5" });
-    expect(acceleratorFromKey(key("Numpad1", { ctrl: true }))).toEqual({
+    ).toStrictEqual({ kind: "ok", accelerator: "Ctrl+Alt+Shift+Super+F5" });
+    expect(acceleratorFromKey(key("Numpad1", { ctrl: true }))).toStrictEqual({
       kind: "ok",
       accelerator: "Ctrl+Numpad1",
     });
@@ -36,15 +36,17 @@ describe("acceleratorFromKey", () => {
 
   it("キーボードの配列によらず、物理的なキーの位置で決める", () => {
     // 日本語配列でも英語配列でも、M の位置のキーは KeyM
-    expect(acceleratorFromKey(key("KeyM", { ctrl: true }))).toEqual({
+    expect(acceleratorFromKey(key("KeyM", { ctrl: true }))).toStrictEqual({
       kind: "ok",
       accelerator: "Ctrl+M",
     });
   });
 
   it("修飾キーだけを押している間は、続きを待つ", () => {
-    expect(acceleratorFromKey(key("ControlLeft", { ctrl: true }))).toEqual({ kind: "pending" });
-    expect(acceleratorFromKey(key("ShiftRight", { ctrl: true, shift: true }))).toEqual({
+    expect(acceleratorFromKey(key("ControlLeft", { ctrl: true }))).toStrictEqual({
+      kind: "pending",
+    });
+    expect(acceleratorFromKey(key("ShiftRight", { ctrl: true, shift: true }))).toStrictEqual({
       kind: "pending",
     });
   });

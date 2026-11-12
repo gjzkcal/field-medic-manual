@@ -8,12 +8,12 @@ const css = readFileSync(resolve(REPO_ROOT, "src", "index.css"), "utf8");
 
 function variables(selector: string): Record<string, string> {
   const start = css.indexOf(`\n${selector} {`);
-  if (start < 0) {
+  if (start === -1) {
     throw new Error(`index.css に ${selector} の節がありません`);
   }
   const body = css.slice(start, css.indexOf("\n}", start));
   return Object.fromEntries(
-    [...body.matchAll(/--([\w-]+):\s*([^;]+);/g)].map((m) => [m[1] ?? "", m[2] ?? ""]),
+    [...body.matchAll(/--([\w-]+):\s*([^;]+);/gu)].map((m) => [m[1] ?? "", m[2] ?? ""]),
   );
 }
 

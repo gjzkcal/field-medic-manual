@@ -17,6 +17,29 @@ interface DebugData {
   synonyms: SynonymGroup[];
 }
 
+async function resync(): Promise<string> {
+  const result = await syncBundledManuals();
+  if (result === null) {
+    return "同期に失敗しました（ライブラリ画面に理由が出ます）";
+  }
+  return `同期しました: 追加 ${String(result.added)} / 更新 ${String(result.updated)} / 変更なし ${String(result.unchanged)} / 削除 ${String(result.removed)} / 失敗 ${String(result.failed.length)}`;
+}
+
+async function insertDummy(): Promise<string> {
+  const started = performance.now();
+  const sections = await insertDummyDocs();
+  return `ダミーを ${String(sections)} 節入れました（${(performance.now() - started).toFixed(0)} ms）。次の起動時の同期で消えます`;
+}
+
+async function removeDummy(): Promise<string> {
+  return `ダミーを ${String(await removeDummyDocs())} 文書消しました`;
+}
+
+async function remove(doc: DocSummary): Promise<string> {
+  await docDelete(doc.id);
+  return `「${doc.title}」を削除しました`;
+}
+
 /** 開発ビルドだけで出す、データ層の動作確認用の画面。 */
 export function DebugPanel(): JSX.Element {
   const [data, setData] = useState<DebugData>({ docs: [], tags: [], synonyms: [] });
@@ -54,29 +77,6 @@ export function DebugPanel(): JSX.Element {
       setBusy(false);
       setRevision((r) => r + 1);
     }
-  }
-
-  async function resync(): Promise<string> {
-    const result = await syncBundledManuals();
-    if (result === null) {
-      return "同期に失敗しました（ライブラリ画面に理由が出ます）";
-    }
-    return `同期しました: 追加 ${String(result.added)} / 更新 ${String(result.updated)} / 変更なし ${String(result.unchanged)} / 削除 ${String(result.removed)} / 失敗 ${String(result.failed.length)}`;
-  }
-
-  async function insertDummy(): Promise<string> {
-    const started = performance.now();
-    const sections = await insertDummyDocs();
-    return `ダミーを ${String(sections)} 節入れました（${(performance.now() - started).toFixed(0)} ms）。次の起動時の同期で消えます`;
-  }
-
-  async function removeDummy(): Promise<string> {
-    return `ダミーを ${String(await removeDummyDocs())} 文書消しました`;
-  }
-
-  async function remove(doc: DocSummary): Promise<string> {
-    await docDelete(doc.id);
-    return `「${doc.title}」を削除しました`;
   }
 
   return (

@@ -101,7 +101,7 @@ export function ChatPromptInput({
 
   async function addFiles(files: readonly File[]): Promise<void> {
     setError(null);
-    const accepted = files.filter(isAcceptedImage);
+    const accepted = files.filter((file) => isAcceptedImage(file));
     if (accepted.length < files.length) {
       setError("PNG・JPEG・WebP の画像だけを付けられます");
     }
@@ -110,7 +110,9 @@ export function ChatPromptInput({
       setError(`画像は ${String(MAX_IMAGES)} 枚までです`);
     }
     try {
-      const prepared = await Promise.all(accepted.slice(0, Math.max(0, room)).map(prepareImage));
+      const prepared = await Promise.all(
+        accepted.slice(0, Math.max(0, room)).map((file) => prepareImage(file)),
+      );
       setImages((current) => [...current, ...prepared].slice(0, MAX_IMAGES));
     } catch (e: unknown) {
       setError(`画像を読めませんでした: ${errorMessage(e)}`);
@@ -157,6 +159,7 @@ export function ChatPromptInput({
   }
 
   return (
+    // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- 画像のドロップを受ける。キーボードでは「画像を付ける」ボタンと貼り付けで同じことができる
     <form
       ref={formRef}
       onSubmit={handleSubmit}

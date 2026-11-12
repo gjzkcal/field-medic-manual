@@ -64,7 +64,7 @@ function dummySection(docIndex: number, sectionIndex: number): SectionInput {
 }
 
 export function makeDummyDocs(): DocUpsertInput[] {
-  return Array.from({ length: DOC_COUNT }, (_, d) => ({
+  return Array.from({ length: DOC_COUNT }, (_value, d) => ({
     title: `ダミー文書 ${String(d + 1)}`,
     sourceType: "text",
     sourcePath: `${DUMMY_SOURCE_PREFIX}${String(d + 1).padStart(2, "0")}`,

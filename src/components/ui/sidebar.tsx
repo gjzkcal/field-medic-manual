@@ -68,10 +68,10 @@ function SidebarProvider({
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
       const openState = typeof value === "function" ? value(open) : value;
-      if (setOpenProp !== undefined) {
-        setOpenProp(openState);
-      } else {
+      if (setOpenProp === undefined) {
         setUncontrolledOpen(openState);
+      } else {
+        setOpenProp(openState);
       }
       // shadcn の元の実装はここで開閉を Cookie（sidebar_state、path=/）に書くが、消した。
       // どこからも読まず、Web 版では origin（gjzkcal.github.io）を共有するほかのページにも送られるため。shadcn で更新したときに戻さない
@@ -82,9 +82,9 @@ function SidebarProvider({
   // Helper to toggle the sidebar.
   const toggleSidebar = React.useCallback(() => {
     if (isMobile) {
-      setOpenMobile((open) => !open);
+      setOpenMobile((current) => !current);
     } else {
-      setOpen((open) => !open);
+      setOpen((current) => !current);
     }
   }, [isMobile, setOpen, setOpenMobile]);
 
@@ -523,11 +523,7 @@ function SidebarMenuButton({
     return comp;
   }
 
-  if (typeof tooltip === "string") {
-    tooltip = {
-      children: tooltip,
-    };
-  }
+  const tooltipProps = typeof tooltip === "string" ? { children: tooltip } : tooltip;
 
   return (
     <Tooltip>
@@ -536,7 +532,7 @@ function SidebarMenuButton({
         side="right"
         align="center"
         hidden={state !== "collapsed" || isMobile}
-        {...tooltip}
+        {...tooltipProps}
       />
     </Tooltip>
   );

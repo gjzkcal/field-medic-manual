@@ -4,7 +4,7 @@ import { decodeAnchor, docHref, highlightTermsOf, resolveLink } from "@/features
 
 describe("resolveLink", () => {
   it("http / https は外部リンク", () => {
-    expect(resolveLink("https://anvil.acemod.org/dev/")).toEqual({
+    expect(resolveLink("https://anvil.acemod.org/dev/")).toStrictEqual({
       kind: "external",
       url: "https://anvil.acemod.org/dev/",
     });
@@ -13,7 +13,7 @@ describe("resolveLink", () => {
   });
 
   it("# だけは同じ文書のアンカー。% エンコードを戻す", () => {
-    expect(resolveLink("#%E6%AD%A2%E8%A1%80%E5%B8%AF%E3%82%92%E4%BD%BF%E3%81%86")).toEqual({
+    expect(resolveLink("#%E6%AD%A2%E8%A1%80%E5%B8%AF%E3%82%92%E4%BD%BF%E3%81%86")).toStrictEqual({
       kind: "anchor",
       anchor: "止血帯を使う",
     });
@@ -21,12 +21,12 @@ describe("resolveLink", () => {
   });
 
   it("相対パスの md は別の文書へのリンク", () => {
-    expect(resolveLink("hemorrhage.md#cpr-%E3%81%AE%E6%89%8B%E9%A0%86")).toEqual({
+    expect(resolveLink("hemorrhage.md#cpr-%E3%81%AE%E6%89%8B%E9%A0%86")).toStrictEqual({
       kind: "doc",
       fileName: "hemorrhage.md",
       anchor: "cpr-の手順",
     });
-    expect(resolveLink("./Airway.md")).toEqual({
+    expect(resolveLink("./Airway.md")).toStrictEqual({
       kind: "doc",
       fileName: "airway.md",
       anchor: null,
@@ -38,6 +38,11 @@ describe("resolveLink", () => {
     expect(resolveLink("../other/a.md").kind).toBe("unknown");
     expect(resolveLink("images/diagram.png").kind).toBe("unknown");
     expect(resolveLink("file:///C:/Windows").kind).toBe("unknown");
+  });
+
+  it("大文字小文字を同じとみなすのは ASCII の英字だけ（ſ U+017F・K U+212A は英字として扱わない）", () => {
+    expect(resolveLink("http\u017F://example.com").kind).toBe("unknown");
+    expect(resolveLink("./\u212Aits.md").kind).toBe("unknown");
   });
 });
 
@@ -57,17 +62,17 @@ describe("docHref", () => {
     const href = docHref("d1", "a", ["止血帯", "C&P R"]);
     expect(href).toMatch(/^\/doc\/d1\?hl=.+&hl=.+#a$/u);
     const search = href.slice(href.indexOf("?"), href.indexOf("#"));
-    expect(highlightTermsOf(search)).toEqual(["止血帯", "C&P R"]);
+    expect(highlightTermsOf(search)).toStrictEqual(["止血帯", "C&P R"]);
   });
 
   it("空の語は読み出さない", () => {
-    expect(highlightTermsOf("?hl=&hl=%20&hl=TQ")).toEqual(["TQ"]);
-    expect(highlightTermsOf("")).toEqual([]);
+    expect(highlightTermsOf("?hl=&hl=%20&hl=TQ")).toStrictEqual(["TQ"]);
+    expect(highlightTermsOf("")).toStrictEqual([]);
   });
 
   it("多すぎる語と長すぎる語は読み出さない", () => {
     const many = Array.from({ length: 20 }, (_, i) => `hl=${String(i)}`).join("&");
     expect(highlightTermsOf(`?${many}`)).toHaveLength(16);
-    expect(highlightTermsOf(`?hl=${"a".repeat(257)}&hl=TQ`)).toEqual(["TQ"]);
+    expect(highlightTermsOf(`?hl=${"a".repeat(257)}&hl=TQ`)).toStrictEqual(["TQ"]);
   });
 });

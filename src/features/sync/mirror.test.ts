@@ -53,14 +53,14 @@ describe("mirrorBundled", () => {
       [bundled(log, "same", "h1"), bundled(log, "changed", "h2"), bundled(log, "new", "h3")],
       [stored(log, "same", "h1"), stored(log, "changed", "old"), stored(log, "gone", "h")],
     );
-    expect(result).toEqual({
+    expect(result).toStrictEqual({
       ...emptySyncResult(),
       added: 1,
       updated: 1,
       unchanged: 1,
       removed: 1,
     });
-    expect(log).toEqual({ saved: ["changed", "new"], removed: ["gone"] });
+    expect(log).toStrictEqual({ saved: ["changed", "new"], removed: ["gone"] });
   });
 
   it("キーのないものは、いくつあっても全部消す", async () => {
@@ -68,7 +68,7 @@ describe("mirrorBundled", () => {
     const result = emptySyncResult();
     await mirrorBundled(result, [], [stored(log, null, "h", "a"), stored(log, null, "h", "b")]);
     expect(result.removed).toBe(2);
-    expect(log.removed).toEqual(["a", "b"]);
+    expect(log.removed).toStrictEqual(["a", "b"]);
   });
 
   it("keepKeys にあるものは、同梱の候補になくても消さない", async () => {
@@ -76,7 +76,7 @@ describe("mirrorBundled", () => {
     const result = emptySyncResult();
     await mirrorBundled(result, [], [stored(log, "rejected", "h")], new Set(["rejected"]));
     expect(result.removed).toBe(0);
-    expect(log.removed).toEqual([]);
+    expect(log.removed).toStrictEqual([]);
   });
 
   it("保存・削除に失敗しても他は続け、保存の警告はファイル名と一緒に積む", async () => {
@@ -95,7 +95,7 @@ describe("mirrorBundled", () => {
         stored(log, "gone", "h"),
       ],
     );
-    expect(result).toEqual({
+    expect(result).toStrictEqual({
       ...emptySyncResult(),
       added: 2,
       removed: 1,
@@ -106,6 +106,6 @@ describe("mirrorBundled", () => {
       ],
       warnings: [{ fileName: "warn.md", message: "直すべき点" }],
     });
-    expect(log).toEqual({ saved: ["warn", "ok"], removed: ["gone"] });
+    expect(log).toStrictEqual({ saved: ["warn", "ok"], removed: ["gone"] });
   });
 });

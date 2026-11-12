@@ -18,7 +18,7 @@ export interface FlowSource {
   hash: string;
 }
 
-const FLOW_FILE = /^(.+)\.flow\.(?:yaml|json)$/;
+const FLOW_FILE = /^(.+)\.flow\.(?:yaml|json)$/u;
 
 /** ファイル名が示すフローの id（`<id>.flow.yaml`）。形が違えば null。 */
 export function flowIdOfFileName(name: string): string | null {
@@ -34,7 +34,7 @@ export async function bundledFlows(): Promise<FlowSource[]> {
       hash: await sha256HexOfText(text),
     })),
   );
-  return sources.sort((a, b) => a.fileName.localeCompare(b.fileName));
+  return sources.toSorted((a, b) => a.fileName.localeCompare(b.fileName));
 }
 
 /** ファイルの中身を読んでフローにする。YAML と JSON のどちらかを拡張子で決める。 */

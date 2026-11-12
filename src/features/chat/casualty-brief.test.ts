@@ -36,9 +36,9 @@ describe("casualtyBrief", () => {
     expect(text).toContain("痛み・気胸: あり");
     expect(text).toContain("- [r1] 2 分 0 秒 前 モルヒネ");
     expect(text).toContain("- [r2] 1 分 0 秒 前 止血帯を巻いた（左腕）");
-    expect(text).toMatch(/- モルヒネ（1 本、最後は 2 分 0 秒 前）: 鎮痛 /);
-    expect(text).toMatch(/過量投与: /);
-    expect(text).toMatch(/生理食塩水: 入れ終わるまで /);
+    expect(text).toMatch(/- モルヒネ（1 本、最後は 2 分 0 秒 前）: 鎮痛 /u);
+    expect(text).toMatch(/過量投与: /u);
+    expect(text).toMatch(/生理食塩水: 入れ終わるまで /u);
     expect(text).toContain("巻いている止血帯: 左腕（1 分 0 秒 前から）");
   });
 
@@ -51,7 +51,7 @@ describe("casualtyBrief", () => {
       nowMs: NOW - 119 * S,
     });
     expect(text).not.toContain("今効いている薬");
-    expect(text).toMatch(/モルヒネ: 次を打てるまで /);
+    expect(text).toMatch(/モルヒネ: 次を打てるまで /u);
   });
 
   it("負傷者がいなければ、そう書く", () => {
@@ -83,7 +83,7 @@ describe("提案の操作", () => {
   ];
 
   it("カードには負傷者を名前で出し、消す操作と見つからないものに印を付ける", () => {
-    expect(describeOps(ops, [A])).toEqual([
+    expect(describeOps(ops, [A])).toStrictEqual([
       { text: "負傷者「B」を追加", destructive: false, missing: false },
       { text: "新しい負傷者「B」に記録: エピネフリン", destructive: false, missing: false },
       { text: "「A」の痛み・気胸を「なし」にする", destructive: false, missing: false },
@@ -93,16 +93,18 @@ describe("提案の操作", () => {
   });
 
   it("記録の操作にするとき、new を作った負傷者の id に、空の名前を「負傷者 N」にする", () => {
-    expect(toCasualtyOp({ action: "add_casualty", name: " " }, null, [A])).toEqual({
+    expect(toCasualtyOp({ action: "add_casualty", name: " " }, null, [A])).toStrictEqual({
       op: "add_casualty",
       name: "負傷者 1",
     });
-    expect(toCasualtyOp(ops[1] ?? { action: "clear_all" }, "c2", [A])).toEqual({
+    expect(toCasualtyOp(ops[1] ?? { action: "clear_all" }, "c2", [A])).toStrictEqual({
       op: "add_record",
       casualtyId: "c2",
       entry: { kind: "drug", drug: "epinephrine" },
     });
-    expect(toCasualtyOp({ action: "set_pain", casualty: "c1", pain: true }, null, [A])).toEqual({
+    expect(
+      toCasualtyOp({ action: "set_pain", casualty: "c1", pain: true }, null, [A]),
+    ).toStrictEqual({
       op: "set_pain",
       casualtyId: "c1",
       inPain: true,

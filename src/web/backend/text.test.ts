@@ -14,12 +14,12 @@ import {
 
 describe("splitTerms", () => {
   it("半角と全角の空白で分け、大文字小文字だけ違う語をまとめる", () => {
-    expect(splitTerms(" 止血帯　出血  cpr CPR ")).toEqual(["止血帯", "出血", "cpr"]);
-    expect(splitTerms(" 　 ")).toEqual([]);
+    expect(splitTerms(" 止血帯　出血  cpr CPR ")).toStrictEqual(["止血帯", "出血", "cpr"]);
+    expect(splitTerms(" 　 ")).toStrictEqual([]);
   });
 
   it("強調の目印を取り除く", () => {
-    expect(splitTerms(`${MARK_START}出血${MARK_END}`)).toEqual(["出血"]);
+    expect(splitTerms(`${MARK_START}出血${MARK_END}`)).toStrictEqual(["出血"]);
   });
 
   it("語は先頭から MAX_TERMS 個までにする", () => {
@@ -38,7 +38,7 @@ describe("splitTerms", () => {
 
 describe("normalizeTags", () => {
   it("前後の空白と先頭の # を除き、空と大文字小文字だけの重複を捨てる", () => {
-    expect(normalizeTags(["  #出血 ", "", "CPR", "cpr", "#"])).toEqual(["出血", "CPR"]);
+    expect(normalizeTags(["  #出血 ", "", "CPR", "cpr", "#"])).toStrictEqual(["出血", "CPR"]);
   });
 });
 
@@ -77,6 +77,6 @@ describe("makeSnippet", () => {
 
 describe("compareNoCase", () => {
   it("ASCII の大文字小文字を同じとみなし、ほかは文字コードの順にする", () => {
-    expect(["b", "A", "止血", "a"].sort(compareNoCase)).toEqual(["A", "a", "b", "止血"]);
+    expect(["b", "A", "止血", "a"].toSorted(compareNoCase)).toStrictEqual(["A", "a", "b", "止血"]);
   });
 });

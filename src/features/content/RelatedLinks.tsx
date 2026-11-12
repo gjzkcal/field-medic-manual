@@ -61,7 +61,6 @@ export function RelatedLinks({ links, flowTitle }: RelatedLinksProps): JSX.Eleme
         openExternal(link.url).catch((error: unknown) => {
           setNotice(`リンクを開けませんでした: ${errorMessage(error)}`);
         });
-        return;
     }
   }
 

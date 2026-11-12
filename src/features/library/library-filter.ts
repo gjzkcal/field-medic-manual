@@ -50,18 +50,18 @@ export function sortDocs(docs: readonly DocSummary[], sort: LibrarySort): DocSum
   const sorted = [...docs];
   switch (sort) {
     case "order":
-      return sorted.sort((a, b) => {
+      return sorted.toSorted((a, b) => {
         const byOrder = compareOrder(a.meta.order, b.meta.order);
         return byOrder === 0 ? collator.compare(a.title, b.title) : byOrder;
       });
     case "updated":
       // ISO 8601 の UTC なので文字列の比較で新しい順にできる
-      return sorted.sort((a, b) => {
+      return sorted.toSorted((a, b) => {
         const byDate = b.updatedAt.localeCompare(a.updatedAt);
         return byDate === 0 ? collator.compare(a.title, b.title) : byDate;
       });
     case "title":
-      return sorted.sort((a, b) => collator.compare(a.title, b.title));
+      return sorted.toSorted((a, b) => collator.compare(a.title, b.title));
   }
 }
 

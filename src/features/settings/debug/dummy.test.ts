@@ -27,6 +27,6 @@ describe("makeDummyDocs", () => {
   });
 
   it("何度作っても同じ中身になる", () => {
-    expect(makeDummyDocs()).toEqual(docs);
+    expect(makeDummyDocs()).toStrictEqual(docs);
   });
 });

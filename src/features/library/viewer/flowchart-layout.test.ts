@@ -42,7 +42,7 @@ describe("layoutFlowchart", () => {
   });
 
   it("ラベルのある辺だけにラベルの位置があり、ひし形に入る辺の端はひし形の縁に乗る", () => {
-    expect(layout.edges.map((e) => e.label !== null)).toEqual([false, true, false]);
+    expect(layout.edges.map((e) => e.label !== null)).toStrictEqual([false, true, false]);
     const b = layout.nodes[1];
     const end = layout.edges[0]?.points.at(-1);
     expect(b !== undefined && end !== undefined).toBe(true);
@@ -56,7 +56,7 @@ describe("layoutFlowchart", () => {
   it("横向きでは左から右へ並べる", () => {
     const lr = layoutFlowchart({ ...PAYLOAD, direction: "LR" }, estimateTextWidth);
     const [a, b] = lr.nodes;
-    expect((a?.x ?? 0) < (b?.x ?? 0)).toBe(true);
+    expect(a?.x ?? 0).toBeLessThan(b?.x ?? 0);
   });
 });
 

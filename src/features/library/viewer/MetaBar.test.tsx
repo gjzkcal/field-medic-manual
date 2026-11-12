@@ -19,7 +19,7 @@ function renderAt(): ReturnType<typeof createMemoryRouter> {
             title="止血"
             shareUrl="https://gjzkcal.github.io/field-medic-manual/doc/hemorrhage"
             notice={null}
-            onDismissNotice={vi.fn()}
+            onDismissNotice={vi.fn<() => void>()}
           />
         ),
       },
@@ -69,7 +69,7 @@ describe("MetaBar", () => {
     renderAt();
     fireEvent.click(screen.getByRole("button", { name: "お気に入り（このマニュアル）" }));
     await vi.waitFor(() => {
-      expect(toggled).toEqual([{ kind: "document", documentId: "d1" }]);
+      expect(toggled).toStrictEqual([{ kind: "document", documentId: "d1" }]);
     });
   });
 });

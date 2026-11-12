@@ -57,8 +57,8 @@ describe("syncFlows", () => {
       db,
     );
     expect(result).toMatchObject({ added: 1, updated: 1, unchanged: 1, removed: 1, failed: [] });
-    expect(db.saved.map((s) => s.id)).toEqual(["changed", "new"]);
-    expect(db.deleted).toEqual(["gone"]);
+    expect(db.saved.map((s) => s.id)).toStrictEqual(["changed", "new"]);
+    expect(db.deleted).toStrictEqual(["gone"]);
   });
 
   it("保存する値をフローから写す", async () => {
@@ -89,7 +89,7 @@ describe("syncFlows", () => {
     });
     expect(db.saved[0]?.searchText.split("\n")[0]).toBe("説明");
     expect(db.saved[0]?.searchText).toContain("出血は？");
-    expect(JSON.parse(db.saved[0]?.json ?? "")).toEqual(flow);
+    expect(JSON.parse(db.saved[0]?.json ?? "")).toStrictEqual(flow);
   });
 
   it("検証エラーのフローと、それを呼ぶフローは入れず、前回の内容も消さない", async () => {
@@ -97,10 +97,13 @@ describe("syncFlows", () => {
     const broken = makeFlow("broken", "q", { q: question("q", "e", "missing"), e: end("e") });
     const caller = makeFlow("caller", "sf", { sf: subflow("broken", "e"), e: end("e") });
     const result = await syncFlows([source(broken), source(caller), source(simpleFlow("ok"))], db);
-    expect(db.saved.map((s) => s.id)).toEqual(["ok"]);
-    expect(db.deleted).toEqual([]);
-    expect(result.failed.map((f) => f.fileName)).toEqual(["broken.flow.json", "caller.flow.json"]);
-    expect(result.failed[0]?.message).toMatch(/^V2:/);
+    expect(db.saved.map((s) => s.id)).toStrictEqual(["ok"]);
+    expect(db.deleted).toStrictEqual([]);
+    expect(result.failed.map((f) => f.fileName)).toStrictEqual([
+      "broken.flow.json",
+      "caller.flow.json",
+    ]);
+    expect(result.failed[0]?.message).toMatch(/^V2:/u);
   });
 
   it("読めないファイルは失敗にし、ファイル名の id の前回の内容は残す", async () => {
@@ -112,8 +115,8 @@ describe("syncFlows", () => {
       ],
       db,
     );
-    expect(db.saved).toEqual([]);
-    expect(db.deleted).toEqual([]);
+    expect(db.saved).toStrictEqual([]);
+    expect(db.deleted).toStrictEqual([]);
     expect(result.failed.map((f) => f.fileName)).toContain("bad.flow.yaml");
     expect(result.failed.map((f) => f.fileName)).toContain("shape.flow.json");
   });
@@ -127,8 +130,8 @@ describe("syncFlows", () => {
     });
     const result = await syncFlows([source(flow)], db);
     expect(result.added).toBe(1);
-    expect(result.warnings.map((w) => w.fileName)).toEqual(["warn.flow.json"]);
-    expect(result.warnings[0]?.message).toMatch(/^V4:/);
+    expect(result.warnings.map((w) => w.fileName)).toStrictEqual(["warn.flow.json"]);
+    expect(result.warnings[0]?.message).toMatch(/^V4:/u);
   });
 
   it("YAML も読む", async () => {
@@ -149,7 +152,7 @@ describe("syncFlows", () => {
       [{ fileName: "yaml-flow.flow.yaml", text: yaml, hash: "h" }],
       db,
     );
-    expect(result.failed).toEqual([]);
+    expect(result.failed).toStrictEqual([]);
     expect(db.saved[0]).toMatchObject({ id: "yaml-flow", verifiedAt: "2026-09-26" });
   });
 });

@@ -88,11 +88,11 @@ function forecastDrug(
   }
   const peakTimesMs: number[] = [];
   let halfAtMs: number | null = null;
-  values.forEach((value, i) => {
+  for (const [i, value] of values.entries()) {
     const previous = values[i - 1];
     const next = values[i + 1];
     if (previous === undefined) {
-      return;
+      continue;
     }
     if (next !== undefined && value > previous && value >= next) {
       peakTimesMs.push(firstAtMs + i * MS);
@@ -101,7 +101,7 @@ function forecastDrug(
     if (previous >= peak / 2 && value < peak / 2) {
       halfAtMs = firstAtMs + i * MS;
     }
-  });
+  }
   const points = values.flatMap((value, i) =>
     i % POINT_STEP_SECONDS === 0 || i === values.length - 1
       ? [{ seconds: i, percent: (value / peak) * 100 }]
@@ -152,6 +152,6 @@ export function drugTimers(forecast: DrugForecast, nowMs: number): DrugTimers {
   const nextPeakAtMs = forecast.peakTimesMs.find((at) => at > nowMs) ?? null;
   const halfAtMs =
     forecast.halfAtMs !== null && forecast.halfAtMs > nowMs ? forecast.halfAtMs : null;
-  const focus = nextPeakAtMs !== null ? "peak" : halfAtMs !== null ? "half" : "clear";
+  const focus = nextPeakAtMs === null ? (halfAtMs === null ? "clear" : "half") : "peak";
   return { focus, nextPeakAtMs, halfAtMs, clearAtMs: forecast.clearAtMs };
 }

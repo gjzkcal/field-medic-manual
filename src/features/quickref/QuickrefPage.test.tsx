@@ -58,7 +58,7 @@ const TABLE: QuickrefTable = {
 };
 
 let history: unknown[] = [];
-const scrollIntoView = vi.fn();
+const scrollIntoView = vi.fn<Element["scrollIntoView"]>();
 
 function renderPage(path = "/quickref"): ReturnType<typeof createMemoryRouter> {
   const router = createMemoryRouter([{ path: "/quickref", element: <QuickrefPage /> }], {
@@ -107,7 +107,7 @@ describe("QuickrefPage", () => {
     await waitFor(() => {
       expect(cards()).toHaveLength(4);
     });
-    expect(symptoms()).toEqual([
+    expect(symptoms()).toStrictEqual([
       "手足から大量に出血している",
       "緊張性気胸",
       "意識不明",
@@ -147,7 +147,7 @@ describe("QuickrefPage", () => {
     const categories = screen.getByRole("group", { name: "分類" });
     fireEvent.click(within(categories).getByRole("button", { name: "意識" }));
     await waitFor(() => {
-      expect(symptoms()).toEqual(["意識不明"]);
+      expect(symptoms()).toStrictEqual(["意識不明"]);
     });
     expect(screen.getByRole("status").textContent).toBe("1 行");
     fireEvent.click(within(categories).getByRole("button", { name: "すべて" }));
@@ -155,7 +155,7 @@ describe("QuickrefPage", () => {
       target: { value: "ncd" },
     });
     await waitFor(() => {
-      expect(symptoms()).toEqual(["緊張性気胸"]);
+      expect(symptoms()).toStrictEqual(["緊張性気胸"]);
     });
   });
 
@@ -179,11 +179,11 @@ describe("QuickrefPage", () => {
       expect(screen.getByText("エピネフリンを注射する")).toBeDefined();
     });
     expect(cards()).toHaveLength(5);
-    expect(screen.getByText(/今の MOD の設定では表示されない行です/)).toBeDefined();
+    expect(screen.getByText(/今の MOD の設定では表示されない行です/u)).toBeDefined();
     await waitFor(() => {
-      expect(history).toEqual([{ target: { kind: "quickref", rowId: "wake-core" } }]);
+      expect(history).toStrictEqual([{ target: { kind: "quickref", rowId: "wake-core" } }]);
     });
-    expect(scrollIntoView).toHaveBeenCalled();
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: "start" });
   });
 
   it("カードと表の表示で、axe の違反がない（WCAG 2.2 A・AA）", async () => {
@@ -191,10 +191,10 @@ describe("QuickrefPage", () => {
     await waitFor(() => {
       expect(cards()).toHaveLength(4);
     });
-    expect(await axeViolations()).toEqual([]);
+    expect(await axeViolations()).toStrictEqual([]);
 
     fireEvent.click(screen.getByRole("button", { name: "表" }));
     await screen.findByRole("table", { name: "症状ごとの処置" });
-    expect(await axeViolations()).toEqual([]);
+    expect(await axeViolations()).toStrictEqual([]);
   });
 });

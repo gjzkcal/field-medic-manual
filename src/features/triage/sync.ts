@@ -50,7 +50,7 @@ export async function syncFlows(
 
   const issues = validateFlows(parsed.map((p) => p.flow));
   const rejected = new Set<string>();
-  parsed.forEach(({ source, flow }, i) => {
+  for (const [i, { source, flow }] of parsed.entries()) {
     const flowIssues = issues[i] ?? [];
     for (const issue of flowIssues) {
       // 再評価のループ（V6）はフローの正常な形なので、起動のたびに知らせない（pnpm test の原稿の検査でも許している）
@@ -63,7 +63,7 @@ export async function syncFlows(
     if (hasErrors(flowIssues)) {
       rejected.add(flow.id);
     }
-  });
+  }
   // 入れなかったフローを呼ぶフローも入れない。実行すると、呼んだ先で止まってしまうため
   const known = new Set(parsed.map((p) => p.flow.id));
   let changed = true;

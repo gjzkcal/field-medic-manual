@@ -4,17 +4,17 @@ import { meetsModConditions } from "@/features/settings/mod-conditions";
 import type { ActiveMods } from "@/features/triage/runner";
 
 // 「同左」のセルは左の列を消すと何を指すか分からなくなるので、消す前に左のセルの中身で置き換える
-const SAME_AS_LEFT = /^[（(]?同左[）)]?$/;
+const SAME_AS_LEFT = /^[（(]?同左[）)]?$/u;
 
 export function hideModColumns(table: HTMLTableElement, active: ActiveMods): void {
-  const columns = readModColumns(table.getAttribute("data-mod-columns") ?? "");
+  const columns = readModColumns(table.dataset["modColumns"] ?? "");
   if (columns === null) {
     return;
   }
   // 後ろの列から消すと、前の列の位置がずれない
   const hidden = columns
     .flatMap((conditions, index) => (meetsModConditions(conditions, active) ? [] : [index]))
-    .reverse();
+    .toReversed();
   if (hidden.length === 0) {
     return;
   }

@@ -23,8 +23,8 @@ describe("記録の整理", () => {
       [2, { kind: "drug", drug: "ammonium_carbonate" }],
       [3, { kind: "saline" }],
     );
-    expect(dosesOf(list)).toEqual([{ drug: "epinephrine", atMs: 1 }]);
-    expect(ammoniumTimes(list)).toEqual([2]);
+    expect(dosesOf(list)).toStrictEqual([{ drug: "epinephrine", atMs: 1 }]);
+    expect(ammoniumTimes(list)).toStrictEqual([2]);
   });
 
   it("止血帯は外すと消え、巻き直すと新しい時刻になる", () => {
@@ -35,7 +35,7 @@ describe("記録の整理", () => {
       [4, { kind: "tourniquet_on", site: "left_arm" }],
       [5, { kind: "tourniquet_off", site: "right_leg" }],
     );
-    expect(activeTourniquets(list)).toEqual([{ site: "left_arm", sinceMs: 4 }]);
+    expect(activeTourniquets(list)).toStrictEqual([{ site: "left_arm", sinceMs: 4 }]);
   });
 
   it("生理食塩水と薬は最後の時刻を返す", () => {

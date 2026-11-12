@@ -66,9 +66,9 @@ export function pagesFromBuild(htmlFiles: readonly string[]): string[] {
     .map((file) => file.replaceAll("\\", "/"))
     .filter((file) => file.endsWith(".html") && file !== "index.html" && file !== "404.html")
     .map((file) => file.slice(0, -".html".length))
-    .sort((a, b) => {
+    .toSorted((a, b) => {
       const depth = a.split("/").length - b.split("/").length;
-      return depth !== 0 ? depth : a.localeCompare(b);
+      return depth === 0 ? a.localeCompare(b) : depth;
     });
 }
 
@@ -79,7 +79,7 @@ export interface Shard {
 }
 
 export function parseShard(spec: string): Shard {
-  const match = /^(\d+)\/(\d+)$/.exec(spec);
+  const match = /^(\d+)\/(\d+)$/u.exec(spec);
   const index = Number(match?.[1]);
   const total = Number(match?.[2]);
   if (match === null || total < 1 || index < 1 || index > total) {
@@ -118,7 +118,7 @@ export function median(values: readonly number[]): number {
   if (values.length === 0) {
     throw new Error("値がありません");
   }
-  const sorted = [...values].sort((a, b) => a - b);
+  const sorted = [...values].toSorted((a, b) => a - b);
   const middle = Math.floor(sorted.length / 2);
   return sorted.length % 2 === 1
     ? (sorted[middle] ?? 0)
@@ -193,7 +193,7 @@ export function summarize(runs: readonly Run[]): Row[] {
       runs: group.length,
       scores,
       metrics,
-      failedAudits: [...new Set(reports.flatMap(failedAudits))].sort(),
+      failedAudits: [...new Set(reports.flatMap((r) => failedAudits(r)))].toSorted(),
     };
   });
 }
@@ -246,8 +246,10 @@ export function toMarkdown(rows: readonly Row[], heading: string): string {
   if (failing.length > 0) {
     lines.push("### 100 を切ったカテゴリ（A11y・BP・SEO）", "");
     for (const row of failing) {
-      lines.push(`- ${row.page}（${row.formFactor}）`);
-      lines.push(...row.failedAudits.map((audit) => `  - ${audit}`));
+      lines.push(
+        `- ${row.page}（${row.formFactor}）`,
+        ...row.failedAudits.map((audit) => `  - ${audit}`),
+      );
     }
     lines.push("");
   }

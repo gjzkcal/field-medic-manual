@@ -58,18 +58,18 @@ const NAMED_CODES = new Set([
 
 /** event.code から Rust に渡すキーの名前。配列（日本語 / 英語）に左右されないよう、文字ではなく位置で決める */
 function keyName(code: string): string | null {
-  const letter = /^Key([A-Z])$/.exec(code)?.[1];
+  const letter = /^Key([A-Z])$/u.exec(code)?.[1];
   if (letter !== undefined) {
     return letter;
   }
-  const digit = /^Digit([0-9])$/.exec(code)?.[1];
+  const digit = /^Digit([0-9])$/u.exec(code)?.[1];
   if (digit !== undefined) {
     return digit;
   }
-  if (/^F(?:[1-9]|1[0-9]|2[0-4])$/.test(code)) {
+  if (/^F(?:[1-9]|1[0-9]|2[0-4])$/u.test(code)) {
     return code;
   }
-  if (/^Numpad(?:[0-9]|Add|Subtract|Multiply|Divide|Decimal|Enter|Equal)$/.test(code)) {
+  if (/^Numpad(?:[0-9]|Add|Subtract|Multiply|Divide|Decimal|Enter|Equal)$/u.test(code)) {
     return code;
   }
   return NAMED_CODES.has(code) ? code : null;

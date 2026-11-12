@@ -17,13 +17,13 @@ describe("useSyncedLoad", () => {
       { initialProps: { id: "a" } },
     );
     await waitFor(() => {
-      expect(result.current).toEqual({ status: "ready", value: "doc-a" });
+      expect(result.current).toStrictEqual({ status: "ready", value: "doc-a" });
     });
 
     rerender({ id: "b" });
-    expect(result.current).toEqual({ status: "loading" });
+    expect(result.current).toStrictEqual({ status: "loading" });
     await waitFor(() => {
-      expect(result.current).toEqual({ status: "ready", value: "doc-b" });
+      expect(result.current).toStrictEqual({ status: "ready", value: "doc-b" });
     });
   });
 
@@ -37,7 +37,7 @@ describe("useSyncedLoad", () => {
       return load;
     });
     await waitFor(() => {
-      expect(result.current).toEqual({ status: "ready", value: 1 });
+      expect(result.current).toStrictEqual({ status: "ready", value: 1 });
     });
 
     version = 2;
@@ -46,7 +46,7 @@ describe("useSyncedLoad", () => {
       await sync();
     });
     await waitFor(() => {
-      expect(result.current).toEqual({ status: "ready", value: 2 });
+      expect(result.current).toStrictEqual({ status: "ready", value: 2 });
     });
     expect(rendered).not.toContainEqual({ status: "loading" });
   });
@@ -57,15 +57,15 @@ describe("useSyncedLoad", () => {
       useSyncedLoad(useSync, "x", () => Promise.reject(new Error("壊れた"))),
     );
     await waitFor(() => {
-      expect(failing.result.current).toEqual({ status: "error", error: new Error("壊れた") });
+      expect(failing.result.current).toStrictEqual({ status: "error", error: new Error("壊れた") });
     });
 
-    const load = vi.fn(() => Promise.resolve(1));
+    const load = vi.fn<() => Promise<number>>(() => Promise.resolve(1));
     const disabled = renderHook(() => useSyncedLoad(useSync, null, load));
     await act(async () => {
       await Promise.resolve();
     });
-    expect(disabled.result.current).toEqual({ status: "loading" });
+    expect(disabled.result.current).toStrictEqual({ status: "loading" });
     expect(load).not.toHaveBeenCalled();
   });
 });

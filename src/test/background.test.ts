@@ -29,6 +29,7 @@ const themeRs = readFileSync(resolve(REPO_ROOT, "src-tauri", "src", "window", "t
 function rustBackground(name: string): string {
   const m = new RegExp(
     String.raw`${name}: Color = Color\(0x(\w\w), 0x(\w\w), 0x(\w\w), 0xff\)`,
+    "u",
   ).exec(themeRs);
   if (m === null) {
     throw new Error(`theme.rs に ${name} がありません`);

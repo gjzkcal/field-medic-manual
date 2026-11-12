@@ -24,7 +24,7 @@ async function blobToBase64(blob: Blob): Promise<string> {
   // 一度に大きな配列を String.fromCharCode に渡すと引数の上限を超えるので、区切って変換する
   const CHUNK = 0x8000;
   for (let i = 0; i < bytes.length; i += CHUNK) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+    binary += String.fromCodePoint(...bytes.subarray(i, i + CHUNK));
   }
   return btoa(binary);
 }

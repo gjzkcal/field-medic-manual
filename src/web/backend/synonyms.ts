@@ -19,13 +19,13 @@ export type SynonymIndex = ReadonlyMap<string, readonly string[]>;
 /** `INSERT INTO synonyms (group_id, term) VALUES (1, '止血帯'), …;` の組を読む。 */
 export function parseSynonymSeed(sql: string): SynonymIndex {
   const start = sql.indexOf("INSERT INTO synonyms ");
-  if (start < 0) {
+  if (start === -1) {
     throw new Error("同義語の初期値の SQL に INSERT INTO synonyms がありません");
   }
   const end = sql.indexOf(";", start);
-  const values = sql.slice(start, end < 0 ? undefined : end);
+  const values = sql.slice(start, end === -1 ? undefined : end);
   const groups = new Map<number, string[]>();
-  for (const match of values.matchAll(/\(\s*(\d+)\s*,\s*'((?:[^']|'')*)'\s*\)/g)) {
+  for (const match of values.matchAll(/\(\s*(\d+)\s*,\s*'((?:[^']|'')*)'\s*\)/gu)) {
     const [, id, term] = match;
     if (id === undefined || term === undefined) {
       continue;
@@ -41,7 +41,7 @@ export function parseSynonymSeed(sql: string): SynonymIndex {
   const index = new Map<string, string[]>();
   for (const terms of groups.values()) {
     // 同義語の列は COLLATE NOCASE で、デスクトップ版は ORDER BY term で返す
-    const sorted = [...terms].sort(compareNoCase);
+    const sorted = [...terms].toSorted(compareNoCase);
     for (const term of terms) {
       const key = asciiLower(term);
       const existing = index.get(key) ?? [];

@@ -42,7 +42,7 @@ const USAGE = {
 };
 
 function apply(events: ChatEvent[]): ChatTurn {
-  return events.reduce(applyEvent, newTurn(1, "TQ は？", []));
+  return events.reduce((turn, event) => applyEvent(turn, event), newTurn(1, "TQ は？", []));
 }
 
 describe("applyEvent", () => {
@@ -54,7 +54,7 @@ describe("applyEvent", () => {
       { type: "text", block: 2, text: "巻く" },
       { type: "text", block: 3, text: "。" },
     ]);
-    expect(turn.items).toEqual([
+    expect(turn.items).toStrictEqual([
       { kind: "thinking", block: 0, text: "考える" },
       { kind: "text", block: 2, text: "腕に巻く", citations: [] },
       { kind: "text", block: 3, text: "。", citations: [] },
@@ -67,7 +67,7 @@ describe("applyEvent", () => {
       { type: "citation", block: 1, citation: TQ },
       { type: "text", block: 1, text: "巻く" },
     ]);
-    expect(turn.items).toEqual([{ kind: "text", block: 1, text: "巻く", citations: [TQ] }]);
+    expect(turn.items).toStrictEqual([{ kind: "text", block: 1, text: "巻く", citations: [TQ] }]);
   });
 
   it("ツールの様子は id ごとに更新し、終わりの知らせに語がなければ始まりの語を残す", () => {
@@ -75,7 +75,7 @@ describe("applyEvent", () => {
       { type: "tool_activity", id: "s1", tool: "web_search", detail: "TQ", state: "running" },
       { type: "tool_activity", id: "s1", tool: "web_search", detail: "", state: "done" },
     ]);
-    expect(turn.items).toEqual([
+    expect(turn.items).toStrictEqual([
       { kind: "tool", id: "s1", tool: "web_search", detail: "TQ", state: "done" },
     ]);
   });
@@ -97,8 +97,8 @@ describe("applyEvent", () => {
       { type: "usage", usage: USAGE },
     ]);
     expect(turn.items[0]).toMatchObject({ kind: "ask", question: "呼吸は？", answer: null });
-    expect(turn.notices).toEqual(["tool_limit_reached"]);
-    expect(turn.usage).toEqual(USAGE);
+    expect(turn.notices).toStrictEqual(["tool_limit_reached"]);
+    expect(turn.usage).toStrictEqual(USAGE);
   });
 });
 
@@ -131,14 +131,14 @@ describe("出典とコピー", () => {
       { type: "citation", block: 1, citation: TQ },
       { type: "citation", block: 1, citation: WEB },
     ]);
-    expect(turnCitations(turn)).toEqual([TQ, WEB]);
+    expect(turnCitations(turn)).toStrictEqual([TQ, WEB]);
   });
 
   it("原稿の出典は Web 版の URL にする", () => {
-    expect(citationUrl(TQ)).toMatch(/\/doc\/tourniquet#%E5%B7%BB%E3%81%8F%E4%BD%8D%E7%BD%AE$/);
+    expect(citationUrl(TQ)).toMatch(/\/doc\/tourniquet#%E5%B7%BB%E3%81%8F%E4%BD%8D%E7%BD%AE$/u);
     expect(citationUrl(WEB)).toBe(WEB.url);
     expect(citationUrl({ ...TQ, source: "flow:massive-bleeding" })).toMatch(
-      /\/triage\/massive-bleeding$/,
+      /\/triage\/massive-bleeding$/u,
     );
   });
 
@@ -150,7 +150,7 @@ describe("出典とコピー", () => {
     ]);
     const copied = answerForCopy(turn);
     expect(copied).toMatch(
-      /^腕に巻く。\[1\]\n\n出典:\n\[1\] 止血帯 > 巻く位置: https:\/\/.+\/doc\/tourniquet#/,
+      /^腕に巻く。\[1\]\n\n出典:\n\[1\] 止血帯 > 巻く位置: https:\/\/.+\/doc\/tourniquet#/u,
     );
     expect(copied).not.toContain("figure");
   });
@@ -173,27 +173,27 @@ describe("mergeTextRun", () => {
 
   it("画面に出す本文には場所ごとの印を入れ、その場所で引いた出典を持つ", () => {
     const { text, marks } = mergeWithMarks(items);
-    expect(splitCitationMarks(text)).toEqual([
+    expect(splitCitationMarks(text)).toStrictEqual([
       "結論です。\n\n- 腕と脚に巻けます。",
       0,
       "\n- 胸には巻けません。",
       1,
     ]);
-    expect(marks).toEqual([[TQ, WEB, TQ], [TQ]]);
+    expect(marks).toStrictEqual([[TQ, WEB, TQ], [TQ]]);
   });
 });
 
 describe("parseAiSettings", () => {
   it("知らない値は既定値にする", () => {
-    expect(parseAiSettings({ model: "claude-opus-5-5", effort: "max" })).toEqual({
+    expect(parseAiSettings({ model: "claude-opus-5-5", effort: "max" })).toStrictEqual({
       model: "claude-opus-5-5",
       effort: "max",
     });
-    expect(parseAiSettings({ model: "gpt", effort: 3 })).toEqual({
+    expect(parseAiSettings({ model: "gpt", effort: 3 })).toStrictEqual({
       model: "claude-sonnet-5-5",
       effort: "medium",
     });
-    expect(parseAiSettings(null)).toEqual({ model: "claude-sonnet-5-5", effort: "medium" });
+    expect(parseAiSettings(null)).toStrictEqual({ model: "claude-sonnet-5-5", effort: "medium" });
   });
 });
 
@@ -211,7 +211,7 @@ describe("負傷者の記録とフロー", () => {
         },
       },
     ]);
-    expect(turn.items).toEqual([
+    expect(turn.items).toStrictEqual([
       {
         kind: "propose",
         toolUseId: "p1",
@@ -232,7 +232,7 @@ describe("負傷者の記録とフロー", () => {
       { type: "text", block: 0, text: "[痛みを抑える](flow:pain)を開いてください。" },
     ]);
     expect(answerForCopy(turn)).toMatch(
-      /^痛みを抑える（https:\/\/.+\/triage\/pain）を開いてください。$/,
+      /^痛みを抑える（https:\/\/.+\/triage\/pain）を開いてください。$/u,
     );
   });
 });

@@ -30,7 +30,7 @@ describe("buildForecasts", () => {
     expect(forecast.clearAtMs).toBe(T0 + 164 * S);
     // 心拍数の補正は濃度に比例するので、濃度の半分の時刻（63.7 s）の次の秒になる
     expect(forecast.halfAtMs).toBe(T0 + 64 * S);
-    expect(forecast.peakTimesMs).toEqual([T0 + 23 * S]);
+    expect(forecast.peakTimesMs).toStrictEqual([T0 + 23 * S]);
   });
 
   it("効能の半分は濃度の半分と違う", () => {
@@ -91,12 +91,12 @@ describe("buildForecasts", () => {
     const old: Dose = { drug: "morphine", atMs: T0 };
     const fresh: Dose = { drug: "epinephrine", atMs: T0 + 10_000 * S };
     const forecasts = buildForecasts(medication, [old, fresh]);
-    expect(forecasts.map((f) => f.drug)).toEqual(["epinephrine"]);
+    expect(forecasts.map((f) => f.drug)).toStrictEqual(["epinephrine"]);
   });
 
   it("同じ記録からは同じ結果になる（描き直しで計算し直さなくてよい）", () => {
     const doses: Dose[] = [{ drug: "morphine", atMs: T0 }];
-    expect(buildForecasts(medication, doses)).toEqual(buildForecasts(medication, doses));
+    expect(buildForecasts(medication, doses)).toStrictEqual(buildForecasts(medication, doses));
   });
 });
 

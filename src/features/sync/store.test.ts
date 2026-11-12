@@ -11,16 +11,16 @@ describe("createBundledSync", () => {
       seen.push(useSync.getState().state);
       return Promise.resolve(result);
     });
-    expect(useSync.getState().state).toEqual({ status: "idle" });
+    expect(useSync.getState().state).toStrictEqual({ status: "idle" });
 
     await expect(sync()).resolves.toBe(result);
-    expect(seen).toEqual([{ status: "syncing" }]);
-    expect(useSync.getState().state).toEqual({ status: "done", result });
+    expect(seen).toStrictEqual([{ status: "syncing" }]);
+    expect(useSync.getState().state).toStrictEqual({ status: "done", result });
   });
 
   it("同期そのものが失敗したら null を返し、理由を入れる", async () => {
     const { useSync, sync } = createBundledSync(() => Promise.reject(new Error("DB を開けない")));
     await expect(sync()).resolves.toBeNull();
-    expect(useSync.getState().state).toEqual({ status: "error", message: "DB を開けない" });
+    expect(useSync.getState().state).toStrictEqual({ status: "error", message: "DB を開けない" });
   });
 });

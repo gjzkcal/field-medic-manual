@@ -29,7 +29,7 @@ describe("appVersion", () => {
     });
 
     await expect(appVersion()).resolves.toBe("0.1.0");
-    expect(calls).toEqual(["app_version"]);
+    expect(calls).toStrictEqual(["app_version"]);
   });
 });
 
@@ -46,16 +46,16 @@ describe("isAppError", () => {
   });
 });
 
-describe("データ層のラッパ", () => {
-  function recordCalls(result: unknown): { cmd: string; payload: unknown }[] {
-    const calls: { cmd: string; payload: unknown }[] = [];
-    mockIPC((cmd, payload) => {
-      calls.push({ cmd, payload });
-      return result;
-    });
-    return calls;
-  }
+function recordCalls(result: unknown): { cmd: string; payload: unknown }[] {
+  const calls: { cmd: string; payload: unknown }[] = [];
+  mockIPC((cmd, payload) => {
+    calls.push({ cmd, payload });
+    return result;
+  });
+  return calls;
+}
 
+describe("データ層のラッパ", () => {
   it("docUpsert は input に包んで送る", async () => {
     const calls = recordCalls("doc-1");
     const input = {
@@ -80,14 +80,14 @@ describe("データ層のラッパ", () => {
     };
 
     await expect(docUpsert(input)).resolves.toBe("doc-1");
-    expect(calls).toEqual([{ cmd: "doc_upsert", payload: { input } }]);
+    expect(calls).toStrictEqual([{ cmd: "doc_upsert", payload: { input } }]);
   });
 
   it("docDelete は id を送る", async () => {
     const calls = recordCalls(null);
 
     await docDelete("doc-1");
-    expect(calls).toEqual([{ cmd: "doc_delete", payload: { id: "doc-1" } }]);
+    expect(calls).toStrictEqual([{ cmd: "doc_delete", payload: { id: "doc-1" } }]);
   });
 
   it("assetPut は bytes を JSON に包まずそのまま送る", async () => {
@@ -95,7 +95,7 @@ describe("データ層のラッパ", () => {
     const bytes = new Uint8Array([1, 2, 3]);
 
     await expect(assetPut(bytes, { fileName: "図 1.png", mime: "image/png" })).resolves.toBe("sha");
-    expect(calls).toEqual([{ cmd: "asset_put", payload: bytes }]);
+    expect(calls).toStrictEqual([{ cmd: "asset_put", payload: bytes }]);
   });
 
   it("searchQuery は省略した limit と filter を null で送る", async () => {
@@ -103,7 +103,7 @@ describe("データ層のラッパ", () => {
 
     await searchQuery("止血帯");
     await searchQuery("CPR", { limit: 5, filter: { modChannel: "dev" } });
-    expect(calls).toEqual([
+    expect(calls).toStrictEqual([
       { cmd: "search_query", payload: { q: "止血帯", limit: null, filter: null } },
       { cmd: "search_query", payload: { q: "CPR", limit: 5, filter: { modChannel: "dev" } } },
     ]);
@@ -114,7 +114,7 @@ describe("データ層のラッパ", () => {
     const group = { id: null, terms: ["a", "b"], note: null };
 
     await synonymSave(group);
-    expect(calls).toEqual([{ cmd: "synonym_save", payload: { group } }]);
+    expect(calls).toStrictEqual([{ cmd: "synonym_save", payload: { group } }]);
   });
 
   it("triage のラッパは input / id で送る", async () => {
@@ -137,7 +137,7 @@ describe("データ層のラッパ", () => {
     await triageGet("f");
     await triageDelete("f");
     await triageList();
-    expect(calls).toEqual([
+    expect(calls).toStrictEqual([
       { cmd: "triage_upsert", payload: { input } },
       { cmd: "triage_get", payload: { id: "f" } },
       { cmd: "triage_delete", payload: { id: "f" } },

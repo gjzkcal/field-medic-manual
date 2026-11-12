@@ -120,8 +120,8 @@ describe("リリースノート", () => {
 
   it("節ごとの比較リンクを組み立て、書かれたリンクと比べられる", () => {
     const sections = changelogSections(changelog);
-    expect(sections).toEqual(["Unreleased", "0.0.2", "0.0.1"]);
-    expect(changelogLinks(changelog)).toEqual(expectedChangelogLinks(sections));
+    expect(sections).toStrictEqual(["Unreleased", "0.0.2", "0.0.1"]);
+    expect(changelogLinks(changelog)).toStrictEqual(expectedChangelogLinks(sections));
   });
 });
 
@@ -152,6 +152,6 @@ describe("リポジトリの版", () => {
     const changelog = readFileSync(join(ROOT, REPO_FILES.changelog), "utf8");
     const sections = changelogSections(changelog);
     expect(sections[0]).toBe("Unreleased");
-    expect(changelogLinks(changelog)).toEqual(expectedChangelogLinks(sections));
+    expect(changelogLinks(changelog)).toStrictEqual(expectedChangelogLinks(sections));
   });
 });

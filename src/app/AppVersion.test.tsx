@@ -21,7 +21,7 @@ describe("AppVersion", () => {
   it("AppError を受け取ったら取得失敗を表示する", async () => {
     mockIPC((cmd) => {
       if (cmd === "app_version") {
-        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- Tauri はコマンドのエラーを Error ではなく AppError の素のオブジェクトで reject する。それを再現する
+        // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- Tauri はコマンドのエラーを Error ではなく AppError の素のオブジェクトで reject する。それを再現する
         return Promise.reject({ kind: "internal", message: "内部エラー: test" });
       }
       return undefined;

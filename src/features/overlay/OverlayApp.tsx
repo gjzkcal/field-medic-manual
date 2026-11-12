@@ -77,6 +77,16 @@ async function handleOverlayMode(mode: OverlayMode): Promise<void> {
   }
 }
 
+// 閲覧モード（フォーカスしない表示）では、押してもキー入力はゲームなど前面のアプリに届く。
+// 文字を打つ場所を押したときだけ、小窓にフォーカスを移す
+function handlePointerDown(event: PointerEvent<HTMLDivElement>): void {
+  if (isTextEntry(event.target)) {
+    overlayActivate().catch(() => {
+      // 移せなくても、ホットキーの検索モード（Ctrl+Shift+F）で打てる
+    });
+  }
+}
+
 export function OverlayApp(): JSX.Element {
   const opacity = useOverlaySettings((s) => s.overlay.opacity);
 
@@ -102,16 +112,6 @@ export function OverlayApp(): JSX.Element {
       unlisten?.();
     };
   }, []);
-
-  // 閲覧モード（フォーカスしない表示）では、押してもキー入力はゲームなど前面のアプリに届く。
-  // 文字を打つ場所を押したときだけ、小窓にフォーカスを移す
-  function handlePointerDown(event: PointerEvent<HTMLDivElement>): void {
-    if (isTextEntry(event.target)) {
-      overlayActivate().catch(() => {
-        // 移せなくても、ホットキーの検索モード（Ctrl+Shift+F）で打てる
-      });
-    }
-  }
 
   return (
     <TooltipProvider>

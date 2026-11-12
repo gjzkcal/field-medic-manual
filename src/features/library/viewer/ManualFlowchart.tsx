@@ -25,7 +25,7 @@ interface ManualFlowchartProps {
  */
 export function ManualFlowchart({ payload }: ManualFlowchartProps): JSX.Element {
   // 矢印の marker は本文の中の図ごとに別の id にする。url(#…) で参照するので、React の id の記号を除いて名前に使える文字だけにする
-  const markerId = `flowchart-arrow-${useId().replace(/[^A-Za-z0-9_-]/g, "")}`;
+  const markerId = `flowchart-arrow-${useId().replaceAll(/[^A-Za-z0-9_-]/gu, "")}`;
   const layout = useMemo(() => layoutFlowchart(payload, measureText()), [payload]);
   const arrow = `url(#${markerId})`;
   const svgRef = useRef<SVGSVGElement>(null);

@@ -28,7 +28,7 @@ export type ChartPanel = z.infer<typeof chartPanelSchema>;
 const chartSeriesSchema = z.strictObject({
   // 点の値を引くキー（列名は記号を含むので、描画ライブラリのキーには使わない）。
   // CSS 変数の名前（--color-<key>）と SVG の属性にそのまま入るので、変換が付ける s0, s1… の形だけを受ける
-  key: z.string().regex(/^s\d+$/),
+  key: z.string().regex(/^s\d+$/u),
   label: z.string(),
   panel: chartPanelSchema,
   // 列のセルに共通の単位（`%` など）。単位が無いか、セルごとに違えば null
@@ -56,7 +56,7 @@ export type ChartData = z.infer<typeof chartDataSchema>;
 const chartPayloadSchema = z.strictObject({ spec: chartSpecSchema, data: chartDataSchema });
 export type ChartPayload = z.infer<typeof chartPayloadSchema>;
 
-const CHART_COMMENT = /^\s*chart\s*[:：](.*)$/is;
+const CHART_COMMENT = /^\s*chart\s*[:：](.*)$/isu;
 const SPEC_KEYS = new Set(["x", "y", "y2", "ref", "title", "data", "unit"]);
 
 /** コメントの中身がグラフの印なら、印の本文（`chart:` の後ろ）を返す。 */
@@ -67,11 +67,11 @@ export function chartMarkerBody(comment: string): string | null {
 /** 印の本文を読む。書き間違いは黙って捨てず、原稿の検査で気づけるようにエラーにする。 */
 export function parseChartSpec(body: string): { spec: ChartSpec } | { error: string } {
   const entries = new Map<string, string>();
-  for (const part of body.split(/[;；]/)) {
+  for (const part of body.split(/[;；]/u)) {
     if (part.trim() === "") {
       continue;
     }
-    const match = /^\s*([^=＝]+?)\s*[=＝](.*)$/s.exec(part);
+    const match = /^\s*([^=＝]+?)\s*[=＝](.*)$/su.exec(part);
     const key = match?.[1]?.toLowerCase();
     const value = match?.[2]?.trim() ?? "";
     if (key === undefined) {
@@ -123,7 +123,7 @@ export function parseChartSpec(body: string): { spec: ChartSpec } | { error: str
 
 function splitList(value: string | undefined): string[] {
   return (value ?? "")
-    .split(/[,、，]/)
+    .split(/[,、，]/u)
     .map((s) => s.trim())
     .filter((s) => s !== "");
 }
@@ -133,9 +133,10 @@ const NUMBER = String.raw`[-−]?\d+(?:\.\d+)?`;
 // 単位は 1 語だけ許す。`85% 未満` のように文が続くセルは、しきい値の説明なので点にしない
 const CELL = new RegExp(
   String.raw`^(${NUMBER})(?:\s*\/\s*(${NUMBER}))?(?:\s*(秒|分|[A-Za-z%°/]+))?$`,
+  "u",
 );
 // 末尾の補足（`914 s（約 15 分 14 秒）`）は値に含めない
-const NOTE = /\s*[（(][^（）()]*[）)]\s*$/;
+const NOTE = /\s*[（(][^（）()]*[）)]\s*$/u;
 
 function parseNumber(text: string): number | null {
   const value = Number(text.trim().replace("−", "-"));
@@ -189,11 +190,15 @@ export interface TableChart {
   warnings: string[];
 }
 
+const onPanel =
+  (panel: ChartPanel) =>
+  (name: string): { name: string; panel: ChartPanel } => ({ name, panel });
+
 /** 表の中身と印から系列を作る。印の列が表にないときや、点が 2 つ未満の線は警告にする。 */
 export function chartFromTable(table: HTMLTableElement, spec: ChartSpec): TableChart {
   const warnings: string[] = [];
   const headers = Array.from(table.tHead?.rows[0]?.cells ?? [], (cell) =>
-    cell.textContent.replace(/\s+/g, " ").trim(),
+    cell.textContent.replaceAll(/\s+/gu, " ").trim(),
   );
   const rows = Array.from(table.tBodies).flatMap((body) =>
     Array.from(body.rows, (row) => Array.from(row.cells, (cell) => cell.textContent)),
@@ -221,16 +226,13 @@ export function chartFromTable(table: HTMLTableElement, spec: ChartSpec): TableC
   const tolerances: Record<string, number>[] = rows.map(() => ({}));
 
   const series: ChartSeries[] = [];
-  const onPanel =
-    (panel: ChartPanel) =>
-    (name: string): { name: string; panel: ChartPanel } => ({ name, panel });
   for (const { name, panel } of [...spec.y.map(onPanel("y")), ...spec.y2.map(onPanel("y2"))]) {
     const index = columnIndex(name);
     // 横軸の列が無いときは、点が無いことを線ごとに繰り返し警告しない
     if (index === null || xIndex === null) {
       continue;
     }
-    const cells = rows.map((cells) => readCell(cells[index] ?? ""));
+    const cells = rows.map((rowCells) => readCell(rowCells[index] ?? ""));
     const unit = commonUnit(cells);
     // 1 つでも「上/下」の組があれば、列を上と下の 2 本の線に分ける
     const size = cells.some((c) => c?.values.length === 2) ? 2 : 1;
@@ -244,7 +246,7 @@ export function chartFromTable(table: HTMLTableElement, spec: ChartSpec): TableC
     for (const { label, pick } of parts) {
       const key = `s${String(series.length)}`;
       let count = 0;
-      cells.forEach((cell, row) => {
+      for (const [row, cell] of cells.entries()) {
         const value = cell?.values.length === size ? cell.values[pick] : undefined;
         const target = values[row];
         const tolerance = tolerances[row];
@@ -258,7 +260,7 @@ export function chartFromTable(table: HTMLTableElement, spec: ChartSpec): TableC
           tolerance[key] = 0.5 * 10 ** -(cell?.decimals[pick] ?? 0);
           count += 1;
         }
-      });
+      }
       if (count < 2) {
         warnings.push(`「${label}」の点が 2 つ未満です（数値のセルが足りません）`);
       }
@@ -270,14 +272,14 @@ export function chartFromTable(table: HTMLTableElement, spec: ChartSpec): TableC
     .flatMap((x, row) =>
       x === null ? [] : [{ x, values: values[row] ?? {}, tolerance: tolerances[row] ?? {} }],
     )
-    .sort((a, b) => a.x - b.x);
+    .toSorted((a, b) => a.x - b.x);
 
   return {
     data: {
       xLabel: spec.x,
       xUnit: commonUnit(xCells),
       series,
-      points: rowsWithX.map(({ x, values }) => ({ x, values })),
+      points: rowsWithX.map(({ x, values: rowValues }) => ({ x, values: rowValues })),
     },
     tolerances: rowsWithX.map((r) => r.tolerance),
     warnings,
@@ -326,7 +328,7 @@ export function chartFromCsv(
   const warnings: string[] = [];
   const { data } = table;
   const lines = text
-    .split(/\r?\n/)
+    .split(/\r?\n/u)
     .map((line, i) => ({ line: line.trim(), number: i + 1 }))
     .filter(({ line }) => line !== "" && !line.startsWith("#"));
   const headers = (lines[0]?.line ?? "").split(",").map((h) => h.trim());
@@ -379,17 +381,17 @@ export function chartFromCsv(
     }
   }
   // 表の値は CSV の値を表の桁で丸めたもののはずなので、差が桁の半分を超えたら片方だけ直したとみなす
-  data.points.forEach((row, i) => {
+  for (const [i, row] of data.points.entries()) {
     // 「85% 未満」だけの行のように、比べる値のない行は CSV に同じ時刻がなくてもよい
     if (Object.keys(row.values).length === 0) {
-      return;
+      continue;
     }
     const at = points.find((p) => Math.abs(p.x - row.x) < 1e-9);
     if (at === undefined) {
       warnings.push(
         `CSV に「${data.xLabel}」が ${String(row.x)} の行がありません（表の行と突き合わせるため）`,
       );
-      return;
+      continue;
     }
     for (const s of data.series) {
       const expected = row.values[s.key];
@@ -404,7 +406,7 @@ export function chartFromCsv(
         );
       }
     }
-  });
+  }
   return { data: { ...data, points }, warnings };
 }
 

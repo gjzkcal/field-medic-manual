@@ -51,7 +51,7 @@ describe("searchKind（quickref）", () => {
 
   it("開く先はその行を指したクイック表", () => {
     expect(searchKind(QUICKREF_HIT.kind).href(QUICKREF_HIT)).toBe("/quickref?row=tension-ptx");
-    expect(searchKind(QUICKREF_HIT.kind).favoriteTarget(QUICKREF_HIT)).toEqual({
+    expect(searchKind(QUICKREF_HIT.kind).favoriteTarget(QUICKREF_HIT)).toStrictEqual({
       kind: "quickref",
       rowId: "tension-ptx",
     });

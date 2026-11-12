@@ -9,11 +9,11 @@ export type FlowLink =
   | { kind: "external"; url: string };
 
 // doc: はマニュアルの本文の内部リンクと同じく content/manuals/ 直下の md だけを指す（DB の UUID は作者に分からないため）
-const DOC_LINK = /^doc:([a-z0-9-]+\.md)(?:#(.+))?$/;
-const FLOW_LINK = /^flow:([a-z0-9]+(?:-[a-z0-9]+)*)$/;
+const DOC_LINK = /^doc:([a-z0-9-]+\.md)(?:#(.+))?$/u;
+const FLOW_LINK = /^flow:([a-z0-9]+(?:-[a-z0-9]+)*)$/u;
 // クイック表の行の id は作者が書くスラッグ（DB の自動採番にすると、原稿を入れ直すたびに変わってリンクが切れるため）
-const QUICKREF_LINK = /^quickref:([a-z0-9]+(?:-[a-z0-9]+)*)$/;
-const EXTERNAL_LINK = /^https:\/\/\S+$/;
+const QUICKREF_LINK = /^quickref:([a-z0-9]+(?:-[a-z0-9]+)*)$/u;
+const EXTERNAL_LINK = /^https:\/\/\S+$/u;
 
 /** 上の 4 つの書式をまとめた正規表現の文字列。JSON Schema の pattern にしてエディタでも書式を確かめる */
 export const FLOW_LINK_PATTERN = `^(?:${[DOC_LINK, FLOW_LINK, QUICKREF_LINK, EXTERNAL_LINK]

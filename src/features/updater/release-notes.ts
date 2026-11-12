@@ -9,13 +9,13 @@ const KIND_LABELS = new Map([
   ["Security", "セキュリティ"],
 ]);
 
-const KIND_HEADING = /^###\s+(\S+)\s*$/;
+const KIND_HEADING = /^###\s+(\S+)\s*$/u;
 
 /** 変更点の種類の見出しを【追加】のような日本語にする。知らない見出しや本文はそのまま残す。 */
 export function formatReleaseNotes(notes: string): string {
   const out: string[] = [];
   let afterHeading = false;
-  for (const line of notes.split(/\r?\n/)) {
+  for (const line of notes.split(/\r?\n/u)) {
     const kind = KIND_HEADING.exec(line)?.[1];
     const label = kind === undefined ? undefined : KIND_LABELS.get(kind);
     if (label !== undefined) {

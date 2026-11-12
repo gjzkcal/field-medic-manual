@@ -20,7 +20,7 @@ export const GLOSSARY_KINDS = [
   "hint",
 ] as const;
 
-const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 
 // 作者の書き間違い（manual を manuals と書くなど）に気づけるよう、知らないキーはエラーにする
 const termSchema = z
@@ -69,7 +69,7 @@ export const glossaryFileSchema = z
   })
   .superRefine((file, ctx) => {
     const seen = new Set<string>();
-    file.terms.forEach((term, i) => {
+    for (const [i, term] of file.terms.entries()) {
       if (seen.has(term.id)) {
         ctx.addIssue({
           code: "custom",
@@ -78,7 +78,7 @@ export const glossaryFileSchema = z
         });
       }
       seen.add(term.id);
-    });
+    }
   })
   .meta({ title: "ゲームの表示名の用語集（Field Medic Manual）" });
 

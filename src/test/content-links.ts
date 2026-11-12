@@ -20,7 +20,7 @@ export async function loadLinkTargets(): Promise<LinkTargets> {
       convertManual(manual, readRepoFile, readBundledData),
     ),
   );
-  const flows = await Promise.all((await bundledFlows()).map(readFlowSource));
+  const flows = await Promise.all((await bundledFlows()).map((source) => readFlowSource(source)));
   const quickrefSource = await bundledQuickref();
   const quickref = quickrefSource === null ? null : await readQuickrefSource(quickrefSource);
   return {

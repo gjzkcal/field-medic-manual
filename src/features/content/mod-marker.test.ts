@@ -16,10 +16,10 @@ describe("markModColumns", () => {
     const warnings: string[] = [];
     markModColumns(el, warnings);
 
-    expect(warnings).toEqual([]);
+    expect(warnings).toStrictEqual([]);
     expect(el.innerHTML).not.toContain("<!--");
-    const columns = readModColumns(el.querySelector("table")?.getAttribute("data-mod-columns") ?? "");
-    expect(columns).toEqual([
+    const columns = readModColumns(el.querySelector("table")?.dataset["modColumns"] ?? "");
+    expect(columns).toStrictEqual([
       { mods: [], withoutMods: [] },
       { mods: ["circulation", "breathing"], withoutMods: [] },
       { mods: [], withoutMods: ["circulation"] },
@@ -37,14 +37,14 @@ describe("markModColumns", () => {
     const warnings: string[] = [];
     markModColumns(el, warnings);
 
-    expect(warnings).toEqual([
+    expect(warnings).toStrictEqual([
       expect.stringContaining("印の次が表ではありません"),
       expect.stringContaining("列の数（2）が表の列の数（3）と合いません"),
       expect.stringContaining("mods の値が不明です: circulaton"),
     ]);
-    const marked = Array.from(el.querySelectorAll("table")).map((t) => t.hasAttribute("data-mod-columns"));
+    const marked = Array.from(el.querySelectorAll("table")).map((t) => Object.hasOwn(t.dataset, "modColumns"));
     // 書き間違えた MOD は捨てて、残りの条件で付ける（警告で気づける）
-    expect(marked).toEqual([false, true]);
+    expect(marked).toStrictEqual([false, true]);
   });
 });
 

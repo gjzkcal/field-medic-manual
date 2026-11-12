@@ -10,19 +10,19 @@ describe("marchOf", () => {
 
   it("ノードに書いた march を使う", () => {
     const flow = makeFlow("f", "a", { a: own, e: end("終わり") }, { march: ["c"] });
-    expect(marchOf(flow, own)).toEqual(["a"]);
+    expect(marchOf(flow, own)).toStrictEqual(["a"]);
   });
 
   it("ノードに無ければ、フロー全体の march を使う", () => {
     const flow = makeFlow("f", "a", { a: plain, e: end("終わり") }, { march: ["w", "s"] });
-    expect(marchOf(flow, plain)).toEqual(["w", "s"]);
+    expect(marchOf(flow, plain)).toStrictEqual(["w", "s"]);
   });
 
   it("どちらにも無ければ空。画面に出ない subflow には付けない", () => {
     const sf = subflow("g", "e");
-    expect(marchOf(makeFlow("f", "a", { a: plain, e: end("終わり") }), plain)).toEqual([]);
-    expect(marchOf(makeFlow("f", "s", { s: sf, e: end("終わり") }, { march: ["m"] }), sf)).toEqual(
-      [],
-    );
+    expect(marchOf(makeFlow("f", "a", { a: plain, e: end("終わり") }), plain)).toStrictEqual([]);
+    expect(
+      marchOf(makeFlow("f", "s", { s: sf, e: end("終わり") }, { march: ["m"] }), sf),
+    ).toStrictEqual([]);
   });
 });

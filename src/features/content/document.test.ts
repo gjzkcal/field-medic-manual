@@ -40,7 +40,7 @@ describe("sectionsFromHtml", () => {
     const { sections, firstH1 } = await sectionsFromHtml(
       "<p>はじめに</p><h1>止血</h1><p>概要</p><h2>包帯</h2><h4>細目</h4><p>巻く</p><h3>注意</h3><p>締めすぎない</p>",
     );
-    expect(sections.map((s) => [s.level, s.title, s.anchor])).toEqual([
+    expect(sections.map((s) => [s.level, s.title, s.anchor])).toStrictEqual([
       [0, "", "intro"],
       [1, "止血", "止血"],
       [2, "包帯", "包帯"],
@@ -55,14 +55,14 @@ describe("sectionsFromHtml", () => {
     const { sections } = await sectionsFromHtml(
       "<div><section><h2>A</h2><p>a</p></section><section><h2>B</h2><p>b</p></section></div>",
     );
-    expect(sections.map((s) => s.title)).toEqual(["A", "B"]);
+    expect(sections.map((s) => s.title)).toStrictEqual(["A", "B"]);
   });
 
   it("見出し直後のコメントと「タグ:」の段落をセクションのタグにし、本文から除く", async () => {
     const { sections } = await sectionsFromHtml(
       "<h2>止血帯</h2>\n<!-- tags: TQ, 四肢 -->\n<p>本文</p><h2>包帯</h2><p>タグ：Bandage、圧迫</p><p>本文</p><h2>他</h2><p>本文</p><p>タグ: 後ろの行は対象外</p>",
     );
-    expect(sections.map((s) => s.tags)).toEqual([["TQ", "四肢"], ["Bandage", "圧迫"], []]);
+    expect(sections.map((s) => s.tags)).toStrictEqual([["TQ", "四肢"], ["Bandage", "圧迫"], []]);
     expect(sections[1]?.plainText).toBe("本文");
     expect(sections[0]?.html).not.toContain("tags");
   });
@@ -77,15 +77,15 @@ describe("sectionsFromHtml", () => {
         "<h2>関連ページ</h2><p>本文</p>",
       ].join(""),
     );
-    expect(warnings).toEqual([]);
-    expect(sections.map((s) => [s.title, s.mods, s.withoutMods])).toEqual([
+    expect(warnings).toStrictEqual([]);
+    expect(sections.map((s) => [s.title, s.mods, s.withoutMods])).toStrictEqual([
       ["心停止", [], []],
       ["Breathing を入れているとき", ["breathing"], []],
       ["Hitzones なし", ["breathing"], ["hitzones"]],
       ["Circulation なし", [], ["circulation"]],
       ["関連ページ", [], []],
     ]);
-    expect(sections[1]?.tags).toEqual(["気道"]);
+    expect(sections[1]?.tags).toStrictEqual(["気道"]);
     expect(sections[1]?.html).not.toContain("mods");
   });
 
@@ -98,8 +98,8 @@ describe("sectionsFromHtml", () => {
         "<h4>深い見出し</h4><!-- mods: hitzones -->",
       ].join(""),
     );
-    expect(sections[0]?.withoutMods).toEqual(["breathing"]);
-    expect(warnings).toEqual([
+    expect(sections[0]?.withoutMods).toStrictEqual(["breathing"]);
+    expect(warnings).toStrictEqual([
       expect.stringContaining("mods の値が不明です: circulaton（「A」"),
       expect.stringContaining("mods の値が不明です: core（「A」"),
       "mods に同じ MOD の「あり」と「なし」があります: breathing（「A-1」）",
@@ -113,7 +113,7 @@ describe("sectionsFromHtml", () => {
       '<h2 onclick="x()">見出し</h2><script>alert(1)</script><p style="color:red" onmouseover="x()">本文<a href="javascript:alert(1)">危険</a><a href="https://example.com">安全</a></p><iframe src="https://example.com"></iframe>',
     );
     const html = sections[0]?.html ?? "";
-    expect(html).not.toMatch(/script|onclick|onmouseover|javascript:|style=|iframe/);
+    expect(html).not.toMatch(/script|onclick|onmouseover|javascript:|style=|iframe/u);
     expect(html).toContain('<a href="https://example.com">安全</a>');
   });
 
@@ -128,7 +128,7 @@ describe("sectionsFromHtml", () => {
     expect(html).toContain(`<img alt="図1" data-asset-id="${assets[0]?.id ?? ""}">`);
     expect(html).not.toContain("src=");
     expect(html).toContain('<a href="https://example.com/a/b.png">[画像: 外部]</a>');
-    expect(warnings).toEqual([
+    expect(warnings).toStrictEqual([
       "画像に代替テキスト（alt）がありません: data URI の画像",
       "画像を読み込めませんでした: missing.png",
     ]);
@@ -139,7 +139,7 @@ describe("sectionsFromHtml", () => {
       resolveImage: (src) =>
         Promise.resolve({ id: "abc", fileName: src, mime: "image/png", bytes: new Uint8Array() }),
     });
-    expect(assets.map((a) => a.fileName)).toEqual(["img/a.png"]);
+    expect(assets.map((a) => a.fileName)).toStrictEqual(["img/a.png"]);
     expect(sections[0]?.html).toBe('<img data-asset-id="abc">');
   });
 });

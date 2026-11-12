@@ -153,7 +153,7 @@ function toSectionHit(
     containsCi(c.section.plainText, term);
   const synonymOnly = groups.some((g) => !contains(g.original));
   const matchedTerms: string[] = [];
-  for (const term of alternatives.filter(contains)) {
+  for (const term of alternatives.filter((candidate) => contains(candidate))) {
     // 語をまたいで同じ候補が出ることがある（「止血 止血帯」と同義語の展開など）
     if (!matchedTerms.some((m) => equalsCi(m, term))) {
       matchedTerms.push(term);
