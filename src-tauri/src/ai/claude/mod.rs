@@ -159,13 +159,15 @@ pub fn request_body(
         "model": model.id(),
         "max_tokens": MAX_TOKENS,
         "stream": true,
-        "system": [{"type": "text", "text": system}],
+        // system（索引）に明示の印を置く。tools → system の順に並ぶので、ここまでが会話に依らず必ず読める位置になる
+        // （質問の編集で履歴を切っても、自動の印の位置が動いても、索引の分はキャッシュから読める）
+        "system": [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
         "tools": tools,
         "messages": messages,
         // 要約を画面の「考えている途中」に出す。表示を変えても料金は同じ
         "thinking": {"type": "adaptive", "display": "summarized"},
         "output_config": {"effort": effort.as_str()},
-        // 最後のブロックまでを自動でキャッシュする。索引（system）が大きいので、2 問目からの入力が安くなる
+        // 履歴の最後のブロックまでを自動でキャッシュする。2 問目からは前の往復の分も読むだけになる
         "cache_control": {"type": "ephemeral"}
     });
     if force_answer && let Some(obj) = body.as_object_mut() {
@@ -381,6 +383,9 @@ mod tests {
         assert_eq!(body["output_config"]["effort"], "xhigh");
         assert_eq!(body["max_tokens"], json!(MAX_TOKENS));
         assert!(body.get("tool_choice").is_none());
+        // system の明示の印と、履歴の末尾の自動の印は同じ TTL にする（違うと 400 になる）
+        assert_eq!(body["system"][0]["cache_control"], body["cache_control"]);
+        assert_eq!(body["cache_control"], json!({"type": "ephemeral"}));
         // サンプリングの値は 2026-10-21 版では送れない
         assert!(body.get("temperature").is_none());
         let forced = request_body(
