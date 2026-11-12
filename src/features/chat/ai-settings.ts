@@ -33,10 +33,25 @@ export const AI_EFFORT_LABELS: Record<AiEffort, string> = {
   max: "最大限",
 };
 
+/**
+ * モデルごとの推奨の Effort。利用者が Effort を選んでいなければ、これを使う。
+ * 値は、同梱の評価セット（src-tauri/eval）で 3 モデルの答えの質がそろう最も安い段階にする。
+ */
+export const AI_EFFORT_RECOMMENDED: Record<AiModel, AiEffort> = {
+  "claude-opus-5-5": "medium",
+  "claude-sonnet-5-5": "medium",
+  "claude-haiku-5-5": "medium",
+};
+
 export const AI_MODELS = Object.keys(AI_MODEL_LABELS).filter((key) => isAiModel(key));
 export const AI_EFFORTS = Object.keys(AI_EFFORT_LABELS).filter((key) => isAiEffort(key));
 
-export const DEFAULT_AI_SETTINGS: AiSettings = { model: "claude-sonnet-5-5", effort: "medium" };
+const DEFAULT_MODEL: AiModel = "claude-sonnet-5-5";
+
+export const DEFAULT_AI_SETTINGS: AiSettings = {
+  model: DEFAULT_MODEL,
+  effort: AI_EFFORT_RECOMMENDED[DEFAULT_MODEL],
+};
 
 const AI_KEY = "ai";
 
@@ -48,30 +63,53 @@ export function isAiEffort(value: unknown): value is AiEffort {
   return typeof value === "string" && Object.hasOwn(AI_EFFORT_LABELS, value);
 }
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return typeof value === "object" && value !== null
+    ? Object.fromEntries(Object.entries(value))
+    : {};
+}
+
+/** 保存した値を読む。Effort が無い・無効なら、そのモデルの推奨にする。 */
 export function parseAiSettings(value: unknown): AiSettings {
-  const record: Record<string, unknown> =
-    typeof value === "object" && value !== null ? Object.fromEntries(Object.entries(value)) : {};
-  const model = record["model"];
+  const record = asRecord(value);
+  const model = isAiModel(record["model"]) ? record["model"] : DEFAULT_MODEL;
   const effort = record["effort"];
   return {
-    model: isAiModel(model) ? model : DEFAULT_AI_SETTINGS.model,
-    effort: isAiEffort(effort) ? effort : DEFAULT_AI_SETTINGS.effort,
+    model,
+    effort: isAiEffort(effort) ? effort : AI_EFFORT_RECOMMENDED[model],
   };
+}
+
+/** 利用者が Effort を自分で選んでいるか（選んでいなければ、モデルを変えたときに推奨へ追従する）。 */
+export function hasCustomEffort(value: unknown): boolean {
+  return isAiEffort(asRecord(value)["effort"]);
 }
 
 interface AiSettingsState {
   settings: AiSettings;
+  /** 利用者が Effort を選んでいる（null なら推奨に追従する） */
+  customEffort: boolean;
   storageError: string | null;
   update: (patch: Partial<AiSettings>) => void;
 }
 
 export const useAiSettings = create<AiSettingsState>()((set, get) => ({
   settings: DEFAULT_AI_SETTINGS,
+  customEffort: false,
   storageError: null,
   update: (patch) => {
-    const settings = parseAiSettings({ ...get().settings, ...patch });
-    set({ settings });
-    settingsSet(AI_KEY, settings).then(
+    const customEffort = get().customEffort || patch.effort !== undefined;
+    const model = patch.model ?? get().settings.model;
+    const settings = parseAiSettings({
+      model,
+      effort: patch.effort ?? (customEffort ? get().settings.effort : AI_EFFORT_RECOMMENDED[model]),
+    });
+    set({ settings, customEffort });
+    // 推奨に追従しているときは effort を保存しない。推奨の値を後で変えたときに、その人にも新しい推奨が効くようにするため
+    settingsSet(AI_KEY, {
+      model: settings.model,
+      effort: customEffort ? settings.effort : null,
+    }).then(
       () => {
         set({ storageError: null });
       },
@@ -85,7 +123,11 @@ export const useAiSettings = create<AiSettingsState>()((set, get) => ({
 /** 起動時に読む。読めなければ既定値のまま。 */
 export async function loadAiSettings(): Promise<void> {
   try {
-    useAiSettings.setState({ settings: parseAiSettings(await settingsGet(AI_KEY)) });
+    const stored = await settingsGet(AI_KEY);
+    useAiSettings.setState({
+      settings: parseAiSettings(stored),
+      customEffort: hasCustomEffort(stored),
+    });
   } catch (error: unknown) {
     useAiSettings.setState({ storageError: errorMessage(error) });
   }

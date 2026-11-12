@@ -231,6 +231,7 @@ function webStorePlugin(prebuild: boolean): Plugin {
 // node のプロジェクトで落ちたら（ReferenceError: document is not defined など）ここに足す
 const DOM_TESTS = [
   "src/app/reveal.test.ts",
+  "src/features/chat/ai-settings.test.ts",
   "src/features/chat/chat-markdown.test.ts",
   "src/features/chat/chat-store.test.ts",
   "src/features/chat/chat-turn.test.ts",

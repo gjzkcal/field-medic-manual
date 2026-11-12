@@ -8,6 +8,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useAiKey } from "@/features/chat/ai-key";
 import {
   AI_EFFORT_LABELS,
+  AI_EFFORT_RECOMMENDED,
   AI_EFFORTS,
   AI_MODEL_DESCRIPTIONS,
   AI_MODEL_LABELS,
@@ -215,11 +216,13 @@ export function AiSettingsCard(): JSX.Element {
             {AI_EFFORTS.map((effort) => (
               <ToggleGroupItem key={effort} value={effort}>
                 {AI_EFFORT_LABELS[effort]}
+                {effort === AI_EFFORT_RECOMMENDED[settings.model] ? "（推奨）" : ""}
               </ToggleGroupItem>
             ))}
           </ToggleGroup>
           <p className="text-xs text-muted-foreground">
-            高いほど考える量が増え、時間と費用が増えます。モデルと Effort
+            高いほど考える量が増え、時間と費用が増えます。「推奨」は、このモデルでマニュアルの質問に十分な段階です。
+            Effort を選んでいなければ、モデルを変えたときに推奨の段階になります。モデルと Effort
             の変更は、新しい会話から使われます。
           </p>
         </div>
