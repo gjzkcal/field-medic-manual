@@ -403,6 +403,7 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
           }}
         />
         <ScrollArea ref={setScrollRoot} className="min-h-0 flex-1">
+          {/* oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- 本文のリンクのクリックをまとめて受ける。リンクの上の Enter もクリックとして届く */}
           <article
             ref={articleRef}
             className="manual-body mx-auto max-w-3xl px-4 py-6 @lg:px-8"

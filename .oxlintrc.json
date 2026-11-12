@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["typescript", "react", "import", "unicorn", "promise", "vitest", "oxc"],
+  "plugins": ["typescript", "react", "import", "unicorn", "promise", "vitest", "oxc", "jsx-a11y"],
   // restriction と style は、プロジェクトの書き方とぶつかるもの（ES の版の制限、好みの書き方、大きさの制限）が
   // 大半なので、カテゴリでは入れず、下の rules で選んで入れる。nursery は挙動が固まっていないので入れない
   "categories": {
@@ -264,6 +264,17 @@
     "vitest/no-conditional-in-test": "off",
     // exactOptionalPropertyTypes の下では、undefined を明示しないと型が合わない箇所がある
     "unicorn/no-useless-undefined": "off",
+    // jsx-a11y: label で囲む shadcn の Switch（Base UI）も入力の部品として数える。
+    // 設定の画面は、表題と説明を span で 2 段に組んだ中に文字を置くので、3 段下まで探す
+    "jsx-a11y/label-has-associated-control": [
+      "error",
+      { "controlComponents": ["Switch"], "depth": 3 }
+    ],
+    // role="status" を output（計算結果のための要素）に、role="group" を fieldset（フォームの部品の囲み）に
+    // 置き換えるよう求めるが、どちらも用途が合わない
+    "jsx-a11y/prefer-tag-over-role": "off",
+    // Base UI の render に空の <a> を渡し、文字は外の部品の子で与える書き方を、名前のないリンクと誤って指摘する
+    "jsx-a11y/control-has-associated-label": "off",
     // 行数・依存の数・クラスの数の上限は、分け方の判断を機械的に縛るだけなので入れない
     "max-lines": "off",
     "max-lines-per-function": "off",

@@ -159,6 +159,7 @@ export function ChatPromptInput({
   }
 
   return (
+    // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- 画像のドロップを受ける。キーボードでは「画像を付ける」ボタンと貼り付けで同じことができる
     <form
       ref={formRef}
       onSubmit={handleSubmit}

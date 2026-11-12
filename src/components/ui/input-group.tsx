@@ -47,6 +47,7 @@ function InputGroupAddon({
   ...props
 }: React.ComponentProps<"div"> & VariantProps<typeof inputGroupAddonVariants>): React.JSX.Element {
   return (
+    // oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- 飾りの部分を押したときに入力欄へフォーカスを移すだけで、入力欄にはキーボードで直接届く
     <div
       role="group"
       data-slot="input-group-addon"
