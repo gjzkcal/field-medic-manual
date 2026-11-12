@@ -191,6 +191,14 @@ jobs:
       - run: rustup toolchain install
         working-directory: src-tauri
 
+      # cargo-about は全クレートの原文を読むので、キャッシュが無いと毎回ダウンロードし直す（約 1 分）。
+      # ビルドはしないので target は保存せず、~/.cargo のレジストリだけにする。キーに job 名が入るので rust ジョブの分とは別
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: "./src-tauri -> target"
+          cache-targets: false
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
       - uses: taiki-e/install-action@c509219cf42fba86913069efd0ade2458c59337b # v2.90.1
         with:
           tool: cargo-about@0.9.2
