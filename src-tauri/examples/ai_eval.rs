@@ -20,12 +20,12 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
-use field_medic_manual_lib::ai::claude::http::{self, HttpTransport};
+use field_medic_manual_lib::ai::claude::http::{self, HttpTransport, Transport};
 use field_medic_manual_lib::ai::conversation::AiState;
 use field_medic_manual_lib::ai::corpus::{self, Corpus};
 use field_medic_manual_lib::ai::types::{
-    AiEffort, AiModel, ChatCitation, ChatEvent, ChatSendInput, ChatUsage, ClientRequest,
-    ClientToolResult, ToolKind, ToolState, TurnStatus,
+    AiEffort, AiModel, ChatCitation, ChatEvent, ChatSendInput, ChatTurnResult, ChatUsage,
+    ClientRequest, ClientToolResult, ToolKind, ToolState, TurnStatus,
 };
 use field_medic_manual_lib::ai::{claude, key, prompt, turn};
 use field_medic_manual_lib::db::{DB_FILE_NAME, Db};
@@ -57,6 +57,10 @@ fn main() {
 
 struct Args {
     count_only: bool,
+    /// 各問の後に、キャッシュの保温の要求（`max_tokens: 0`）を送って使用量を出す
+    keep_alive_check: bool,
+    /// 各問の後に、同じ会話で 2 問目をこの effort で送る（会話の途中の effort の変更を API が受け付けるかの確認）
+    effort_change: Option<AiEffort>,
     /// 集計だけする JSONL（結果のフォルダの results.jsonl）。複数なら、索引を変える前後の比較に使う
     summary: Vec<PathBuf>,
     dry_run: bool,
@@ -74,6 +78,8 @@ impl Args {
     fn parse(args: impl Iterator<Item = String>) -> Result<Self, String> {
         let mut out = Self {
             count_only: false,
+            keep_alive_check: false,
+            effort_change: None,
             summary: Vec::new(),
             dry_run: false,
             models: vec![AiModel::ClaudeSonnet55],
@@ -90,6 +96,8 @@ impl Args {
             let mut value = || args.next().ok_or_else(|| format!("{arg} には値が要ります"));
             match arg.as_str() {
                 "--count-only" => out.count_only = true,
+                "--keep-alive-check" => out.keep_alive_check = true,
+                "--effort-change" => out.effort_change = Some(parse_effort(&value()?)?),
                 "--summary" => out.summary.push(PathBuf::from(value()?)),
                 "--dry-run" => out.dry_run = true,
                 "--models" => {
@@ -436,6 +444,8 @@ async fn run_all(
                         case,
                         rep,
                         args.timeout,
+                        args.keep_alive_check,
+                        args.effort_change,
                         section_count,
                     )
                     .await;
@@ -605,6 +615,8 @@ async fn run_case(
     case: &Case,
     rep: u32,
     timeout: Duration,
+    keep_alive_check: bool,
+    effort_change: Option<AiEffort>,
     section_count: usize,
 ) -> Record {
     let state = Arc::new(AiState::default());
@@ -642,11 +654,92 @@ async fn run_case(
     let elapsed = started.elapsed();
     let duration_ms = elapsed.as_millis();
     let duration_secs = elapsed.as_secs_f64();
+    if keep_alive_check {
+        keep_alive_check_once(api_key, &state).await;
+    }
+    let record = record_of(
+        &collector.lock().expect("ロックできる"),
+        &result,
+        case,
+        corpus,
+        Labels {
+            run_at,
+            model,
+            effort,
+            rep,
+            duration_ms,
+            duration_secs,
+            section_count,
+        },
+    );
+    if let Some(next) = effort_change {
+        follow_up(db, &transport, &state, &emit, model, next, &case.mods).await;
+    }
+    record
+}
 
-    let c = collector.lock().expect("ロックできる");
+/// 同じ会話で 2 問目を違う effort で送り、API が受け付けるか（`EffortChangeUnsupported` が出ないか）を確かめる。
+async fn follow_up<T: Transport>(
+    db: &Db,
+    transport: &T,
+    state: &Arc<AiState>,
+    emit: &(dyn Fn(ChatEvent) -> bool + Send + Sync),
+    model: AiModel,
+    effort: AiEffort,
+    mods: &[ModTarget],
+) {
+    let input = ChatSendInput {
+        text: "いまの答えを 1 行にまとめて".to_owned(),
+        images: Vec::new(),
+        model,
+        effort,
+        mods: mods.to_vec(),
+        replace_from: None,
+    };
+    match turn::run(state, db, transport, input, emit).await {
+        Ok(r) => println!(
+            "  2 問目（effort {}）: {} input {} cache_read {} cache_write {} output {}",
+            effort.as_str(),
+            status_name(&r.status),
+            r.usage.input_tokens,
+            r.usage.cache_read_tokens,
+            r.usage.cache_write_tokens,
+            r.usage.output_tokens
+        ),
+        Err(e) => println!("  2 問目（effort {}）に失敗: {e}", effort.as_str()),
+    }
+}
+
+/// 1 回の実行に付ける印。
+struct Labels {
+    run_at: String,
+    model: AiModel,
+    effort: AiEffort,
+    rep: u32,
+    duration_ms: u128,
+    duration_secs: f64,
+    section_count: usize,
+}
+
+fn record_of(
+    c: &Collector,
+    result: &Result<ChatTurnResult, AppError>,
+    case: &Case,
+    corpus: &Corpus,
+    labels: Labels,
+) -> Record {
+    let Labels {
+        run_at,
+        model,
+        effort,
+        rep,
+        duration_ms,
+        duration_secs,
+        section_count,
+    } = labels;
     let last = c.segments.last().cloned().unwrap_or_default();
     let answer = last.text.trim().to_owned();
-    let (status, error, usage) = match &result {
+    let (status, error, usage) = match result {
         Ok(r) => (status_name(&r.status), None, r.usage),
         Err(e) => (
             "error".to_owned(),
@@ -660,20 +753,17 @@ async fn run_case(
     let mut cited: Vec<String> = last.manual_sources.clone();
     cited.sort();
     cited.dedup();
-    let expect = &case.expect;
-    let checks = Checks {
-        citations: expect.citations.map(|want| want != cited.is_empty()),
-        flow: expect.flow.as_ref().map(|id| flow_ids.contains(id)),
-        not_listed: expect.not_listed.map(|want| want == not_listed),
-        figure: expect.figure.map(|want| want == has_figure),
-        client_calls: expect.client_calls.map(|want| want == (c.client_calls > 0)),
-        sources: (!expect.sources.is_empty()).then(|| {
-            expect
-                .sources
-                .iter()
-                .any(|s| cited.contains(s) || c.reads.contains(s))
-        }),
-    };
+    let checks = check(
+        &case.expect,
+        &Observed {
+            cited: &cited,
+            reads: &c.reads,
+            flow_ids: &flow_ids,
+            not_listed,
+            has_figure,
+            client_calls: c.client_calls,
+        },
+    );
     let system = prompt::system_prompt(corpus, &sorted_mods(&case.mods));
     Record {
         run_at,
@@ -1007,4 +1097,47 @@ fn summarize(files: &[PathBuf]) -> Result<(), AppError> {
         );
     }
     Ok(())
+}
+
+/// キャッシュの保温の要求を 1 回送り、使用量を出す（本番と同じ本文で API が受け付けるかの確認）。
+async fn keep_alive_check_once(api_key: &str, state: &AiState) {
+    match state.keep_alive_body() {
+        Ok(Some(body)) => match http::send_for_usage(api_key, &body).await {
+            Ok(u) => println!(
+                "  保温: input {} cache_read {} cache_write {} output {}",
+                u.input_tokens, u.cache_read_tokens, u.cache_write_tokens, u.output_tokens
+            ),
+            Err(e) => println!("  保温に失敗: {e}"),
+        },
+        Ok(None) => println!("  保温: 会話がない"),
+        Err(e) => println!("  保温に失敗: {e}"),
+    }
+}
+
+/// 1 回の実行で観測したもの（期待と突き合わせる分だけ）。
+struct Observed<'a> {
+    cited: &'a [String],
+    reads: &'a [String],
+    flow_ids: &'a [String],
+    not_listed: bool,
+    has_figure: bool,
+    client_calls: u32,
+}
+
+fn check(expect: &Expect, seen: &Observed<'_>) -> Checks {
+    Checks {
+        citations: expect.citations.map(|want| want != seen.cited.is_empty()),
+        flow: expect.flow.as_ref().map(|id| seen.flow_ids.contains(id)),
+        not_listed: expect.not_listed.map(|want| want == seen.not_listed),
+        figure: expect.figure.map(|want| want == seen.has_figure),
+        client_calls: expect
+            .client_calls
+            .map(|want| want == (seen.client_calls > 0)),
+        sources: (!expect.sources.is_empty()).then(|| {
+            expect
+                .sources
+                .iter()
+                .any(|s| seen.cited.contains(s) || seen.reads.contains(s))
+        }),
+    }
 }
