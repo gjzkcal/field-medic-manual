@@ -75,14 +75,16 @@ export interface HeadlessBrowser {
 
 /**
  * ブラウザをヘッドレスで起動し、デバッグのポートが開くのを待つ。
- * 起動できなければ（ポートが開かなければ）止めてから例外にする
+ * 起動できなければ（ポートが開かなければ）止めてから例外にする。
+ * 一時プロファイルは profileRoot の下に作り、閉じるときに消す
  */
 export async function launchHeadlessBrowser(
   executable: string,
   port: number,
+  profileRoot = tmpdir(),
 ): Promise<HeadlessBrowser> {
   // 既定のプロファイルを使うと、開いているふだんのブラウザに引き渡されて、ポートが開かない
-  const profile = mkdtempSync(join(tmpdir(), "lighthouse-browser-"));
+  const profile = mkdtempSync(join(profileRoot, "lighthouse-browser-"));
   const child = spawn(
     executable,
     [
@@ -94,8 +96,15 @@ export async function launchHeadlessBrowser(
     ],
     { stdio: "ignore" },
   );
+  let spawnError: Error | undefined;
   const exited = new Promise<void>((resolve) => {
     child.on("exit", () => {
+      resolve();
+    });
+    // 実行ファイルが無い・起動する権限が無いときは、exit ではなく error が来る。受け手が無いと Node が例外にして
+    // スクリプトごと落ち、やり直しにも一時プロファイルの片付けにも進めない。始まっていないので、終わったものとして扱う
+    child.on("error", (error) => {
+      spawnError = error;
       resolve();
     });
   });
@@ -142,9 +151,11 @@ export async function launchHeadlessBrowser(
 
   const deadline = Date.now() + READY_TIMEOUT_MS;
   while ((await debuggerUrl()) === undefined) {
-    if (child.exitCode !== null || Date.now() > deadline) {
+    if (spawnError !== undefined || child.exitCode !== null || Date.now() > deadline) {
       await close();
-      throw new Error(`ブラウザを起動できませんでした（ポート ${String(port)}）`);
+      throw new Error(
+        `ブラウザを起動できませんでした（ポート ${String(port)}）${spawnError === undefined ? "" : `: ${spawnError.message}`}`,
+      );
     }
     await sleep(200);
   }
