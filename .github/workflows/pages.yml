@@ -1,7 +1,7 @@
 # マニュアルの Web 版を GitHub Pages（https://gjzkcal.github.io/field-medic-manual/）に公開する。
 # 配ったアプリと同じ原稿にするため、リリース（release.yml）が Releases への公開に成功してから呼び出す。
 # 手で公開し直すときは、Actions の画面で版のタグ（v0.4.0 など）を選んで実行する。
-# 公開の後に、本番の代表ページの Performance を Lighthouse で測って記録する（lighthouse ジョブ）。
+# 公開の後に、本番の全画面と重い原稿の Performance を Lighthouse で測って記録する（lighthouse ジョブ）。
 name: Pages
 
 on:
@@ -111,15 +111,15 @@ jobs:
       - id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
 
-  # 公開した Web 版の代表ページの Performance を測って記録する（scripts/lighthouse.ts）。
+  # 公開した Web 版の全画面と重い原稿の Performance を測って記録する（scripts/lighthouse.ts）。
   # 利用者が開くもの（この版と Pages の配信）の数字にするため、preview ではなく本番を測る。
   # 点数は計測のたびにぶれるので合否にはしない。表はジョブの概要に、レポートは成果物の lighthouse-production に残る
   lighthouse:
     needs: [build, deploy]
     # Chrome が最初から入っている
     runs-on: ubuntu-latest
-    # 3 ページ × 2 端末 × 5 回（1 回 15〜30 秒）と、CDN の入れ替わりを待つ時間に余裕を持たせる
-    timeout-minutes: 30
+    # 9 ページ × 2 端末 × 5 回（1 回 12〜30 秒で 18〜45 分）と、CDN の入れ替わりを待つ時間（最長 20 分）に余裕を持たせる
+    timeout-minutes: 75
     permissions:
       contents: read
     steps:

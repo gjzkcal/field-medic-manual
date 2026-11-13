@@ -1,3 +1,6 @@
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import {
@@ -5,6 +8,7 @@ import {
   median,
   METRICS,
   pagesFromBuild,
+  PERFORMANCE_PAGES,
   parseReport,
   parseShard,
   shardPages,
@@ -90,6 +94,28 @@ describe("pagesFromBuild", () => {
         "library.html",
       ]),
     ).toStrictEqual(["library", "quickref", "doc/airway", "doc/pain"]);
+  });
+});
+
+describe("PERFORMANCE_PAGES", () => {
+  const root = join(import.meta.dirname, "..", "..");
+  const router = readFileSync(join(root, "src", "web", "router.tsx"), "utf8");
+
+  // 本番は無い URL に 404.html（どの URL でも起動する同じ画面）を返すので、原稿やフローの名前を変えると、
+  // 計測は失敗せずに、黙って別の画面の数字を記録する
+  function exists(page: string): boolean {
+    const [kind, id] = page.split("/");
+    if (id === undefined) {
+      return router.includes(`path: "${page}"`);
+    }
+    if (kind === "doc") {
+      return existsSync(join(root, "content", "manuals", `${id}.md`));
+    }
+    return kind === "triage" && existsSync(join(root, "content", "flows", `${id}.flow.yaml`));
+  }
+
+  it.each(PERFORMANCE_PAGES)("%s は、Web 版にある画面・原稿・フロー", (page) => {
+    expect(exists(page)).toBe(true);
   });
 });
 
@@ -208,6 +234,17 @@ describe("toMarkdown", () => {
       "| /contrast | モバイル | 75 | 95 | 100 | 100 | 2.0 s | 3.0 s | 0.3 s | 0.000 |",
     );
     expect(markdown).toContain("  - accessibility: color-contrast（color-contrast の題名）");
+  });
+
+  it("転送量を測っていれば、KB の列を足す", () => {
+    const r = report({ performance: 75, accessibility: 100 });
+    const withBytes: Report = {
+      ...r,
+      audits: { ...r.audits, "total-byte-weight": audit("total-byte-weight", 1, 555 * 1024) },
+    };
+    const markdown = toMarkdown(summarize(runs("/library", [withBytes])), "Performance");
+    expect(markdown).toContain("| FCP | LCP | TBT | CLS | 転送量 |");
+    expect(markdown).toContain("| 2.0 s | 3.0 s | 0.3 s | 0.000 | 555 KB |");
   });
 
   it("測ったカテゴリの列だけを出し、行が多ければ表を畳んで失敗の一覧を先に出す", () => {

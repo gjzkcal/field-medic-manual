@@ -5,8 +5,11 @@
 //     この 3 つはページの中身で決まりぶれないので、回数ではなく測るページの広さで漏れを防ぐ。
 //     --shard 2/3 を付けると、全ページを 3 つに分けた 2 番目だけを測る（CI で複数のジョブに分けて時間を縮めるため）。
 //   pnpm lighthouse:web --url https://gjzkcal.github.io/field-medic-manual/
-//     性能。公開した Web 版の代表ページを、モバイルとデスクトップで Performance だけ 5 回ずつ測り、中央値を記録する。
-//     利用者が開くもの（リリースの版と Pages の配信）の数字にするため、preview ではなく本番を測る。
+//     性能。公開した Web 版の全画面と重い原稿を、モバイルとデスクトップで Performance だけ 5 回ずつ測り、中央値を記録する。
+//     利用者が開くもの（リリースの版と Pages の配信）の数字にするため、記録に残すのは本番の数字にする。
+//   pnpm build:web の後に pnpm lighthouse:web --performance
+//     性能を、同じページ・同じ回数で vite preview に対して測る。本番と配信が違うので記録には使わず、
+//     公開する前に、変更の前後を同じ条件で比べるために使う。
 // CI（.github/workflows/lighthouse.yml と pages.yml）と手元で同じ測り方にする。
 // ブラウザは Chrome（CHROME_PATH）。Windows で Chrome が無ければ Edge を使う。
 
@@ -24,10 +27,12 @@ import { join } from "node:path";
 import process from "node:process";
 import { parseArgs } from "node:util";
 
+import { launchHeadlessBrowser, type HeadlessBrowser } from "./lib/headless-browser.ts";
 import {
   FORM_FACTORS,
   failingRows,
   pagesFromBuild,
+  PERFORMANCE_PAGES,
   parseReport,
   parseShard,
   shardPages,
@@ -46,8 +51,6 @@ const DIST = join(ROOT, "dist-web");
 const BASE = "/field-medic-manual/";
 // fetch と Chrome が接続を止める番号（4190 など、fetch の仕様の bad port）を避ける
 const PREVIEW_PORT = 4176;
-// 性能を測るページ。一覧・クイック表と、いちばん長い原稿（本文の描画がいちばん重い）
-const PERFORMANCE_PAGES = ["library", "quickref", "doc/cardiac-arrest-system"];
 // Lighthouse の文書が、ぶれを抑えるのに勧める回数
 const PERFORMANCE_RUNS = 5;
 // 合否は点数が計測の速さに左右されないので、並べて走らせて時間を縮める。
@@ -62,14 +65,19 @@ function fail(message: string): never {
 }
 
 const { values: options, positionals } = parseArgs({
-  options: { url: { type: "string" }, shard: { type: "string" } },
+  options: {
+    url: { type: "string" },
+    performance: { type: "boolean" },
+    shard: { type: "string" },
+  },
   allowPositionals: true,
 });
 const outDir = join(ROOT, positionals[0] ?? "lighthouse-results");
 const production = options.url;
+const measuresPerformance = production !== undefined || options.performance === true;
 // 性能は 1 本ずつ測る前提なので、分けて同時に測ると数字が悪くなる
-if (production !== undefined && options.shard !== undefined) {
-  fail("--shard は --url と一緒に使えません");
+if (measuresPerformance && options.shard !== undefined) {
+  fail("--shard は --url・--performance と一緒に使えません");
 }
 function shardOption(spec: string | undefined): Shard | undefined {
   try {
@@ -89,6 +97,9 @@ if (process.platform === "win32" && env["CHROME_PATH"] === undefined && existsSy
 }
 // GitHub の ubuntu のランナーは、Chrome のサンドボックスに要る名前空間を使えない。測るのは自分のサイトだけ
 const chromeFlags = process.platform === "linux" ? "--headless=new --no-sandbox" : "--headless=new";
+// Windows では、Lighthouse に起動させたブラウザのウィンドウの項目が Alt+Tab に残るので、こちらで起動して閉じさせる
+// （scripts/lib/headless-browser.ts）。CI（Linux）は残る先が無く、記録してきた本番の数字と測り方を変えないため、今までどおり
+const ownBrowser = process.platform === "win32" ? env["CHROME_PATH"] : undefined;
 
 /** 子プロセスを動かし、終了コードを返す。時間を過ぎたら止めて null */
 function run(command: string, args: string[], timeoutMs: number): Promise<number | null> {
@@ -147,17 +158,21 @@ interface Plan {
   heading: (version: string) => string;
 }
 
+function performancePlan(base: string, target: string): Plan {
+  return {
+    base,
+    pages: [...PERFORMANCE_PAGES],
+    runs: PERFORMANCE_RUNS,
+    categories: "performance",
+    concurrency: 1,
+    heading: (version) =>
+      `Lighthouse ${version}: ${target}の Performance（各 ${String(PERFORMANCE_RUNS)} 回の中央値）`,
+  };
+}
+
 function plan(): Plan {
   if (production !== undefined) {
-    return {
-      base: production.endsWith("/") ? production : `${production}/`,
-      pages: PERFORMANCE_PAGES,
-      runs: PERFORMANCE_RUNS,
-      categories: "performance",
-      concurrency: 1,
-      heading: (version) =>
-        `Lighthouse ${version}: 本番の Performance（各 ${String(PERFORMANCE_RUNS)} 回の中央値）`,
-    };
+    return performancePlan(production.endsWith("/") ? production : `${production}/`, "本番");
   }
   if (!existsSync(join(DIST, "index.html"))) {
     fail("dist-web がありません。先に pnpm build:web を実行してください");
@@ -165,13 +180,22 @@ function plan(): Plan {
   const allPages = pagesFromBuild(
     readdirSync(DIST, { recursive: true, encoding: "utf8" }).filter((f) => f.endsWith(".html")),
   );
+  const local = `http://localhost:${String(PREVIEW_PORT)}${BASE}`;
+  if (measuresPerformance) {
+    // preview は無い URL にも index.html を返すので、名前の変わったページを測ると、黙って /library の数字になる
+    const missing = PERFORMANCE_PAGES.filter((page) => !allPages.includes(page));
+    if (missing.length > 0) {
+      fail(`性能を測るページが dist-web にありません: ${missing.join("、")}`);
+    }
+    return performancePlan(local, "preview ");
+  }
   const pages = shard === undefined ? allPages : shardPages(allPages, shard);
   const scope =
     shard === undefined
       ? `全 ${String(allPages.length)} ページ`
       : `全 ${String(allPages.length)} ページのうち分担 ${String(shard.index)}/${String(shard.total)} の ${String(pages.length)} ページ`;
   return {
-    base: `http://localhost:${String(PREVIEW_PORT)}${BASE}`,
+    base: local,
     pages,
     runs: 1,
     categories: "accessibility,best-practices,seo",
@@ -186,11 +210,18 @@ const { base, pages, runs: runsPerPage, categories, concurrency, heading } = pla
 // （Windows の Edge は、ポートを指定しないと Lighthouse がデバッグのポートを見つけられない）
 let debugPort = 9300;
 
-async function measure(page: string, formFactor: FormFactor, name: string): Promise<Run> {
-  const outputPath = join(outDir, name);
-  // ブラウザの起動の失敗などはまれに起きるので、1 回だけやり直す
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    const code = await run(
+/** Lighthouse を 1 回動かし、終了コードを返す。時間切れと、ブラウザを起動できなかったときは null */
+async function runLighthouse(
+  page: string,
+  formFactor: FormFactor,
+  outputPath: string,
+): Promise<number | null> {
+  const port = debugPort++;
+  let browser: HeadlessBrowser | undefined;
+  try {
+    // 先にポートへブラウザを用意しておくと、Lighthouse は自分で起動せずにそれへ接続する
+    browser = ownBrowser === undefined ? undefined : await launchHeadlessBrowser(ownBrowser, port);
+    return await run(
       process.execPath,
       [
         pnpm,
@@ -199,8 +230,8 @@ async function measure(page: string, formFactor: FormFactor, name: string): Prom
         `${base}${page}`,
         ...(formFactor === "desktop" ? ["--preset=desktop"] : []),
         `--only-categories=${categories}`,
-        `--chrome-flags=${chromeFlags}`,
-        `--port=${String(debugPort++)}`,
+        ...(browser === undefined ? [`--chrome-flags=${chromeFlags}`] : []),
+        `--port=${String(port)}`,
         "--output=json",
         "--output=html",
         `--output-path=${outputPath}`,
@@ -208,13 +239,26 @@ async function measure(page: string, formFactor: FormFactor, name: string): Prom
       ],
       RUN_TIMEOUT_MS,
     );
+  } catch (error) {
+    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+    return null;
+  } finally {
+    await browser?.close();
+  }
+}
+
+async function measure(page: string, formFactor: FormFactor, name: string): Promise<Run> {
+  const outputPath = join(outDir, name);
+  // ブラウザの起動の失敗などはまれに起きるので、1 回だけやり直す
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const code = await runLighthouse(page, formFactor, outputPath);
     const json = `${outputPath}.report.json`;
     if (code === 0 && existsSync(json)) {
       process.stdout.write(`${name}: 完了\n`);
       return { page: `/${page}`, formFactor, report: parseReport(readFileSync(json, "utf8")) };
     }
     process.stdout.write(
-      `${name}: 失敗（${code === null ? "時間切れ" : `終了コード ${String(code)}`}）\n`,
+      `${name}: 失敗（${code === null ? "時間切れか、ブラウザを起動できない" : `終了コード ${String(code)}`}）\n`,
     );
   }
   throw new Error(`${name} を測れませんでした`);
