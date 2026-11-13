@@ -27,6 +27,7 @@ import { join } from "node:path";
 import process from "node:process";
 import { parseArgs } from "node:util";
 
+import { launchHeadlessBrowser, type HeadlessBrowser } from "./lib/headless-browser.ts";
 import {
   FORM_FACTORS,
   failingRows,
@@ -96,6 +97,9 @@ if (process.platform === "win32" && env["CHROME_PATH"] === undefined && existsSy
 }
 // GitHub の ubuntu のランナーは、Chrome のサンドボックスに要る名前空間を使えない。測るのは自分のサイトだけ
 const chromeFlags = process.platform === "linux" ? "--headless=new --no-sandbox" : "--headless=new";
+// Windows では、Lighthouse に起動させたブラウザのウィンドウの項目が Alt+Tab に残るので、こちらで起動して閉じさせる
+// （scripts/lib/headless-browser.ts）。CI（Linux）は残る先が無く、記録してきた本番の数字と測り方を変えないため、今までどおり
+const ownBrowser = process.platform === "win32" ? env["CHROME_PATH"] : undefined;
 
 /** 子プロセスを動かし、終了コードを返す。時間を過ぎたら止めて null */
 function run(command: string, args: string[], timeoutMs: number): Promise<number | null> {
@@ -206,11 +210,18 @@ const { base, pages, runs: runsPerPage, categories, concurrency, heading } = pla
 // （Windows の Edge は、ポートを指定しないと Lighthouse がデバッグのポートを見つけられない）
 let debugPort = 9300;
 
-async function measure(page: string, formFactor: FormFactor, name: string): Promise<Run> {
-  const outputPath = join(outDir, name);
-  // ブラウザの起動の失敗などはまれに起きるので、1 回だけやり直す
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    const code = await run(
+/** Lighthouse を 1 回動かし、終了コードを返す。時間切れと、ブラウザを起動できなかったときは null */
+async function runLighthouse(
+  page: string,
+  formFactor: FormFactor,
+  outputPath: string,
+): Promise<number | null> {
+  const port = debugPort++;
+  let browser: HeadlessBrowser | undefined;
+  try {
+    // 先にポートへブラウザを用意しておくと、Lighthouse は自分で起動せずにそれへ接続する
+    browser = ownBrowser === undefined ? undefined : await launchHeadlessBrowser(ownBrowser, port);
+    return await run(
       process.execPath,
       [
         pnpm,
@@ -219,8 +230,8 @@ async function measure(page: string, formFactor: FormFactor, name: string): Prom
         `${base}${page}`,
         ...(formFactor === "desktop" ? ["--preset=desktop"] : []),
         `--only-categories=${categories}`,
-        `--chrome-flags=${chromeFlags}`,
-        `--port=${String(debugPort++)}`,
+        ...(browser === undefined ? [`--chrome-flags=${chromeFlags}`] : []),
+        `--port=${String(port)}`,
         "--output=json",
         "--output=html",
         `--output-path=${outputPath}`,
@@ -228,13 +239,26 @@ async function measure(page: string, formFactor: FormFactor, name: string): Prom
       ],
       RUN_TIMEOUT_MS,
     );
+  } catch (error) {
+    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+    return null;
+  } finally {
+    await browser?.close();
+  }
+}
+
+async function measure(page: string, formFactor: FormFactor, name: string): Promise<Run> {
+  const outputPath = join(outDir, name);
+  // ブラウザの起動の失敗などはまれに起きるので、1 回だけやり直す
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const code = await runLighthouse(page, formFactor, outputPath);
     const json = `${outputPath}.report.json`;
     if (code === 0 && existsSync(json)) {
       process.stdout.write(`${name}: 完了\n`);
       return { page: `/${page}`, formFactor, report: parseReport(readFileSync(json, "utf8")) };
     }
     process.stdout.write(
-      `${name}: 失敗（${code === null ? "時間切れ" : `終了コード ${String(code)}`}）\n`,
+      `${name}: 失敗（${code === null ? "時間切れか、ブラウザを起動できない" : `終了コード ${String(code)}`}）\n`,
     );
   }
   throw new Error(`${name} を測れませんでした`);
