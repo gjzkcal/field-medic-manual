@@ -1,3 +1,4 @@
+import { Channel } from "@tauri-apps/api/core";
 import { clearMocks, mockIPC } from "@tauri-apps/api/mocks";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
@@ -112,5 +113,46 @@ describe("useChatStore", () => {
     await useChatStore.getState().reset();
     expect(useChatStore.getState().keepAlive.count).toBe(0);
     expect(useChatStore.getState().lastRequestAt).toBeNull();
+  });
+
+  it("保温を待っている間に会話を消したら、その結果は足さない", async () => {
+    // 保温の応答を、reset の後まで止めておく
+    const gate: { release?: (usage: typeof USAGE) => void } = {};
+    mockIPC((cmd) => {
+      if (cmd === "ai_chat_send") {
+        return { status: { kind: "completed" }, usage: USAGE, turnIndex: 0 };
+      }
+      if (cmd === "ai_chat_keep_alive") {
+        return new Promise((resolve) => {
+          gate.release = resolve;
+        });
+      }
+      return null;
+    });
+    await useChatStore.getState().send("q1", []);
+    const pending = useChatStore.getState().keepAliveNow();
+    await useChatStore.getState().reset();
+    gate.release?.(USAGE);
+    await pending;
+    expect(useChatStore.getState().keepAlive.count).toBe(0);
+  });
+
+  it("保温の予約の基準は、最後の要求の開始時刻にする", async () => {
+    mockIPC((cmd, args) => {
+      if (cmd !== "ai_chat_send") {
+        return null;
+      }
+      const onEvent = arg(args, "onEvent");
+      if (onEvent instanceof Channel) {
+        onEvent.onmessage({ type: "request_started" });
+      }
+      return { status: { kind: "completed" }, usage: USAGE, turnIndex: 0 };
+    });
+    const before = Date.now();
+    await useChatStore.getState().send("q1", []);
+    const { lastRequestAt, lastTurnEndAt } = useChatStore.getState();
+    expect(lastRequestAt).not.toBeNull();
+    expect(lastRequestAt ?? 0).toBeGreaterThanOrEqual(before);
+    expect(lastTurnEndAt ?? 0).toBeGreaterThanOrEqual(lastRequestAt ?? 0);
   });
 });

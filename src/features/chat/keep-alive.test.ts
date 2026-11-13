@@ -24,4 +24,8 @@ describe("keepAliveDelayMs", () => {
     const tooLate = end + KEEP_ALIVE_WINDOW_MS - KEEP_ALIVE_INTERVAL_MS + 1;
     expect(keepAliveDelayMs(tooLate, tooLate, end)).toBeNull();
   });
+
+  it("パネルを閉じて長く置いた後に開いても、回答から 20 分を過ぎていれば送らない", () => {
+    expect(keepAliveDelayMs(end + 30 * 60_000, end, end)).toBeNull();
+  });
 });

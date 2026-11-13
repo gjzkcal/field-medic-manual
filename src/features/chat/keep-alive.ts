@@ -22,7 +22,10 @@ export function keepAliveDelayMs(
     return null;
   }
   const due = lastRequestMs + KEEP_ALIVE_INTERVAL_MS;
-  if (due > lastTurnEndMs + KEEP_ALIVE_WINDOW_MS) {
+  // 予定の時刻でも今の時刻でも、回答から 20 分を過ぎていたら送らない（パネルを閉じて長く置いた後に開いたとき、
+  // 期限切れのキャッシュを書き直す有料の要求を出さないため）
+  const stop = lastTurnEndMs + KEEP_ALIVE_WINDOW_MS;
+  if (due > stop || nowMs > stop) {
     return null;
   }
   return Math.max(0, due - nowMs);

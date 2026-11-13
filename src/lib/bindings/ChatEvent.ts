@@ -9,4 +9,4 @@ import type { ToolState } from "./ToolState";
 /**
  * 回答の途中で画面に流すもの。`block` は 1 回の質問の中で通しの番号（ツールの往復をまたいでも重ならない）。
  */
-export type ChatEvent = { "type": "text", block: number, text: string, } | { "type": "thinking", block: number, text: string, } | { "type": "citation", block: number, citation: ChatCitation, } | { "type": "tool_activity", id: string, tool: ToolKind, detail: string, state: ToolState, } | { "type": "client_request", toolUseId: string, request: ClientRequest, } | { "type": "notice", notice: ChatNotice, } | { "type": "usage", usage: ChatUsage, };
+export type ChatEvent = { "type": "text", block: number, text: string, } | { "type": "thinking", block: number, text: string, } | { "type": "citation", block: number, citation: ChatCitation, } | { "type": "tool_activity", id: string, tool: ToolKind, detail: string, state: ToolState, } | { "type": "client_request", toolUseId: string, request: ClientRequest, } | { "type": "notice", notice: ChatNotice, } | { "type": "request_started" } | { "type": "usage", usage: ChatUsage, };

@@ -261,6 +261,8 @@ struct Collector {
     segments: Vec<Segment>,
     current: Segment,
     api_calls: u32,
+    /// 最後に届いた累計。途中で失敗しても、課金された分を結果に残すため
+    usage: ChatUsage,
     searches: Vec<String>,
     reads: Vec<String>,
     web_searches: u32,
@@ -317,7 +319,7 @@ fn collect(
             ToolKind::WebSearch => c.web_searches += 1,
             ToolKind::CasualtyRead => {}
         },
-        ChatEvent::ToolActivity { .. } => {}
+        ChatEvent::ToolActivity { .. } | ChatEvent::RequestStarted => {}
         ChatEvent::ClientRequest {
             tool_use_id,
             request,
@@ -330,8 +332,9 @@ fn collect(
             }
         }
         ChatEvent::Notice { notice } => c.notices.push(format!("{notice:?}")),
-        ChatEvent::Usage { .. } => {
+        ChatEvent::Usage { usage } => {
             c.api_calls += 1;
+            c.usage = usage;
             let segment = std::mem::take(&mut c.current);
             c.segments.push(segment);
         }
@@ -741,11 +744,8 @@ fn record_of(
     let answer = last.text.trim().to_owned();
     let (status, error, usage) = match result {
         Ok(r) => (status_name(&r.status), None, r.usage),
-        Err(e) => (
-            "error".to_owned(),
-            Some(e.to_string()),
-            ChatUsage::default(),
-        ),
+        // 失敗しても、それまでの応答の分は課金されている
+        Err(e) => ("error".to_owned(), Some(e.to_string()), c.usage),
     };
     let flow_ids = flow_links(&answer);
     let not_listed = NOT_LISTED_MARKS.iter().any(|m| answer.contains(m));
@@ -765,6 +765,12 @@ fn record_of(
         },
     );
     let system = prompt::system_prompt(corpus, &sorted_mods(&case.mods));
+    // 正常に答え終わっていない実行は、期待を満たしていても不合格（空の答えが citations:false を満たす、など）
+    let pass = if status == "completed" {
+        checks.pass()
+    } else {
+        Some(false)
+    };
     Record {
         run_at,
         model: model.id(),
@@ -791,7 +797,7 @@ fn record_of(
         flow_ids,
         not_listed,
         has_figure,
-        pass: checks.pass(),
+        pass,
         checks,
         answer,
         system_sha256: hex::encode(Sha256::digest(system.as_bytes())),

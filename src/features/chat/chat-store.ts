@@ -84,6 +84,8 @@ function addUsage(a: ChatUsage, b: ChatUsage): ChatUsage {
 }
 
 let nextTurnId = 1;
+/** 会話を消すたびに増やす。消す前に出した保温の結果を、新しい会話に足さないため */
+let conversationGeneration = 0;
 
 async function sendResult(toolUseId: string, result: ClientToolResult): Promise<void> {
   try {
@@ -162,6 +164,10 @@ export const useChatStore = create<ChatState>()((set, get) => {
           if (event.type === "client_request" && event.request.kind === "casualty_read") {
             void answerCasualtyRead(event.toolUseId);
           }
+          // キャッシュの期限は要求の開始から数えるので、ツールの往復ごとの最後の要求の開始を覚える
+          if (event.type === "request_started") {
+            set({ lastRequestAt: Date.now() });
+          }
         },
       );
       const finished = finishTurn(turn, result);
@@ -172,7 +178,8 @@ export const useChatStore = create<ChatState>()((set, get) => {
       return "error";
     } finally {
       const now = Date.now();
-      set({ busy: false, lastRequestAt: now, lastTurnEndAt: now });
+      // 要求の開始が届かなかったとき（送る前の失敗）だけ、終わった時刻で代える
+      set({ busy: false, lastTurnEndAt: now, lastRequestAt: get().lastRequestAt ?? now });
     }
   }
 
@@ -253,6 +260,7 @@ export const useChatStore = create<ChatState>()((set, get) => {
       });
     },
     reset: async () => {
+      conversationGeneration += 1;
       revokeImages(get().turns);
       set({
         turns: [],
@@ -272,9 +280,11 @@ export const useChatStore = create<ChatState>()((set, get) => {
       }
       // 送った時刻を先に記録する。期限は要求の開始から数えるので、次の保温もそこから測る
       set({ lastRequestAt: Date.now() });
+      const generation = conversationGeneration;
       try {
         const usage = await aiChatKeepAlive();
-        if (usage !== null) {
+        // 待っている間に会話を消していたら、消した会話の分を新しい会話に足さない
+        if (usage !== null && generation === conversationGeneration) {
           set((state) => ({
             keepAlive: {
               count: state.keepAlive.count + 1,

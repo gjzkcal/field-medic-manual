@@ -158,6 +158,9 @@ export function applyEvent(turn: ChatTurn, event: ChatEvent): ChatTurn {
         : { ...turn, notices: [...turn.notices, event.notice] };
     case "usage":
       return { ...turn, usage: event.usage };
+    case "request_started":
+      // 表示は変えない（保温の予約に使うのは chat-store）
+      return turn;
   }
 }
 

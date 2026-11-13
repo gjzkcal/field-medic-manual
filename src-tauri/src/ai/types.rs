@@ -311,6 +311,8 @@ pub enum ChatEvent {
     Notice {
         notice: ChatNotice,
     },
+    /// API に要求を送る直前（ツールの往復ごと）。キャッシュの期限は要求の開始から数えるので、画面が保温の予約の基準にする
+    RequestStarted,
     /// API を 1 回呼ぶごとの累計
     Usage {
         usage: ChatUsage,

@@ -342,6 +342,7 @@ impl<T: Transport> Run<'_, T> {
                 messages,
                 force,
             );
+            self.emit_event(ChatEvent::RequestStarted);
             let failure: SendFailure = tokio::select! {
                 result = self.transport.send(body) => match result {
                     Ok(stream) => return Ok(stream),
