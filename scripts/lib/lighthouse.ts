@@ -1,6 +1,6 @@
 // Web 版の Lighthouse の結果（Lighthouse の JSON のレポート）を、ページ × 端末ごとの中央値の表にまとめ、合否を決める。
 // 計測そのもの（ブラウザの起動）は scripts/lighthouse.ts。
-// 合否は全ページの A11y・BP・SEO だけ、性能は本番の代表ページの Performance だけを測るので、
+// 合否は全ページの A11y・BP・SEO だけ、性能は全画面と重い原稿の Performance だけを測るので、
 // どちらのレポートにも全カテゴリがそろうとは限らない。表と判定は、測ったカテゴリ・指標だけを扱う。
 
 import { z } from "zod";
@@ -18,12 +18,31 @@ export const GATED: readonly Category[] = ["accessibility", "best-practices", "s
 export const FORM_FACTORS = ["mobile", "desktop"] as const;
 export type FormFactor = (typeof FORM_FACTORS)[number];
 
+/**
+ * 性能を測るページ。画面は全部、引数を持つルートは重いものを選ぶ:
+ * フローはサブフローをいちばん多く呼ぶ本体、原稿はいちばん長いもの（本文の描画が重い）と、式がいちばん多くグラフもあるもの。
+ * 全ページにしないのは、性能は 1 本ずつ 5 回測るので、原稿ごとに測ると 1 時間を超えるため
+ */
+export const PERFORMANCE_PAGES = [
+  "library",
+  "quickref",
+  "triage",
+  "triage/casualty-first-contact",
+  "casualties",
+  "settings",
+  "about",
+  "doc/cardiac-arrest-system",
+  "doc/vitals-system",
+] as const;
+
 /** 表に出す指標。Lighthouse の audits のキーと表の見出し */
 export const METRICS = [
   ["first-contentful-paint", "FCP"],
   ["largest-contentful-paint", "LCP"],
   ["total-blocking-time", "TBT"],
   ["cumulative-layout-shift", "CLS"],
+  // モバイルの想定の回線では、読む量がそのまま LCP の時間になる。点数が動いた理由を表だけで追えるようにする
+  ["total-byte-weight", "転送量"],
 ] as const;
 type MetricId = (typeof METRICS)[number][0];
 
@@ -204,7 +223,16 @@ export function failingRows(rows: readonly Row[]): Row[] {
 }
 
 function formatMetric(id: MetricId, value: number): string {
-  return id === "cumulative-layout-shift" ? value.toFixed(3) : `${(value / 1000).toFixed(1)} s`;
+  switch (id) {
+    case "cumulative-layout-shift":
+      return value.toFixed(3);
+    case "total-byte-weight":
+      return `${String(Math.round(value / 1024))} KB`;
+    case "first-contentful-paint":
+    case "largest-contentful-paint":
+    case "total-blocking-time":
+      return `${(value / 1000).toFixed(1)} s`;
+  }
 }
 
 const CATEGORY_LABELS: Record<Category, string> = {
