@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/input-group";
 import {
   AI_EFFORT_LABELS,
+  AI_EFFORT_RECOMMENDED,
   AI_EFFORTS,
   AI_MODEL_LABELS,
   AI_MODELS,
@@ -289,6 +290,7 @@ export function ChatPromptInput({
                   {AI_EFFORTS.map((effort) => (
                     <DropdownMenuRadioItem key={effort} value={effort} closeOnClick>
                       {AI_EFFORT_LABELS[effort]}
+                      {effort === AI_EFFORT_RECOMMENDED[settings.model] ? "（推奨）" : ""}
                     </DropdownMenuRadioItem>
                   ))}
                 </DropdownMenuRadioGroup>
@@ -321,7 +323,7 @@ export function ChatPromptInput({
       </InputGroup>
       {settingsPending && (
         <p className="text-xs text-muted-foreground">
-          モデルと Effort の変更は、新しい会話から使われます
+          モデルの変更は、新しい会話から使われます（Effort は次の質問から）
         </p>
       )}
       {error !== null && (

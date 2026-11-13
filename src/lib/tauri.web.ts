@@ -149,6 +149,7 @@ export const aiChatSend: typeof Desktop.aiChatSend = () => unsupported("AI チ�
 export const aiChatToolResult: typeof Desktop.aiChatToolResult = () => unsupported("AI チャット");
 export const aiChatCancel: typeof Desktop.aiChatCancel = noop;
 export const aiChatReset: typeof Desktop.aiChatReset = noop;
+export const aiChatKeepAlive: typeof Desktop.aiChatKeepAlive = () => Promise.resolve(null);
 
 export const hotkeyList: typeof Desktop.hotkeyList = () => Promise.resolve([]);
 export const hotkeySet: typeof Desktop.hotkeySet = () => unsupported("ホットキー");

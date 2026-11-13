@@ -45,6 +45,7 @@ const COMMANDS: &[&str] = &[
     "ai_chat_tool_result",
     "ai_chat_cancel",
     "ai_chat_reset",
+    "ai_chat_keep_alive",
 ];
 
 fn main() {

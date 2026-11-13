@@ -14,6 +14,8 @@ use crate::ai::types::{AiEffort, AiModel, ChatCitation, ChatImage, ChatUsage};
 /// 2026-10-21 版で temperature などが無くなり、引用付きの文を user に入れられなくなった。
 /// このアプリはどちらも使わないので、新しい版に合わせておく（後で移す手間をなくすため）
 pub const API_VERSION: &str = "2026-10-21";
+/// 使う beta の機能。会話の途中で effort を変える system メッセージ（`effort_message`）に要る
+pub const BETAS: &str = "mid-conversation-output-config-2026-07-01";
 /// xhigh / max の effort では 64000 以上が要る（足りないと考えている途中で切れる）。ストリーミングなので大きくても時間切れにならない
 const MAX_TOKENS: u32 = 64000;
 pub const WEB_SEARCH: &str = "web_search";
@@ -159,17 +161,79 @@ pub fn request_body(
         "model": model.id(),
         "max_tokens": MAX_TOKENS,
         "stream": true,
-        "system": [{"type": "text", "text": system}],
+        // system（索引）に明示の印を置く。tools → system の順に並ぶので、ここまでが会話に依らず必ず読める位置になる
+        // （質問の編集で履歴を切っても、自動の印の位置が動いても、索引の分はキャッシュから読める）
+        "system": [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
         "tools": tools,
         "messages": messages,
         // 要約を画面の「考えている途中」に出す。表示を変えても料金は同じ
         "thinking": {"type": "adaptive", "display": "summarized"},
         "output_config": {"effort": effort.as_str()},
-        // 最後のブロックまでを自動でキャッシュする。索引（system）が大きいので、2 問目からの入力が安くなる
+        // 履歴の最後のブロックまでを自動でキャッシュする。2 問目からは前の往復の分も読むだけになる
         "cache_control": {"type": "ephemeral"}
     });
     if force_answer && let Some(obj) = body.as_object_mut() {
         obj.insert("tool_choice".to_owned(), json!({"type": "none"}));
+    }
+    body
+}
+
+/// 会話の途中で effort を変える system メッセージ（beta `mid-conversation-output-config-2026-07-01`）。
+/// 履歴に追記するだけなので、キャッシュも thinking の署名も保てる（要求のトップレベルの effort を変えるとどちらも切れる）。
+#[must_use]
+pub fn effort_message(effort: AiEffort) -> Value {
+    json!({"role": "system", "content": [], "output_config": {"effort": effort.as_str()}})
+}
+
+/// 履歴の時点で効いている effort。`effort_message` があれば最後のもの、なければ会話の最初の値。
+#[must_use]
+pub fn effective_effort(messages: &[Value], initial: AiEffort) -> AiEffort {
+    messages
+        .iter()
+        .rev()
+        .filter(|m| m.get("role").and_then(Value::as_str) == Some("system"))
+        .find_map(|m| m.get("output_config")?.get("effort").cloned())
+        .and_then(|v| serde_json::from_value(v).ok())
+        .unwrap_or(initial)
+}
+
+/// キャッシュの期限を延ばす要求の本文。`request_body` と同じ接頭辞にし（違うとキャッシュに当たらない）、
+/// 出力は作らせず、ストリーミングにしない（`max_tokens: 0` はストリーミングと組み合わせられない）。
+#[must_use]
+pub fn keep_alive_body(
+    model: AiModel,
+    effort: AiEffort,
+    system: &str,
+    tools: &Value,
+    messages: &[Value],
+) -> Value {
+    let mut body = request_body(model, effort, system, tools, messages, false);
+    if let Some(obj) = body.as_object_mut() {
+        obj.insert("max_tokens".to_owned(), json!(0));
+        obj.remove("stream");
+    }
+    body
+}
+
+/// `count_tokens` に送る本文。数えるのに要らないキー（`max_tokens`・`stream`・`output_config`・`cache_control`）は
+/// 入れない（`count_tokens` が受け付けない可能性があり、数にも影響しないため）。`system` や `tools` を省くと、残りの分だけを数えられる。
+#[must_use]
+pub fn count_body(model: AiModel, system: Option<&str>, tools: Option<&Value>) -> Value {
+    let mut body = json!({
+        "model": model.id(),
+        "messages": [{"role": "user", "content": "."}],
+        "thinking": {"type": "adaptive"}
+    });
+    if let Some(obj) = body.as_object_mut() {
+        if let Some(system) = system {
+            obj.insert(
+                "system".to_owned(),
+                json!([{"type": "text", "text": system}]),
+            );
+        }
+        if let Some(tools) = tools {
+            obj.insert("tools".to_owned(), tools.clone());
+        }
     }
     body
 }
@@ -283,6 +347,75 @@ mod tests {
     use crate::ai::types::{ImageMediaType, ProposedOp};
 
     #[test]
+    fn effort_changes_are_read_back_from_the_history() {
+        let mut messages = vec![user_message("q1", &[])];
+        assert_eq!(
+            effective_effort(&messages, AiEffort::Medium),
+            AiEffort::Medium
+        );
+        messages.push(effort_message(AiEffort::Low));
+        messages.push(user_message("q2", &[]));
+        assert_eq!(effective_effort(&messages, AiEffort::Medium), AiEffort::Low);
+        let message = effort_message(AiEffort::High);
+        assert_eq!(message["role"], "system");
+        assert_eq!(message["content"], json!([]));
+        assert_eq!(message["output_config"]["effort"], "high");
+    }
+
+    #[test]
+    fn keep_alive_body_keeps_the_prefix_and_asks_for_no_output() {
+        let tools = tools(true);
+        let messages = vec![user_message("q", &[])];
+        let normal = request_body(
+            AiModel::ClaudeOpus55,
+            AiEffort::Low,
+            "sys",
+            &tools,
+            &messages,
+            false,
+        );
+        let keep = keep_alive_body(
+            AiModel::ClaudeOpus55,
+            AiEffort::Low,
+            "sys",
+            &tools,
+            &messages,
+        );
+        assert_eq!(keep["max_tokens"], json!(0));
+        assert!(keep.get("stream").is_none());
+        for key in [
+            "model",
+            "system",
+            "tools",
+            "messages",
+            "thinking",
+            "output_config",
+            "cache_control",
+        ] {
+            assert_eq!(
+                keep[key], normal[key],
+                "{key} は同じ（キャッシュの接頭辞をそろえる）"
+            );
+        }
+    }
+
+    #[test]
+    fn count_body_leaves_out_keys_that_do_not_affect_the_count() {
+        let tools = tools(true);
+        let body = count_body(AiModel::ClaudeHaiku55, Some("sys"), Some(&tools));
+        let obj = body.as_object().expect("オブジェクト");
+        for key in ["max_tokens", "stream", "output_config", "cache_control"] {
+            assert!(!obj.contains_key(key), "{key} は count_tokens に送らない");
+        }
+        assert_eq!(body["model"], "claude-haiku-5-5");
+        assert_eq!(body["system"][0]["text"], "sys");
+        assert_eq!(body["tools"], tools);
+        assert_eq!(body["messages"][0]["role"], "user");
+        let partial = count_body(AiModel::ClaudeSonnet55, None, None);
+        assert!(partial.get("system").is_none() && partial.get("tools").is_none());
+    }
+
+    #[test]
     fn every_proposed_op_shape_starts_with_the_action_key() {
         // strict のツールはキーを名前の順に書かせるので、種類のキーが先頭でない形があると、AI の出力がほかの形へ押し込まれる
         let schema = proposed_op_schema();
@@ -342,6 +475,9 @@ mod tests {
         assert_eq!(body["output_config"]["effort"], "xhigh");
         assert_eq!(body["max_tokens"], json!(MAX_TOKENS));
         assert!(body.get("tool_choice").is_none());
+        // system の明示の印と、履歴の末尾の自動の印は同じ TTL にする（違うと 400 になる）
+        assert_eq!(body["system"][0]["cache_control"], body["cache_control"]);
+        assert_eq!(body["cache_control"], json!({"type": "ephemeral"}));
         // サンプリングの値は 2026-10-21 版では送れない
         assert!(body.get("temperature").is_none());
         let forced = request_body(

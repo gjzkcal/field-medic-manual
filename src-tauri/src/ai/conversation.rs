@@ -9,6 +9,7 @@ use std::sync::{Arc, Mutex, MutexGuard};
 use serde_json::Value;
 use tokio::sync::{oneshot, watch};
 
+use crate::ai::claude;
 use crate::ai::corpus::Corpus;
 use crate::ai::types::{AiEffort, AiModel, ClientToolResult};
 use crate::error::AppError;
@@ -172,6 +173,38 @@ impl AiState {
             active.pending.clear();
         }
         Ok(())
+    }
+
+    /// キャッシュの期限を延ばすための要求の本文。会話がない・回答中なら None。
+    ///
+    /// 直前の要求と同じ接頭辞（tools・system・履歴）を、出力なし（`max_tokens: 0`）で送ると、
+    /// キャッシュの読みだけが起きて期限が延びる（読みは書きより大幅に安い）。履歴は user で終わる必要があるので、
+    /// 末尾に中身のない user を足す。
+    ///
+    /// # Errors
+    ///
+    /// 状態が壊れているとき。
+    pub fn keep_alive_body(&self) -> Result<Option<Value>, AppError> {
+        let inner = self.lock()?;
+        if inner.active.is_some() {
+            return Ok(None);
+        }
+        let Some(conversation) = inner.conversation.as_ref() else {
+            return Ok(None);
+        };
+        if conversation.messages.is_empty() {
+            return Ok(None);
+        }
+        let fixed = &conversation.fixed;
+        let mut messages = conversation.messages.clone();
+        messages.push(claude::user_message(".", &[]));
+        Ok(Some(claude::keep_alive_body(
+            fixed.model,
+            fixed.effort,
+            &fixed.system,
+            &claude::tools(fixed.web_search),
+            &messages,
+        )))
     }
 
     /// 画面で答えてもらう要求を登録し、答えを受け取る口を返す。
@@ -366,6 +399,27 @@ mod tests {
             None
         );
         assert!(!state.has_conversation().expect("読める"));
+    }
+
+    #[test]
+    fn keep_alive_body_exists_only_for_an_idle_conversation() {
+        let state = Arc::new(AiState::default());
+        assert!(state.keep_alive_body().expect("読める").is_none());
+        answer(&state, None, "1");
+        let body = state
+            .keep_alive_body()
+            .expect("読める")
+            .expect("会話があれば本文がある");
+        assert_eq!(body["max_tokens"], json!(0));
+        assert_eq!(body["output_config"]["effort"], "medium");
+        let messages = body["messages"].as_array().expect("配列");
+        assert_eq!(messages.len(), 3, "履歴の末尾に中身のない user を足す");
+        assert_eq!(messages[2]["role"], "user");
+        let _start = state.begin(None, None).expect("始められる");
+        assert!(
+            state.keep_alive_body().expect("読める").is_none(),
+            "回答中は送らない"
+        );
     }
 
     #[test]

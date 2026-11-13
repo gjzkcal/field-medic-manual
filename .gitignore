@@ -11,6 +11,8 @@ dist-web/
 dist-ssr/
 # pnpm lighthouse:web のレポート
 lighthouse-results/
+# cargo run --example ai_eval の結果（AI の回答の全文が入る）
+src-tauri/eval/results/
 src-tauri/target/
 *.tsbuildinfo
 

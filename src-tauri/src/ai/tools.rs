@@ -21,13 +21,14 @@ pub const CASUALTY_PROPOSE: &str = "casualty_propose";
 pub const NEW_CASUALTY: &str = "new";
 
 /// 検索で返す節の数。多いと入力が増え、少ないと言い換えの取りこぼしが増える
-const MAX_SECTION_HITS: usize = 6;
+const MAX_SECTION_HITS: usize = 4;
 const MAX_QUICKREF_HITS: usize = 3;
 const MAX_FLOW_HITS: usize = 2;
 /// MOD で絞ると落ちる分を見込んで、検索からは多めに取る
 const SEARCH_CANDIDATES: u32 = 100;
-/// 検索の結果の 1 節あたりの上限（文字数）。長い節は `read_section` で全文を読ませる
-const MAX_HIT_CHARS: usize = 3000;
+/// 検索の結果の 1 節あたりの上限（文字数）。当たりを見極める分だけ返し、本文は `read_section` で読ませる
+/// （6 節 × 3000 字では 1 回の検索で 1 万トークン以上が履歴に残り、会話の間ずっと再送されるため）
+const MAX_HIT_CHARS: usize = 800;
 /// `read_section` で返す上限（文字数）。配下の節まで含めると長くなるため
 const MAX_READ_CHARS: usize = 12000;
 /// 1 節を分ける段落の上限。引用の単位を細かくしつつ、ブロックの数を増やしすぎない

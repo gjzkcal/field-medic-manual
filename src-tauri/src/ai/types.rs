@@ -246,6 +246,8 @@ pub enum ChatNotice {
     WebSearchDisabled,
     /// ツールの往復の上限に達したので、そこまでの結果で答えさせた
     ToolLimitReached,
+    /// 会話の途中の effort の変更を API が受け付けなかったので、会話の最初の effort のまま答えた
+    EffortChangeUnsupported,
 }
 
 /// トークン数の累計（1 回の質問のうちに API を何度呼んでも合わせる）。
@@ -309,6 +311,8 @@ pub enum ChatEvent {
     Notice {
         notice: ChatNotice,
     },
+    /// API に要求を送る直前（ツールの往復ごと）。キャッシュの期限は要求の開始から数えるので、画面が保温の予約の基準にする
+    RequestStarted,
     /// API を 1 回呼ぶごとの累計
     Usage {
         usage: ChatUsage,

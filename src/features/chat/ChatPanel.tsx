@@ -37,6 +37,7 @@ import type { ChatTurn } from "@/features/chat/chat-turn";
 import { ChatAnswer } from "@/features/chat/ChatAnswer";
 import { renderChatMarkdown } from "@/features/chat/chat-markdown";
 import { ChatMarkdown } from "@/features/chat/ChatMarkdown";
+import { keepAliveDelayMs } from "@/features/chat/keep-alive";
 import {
   ChatPromptInput,
   MAX_QUESTION_CHARS,
@@ -159,6 +160,27 @@ function ChatPanel(): JSX.Element {
   const syncStatus = useContentSync((s) => s.state.status);
   const inputRef = useRef<ChatPromptInputHandle>(null);
 
+  // パネルを開いている間だけ、会話のキャッシュの期限を延ばす（閉じたら effect の後始末で止まる）
+  const lastRequestAt = useChatStore((s) => s.lastRequestAt);
+  const lastTurnEndAt = useChatStore((s) => s.lastTurnEndAt);
+  const keepAlive = useChatStore((s) => s.keepAlive);
+  const keepAliveNow = useChatStore((s) => s.keepAliveNow);
+  useEffect(() => {
+    if (busy) {
+      return;
+    }
+    const delay = keepAliveDelayMs(Date.now(), lastRequestAt, lastTurnEndAt);
+    if (delay === null) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      void keepAliveNow();
+    }, delay);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [busy, lastRequestAt, lastTurnEndAt, keepAliveNow]);
+
   useEffect(() => {
     void refreshKey();
     // 回答の Markdown の変換は初めて使うときにライブラリを読み込むので、開いたときに先に読んでおく。
@@ -193,9 +215,8 @@ function ChatPanel(): JSX.Element {
   const pendingAsk = turns.at(-1)?.items.findLast((i) => i.kind === "ask" && i.answer === null);
   const answering = busy && pendingAsk?.kind === "ask";
   const ready = syncStatus === "done" || syncStatus === "error";
-  const settingsPending =
-    conversation !== null &&
-    (conversation.model !== settings.model || conversation.effort !== settings.effort);
+  // effort は次の質問から効くので、知らせるのはモデルの変更だけ
+  const settingsPending = conversation !== null && conversation.model !== settings.model;
 
   function handleSend(text: string, images: Parameters<typeof send>[1]): void {
     if (answering) {
@@ -300,6 +321,17 @@ function ChatPanel(): JSX.Element {
             {!ready && (
               <p role="status" className="text-xs text-muted-foreground">
                 マニュアルを読み込んでいます。終わるまで送れません
+              </p>
+            )}
+            {keepAlive.count > 0 && (
+              <p className="text-xs text-muted-foreground">
+                キャッシュの保温 {keepAlive.count} 回（入力{" "}
+                {(
+                  keepAlive.usage.inputTokens +
+                  keepAlive.usage.cacheWriteTokens +
+                  keepAlive.usage.cacheReadTokens
+                ).toLocaleString("ja-JP")}{" "}
+                トークン。次の質問で索引を読み直さずに済むように、会話を開いている間は定期的に送ります）
               </p>
             )}
             <ChatPromptInput

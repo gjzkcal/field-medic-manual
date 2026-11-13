@@ -127,6 +127,7 @@ pub fn run() {
             commands::ai::ai_chat_tool_result,
             commands::ai::ai_chat_cancel,
             commands::ai::ai_chat_reset,
+            commands::ai::ai_chat_keep_alive,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -68,6 +68,15 @@ pub async fn run<T: Transport>(
         Some(new_fixed(db, &input).await?)
     };
     let start = state.begin(fixed, input.replace_from)?;
+    let mut messages = start.messages;
+    let start_index = messages.len();
+    // effort は会話の最初の値を要求のトップレベルに送り続け（変えるとキャッシュと thinking の署名が切れる）、
+    // 設定が変わっていたら履歴に system メッセージを足して次の質問から効かせる
+    let effort_change = (input.effort != claude::effective_effort(&messages, start.fixed.effort))
+        .then(|| {
+            messages.push(claude::effort_message(input.effort));
+            messages.len() - 1
+        });
     let mut run = Run {
         state,
         db,
@@ -78,9 +87,8 @@ pub async fn run<T: Transport>(
         turn_id: start.guard.turn_id(),
         usage: ChatUsage::default(),
         block_offset: 0,
+        effort_change,
     };
-    let mut messages = start.messages;
-    let start_index = messages.len();
     messages.push(claude::user_message(&text, &input.images));
     match run.answer(&mut messages).await? {
         Outcome::Keep(status) => {
@@ -191,6 +199,8 @@ struct Run<'a, T: Transport> {
     usage: ChatUsage,
     /// 画面のブロックの通し番号。API の応答ごとに 0 から振られるので、前の応答の分だけずらす
     block_offset: u32,
+    /// この質問で足した effort の変更（system メッセージ）の位置。API が受け付けなければ外して送り直す
+    effort_change: Option<usize>,
 }
 
 /// 応答を読んでいる途中で止まった理由。
@@ -208,9 +218,25 @@ impl<T: Transport> Run<'_, T> {
             let message = match self.call(messages, force).await {
                 Ok(m) => m,
                 Err(Interrupted::Cancelled) => return Ok(Outcome::Discard(TurnStatus::Cancelled)),
+                Err(Interrupted::Failed(AppError::AiRequest(_)))
+                    if tool_rounds == 0 && self.drop_effort_change(messages) =>
+                {
+                    continue;
+                }
                 Err(Interrupted::Failed(e)) => return Err(e),
             };
-            self.usage.add(claude::usage(&message.usage));
+            let usage = claude::usage(&message.usage);
+            // トークンの使い方を後から確かめられるようにする（本文やキーは出さない）
+            log::debug!(
+                "AI の要求 {}: input {} cache_read {} cache_write {} output {} web {}",
+                tool_rounds + 1,
+                usage.input_tokens,
+                usage.cache_read_tokens,
+                usage.cache_write_tokens,
+                usage.output_tokens,
+                usage.web_searches
+            );
+            self.usage.add(usage);
             self.emit_event(ChatEvent::Usage { usage: self.usage });
             self.block_offset += u32::try_from(message.content.len()).unwrap_or(0);
             let stop = message.stop_reason.as_deref().unwrap_or("end_turn");
@@ -285,6 +311,19 @@ impl<T: Transport> Run<'_, T> {
         }
     }
 
+    /// effort の変更（system メッセージ）を履歴から外す。beta を使えない組織では 400 になるので、
+    /// 変更をあきらめて会話の最初の値のまま答えさせる。外すものがなければ false。
+    fn drop_effort_change(&mut self, messages: &mut Vec<Value>) -> bool {
+        let Some(index) = self.effort_change.take() else {
+            return false;
+        };
+        messages.remove(index);
+        self.emit_event(ChatEvent::Notice {
+            notice: ChatNotice::EffortChangeUnsupported,
+        });
+        true
+    }
+
     /// API を 1 回呼び、応答を最後まで読む。
     async fn call(&mut self, messages: &[Value], force: bool) -> Result<FinalMessage, Interrupted> {
         let stream = self.send(messages, force).await?;
@@ -303,6 +342,7 @@ impl<T: Transport> Run<'_, T> {
                 messages,
                 force,
             );
+            self.emit_event(ChatEvent::RequestStarted);
             let failure: SendFailure = tokio::select! {
                 result = self.transport.send(body) => match result {
                     Ok(stream) => return Ok(stream),

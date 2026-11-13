@@ -14,6 +14,7 @@ import type { CasualtyOp } from "@/lib/bindings/CasualtyOp";
 import type { ChatEvent } from "@/lib/bindings/ChatEvent";
 import type { ChatSendInput } from "@/lib/bindings/ChatSendInput";
 import type { ChatTurnResult } from "@/lib/bindings/ChatTurnResult";
+import type { ChatUsage } from "@/lib/bindings/ChatUsage";
 import type { ClientToolResult } from "@/lib/bindings/ClientToolResult";
 import type { DocDetail } from "@/lib/bindings/DocDetail";
 import type { DocOutline } from "@/lib/bindings/DocOutline";
@@ -229,6 +230,11 @@ export async function aiChatCancel(): Promise<void> {
 /** 会話を消す。 */
 export async function aiChatReset(): Promise<void> {
   return invoke<undefined>("ai_chat_reset");
+}
+
+/** 会話のキャッシュの期限を延ばす。会話がない・回答中なら null。返すのはこの要求で使ったトークン数。 */
+export async function aiChatKeepAlive(): Promise<ChatUsage | null> {
+  return invoke<ChatUsage | null>("ai_chat_keep_alive");
 }
 
 export async function hotkeyList(): Promise<HotkeyBinding[]> {

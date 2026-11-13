@@ -66,6 +66,8 @@ const NOTICE_TEXT: Record<ChatNotice, string> = {
   web_search_disabled:
     "組織の設定で Web 検索が切られていたので、Web 検索を使わずに答えました（Anthropic の Console で変えられます）",
   tool_limit_reached: "調べる回数の上限に達したので、そこまでに読んだ節で答えました",
+  effort_change_unsupported:
+    "会話の途中の Effort の変更を API が受け付けなかったので、会話の最初の Effort のまま答えました。変えるには新しい会話にしてください",
 };
 
 interface ChatAnswerProps {

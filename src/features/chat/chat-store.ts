@@ -21,9 +21,11 @@ import { loadMedication } from "@/features/medication/bundle";
 import { activeMods, useModSettings } from "@/features/settings/mod-settings";
 import { useViewerSettings } from "@/features/settings/viewer-settings";
 import type { ChatImage } from "@/lib/bindings/ChatImage";
+import type { ChatUsage } from "@/lib/bindings/ChatUsage";
 import type { ClientToolResult } from "@/lib/bindings/ClientToolResult";
 import {
   aiChatCancel,
+  aiChatKeepAlive,
   aiChatReset,
   aiChatSend,
   aiChatToolResult,
@@ -41,10 +43,16 @@ interface ChatState {
   panelOpen: boolean;
   turns: ChatTurn[];
   busy: boolean;
-  /** 会話の最初の質問のときの設定。Rust は会話の間これを使うので、設定を変えても次の会話まで効かない */
+  /** 会話で使っている設定。モデルは会話の最初の値で固定（Rust も固定する）、effort は最後に送った値 */
   conversation: AiSettings | null;
   /** 編集した質問を送れなかったときの知らせ（元の会話に戻したことを伝える） */
   notice: string | null;
+  /** 最後に API へ送った時刻（保温の要求を含む）。会話がなければ null */
+  lastRequestAt: number | null;
+  /** 最後の回答が終わった時刻 */
+  lastTurnEndAt: number | null;
+  /** キャッシュの保温で使った分（利用者に見せる。隠すと費用の説明がつかない） */
+  keepAlive: { count: number; usage: ChatUsage };
   setPanelOpen: (open: boolean) => void;
   send: (text: string, images: readonly PreparedImage[]) => Promise<void>;
   edit: (turnId: number, text: string) => Promise<void>;
@@ -53,9 +61,31 @@ interface ChatState {
   decide: (toolUseId: string, approve: boolean) => Promise<void>;
   cancel: () => Promise<void>;
   reset: () => Promise<void>;
+  /** 会話のキャッシュの期限を延ばす（keep-alive.ts の間隔で画面が呼ぶ） */
+  keepAliveNow: () => Promise<void>;
+}
+
+const NO_USAGE: ChatUsage = {
+  inputTokens: 0,
+  outputTokens: 0,
+  cacheReadTokens: 0,
+  cacheWriteTokens: 0,
+  webSearches: 0,
+};
+
+function addUsage(a: ChatUsage, b: ChatUsage): ChatUsage {
+  return {
+    inputTokens: a.inputTokens + b.inputTokens,
+    outputTokens: a.outputTokens + b.outputTokens,
+    cacheReadTokens: a.cacheReadTokens + b.cacheReadTokens,
+    cacheWriteTokens: a.cacheWriteTokens + b.cacheWriteTokens,
+    webSearches: a.webSearches + b.webSearches,
+  };
 }
 
 let nextTurnId = 1;
+/** 会話を消すたびに増やす。消す前に出した保温の結果を、新しい会話に足さないため */
+let conversationGeneration = 0;
 
 async function sendResult(toolUseId: string, result: ClientToolResult): Promise<void> {
   try {
@@ -102,7 +132,12 @@ export const useChatStore = create<ChatState>()((set, get) => {
     images: readonly PreparedImage[],
     replaceFrom: number | null,
   ): Promise<ChatTurn["state"]> {
-    const settings = get().conversation ?? useAiSettings.getState().settings;
+    // モデルは会話の最初の値（Rust が固定する）。effort は今の設定で、Rust が次の質問から効かせる
+    const current = useAiSettings.getState().settings;
+    const settings: AiSettings = {
+      model: get().conversation?.model ?? current.model,
+      effort: current.effort,
+    };
     const turn = newTurn(
       nextTurnId++,
       text,
@@ -129,6 +164,10 @@ export const useChatStore = create<ChatState>()((set, get) => {
           if (event.type === "client_request" && event.request.kind === "casualty_read") {
             void answerCasualtyRead(event.toolUseId);
           }
+          // キャッシュの期限は要求の開始から数えるので、ツールの往復ごとの最後の要求の開始を覚える
+          if (event.type === "request_started") {
+            set({ lastRequestAt: Date.now() });
+          }
         },
       );
       const finished = finishTurn(turn, result);
@@ -138,7 +177,9 @@ export const useChatStore = create<ChatState>()((set, get) => {
       updateTurn(turn.id, (t) => failTurn(t, errorMessage(error)));
       return "error";
     } finally {
-      set({ busy: false });
+      const now = Date.now();
+      // 要求の開始が届かなかったとき（送る前の失敗）だけ、終わった時刻で代える
+      set({ busy: false, lastTurnEndAt: now, lastRequestAt: get().lastRequestAt ?? now });
     }
   }
 
@@ -148,6 +189,9 @@ export const useChatStore = create<ChatState>()((set, get) => {
     busy: false,
     conversation: null,
     notice: null,
+    lastRequestAt: null,
+    lastTurnEndAt: null,
+    keepAlive: { count: 0, usage: NO_USAGE },
     setPanelOpen: (open) => {
       set({ panelOpen: open });
     },
@@ -216,11 +260,41 @@ export const useChatStore = create<ChatState>()((set, get) => {
       });
     },
     reset: async () => {
+      conversationGeneration += 1;
       revokeImages(get().turns);
-      set({ turns: [], conversation: null, notice: null });
+      set({
+        turns: [],
+        conversation: null,
+        notice: null,
+        lastRequestAt: null,
+        lastTurnEndAt: null,
+        keepAlive: { count: 0, usage: NO_USAGE },
+      });
       await aiChatReset().catch(() => {
         // Rust の会話が残っても、次の質問で同じ会話に続くだけ
       });
+    },
+    keepAliveNow: async () => {
+      if (get().busy || get().conversation === null) {
+        return;
+      }
+      // 送った時刻を先に記録する。期限は要求の開始から数えるので、次の保温もそこから測る
+      set({ lastRequestAt: Date.now() });
+      const generation = conversationGeneration;
+      try {
+        const usage = await aiChatKeepAlive();
+        // 待っている間に会話を消していたら、消した会話の分を新しい会話に足さない
+        if (usage !== null && generation === conversationGeneration) {
+          set((state) => ({
+            keepAlive: {
+              count: state.keepAlive.count + 1,
+              usage: addUsage(state.keepAlive.usage, usage),
+            },
+          }));
+        }
+      } catch {
+        // 延ばせなくても、次の質問で書き直すだけ。保温の失敗で画面を止めない
+      }
     },
   };
 });
