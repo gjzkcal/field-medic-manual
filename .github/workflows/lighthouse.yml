@@ -23,6 +23,7 @@ on:
       - ".github/workflows/release.yml"
       - ".github/workflows/pages.yml"
       - ".github/workflows/codeql.yml"
+      - ".github/workflows/lighthouse-compare.yml"
       - "README.md"
       - "CHANGELOG.md"
   # マージの前に崩れに気づくため（main で初めて落ちたことがある）。除外は push と同じものに、
@@ -40,6 +41,7 @@ on:
       - ".github/workflows/release.yml"
       - ".github/workflows/pages.yml"
       - ".github/workflows/codeql.yml"
+      - ".github/workflows/lighthouse-compare.yml"
       - "README.md"
       - "CHANGELOG.md"
       - "package.json"

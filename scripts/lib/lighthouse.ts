@@ -91,6 +91,44 @@ export function pagesFromBuild(htmlFiles: readonly string[]): string[] {
     });
 }
 
+/**
+ * --pages の指定（library,doc/morphine のようなコンマ区切り）を、測るページの一覧にする。指定が無ければ既定の一覧。
+ * available を渡すと、そこに無いページは例外にする（preview は無い URL にも index.html を返すので、黙って別の画面の数字になる）
+ */
+export function selectPages(
+  spec: string | undefined,
+  defaults: readonly string[],
+  available?: readonly string[],
+): string[] {
+  const pages =
+    spec === undefined
+      ? [...defaults]
+      : spec
+          .split(",")
+          .map((page) => page.trim().replace(/^\/+/u, ""))
+          .filter((page) => page !== "");
+  if (pages.length === 0) {
+    throw new Error("--pages に測るページがありません");
+  }
+  const missing = available === undefined ? [] : pages.filter((page) => !available.includes(page));
+  if (missing.length > 0) {
+    throw new Error(`測るページがビルドにありません: ${missing.join("、")}`);
+  }
+  return [...new Set(pages)];
+}
+
+/** --form-factor の指定を、測る端末の一覧にする。指定が無ければ両方 */
+export function selectFormFactors(spec: string | undefined): FormFactor[] {
+  if (spec === undefined) {
+    return [...FORM_FACTORS];
+  }
+  const found = FORM_FACTORS.find((formFactor) => formFactor === spec);
+  if (found === undefined) {
+    throw new Error(`--form-factor は ${FORM_FACTORS.join(" か ")} で指定してください（${spec}）`);
+  }
+  return [found];
+}
+
 /** 全ページを n 個の分担に分けたうちの i 番目（1 始まり）。CI で複数のジョブに分けて同時に測るため */
 export interface Shard {
   index: number;
@@ -294,4 +332,57 @@ export function toMarkdown(rows: readonly Row[], heading: string): string {
     lines.push(...table);
   }
   return `${lines.join("\n")}\n`;
+}
+
+/** 「前 → 後（差）」。表示が同じになる差は、ぶれと見分けがつかないので値だけにする */
+function compareCell(
+  format: (value: number) => string,
+  before: number | undefined,
+  after: number,
+): string {
+  if (before === undefined) {
+    return `— → ${format(after)}`;
+  }
+  if (format(before) === format(after)) {
+    return format(after);
+  }
+  const sign = after > before ? "+" : "−";
+  return `${format(before)} → ${format(after)}（${sign}${format(Math.abs(after - before))}）`;
+}
+
+/**
+ * 同じページを 2 つのビルドで測った結果を、「前 → 後（差）」の表にする。行は後のビルドの並び。
+ * 出すのは Performance と指標だけ（比べるのは、ぶれる数字を同じ機械で交互に測って差を見たいときなので）
+ */
+export function toComparisonMarkdown(
+  before: readonly Row[],
+  after: readonly Row[],
+  heading: string,
+): string {
+  const metrics = METRICS.filter(([id]) => after.some((row) => row.metrics[id] !== undefined));
+  const header = [
+    "ページ",
+    "端末",
+    CATEGORY_LABELS.performance,
+    ...metrics.map(([, label]) => label),
+  ];
+  const lines = after.map((row) => {
+    const base = before.find((b) => b.page === row.page && b.formFactor === row.formFactor);
+    const cells = [
+      row.page,
+      row.formFactor === "mobile" ? "モバイル" : "デスクトップ",
+      row.scores.performance === undefined
+        ? "—"
+        : compareCell(String, base?.scores.performance, row.scores.performance),
+      ...metrics.map(([id]) => {
+        const value = row.metrics[id];
+        return value === undefined
+          ? "—"
+          : compareCell((v) => formatMetric(id, v), base?.metrics[id], value);
+      }),
+    ];
+    return `| ${cells.join(" | ")} |`;
+  });
+  const table = [`| ${header.join(" | ")} |`, `|${header.map(() => "---").join("|")}|`, ...lines];
+  return `${[`## ${heading}`, "", ...table].join("\n")}\n`;
 }
