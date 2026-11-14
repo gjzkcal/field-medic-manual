@@ -108,6 +108,7 @@ pnpm build:web && pnpm preview:web:lan              # ビルドした Web 版を
 pnpm build:web && pnpm lighthouse:web               # Web 版の全ページの A11y・BP・SEO を Lighthouse で測る（Chrome、Windows で無ければ Edge。lighthouse-results/）
 pnpm lighthouse:web --url https://gjzkcal.github.io/field-medic-manual/  # 公開中の Web 版の Performance を測る
 pnpm build:web && pnpm lighthouse:web --performance  # 手元のビルドの Performance を測る（変更の前後を比べるため）
+gh workflow run lighthouse-compare.yml --ref <ブランチ>  # GitHub 上で、ブランチと main の Performance を比べる（結果は Actions のジョブの概要）
 pnpm lint && pnpm test                              # 確認
 cd src-tauri && cargo clippy --all-targets -- -D warnings && cargo test
 ```

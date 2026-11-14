@@ -11,8 +11,11 @@ import {
   PERFORMANCE_PAGES,
   parseReport,
   parseShard,
+  selectFormFactors,
+  selectPages,
   shardPages,
   summarize,
+  toComparisonMarkdown,
   toMarkdown,
   type Report,
   type Run,
@@ -257,5 +260,57 @@ describe("toMarkdown", () => {
     expect(markdown).toContain("| /doc/p0 | モバイル | 100 | 100 | 100 |");
     expect(markdown).toContain("<details><summary>全 13 行の結果</summary>");
     expect(markdown.indexOf("- /doc/p12（mobile）")).toBeLessThan(markdown.indexOf("<details>"));
+  });
+});
+
+describe("selectPages", () => {
+  const built = ["library", "quickref", "doc/a", "doc/b"];
+
+  it("指定が無ければ既定の一覧、あればコンマ区切りを読み、先頭の / と重複を除く", () => {
+    expect(selectPages(undefined, ["library", "doc/a"], built)).toStrictEqual(["library", "doc/a"]);
+    expect(selectPages(" /doc/b, library,doc/b ", ["library"], built)).toStrictEqual([
+      "doc/b",
+      "library",
+    ]);
+  });
+
+  it("ビルドに無いページと、空の指定は例外にする", () => {
+    expect(() => selectPages("doc/zzz", ["library"], built)).toThrow("doc/zzz");
+    expect(() => selectPages(undefined, ["library", "triage"], built)).toThrow("triage");
+    expect(() => selectPages(" , ", ["library"], built)).toThrow("--pages");
+  });
+
+  it("ビルドを渡さなければ（本番）、あるかどうかは確かめない", () => {
+    expect(selectPages("doc/zzz", ["library"])).toStrictEqual(["doc/zzz"]);
+  });
+});
+
+describe("selectFormFactors", () => {
+  it("指定が無ければ両方、あればその端末だけ。知らない名前は例外にする", () => {
+    expect(selectFormFactors(undefined)).toStrictEqual(["mobile", "desktop"]);
+    expect(selectFormFactors("mobile")).toStrictEqual(["mobile"]);
+    expect(() => selectFormFactors("tablet")).toThrow("--form-factor");
+  });
+});
+
+describe("toComparisonMarkdown", () => {
+  it("前 → 後（差）を出し、表示が同じ値は 1 つだけ出す", () => {
+    const before = summarize(
+      runs("/doc/a", [report({ performance: 64, accessibility: 100 }, 4800)]),
+    );
+    const after = summarize(
+      runs("/doc/a", [report({ performance: 75, accessibility: 100 }, 3100)]),
+    );
+    const markdown = toComparisonMarkdown(before, after, "前 → 後");
+    expect(markdown).toContain("## 前 → 後");
+    expect(markdown).toContain("| ページ | 端末 | Perf | FCP | LCP | TBT | CLS |");
+    expect(markdown).toContain(
+      "| /doc/a | モバイル | 64 → 75（+11） | 2.0 s | 4.8 s → 3.1 s（−1.7 s） | 0.3 s | 0.000 |",
+    );
+  });
+
+  it("前のビルドに無い行は、前を — にする", () => {
+    const after = summarize(runs("/triage", [report({ performance: 80, accessibility: 100 })]));
+    expect(toComparisonMarkdown([], after, "x")).toContain("| /triage | モバイル | — → 80 |");
   });
 });

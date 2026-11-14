@@ -1,0 +1,99 @@
+# Web 版の Performance を、選んだブランチと比べる相手（既定は main）で測り、「前 → 後（差）」の表を出す（scripts/lighthouse.ts の --compare）。
+# 開発中のブランチの変更が効いたかを、手元の PC の状態（バッテリー駆動・ほかのアプリ・熱）に左右されずに確かめるため。
+# Actions の画面でブランチを選んで実行する（PR は要らない。push してあればよい）。合否にはしない。
+# ランナーの速さは実行のたびに違うので、同じジョブの中で両方をビルドし、同じページを前・後の順に交互に測って差だけを見る。
+# 記録に残す数字は、今までどおり公開した後の本番（pages.yml）。
+# 表はジョブの概要に、レポート（HTML・JSON）は成果物の lighthouse-compare に残る。
+name: Lighthouse compare
+
+on:
+  workflow_dispatch:
+    inputs:
+      base:
+        description: 比べる相手（ブランチ・タグ・コミット）
+        default: main
+        required: true
+        type: string
+      pages:
+        description: 測るページ（コンマ区切り。例 quickref,doc/morphine）。空なら全画面と重い原稿
+        default: ""
+        required: false
+        type: string
+      desktop:
+        description: デスクトップも測る（時間が 2 倍になる）
+        default: false
+        required: true
+        type: boolean
+
+permissions:
+  contents: read
+
+# 同じブランチで続けて起動したら、古い回を止めて最新のコミットだけを測る
+concurrency:
+  group: lighthouse-compare-${{ github.ref }}
+  cancel-in-progress: true
+
+# 外部のアクションはコミットの SHA で固定し、版はコメントに書く（ci.yml と同じ。Renovate がそろえて更新する）
+jobs:
+  compare:
+    # Chrome が最初から入っている
+    runs-on: ubuntu-latest
+    # 9 ページ × 5 回 × 前後（1 回 12〜30 秒で 18〜45 分）。デスクトップも測るとその 2 倍
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: after
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.base }}
+          path: before
+
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          version: 11
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 26
+          cache: pnpm
+          cache-dependency-path: after/pnpm-lock.yaml
+
+      - name: Build the base
+        working-directory: before
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build:web
+
+      - name: Build the branch
+        working-directory: after
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build:web
+
+      # 測るのは選んだブランチのスクリプト。比べる相手からは、ビルドした dist-web だけを使う
+      # （相手が古くて --compare を知らなくても比べられる）。
+      # 入力は式で埋め込まず、環境変数で渡す（シェルの文として解釈させない）
+      - name: Measure
+        working-directory: after
+        env:
+          PAGES: ${{ inputs.pages }}
+          DESKTOP: ${{ inputs.desktop }}
+        run: |
+          args=(--performance --compare ../before/dist-web)
+          if [ -n "$PAGES" ]; then
+            args+=(--pages "$PAGES")
+          fi
+          if [ "$DESKTOP" != "true" ]; then
+            args+=(--form-factor mobile)
+          fi
+          pnpm lighthouse:web "${args[@]}" lighthouse-results
+
+      # 途中で失敗したときも、そこまでのレポートで原因を見る
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: lighthouse-compare
+          path: after/lighthouse-results/
+          retention-days: 14
