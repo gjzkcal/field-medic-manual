@@ -580,7 +580,8 @@ describe("DocPage", () => {
     renderDoc("/doc/d1");
     await screen.findByRole("heading", { level: 2, name: "止血帯を使う" });
 
-    const tree = screen.getByRole("navigation", { name: "マニュアルの見出し" });
+    // ツリーは本文より後に載る
+    const tree = await screen.findByRole("navigation", { name: "マニュアルの見出し" });
     fireEvent.click(within(tree).getByRole("button", { name: "心停止と CPRの見出し" }));
 
     expect(within(tree).getByText("CPR の手順")).toBeDefined();

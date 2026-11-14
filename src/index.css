@@ -217,6 +217,21 @@
   .manual-body section:first-child > :first-child {
     margin-top: 0;
   }
+  /*
+   * ビューアの節の本文は、画面に近づくまでレイアウトと描画を後回しにする（長い原稿を開いたときに、全部の節を一度に並べて画面が固まるのを防ぐ）。
+   * 見出しは外にあるので位置は先に決まり、アンカーへの移動と目次の追従はそのまま使える。高さは一度描くとブラウザが覚える。
+   * この指定を付けた箱は、中の余白が外の余白と重ならなくなる。末尾の余白を箱の側に移して、次の見出しとの間隔を変えない。
+   * 箱の外にはみ出す描画（フォーカスの枠）は切られるので、切る位置を外へ広げる
+   */
+  article.manual-body > section > .manual-section-body {
+    margin-bottom: 0.8em;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 40em;
+    overflow-clip-margin: 0.5em;
+  }
+  article.manual-body > section > .manual-section-body > :last-child {
+    margin-bottom: 0;
+  }
   .manual-body :where(p, ul, ol, pre, table, blockquote, figure) {
     margin: 0 0 0.8em;
   }

@@ -242,7 +242,12 @@ function QuickrefBody({ table, compact }: { table: QuickrefTable; compact: boole
       ) : (
         <ul className={compact ? "flex flex-col gap-3" : "grid gap-4 lg:grid-cols-2"}>
           {shown.map(({ row, hiddenByMods }) => (
-            <li key={row.id}>
+            // 画面の外のカードは、近づくまでレイアウトと描画を後回しにする（行が多く、一度に並べると開いた直後に固まる）。
+            // 縁取りと選択中の枠は li の外にはみ出すので、切る位置を外へ広げる
+            <li
+              key={row.id}
+              className="[contain-intrinsic-size:auto_20rem] [content-visibility:auto] [overflow-clip-margin:0.5rem]"
+            >
               <QuickrefCard
                 row={row}
                 highlighted={row.id === targetId}
