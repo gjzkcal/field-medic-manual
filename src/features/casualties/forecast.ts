@@ -8,7 +8,8 @@ import {
   singleDosePeak,
   type Concentrations,
 } from "@/features/medication/pharmacology";
-import { DRUG_IDS, type DrugId, type MedicationFile } from "@/features/medication/schema";
+import { DRUG_IDS, type DrugId } from "@/features/medication/ids";
+import type { MedicationFile } from "@/features/medication/schema";
 
 /** 1 本の投与。これから打つ仮の投与も同じ形で計算に渡せるよう、記録の型に依存しない */
 export interface Dose {

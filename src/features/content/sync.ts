@@ -1,6 +1,5 @@
 // 起動時に、同梱した原稿を DB に入れる。
 // DB の本文は同梱物の写しなので、変わった原稿だけ入れ直し、同梱にないドキュメントは消す。
-import { convertManual } from "@/features/content/markdown";
 import { manualSourcePath } from "@/features/content/path";
 import { saveDocument } from "@/features/content/save";
 import type { ManualSource, NormalizedDoc, ReadData, ReadImage } from "@/features/content/types";
@@ -25,6 +24,9 @@ export async function syncManuals(
   manuals: readonly ManualSource[],
   deps: ManualSyncDeps,
 ): Promise<SyncResult> {
+  // 変換器は同期するときに読み込む。画面は useContentSync のためにこのファイルを読むので、
+  // 静的に読むと、同期を使わない Web 版でも最初の JS に変換器と図の形の検査（zod）が入ってしまう
+  const { convertManual } = await import("@/features/content/markdown");
   const result = emptySyncResult();
   await mirrorBundled(
     result,

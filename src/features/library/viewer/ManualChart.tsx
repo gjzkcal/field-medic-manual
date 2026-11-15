@@ -9,13 +9,8 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import {
-  chartSummary,
-  type ChartData,
-  type ChartPanel,
-  type ChartSeries,
-  type ChartSpec,
-} from "@/features/content/chart";
+import type { ChartData, ChartPanel, ChartSeries, ChartSpec } from "@/features/content/chart";
+import { chartSummary } from "@/features/content/chart-summary";
 
 interface ManualChartProps {
   spec: ChartSpec;

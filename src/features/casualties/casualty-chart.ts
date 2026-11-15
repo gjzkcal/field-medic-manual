@@ -2,7 +2,7 @@
 import type { DrugForecast } from "@/features/casualties/forecast";
 import { DRUG_LABELS } from "@/features/casualties/labels";
 import type { ChartData, ChartSpec } from "@/features/content/chart";
-import { DRUG_IDS, type DrugId } from "@/features/medication/schema";
+import { DRUG_IDS, type DrugId } from "@/features/medication/ids";
 
 /** 効能の半分の線。1 本のピークを 100 とする */
 const HALF_LINE = 50;
