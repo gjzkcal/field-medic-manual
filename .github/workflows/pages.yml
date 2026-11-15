@@ -49,12 +49,28 @@ jobs:
       - name: Check the build output
         run: |
           cmp dist-web/index.html dist-web/404.html
-          # 画面ごと・原稿ごとの写しは、画面の名前を出す <title> の行だけが index.html と違う
-          for page in dist-web/library.html dist-web/*.html dist-web/doc/*.html; do
-            if ! diff <(sed '/<title>/d' dist-web/index.html) <(sed '/<title>/d' "$page") >/dev/null; then
-              echo "::error::$page が index.html と <title> 以外でも違います"
+          # 画面ごと・原稿ごと・フローごとの写しは、画面の名前を出す <title> の行と、
+          # そのページが読むデータの先読みの行（data-page-data。vite.config.ts の webPlugin）だけが index.html と違う
+          for page in dist-web/*.html dist-web/doc/*.html dist-web/triage/*.html; do
+            if ! diff <(sed '/<title>/d' dist-web/index.html) <(sed '/<title>/d; /data-page-data/d' "$page") >/dev/null; then
+              echo "::error::$page が index.html と <title>・データの先読み以外でも違います"
               exit 1
             fi
+          done
+          # 一覧・クイック表・トリアージは、先読みが無いと、データを取りに行くのが最初の JS を実行した後になり、表示が遅くなる。
+          # 先読みするファイルが無いと、使わない通信が 1 回増える
+          for page in dist-web/library.html dist-web/quickref.html dist-web/triage.html dist-web/triage/*.html; do
+            files=$(grep -o 'href="[^"]*" data-page-data' "$page" | sed 's/^href="\/field-medic-manual\///; s/" data-page-data$//' || true)
+            if [ -z "$files" ]; then
+              echo "::error::$page に、データの先読みがありません"
+              exit 1
+            fi
+            for file in $files; do
+              if [ ! -f "dist-web/$file" ]; then
+                echo "::error::$page が先読みする $file が、ビルドの出力にありません"
+                exit 1
+              fi
+            done
           done
           # 原稿ごとの写しが無いと、本文の URL を直接開いたときに HTTP 404 で返る
           manuals=$(ls content/manuals/*.md | wc -l)

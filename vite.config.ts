@@ -14,6 +14,7 @@ import { z } from "zod";
 
 import { APP_NAME, pageTitle } from "./src/app/page-title.ts";
 import { WEB_BASE } from "./src/lib/web-site.ts";
+import { pageDataParts } from "./src/web/page-data.ts";
 import { THEME_BOOT_SCRIPT } from "./src/web/theme-boot.ts";
 
 const host = process.env["TAURI_DEV_HOST"];
@@ -34,6 +35,9 @@ const DESKTOP_ENTRY = 'src="/src/main.tsx"';
 const WEB_ENTRY = 'src="/src/web/main.tsx"';
 
 const EMPTY_ROOT = '<div id="root"></div>';
+// ページごとの写しに足す、データの先読みの行の目印。公開の前の検査（.github/workflows/pages.yml）が、
+// 写しと index.html の違いが <title> とこの行だけかを確かめるのに使う
+const PAGE_DATA_ATTR = "data-page-data";
 // JS を読んで実行し終わるまで（低速の回線とスマホで数秒）真っ白にしないため、#root に読み込み中の表示を置く。
 // React の描画で中身ごと置き換わる。Tailwind はこのファイルの中のクラスを拾わないので、色は CSS 変数で書く。
 // デスクトップ版は最初の画面が描けるまでウィンドウを出さないので入れない
@@ -69,8 +73,12 @@ const WEB_CSP = [
  * 公開するビルドには CSP と favicon を入れ、GitHub Pages でディープリンクを開けるように 404.html とルートごとの写しを置く。
  */
 function webPlugin(): Plugin {
+  let base = "/";
   return {
     name: "field-medic-manual:web",
+    configResolved(config) {
+      ({ base } = config);
+    },
     transformIndexHtml: {
       order: "pre",
       handler(html, context) {
@@ -121,7 +129,28 @@ function webPlugin(): Plugin {
         };
       },
     },
-    writeBundle(options) {
+    writeBundle(options, bundle) {
+      // 原稿の表の部分（webStorePlugin が分けたモジュール）ごとの、出力のファイル名
+      const dataFiles = new Map<string, string>();
+      for (const chunk of Object.values(bundle)) {
+        if (chunk.type === "chunk" && chunk.facadeModuleId !== null) {
+          dataFiles.set(chunk.facadeModuleId, chunk.fileName);
+        }
+      }
+      // そのページが最初の表示で読むデータを、HTML から取り始めさせる。
+      // 無いと、取りに行くのが最初の JS を実行した後になり、表示が通信 1 往復ぶん遅れる。
+      // modulepreload にするのは、後の動的 import が同じ応答を使うため（preload と fetch では 2 回取りに行く）
+      const dataPreloads = (page: string): string =>
+        pageDataParts(page)
+          .map((part) => {
+            const file = dataFiles.get(resolvedWebStoreId(part));
+            if (file === undefined) {
+              // 黙って先読みを落とすと、遅くなったことに気づけない
+              throw new Error(`${page} が読む ${part} が、ビルドの出力にありません`);
+            }
+            return `\n    <link rel="modulepreload" crossorigin href="${escapeHtml(base + file)}" ${PAGE_DATA_ATTR}>`;
+          })
+          .join("");
       const dir = options.dir ?? "dist-web";
       const index = join(dir, "index.html");
       // Pages は無い URL に 404.html を返すので、どの URL でも同じ画面を起動させる
@@ -134,10 +163,13 @@ function webPlugin(): Plugin {
       if (!indexHtml.includes(INDEX_TITLE)) {
         throw new Error(`index.html に ${INDEX_TITLE} がありません`);
       }
-      const withTitle = (page: string): string =>
-        indexHtml.replace(INDEX_TITLE, `<title>${escapeHtml(pageTitle(page))}</title>`);
-      for (const [route, page] of Object.entries(WEB_STATIC_ROUTES)) {
-        writeFileSync(join(dir, `${route}.html`), withTitle(page));
+      const pageHtml = (page: string, title: string): string =>
+        indexHtml.replace(
+          INDEX_TITLE,
+          `<title>${escapeHtml(pageTitle(title))}</title>${dataPreloads(page)}`,
+        );
+      for (const [route, title] of Object.entries(WEB_STATIC_ROUTES)) {
+        writeFileSync(join(dir, `${route}.html`), pageHtml(route, title));
       }
       // 文書の id は原稿のファイル名の stem（src/features/content/bundle.ts と同じ規則）
       const docDir = join(dir, "doc");
@@ -146,7 +178,8 @@ function webPlugin(): Plugin {
       for (const name of readdirSync(manuals)) {
         if (extname(name) === ".md") {
           const title = frontMatterTitle(readFileSync(join(manuals, name), "utf8")) ?? name;
-          writeFileSync(join(docDir, `${basename(name, ".md")}.html`), withTitle(title));
+          const id = basename(name, ".md");
+          writeFileSync(join(docDir, `${id}.html`), pageHtml(`doc/${id}`, title));
         }
       }
       // フローの id はファイル名の <id>.flow.yaml（同梱のフローの検査 src/features/triage/flows.test.ts で一致を確かめている）
@@ -157,7 +190,7 @@ function webPlugin(): Plugin {
         const id = FLOW_FILE.exec(name)?.[1];
         if (id !== undefined) {
           const title = topLevelTitle(readFileSync(join(flows, name), "utf8")) ?? id;
-          writeFileSync(join(triageDir, `${id}.html`), withTitle(title));
+          writeFileSync(join(triageDir, `${id}.html`), pageHtml(`triage/${id}`, title));
         }
       }
     },
@@ -191,7 +224,7 @@ function topLevelTitle(text: string): string | null {
 const WEB_STORE_ID = "virtual:web-store";
 // 解決した後の id。出力のファイル名はこの名前から付く。virtual:web-store/index のままだと、エントリの index と名前がぶつかり、
 // 先頭に空白の付いたファイル名になった。部分ごとに重ならない名前（web-store-index・web-doc-<id> など）にする
-const RESOLVED_WEB_STORE_PREFIX = " web-";
+const RESOLVED_WEB_STORE_PREFIX = "\0web-";
 
 function resolvedWebStoreId(part: string): string {
   if (part === "") {
