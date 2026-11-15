@@ -27,7 +27,7 @@ import {
   formatDuration,
   SITE_LABELS,
 } from "@/features/casualties/labels";
-import { chartSummary } from "@/features/content/chart";
+import { chartSummary } from "@/features/content/chart-summary";
 import type { OverdoseLine } from "@/features/medication/overdose-line";
 import { singleDosePeak } from "@/features/medication/pharmacology";
 import type { DrugId, MedicationFile } from "@/features/medication/schema";

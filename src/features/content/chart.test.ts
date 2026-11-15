@@ -6,12 +6,12 @@ import {
   parseChartCell,
   parseChartSpec,
   chartFromCsv,
-  chartSummary,
   chartWithoutTable,
   readChartPayload,
   type ChartData,
   type ChartSpec,
 } from "@/features/content/chart";
+import { chartSummary } from "@/features/content/chart-summary";
 
 function spec(body: string): ChartSpec {
   const parsed = parseChartSpec(body);

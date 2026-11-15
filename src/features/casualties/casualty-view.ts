@@ -1,6 +1,6 @@
 // 記録を、カードに出す形に整理する。画面と保存に依存しない純粋な関数にしてテストする。
 import type { Dose } from "@/features/casualties/forecast";
-import { DRUG_IDS, type DrugId } from "@/features/medication/schema";
+import { DRUG_IDS, type DrugId } from "@/features/medication/ids";
 import type { CasualtyDrug } from "@/lib/bindings/CasualtyDrug";
 import type { CasualtyRecord } from "@/lib/bindings/CasualtyRecord";
 import type { TourniquetSite } from "@/lib/bindings/TourniquetSite";

@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ChartData, ChartPayload, ChartSpec } from "@/features/content/chart";
@@ -102,7 +102,7 @@ describe("SectionBody", () => {
     expect(container.querySelectorAll("figure")).toHaveLength(1);
   });
 
-  it("表なしのグラフの形が合わないときは、空の figure を残さない", () => {
+  it("表なしのグラフの形が合わないときは、空の figure を見せない", async () => {
     const { container } = render(
       <SectionBody
         html='<figure data-chart="{"></figure><p>本文</p>'
@@ -111,11 +111,14 @@ describe("SectionBody", () => {
       />,
     );
 
-    expect(container.querySelector("figure")).toBeNull();
+    await waitFor(() => {
+      expect(container.querySelector<HTMLElement>("figure")?.hidden).toBe(true);
+    });
+    expect(screen.queryByTestId("chart")).toBeNull();
     expect(container.textContent).toBe("本文");
   });
 
-  it("data-chart の形が合わないときは、グラフを描かず表だけを出す", () => {
+  it("data-chart の形が合わないときは、グラフを描かず表だけを出す", async () => {
     const { container } = render(
       <SectionBody
         html={tableHtml(JSON.stringify({ spec: PAYLOAD.spec }))}
@@ -124,8 +127,29 @@ describe("SectionBody", () => {
       />,
     );
 
-    expect(container.querySelector("figure")).toBeNull();
+    await waitFor(() => {
+      expect(container.querySelector<HTMLElement>("figure")?.hidden).toBe(true);
+    });
+    expect(screen.queryByTestId("chart")).toBeNull();
     expect(container.querySelector("table")).not.toBeNull();
+  });
+
+  it("data-flowchart の形が合わないときは、図を描かず、文のリストを隠さない", async () => {
+    const { container } = render(
+      <SectionBody
+        html='<figure data-flowchart="{"><ol class="manual-flowchart-text"><li>確かめる</li></ol></figure>'
+        resolveAsset={resolveAsset}
+        active={null}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(container.querySelector<HTMLElement>(".manual-flowchart-canvas")?.hidden).toBe(true);
+    });
+    // 文のリストは、figure に manual-flowchart が付いている間だけ画面から隠れる
+    expect(container.querySelector("figure")?.classList.contains("manual-flowchart")).toBe(false);
+    expect(container.querySelector("svg")).toBeNull();
+    expect(container.textContent).toBe("確かめる");
   });
 
   it("data-mod-columns の付いた表は、設定の MOD に合わない組み合わせの列を消す", () => {

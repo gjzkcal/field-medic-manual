@@ -1,28 +1,12 @@
 // 薬の数値（content/medication.yaml）の形。.meta() の説明は、ここから生成する JSON Schema に載り、エディタの補完に出る。
+import { DRUG_IDS, EFFECT_IDS } from "@/features/medication/ids";
 import { isoDate, modChannel } from "@/features/triage/schema";
 import { z } from "@/lib/zod";
 
 export const MEDICATION_SCHEMA_FILE = "medication.v1.schema.json";
 export const MEDICATION_SCHEMA_ID = `./${MEDICATION_SCHEMA_FILE}`;
 
-/** 濃度の仕組みがある薬。炭酸アンモニウムは濃度の仕組みがないので含まない */
-export const DRUG_IDS = [
-  "epinephrine",
-  "metoprolol",
-  "morphine",
-  "naloxone",
-  "phenylephrine",
-] as const;
-export type DrugId = (typeof DRUG_IDS)[number];
-
-export const EFFECT_IDS = [
-  "heartRate",
-  "vascularResistance",
-  "analgesia",
-  "bleedingRate",
-  "reviveFrequency",
-] as const;
-export type EffectId = (typeof EFFECT_IDS)[number];
+export type { DrugId, EffectId } from "@/features/medication/ids";
 
 const drugId = z.enum(DRUG_IDS);
 const positive = z.number().positive();

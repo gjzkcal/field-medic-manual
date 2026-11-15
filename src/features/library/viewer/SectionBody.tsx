@@ -1,21 +1,19 @@
 import { lazy, Suspense, useId, useLayoutEffect, useMemo, useRef, type JSX } from "react";
 import { createPortal } from "react-dom";
 
-import { readChartPayload, type ChartData, type ChartSpec } from "@/features/content/chart";
-import { readFlowchartPayload, type FlowchartPayload } from "@/features/content/flowchart";
 import { sanitizeToFragment } from "@/features/content/sanitize";
 import { hideModColumns } from "@/features/library/viewer/mod-columns";
 import type { ActiveMods } from "@/features/triage/runner";
 import { IS_WEB } from "@/lib/platform";
 
-// Recharts は大きいので、グラフのある節を開くまで読み込まない（起動を遅くしないため）
-const ManualChart = lazy(() =>
-  import("@/features/library/viewer/ManualChart").then((m) => ({ default: m.ManualChart })),
+// Recharts と形の検査（zod）は大きいので、グラフのある節を開くまで読み込まない（起動を遅くしないため）
+const EmbeddedChart = lazy(() =>
+  import("@/features/library/viewer/EmbeddedChart").then((m) => ({ default: m.EmbeddedChart })),
 );
-// 配置に使う dagre も、図のある節を開くまで読み込まない
-const ManualFlowchart = lazy(() =>
-  import("@/features/library/viewer/ManualFlowchart").then((m) => ({
-    default: m.ManualFlowchart,
+// 配置に使う dagre と形の検査も、図のある節を開くまで読み込まない
+const EmbeddedFlowchart = lazy(() =>
+  import("@/features/library/viewer/EmbeddedFlowchart").then((m) => ({
+    default: m.EmbeddedFlowchart,
   })),
 );
 
@@ -27,17 +25,18 @@ interface SectionBodyProps {
   active: ActiveMods | null;
 }
 
+// data-chart・data-flowchart の中身は、ここでは読まずに文字列のまま渡す。
+// 形の検査（zod）を、図を描く部品と一緒に後から読むため（ここで読むと、図の無い原稿でも最初の JS に zod が入る）
 interface ChartMount {
   host: HTMLElement;
-  spec: ChartSpec;
-  data: ChartData;
+  json: string;
   /** 表の直前に描くグラフか（表なしのグラフでなければ true） */
   withTable: boolean;
 }
 
 interface FlowchartMount {
   host: HTMLElement;
-  payload: FlowchartPayload;
+  json: string;
 }
 
 /**
@@ -46,6 +45,7 @@ interface FlowchartMount {
  * `data-chart` の付いた表は、表の直前にグラフを描く（表は残す）。表なしのグラフは `data-chart` の付いた figure に描く。
  * `data-mod-columns` の付いた表は、設定の MOD に合わない組み合わせの列を消す。
  * `data-flowchart` の付いた figure にはフローチャートを描く。描けないときは、figure の中の文のリストがそのまま見える。
+ * グラフとフローチャートは、形の検査も含めて後から読む部品が描く。形が合わなければ、その部品が置き場所を隠す。
  */
 export function SectionBody({ html, resolveAsset, active }: SectionBodyProps): JSX.Element {
   const ref = useRef<HTMLDivElement>(null);
@@ -68,36 +68,24 @@ export function SectionBody({ html, resolveAsset, active }: SectionBodyProps): J
       fragment.querySelectorAll<HTMLElement>("table[data-chart], figure[data-chart]"),
     )) {
       const isTable = marked instanceof HTMLTableElement;
-      const payload = readChartPayload(marked.dataset["chart"] ?? "");
-      if (payload === null || payload.data.points.length < 2) {
-        // 表なしのグラフの figure は中身が無く、描けなければ空の余白になるだけなので消す
-        if (!isTable) {
-          marked.remove();
-        }
-        continue;
-      }
       let host = marked;
       if (isTable) {
         host = marked.ownerDocument.createElement("figure");
         marked.before(host);
       }
       host.className = "manual-chart";
-      mounts.push({ host, ...payload, withTable: isTable });
+      mounts.push({ host, json: marked.dataset["chart"] ?? "", withTable: isTable });
     }
     const flowchartMounts: FlowchartMount[] = [];
     for (const figure of Array.from(
       fragment.querySelectorAll<HTMLElement>("figure[data-flowchart]"),
     )) {
-      const payload = readFlowchartPayload(figure.dataset["flowchart"] ?? "");
-      if (payload === null) {
-        continue;
-      }
       // 文のリストは検索と読み上げのために残すので、図は figure の先頭に別の置き場所を作って描く
       const host = figure.ownerDocument.createElement("div");
       host.className = "manual-flowchart-canvas";
       figure.prepend(host);
       figure.classList.add("manual-flowchart");
-      flowchartMounts.push({ host, payload });
+      flowchartMounts.push({ host, json: figure.dataset["flowchart"] ?? "" });
     }
     nameTables(fragment, baseId);
     markExternalLinks(fragment);
@@ -153,19 +141,19 @@ export function SectionBody({ html, resolveAsset, active }: SectionBodyProps): J
   return (
     <>
       <div ref={ref} className="manual-section-body" />
-      {charts.map(({ host, spec, data, withTable }, i) =>
+      {charts.map(({ host, json, withTable }, i) =>
         createPortal(
           <Suspense fallback={null}>
-            <ManualChart spec={spec} data={data} withTable={withTable} />
+            <EmbeddedChart host={host} json={json} withTable={withTable} />
           </Suspense>,
           host,
           `chart-${String(i)}`,
         ),
       )}
-      {flowcharts.map(({ host, payload }, i) =>
+      {flowcharts.map(({ host, json }, i) =>
         createPortal(
           <Suspense fallback={null}>
-            <ManualFlowchart payload={payload} />
+            <EmbeddedFlowchart host={host} json={json} />
           </Suspense>,
           host,
           `flowchart-${String(i)}`,

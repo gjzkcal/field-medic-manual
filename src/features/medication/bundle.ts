@@ -1,5 +1,5 @@
 // content/medication.yaml をアプリに同梱し、読む。
-import { parseMedication, type MedicationFile } from "@/features/medication/schema";
+import type { MedicationFile } from "@/features/medication/schema";
 
 // 負傷者の画面を開くまで読まない（起動時の JS を小さくするため）
 const MEDICATION_TEXTS = import.meta.glob<string>("/content/medication.yaml", {
@@ -14,7 +14,12 @@ async function read(): Promise<MedicationFile> {
   if (load === undefined) {
     throw new Error("薬の数値のファイルが同梱されていません");
   }
-  const [text, { parse }] = await Promise.all([load(), import("yaml")]);
+  // 形の検査（zod）も、読むときに取り込む（負傷者の画面を載せる最初の JS に入れないため）
+  const [text, { parse }, { parseMedication }] = await Promise.all([
+    load(),
+    import("yaml"),
+    import("@/features/medication/schema"),
+  ]);
   return parseMedication(parse(text));
 }
 
