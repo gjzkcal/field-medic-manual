@@ -74,9 +74,17 @@ jobs:
             echo "::error::Web 版のビルドに Tauri の API が入っています"
             exit 1
           fi
-          # 原稿はビルドのときに変換して同梱する。無いと、ブラウザで原稿の表を読めない
-          if ! ls dist-web/assets/_virtual_web-store-*.js >/dev/null 2>&1; then
-            echo "::error::Web 版のビルドに、変換した原稿の表（virtual:web-store）がありません"
+          # 原稿はビルドのときに変換し、開いた画面に要る分だけ読めるように分けて同梱する（vite.config.ts の webStorePlugin）。
+          # 無いと、ブラウザで一覧・本文・クイック表・フロー・検索を読めない
+          for part in index quickref flows search; do
+            if ! ls dist-web/assets/_web-store-"$part"-*.js >/dev/null 2>&1; then
+              echo "::error::Web 版のビルドに、変換した原稿の表の $part がありません"
+              exit 1
+            fi
+          done
+          docs=$(ls dist-web/assets/_web-doc-*.js | wc -l)
+          if [ "$manuals" -ne "$docs" ]; then
+            echo "::error::原稿は $manuals 本ですが、変換した本文は $docs 個です"
             exit 1
           fi
 

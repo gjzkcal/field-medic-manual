@@ -106,7 +106,7 @@ export function buildStore(
   };
 }
 
-export function listFlows(store: WebStore): TriageSummary[] {
+export function listFlows(store: Pick<WebStore, "flows">): TriageSummary[] {
   return store.flows.map(({ detail }) => ({
     id: detail.id,
     title: detail.title,
@@ -120,7 +120,7 @@ export function listFlows(store: WebStore): TriageSummary[] {
   }));
 }
 
-export function findFlow(store: WebStore, id: string): TriageDetail | undefined {
+export function findFlow(store: Pick<WebStore, "flows">, id: string): TriageDetail | undefined {
   return store.flows.find((f) => f.detail.id === id)?.detail;
 }
 
