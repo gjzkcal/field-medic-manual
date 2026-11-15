@@ -3,21 +3,15 @@
 // 画面は同じものを使い、Rust の代わりに、同梱した原稿とフローを変換したメモリの表から返す。
 // Web 版にない機能（フローの保存・お気に入り・履歴・ホットキー・小窓・更新）は、空の結果か何もしない関数にする。
 // 負傷者の記録は localStorage に置く。
+import loaders from "virtual:web-store";
+
 import { version } from "../../package.json";
 import type * as Desktop from "./tauri";
 
 import { isExternalUrl } from "@/lib/external-url";
-import { fromPrebuilt } from "@/web/backend/prebuilt";
 import { searchStore } from "@/web/backend/search";
-import {
-  findDoc,
-  findFlow,
-  listDocs,
-  listFlows,
-  outlineDocs,
-  tagCounts,
-  type WebStore,
-} from "@/web/backend/store";
+import { sourceFromParts, sourceFromStore, type WebSource } from "@/web/backend/source";
+import { findFlow, listFlows } from "@/web/backend/store";
 import { readLocalSetting, writeLocalSetting } from "@/web/local-settings";
 import { LOCAL_CASUALTIES_KEY } from "@/web/storage-keys";
 import { WebAppError } from "@/web/web-error";
@@ -31,22 +25,36 @@ export type {
   UpdateInfo,
 } from "./tauri";
 
-let storePromise: Promise<WebStore> | undefined;
+let sourcePromise: Promise<WebSource> | undefined;
 
 /**
- * 原稿の表は、最初に使われたときに 1 回だけ読む。本番はビルドのときに変換した結果を読むだけにし
- * （ブラウザで全原稿を変換すると、スマホで数秒かかるため）、変換のコード（unified など）をバンドルに入れない。
- * 開発サーバーとテストは、原稿の直しがすぐ反映されるよう、その場で変換する。
+ * 原稿・クイック表・フローを読む口。本番は、ビルドのときに変換して画面ごとに分けたもの（virtual:web-store）を、
+ * 開いた画面に要る分だけ取りに行く（ブラウザで全原稿を変換するとスマホで数秒かかり、全部を 1 つで読むと回線で数秒かかるため）。
+ * 変換のコード（unified など）はバンドルに入れない。
+ * 開発サーバーとテストは、原稿の直しがすぐ反映されるよう、最初に使われたときにその場で変換する。
  */
-async function getStore(): Promise<WebStore> {
-  storePromise ??= import.meta.env.DEV
-    ? import("@/web/backend/load").then((m) => m.loadWebStore())
-    : import("virtual:web-store").then((m) => fromPrebuilt(m.default));
-  try {
-    return await storePromise;
-  } catch (error: unknown) {
+function getSource(): Promise<WebSource> {
+  sourcePromise ??= (
+    import.meta.env.DEV
+      ? import("@/web/backend/load").then(async (m) => sourceFromStore(await m.loadWebStore()))
+      : Promise.resolve().then(() => {
+          if (loaders === null) {
+            throw new Error("変換した原稿の表がビルドに入っていません");
+          }
+          return sourceFromParts(loaders);
+        })
+  ).catch((error: unknown) => {
     // 失敗を覚えたままにせず、次の操作（再読み込みのボタンなど）でやり直せるようにする
-    storePromise = undefined;
+    sourcePromise = undefined;
+    throw error;
+  });
+  return sourcePromise;
+}
+
+async function read<T>(get: (source: WebSource) => T | Promise<T>): Promise<T> {
+  try {
+    return await get(await getSource());
+  } catch (error: unknown) {
     throw new WebAppError(
       "internal",
       `マニュアルを読み込めませんでした: ${error instanceof Error ? error.message : String(error)}`,
@@ -70,24 +78,26 @@ export const clientLog: typeof Desktop.clientLog = noop;
 
 export const docUpsert: typeof Desktop.docUpsert = () => unsupported("原稿の保存");
 
-export const docList: typeof Desktop.docList = async () => listDocs(await getStore());
+export const docList: typeof Desktop.docList = async () =>
+  (await read((source) => source.index())).docs;
 
 export const docGet: typeof Desktop.docGet = async (id) => {
-  const doc = findDoc(await getStore(), id);
+  const doc = await read((source) => source.doc(id));
   if (doc === undefined) {
     throw new WebAppError("not_found", `マニュアルが見つかりません: ${id}`);
   }
   return doc;
 };
 
-export const docOutline: typeof Desktop.docOutline = async () => outlineDocs(await getStore());
+export const docOutline: typeof Desktop.docOutline = async () =>
+  (await read((source) => source.index())).outline;
 
 export const docDelete: typeof Desktop.docDelete = () => unsupported("原稿の削除");
 
 export const assetPut: typeof Desktop.assetPut = () => unsupported("画像の保存");
 
 export const assetGet: typeof Desktop.assetGet = async (id) => {
-  const asset = (await getStore()).assets.get(id);
+  const asset = await read((source) => source.asset(id));
   if (asset === undefined) {
     throw new WebAppError("not_found", `画像が見つかりません: ${id}`);
   }
@@ -96,17 +106,19 @@ export const assetGet: typeof Desktop.assetGet = async (id) => {
 };
 
 export const searchQuery: typeof Desktop.searchQuery = async (q, options) =>
-  searchStore(await getStore(), q, options);
+  searchStore(await read((source) => source.searchStore()), q, options);
 
-export const tagList: typeof Desktop.tagList = async () => tagCounts(await getStore());
+export const tagList: typeof Desktop.tagList = async () =>
+  (await read((source) => source.index())).tags;
 
 export const synonymList: typeof Desktop.synonymList = () => Promise.resolve([]);
 export const synonymSave: typeof Desktop.synonymSave = () => unsupported("同義語の編集");
 export const synonymDelete: typeof Desktop.synonymDelete = () => unsupported("同義語の編集");
 
-export const triageList: typeof Desktop.triageList = async () => listFlows(await getStore());
+export const triageList: typeof Desktop.triageList = async () =>
+  listFlows({ flows: await read((source) => source.flows()) });
 export const triageGet: typeof Desktop.triageGet = async (id) => {
-  const flow = findFlow(await getStore(), id);
+  const flow = findFlow({ flows: await read((source) => source.flows()) }, id);
   if (flow === undefined) {
     throw new WebAppError("not_found", `フローが見つかりません: ${id}`);
   }
@@ -115,7 +127,7 @@ export const triageGet: typeof Desktop.triageGet = async (id) => {
 export const triageUpsert: typeof Desktop.triageUpsert = () => unsupported("フローの保存");
 export const triageDelete: typeof Desktop.triageDelete = () => unsupported("フローの削除");
 
-export const quickrefList: typeof Desktop.quickrefList = async () => (await getStore()).quickref;
+export const quickrefList: typeof Desktop.quickrefList = () => read((source) => source.quickref());
 export const quickrefReplaceAll: typeof Desktop.quickrefReplaceAll = () =>
   unsupported("クイック表の保存");
 

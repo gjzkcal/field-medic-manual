@@ -10,6 +10,7 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import type { Alias, HtmlTagDescriptor, Plugin } from "vite";
 import { defineConfig } from "vitest/config";
+import { z } from "zod";
 
 import { APP_NAME, pageTitle } from "./src/app/page-title.ts";
 import { WEB_BASE } from "./src/lib/web-site.ts";
@@ -188,41 +189,126 @@ function topLevelTitle(text: string): string | null {
 }
 
 const WEB_STORE_ID = "virtual:web-store";
-const RESOLVED_WEB_STORE_ID = ` ${WEB_STORE_ID}`;
+// 解決した後の id。出力のファイル名はこの名前から付く。virtual:web-store/index のままだと、エントリの index と名前がぶつかり、
+// 先頭に空白の付いたファイル名になった。部分ごとに重ならない名前（web-store-index・web-doc-<id> など）にする
+const RESOLVED_WEB_STORE_PREFIX = " web-";
+
+function resolvedWebStoreId(part: string): string {
+  if (part === "") {
+    return `${RESOLVED_WEB_STORE_PREFIX}store`;
+  }
+  return part.startsWith("doc/")
+    ? `${RESOLVED_WEB_STORE_PREFIX}doc-${part.slice("doc/".length)}`
+    : `${RESOLVED_WEB_STORE_PREFIX}store-${part}`;
+}
+
+// scripts/web-prebuild.ts が書き出す JSON（src/web/backend/prebuilt.ts の PrebuiltParts）。ここでは分け方だけを見る
+const prebuiltPartsSchema = z.object({
+  index: z.unknown(),
+  docs: z.record(z.string(), z.unknown()),
+  quickref: z.unknown(),
+  flows: z.unknown(),
+  search: z.unknown(),
+});
+type PrebuiltParts = z.infer<typeof prebuiltPartsSchema>;
+
+async function buildPrebuiltParts(): Promise<PrebuiltParts> {
+  const output = fileURLToPath(new URL("./node_modules/.tmp/web-store.json", import.meta.url));
+  mkdirSync(join(output, ".."), { recursive: true });
+  const script = fileURLToPath(new URL("./scripts/web-prebuild.ts", import.meta.url));
+  await new Promise<void>((resolve, reject) => {
+    execFile(process.execPath, [script, output], (error) => {
+      if (error instanceof Error) {
+        reject(error);
+      } else {
+        resolve();
+      }
+    });
+  });
+  const parts = prebuiltPartsSchema.parse(JSON.parse(await readFile(output, "utf8")));
+  for (const id of Object.keys(parts.docs)) {
+    // id はモジュールの名前と出力のファイル名になる
+    if (!/^[a-z0-9-]+$/u.test(id)) {
+      throw new Error(`原稿の id に、ファイル名に使えない文字があります: ${id}`);
+    }
+  }
+  return parts;
+}
+
+const UNSAFE_IN_SCRIPT = /[<>/\u2028\u2029]/gu;
+
+/**
+ * 文字列を、JavaScript のコードに埋め込める文字列リテラルにする。
+ * JSON.stringify だけだと、</script> や行の区切りの文字（U+2028・U+2029）がそのまま残り、埋め込んだ先でコードとして読まれうる。
+ * 今埋め込むのは検査を通した原稿の id と変換済みの原稿だが、検査に頼らず、ここで読まれない形にする
+ */
+function jsString(value: string): string {
+  return JSON.stringify(value).replaceAll(
+    UNSAFE_IN_SCRIPT,
+    (char) => `\\u${char.codePointAt(0)?.toString(16).padStart(4, "0") ?? ""}`,
+  );
+}
+
+// オブジェクトのリテラルより JSON.parse の文字列のほうが、ブラウザで速く読める
+function jsonModule(value: unknown): string {
+  return `export default JSON.parse(${jsString(JSON.stringify(value))});`;
+}
+
+function importer(part: string): string {
+  return `() => import(${jsString(`${WEB_STORE_ID}/${part}`)})`;
+}
 
 /**
  * Web 版の原稿の表（src/lib/tauri.web.ts が本番で読む）。Web のビルドのときだけ、原稿を変換して JSON で埋め込む。
- * ほかのモード（テスト・開発サーバー）は実行時に変換するので読まれないが、解決できないと変換の段階で落ちるため、
- * 読んだら失敗するモジュールを返す
+ * 開いた画面に要る分だけを読めるよう、一覧と目次・原稿 1 本ずつ・クイック表・フロー・検索の文に分けて別々のモジュールにし、
+ * virtual:web-store は、それぞれを動的 import する関数の表にする（Vite が部分ごとに別のファイルにする）。
+ * ほかのモード（テスト・開発サーバー）は実行時に変換するので、表の代わりに null を返す
  */
 function webStorePlugin(prebuild: boolean): Plugin {
+  // 変換は 1 回のビルドで 1 回だけ。部分ごとの load が並んで来るので、結果を持ち回る
+  let parts: Promise<PrebuiltParts> | undefined;
   return {
     name: "field-medic-manual:web-store",
     resolveId(id) {
-      return id === WEB_STORE_ID ? RESOLVED_WEB_STORE_ID : undefined;
+      if (id === WEB_STORE_ID) {
+        return resolvedWebStoreId("");
+      }
+      return id.startsWith(`${WEB_STORE_ID}/`)
+        ? resolvedWebStoreId(id.slice(WEB_STORE_ID.length + 1))
+        : undefined;
     },
     async load(id) {
-      if (id !== RESOLVED_WEB_STORE_ID) {
+      if (!id.startsWith(RESOLVED_WEB_STORE_PREFIX)) {
         return undefined;
       }
       if (!prebuild) {
-        return `throw new Error("${WEB_STORE_ID} は Web 版のビルドのときだけ作る");`;
+        return "export default null;";
       }
-      const output = fileURLToPath(new URL("./node_modules/.tmp/web-store.json", import.meta.url));
-      mkdirSync(join(output, ".."), { recursive: true });
-      const script = fileURLToPath(new URL("./scripts/web-prebuild.ts", import.meta.url));
-      await new Promise<void>((resolve, reject) => {
-        execFile(process.execPath, [script, output], (error) => {
-          if (error instanceof Error) {
-            reject(error);
-          } else {
-            resolve();
-          }
-        });
-      });
-      const json = await readFile(output, "utf8");
-      // オブジェクトのリテラルより JSON.parse の文字列のほうが、ブラウザで速く読める
-      return `export default JSON.parse(${JSON.stringify(json)});`;
+      parts ??= buildPrebuiltParts();
+      const { index, docs, quickref, flows, search } = await parts;
+      const name = id.slice(RESOLVED_WEB_STORE_PREFIX.length);
+      if (name === "store") {
+        const docImporters = Object.keys(docs).map(
+          (docId) => `${jsString(docId)}: ${importer(`doc/${docId}`)}`,
+        );
+        return [
+          "export default {",
+          `  index: ${importer("index")},`,
+          `  docs: { ${docImporters.join(", ")} },`,
+          `  quickref: ${importer("quickref")},`,
+          `  flows: ${importer("flows")},`,
+          `  search: ${importer("search")},`,
+          "};",
+        ].join("\n");
+      }
+      const single: Partial<Record<string, unknown>> = { index, quickref, flows, search };
+      const value = name.startsWith("doc-")
+        ? docs[name.slice("doc-".length)]
+        : single[name.slice("store-".length)];
+      if (value === undefined) {
+        throw new Error(`${WEB_STORE_ID} に ${name} はありません`);
+      }
+      return jsonModule(value);
     },
   };
 }
@@ -259,7 +345,7 @@ const DOM_TESTS = [
   "src/lib/reveal-when-idle.test.ts",
   "src/lib/tauri.test.ts",
   "src/lib/tauri.web.test.ts",
-  "src/web/backend/prebuilt.test.ts",
+  "src/web/backend/source.test.ts",
   "src/web/framed.test.ts",
   "src/web/theme-boot.test.ts",
 ];
