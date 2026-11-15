@@ -6,16 +6,15 @@
 
 /**
  * @param page サイトの中のパス（先頭と末尾の `/` なし。例: `library`、`doc/vitals-system`）
- * @returns 先読みする部分の名前。原稿は `doc/<id>`
+ * @returns 先読みする部分の名前
  */
 export function pageDataParts(page: string): string[] {
-  const [screen = "", id] = page.split("/");
+  const [screen = ""] = page.split("/");
   switch (screen) {
     case "library":
       return ["index"];
-    case "doc":
-      // 目次（見出しのツリーと関連リンク）は index にある
-      return id === undefined ? [] : ["index", `doc/${id}`];
+    // 原稿（doc/<id>）は先読みしない。Lighthouse（モバイル）で比べると、先読みを入れても表示は早くならず、
+    // LCP が 0.1〜0.4 秒遅く出た（本文は描くのに時間がかかり、データが先に着いても、最初の JS と回線を取り合うぶんだけ損になる）
     case "quickref":
       // 行の関連リンクの表題を index の目次から引く
       return ["index", "quickref"];

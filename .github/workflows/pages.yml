@@ -57,9 +57,9 @@ jobs:
               exit 1
             fi
           done
-          # 先読みが無いと、データを取りに行くのが最初の JS を実行した後になり、表示が遅くなる。
+          # 一覧・クイック表・トリアージは、先読みが無いと、データを取りに行くのが最初の JS を実行した後になり、表示が遅くなる。
           # 先読みするファイルが無いと、使わない通信が 1 回増える
-          for page in dist-web/library.html dist-web/quickref.html dist-web/triage.html dist-web/doc/*.html dist-web/triage/*.html; do
+          for page in dist-web/library.html dist-web/quickref.html dist-web/triage.html dist-web/triage/*.html; do
             files=$(grep -o 'href="[^"]*" data-page-data' "$page" | sed 's/^href="\/field-medic-manual\///; s/" data-page-data$//' || true)
             if [ -z "$files" ]; then
               echo "::error::$page に、データの先読みがありません"
