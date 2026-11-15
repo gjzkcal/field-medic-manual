@@ -235,13 +235,27 @@ async function buildPrebuiltParts(): Promise<PrebuiltParts> {
   return parts;
 }
 
+const UNSAFE_IN_SCRIPT = /[<>/\u2028\u2029]/gu;
+
+/**
+ * 文字列を、JavaScript のコードに埋め込める文字列リテラルにする。
+ * JSON.stringify だけだと、</script> や行の区切りの文字（U+2028・U+2029）がそのまま残り、埋め込んだ先でコードとして読まれうる。
+ * 今埋め込むのは検査を通した原稿の id と変換済みの原稿だが、検査に頼らず、ここで読まれない形にする
+ */
+function jsString(value: string): string {
+  return JSON.stringify(value).replaceAll(
+    UNSAFE_IN_SCRIPT,
+    (char) => `\\u${char.codePointAt(0)?.toString(16).padStart(4, "0") ?? ""}`,
+  );
+}
+
 // オブジェクトのリテラルより JSON.parse の文字列のほうが、ブラウザで速く読める
 function jsonModule(value: unknown): string {
-  return `export default JSON.parse(${JSON.stringify(JSON.stringify(value))});`;
+  return `export default JSON.parse(${jsString(JSON.stringify(value))});`;
 }
 
 function importer(part: string): string {
-  return `() => import(${JSON.stringify(`${WEB_STORE_ID}/${part}`)})`;
+  return `() => import(${jsString(`${WEB_STORE_ID}/${part}`)})`;
 }
 
 /**
@@ -275,7 +289,7 @@ function webStorePlugin(prebuild: boolean): Plugin {
       const name = id.slice(RESOLVED_WEB_STORE_PREFIX.length);
       if (name === "store") {
         const docImporters = Object.keys(docs).map(
-          (docId) => `${JSON.stringify(docId)}: ${importer(`doc/${docId}`)}`,
+          (docId) => `${jsString(docId)}: ${importer(`doc/${docId}`)}`,
         );
         return [
           "export default {",
