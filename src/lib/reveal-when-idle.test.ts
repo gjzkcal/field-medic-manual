@@ -56,3 +56,67 @@ describe("revealWhenIdle", () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 });
+
+// Chromium（Web 版の多くと、デスクトップ版の WebView2）は requestIdleCallback の経路を通る
+describe("revealWhenIdle（requestIdleCallback のあるブラウザ）", () => {
+  let callbacks: Map<number, () => void>;
+  let nextHandle: number;
+
+  /** 予約されている中でいちばん古いものを 1 つ呼ぶ。無ければ false */
+  function runIdle(): boolean {
+    const [first] = callbacks;
+    if (first === undefined) {
+      return false;
+    }
+    callbacks.delete(first[0]);
+    first[1]();
+    return true;
+  }
+
+  beforeEach(() => {
+    callbacks = new Map();
+    nextHandle = 1;
+    vi.stubGlobal("requestIdleCallback", (callback: () => void): number => {
+      callbacks.set(nextHandle, callback);
+      return nextHandle++;
+    });
+    vi.stubGlobal("cancelIdleCallback", (handle: number): void => {
+      callbacks.delete(handle);
+    });
+    // こちらの経路では、時間を置いて呼ぶほうを使わないことも確かめる
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it("手の空いたときの 1 回ごとに、1 つだけ切り替える", () => {
+    const elements = boxes(3);
+    revealWhenIdle(elements);
+    expect(revealed(elements)).toStrictEqual([false, false, false]);
+    expect(callbacks.size).toBe(1);
+    runIdle();
+    expect(revealed(elements)).toStrictEqual([true, false, false]);
+    expect(callbacks.size).toBe(1);
+    runIdle();
+    runIdle();
+    expect(revealed(elements)).toStrictEqual([true, true, true]);
+    // 全部を切り替えた後の 1 回で、次を予約せずに終わる
+    expect(runIdle()).toBe(true);
+    expect(callbacks.size).toBe(0);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("途中で止めたら、いま予約している分を取り消し、残りは切り替えない", () => {
+    const elements = boxes(3);
+    const stop = revealWhenIdle(elements);
+    runIdle();
+    expect(callbacks.size).toBe(1);
+    stop();
+    expect(callbacks.size).toBe(0);
+    expect(runIdle()).toBe(false);
+    expect(revealed(elements)).toStrictEqual([true, false, false]);
+  });
+});
