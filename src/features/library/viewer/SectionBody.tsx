@@ -1,4 +1,14 @@
-import { lazy, Suspense, useId, useLayoutEffect, useMemo, useRef, type JSX } from "react";
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type JSX,
+} from "react";
 import { createPortal } from "react-dom";
 
 import { sanitizeToFragment } from "@/features/content/sanitize";
@@ -16,6 +26,31 @@ const EmbeddedFlowchart = lazy(() =>
     default: m.EmbeddedFlowchart,
   })),
 );
+
+/**
+ * 最初の描画が画面に出た後に true になる。図の部品を、本文の文が見えてから読み始めるために使う
+ * （本文を描いている最中に読み始めると、回線と CPU を本文と取り合い、文が出るのが遅れる）
+ */
+function useAfterFirstPaint(enabled: boolean): boolean {
+  const [painted, setPainted] = useState(false);
+  useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+    // NOTE: 描画の後を知る API は無いので、requestAnimationFrame を 2 回重ねる。
+    // 1 回目のコールバックは今回の描画の直前に、その中で予約した 2 回目は次の描画の直前に走るので、
+    // 2 回目が走るときには、今回の描画（本文の文）は画面に出ている
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => {
+        setPainted(true);
+      });
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+    };
+  }, [enabled]);
+  return painted;
+}
 
 interface SectionBodyProps {
   html: string;
@@ -93,6 +128,8 @@ export function SectionBody({ html, resolveAsset, active }: SectionBodyProps): J
     return { nodes: Array.from(fragment.childNodes), charts: mounts, flowcharts: flowchartMounts };
   }, [html, active, baseId]);
 
+  const drawFigures = useAfterFirstPaint(charts.length > 0 || flowcharts.length > 0);
+
   // 描画の前に差し込み、アンカーへのスクロールが本文の高さの揃った状態で行われるようにする
   useLayoutEffect(() => {
     const container = ref.current;
@@ -141,24 +178,26 @@ export function SectionBody({ html, resolveAsset, active }: SectionBodyProps): J
   return (
     <>
       <div ref={ref} className="manual-section-body" />
-      {charts.map(({ host, json, withTable }, i) =>
-        createPortal(
-          <Suspense fallback={null}>
-            <EmbeddedChart host={host} json={json} withTable={withTable} />
-          </Suspense>,
-          host,
-          `chart-${String(i)}`,
-        ),
-      )}
-      {flowcharts.map(({ host, json }, i) =>
-        createPortal(
-          <Suspense fallback={null}>
-            <EmbeddedFlowchart host={host} json={json} />
-          </Suspense>,
-          host,
-          `flowchart-${String(i)}`,
-        ),
-      )}
+      {drawFigures &&
+        charts.map(({ host, json, withTable }, i) =>
+          createPortal(
+            <Suspense fallback={null}>
+              <EmbeddedChart host={host} json={json} withTable={withTable} />
+            </Suspense>,
+            host,
+            `chart-${String(i)}`,
+          ),
+        )}
+      {drawFigures &&
+        flowcharts.map(({ host, json }, i) =>
+          createPortal(
+            <Suspense fallback={null}>
+              <EmbeddedFlowchart host={host} json={json} />
+            </Suspense>,
+            host,
+            `flowchart-${String(i)}`,
+          ),
+        )}
     </>
   );
 }
