@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import type { NormalizedAsset } from "@/features/content/types";
 import { CONVERT_TIMEOUT_MS } from "@/test/samples";
-import { bleeding, EMPTY_QUICKREF } from "@/test/web-fixtures";
+import { bleeding, cpr, EMPTY_QUICKREF } from "@/test/web-fixtures";
 import { loadWebStore } from "@/web/backend/load";
 import { toPrebuiltParts, type PartLoaders, type PrebuiltParts } from "@/web/backend/prebuilt";
 import { searchStore } from "@/web/backend/search";
 import { sourceFromParts, sourceFromStore, type WebSource } from "@/web/backend/source";
-import { buildStore, type WebStore } from "@/web/backend/store";
+import { buildStore, listDocs, type WebStore } from "@/web/backend/store";
 
 /** 同梱するときと同じく JSON の文字列を通してから、部分ごとに読む関数の表にする */
 function loadersOf(store: WebStore): PartLoaders {
@@ -25,6 +25,33 @@ function loadersOf(store: WebStore): PartLoaders {
     flows: () => Promise.resolve({ default: parts.flows }),
     search: () => Promise.resolve({ default: parts.search }),
   };
+}
+
+/** 読みに行った部分の名前を、読んだ順に calls へ残す */
+function recording(loaders: PartLoaders, calls: string[]): PartLoaders {
+  function record<T>(name: string, load: () => Promise<T>): () => Promise<T> {
+    return () => {
+      calls.push(name);
+      return load();
+    };
+  }
+  return {
+    index: record("index", loaders.index),
+    docs: Object.fromEntries(
+      Object.entries(loaders.docs).map(([id, load]) => [id, record(`doc:${id}`, load)]),
+    ),
+    quickref: record("quickref", loaders.quickref),
+    flows: record("flows", loaders.flows),
+    search: record("search", loaders.search),
+  };
+}
+
+function firstDocId(store: WebStore): string {
+  const [first] = listDocs(store);
+  if (first === undefined) {
+    throw new Error("原稿が 1 本も無い");
+  }
+  return first.id;
 }
 
 async function search(source: WebSource, query: string, tags?: string[]): Promise<unknown> {
@@ -90,6 +117,53 @@ describe("分けて同梱した原稿の表", () => {
     expect(await source.doc("no-such-manual")).toBeUndefined();
     expect(await source.doc("constructor")).toBeUndefined();
     expect(await source.doc("__proto__")).toBeUndefined();
+  });
+
+  it("呼ばれた部分だけを読む", async () => {
+    const store = buildStore([bleeding(), cpr()], EMPTY_QUICKREF, "2026-10-16T00:00:00.000Z");
+    const first = firstDocId(store);
+    expect(listDocs(store)).toHaveLength(2);
+
+    const calls: string[] = [];
+    const source = sourceFromParts(recording(loadersOf(store), calls));
+    expect(calls).toStrictEqual([]);
+
+    await source.index();
+    expect(calls).toStrictEqual(["index"]);
+
+    await source.doc(first);
+    expect(calls).toStrictEqual(["index", `doc:${first}`]);
+
+    await source.doc("no-such-manual");
+    expect(calls).toStrictEqual(["index", `doc:${first}`]);
+
+    calls.length = 0;
+    await source.searchStore();
+    expect(calls.toSorted()).toStrictEqual(["flows", "quickref", "search"]);
+  });
+
+  it("同時に呼ばれても、繰り返し呼ばれても、各部分を 1 回しか読まない", async () => {
+    const store = buildStore([bleeding(), cpr()], EMPTY_QUICKREF, "2026-10-16T00:00:00.000Z");
+    const first = firstDocId(store);
+    const calls: string[] = [];
+    const source = sourceFromParts(recording(loadersOf(store), calls));
+
+    await Promise.all([
+      source.index(),
+      source.index(),
+      source.doc(first),
+      source.doc(first),
+      source.quickref(),
+      source.flows(),
+      source.searchStore(),
+      source.searchStore(),
+    ]);
+    await Promise.all([source.index(), source.doc(first), source.searchStore()]);
+
+    // 検索の表は、クイック表とフローを画面と共有する（別に読み直さない）
+    expect(calls.toSorted()).toStrictEqual(
+      [`doc:${first}`, "flows", "index", "quickref", "search"].toSorted(),
+    );
   });
 
   it("読むのに失敗しても覚えたままにせず、次に呼ばれたら読み直す", async () => {
