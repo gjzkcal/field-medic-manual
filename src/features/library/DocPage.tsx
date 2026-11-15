@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useDeferredValue,
   useEffect,
   useEffectEvent,
   useId,
@@ -60,6 +61,7 @@ import { useNow } from "@/hooks/use-now";
 import type { DocDetail } from "@/lib/bindings/DocDetail";
 import type { DocOutline } from "@/lib/bindings/DocOutline";
 import type { OutlineHeading } from "@/lib/bindings/OutlineHeading";
+import { revealWhenIdle } from "@/lib/reveal-when-idle";
 import { assetGet, errorMessage, openExternal } from "@/lib/tauri";
 
 const HEADING_TAGS = ["h1", "h2", "h3", "h4", "h5", "h6"] as const;
@@ -129,6 +131,42 @@ function handleBodyAuxClick(event: MouseEvent<HTMLElement>): void {
   }
 }
 
+const SECTION_BODY = ".manual-section-body";
+
+/**
+ * 見出しより上にある節の本文を、本物の描画へ切り替える。
+ * 節の本文は content-visibility: auto（index.css の .manual-section-body）で、画面の外では仮の高さになっている。
+ * 途中の見出しへ移った後に、上の節が本物の高さで描かれると、その分だけ見ている位置が動く。移る前に高さを確定させる
+ */
+function revealBodiesAbove(article: HTMLElement, heading: HTMLElement): void {
+  for (const body of Array.from(article.querySelectorAll<HTMLElement>(SECTION_BODY))) {
+    // 文書の順で見出しより後ろに来たら、そこから先は下の節
+    if ((heading.compareDocumentPosition(body) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0) {
+      return;
+    }
+    body.style.contentVisibility = "visible";
+  }
+}
+
+/**
+ * 画面に入っている節の本文を、最初に描く前に本物の描画へ切り替える。
+ * ブラウザは最初の 1 コマを全部の節が仮の高さのまま描き、次のコマで画面の中の節だけを本物に差し替える。
+ * そのままだと、開いた直後に空白が一瞬見え、下の節が飛んで動く。
+ * 上から順に位置を読むので、読むたびに並べ直すのは切り替えた節の分だけ（画面の外の節は仮の高さのまま）
+ */
+function revealBodiesInView(article: HTMLElement, viewport: HTMLElement): void {
+  const view = viewport.getBoundingClientRect();
+  for (const body of Array.from(article.querySelectorAll<HTMLElement>(SECTION_BODY))) {
+    const rect = body.getBoundingClientRect();
+    if (rect.top >= view.bottom) {
+      return;
+    }
+    if (rect.bottom > view.top) {
+      body.style.contentVisibility = "visible";
+    }
+  }
+}
+
 interface DocViewerProps {
   doc: DocDetail;
   outline: readonly DocOutline[];
@@ -140,6 +178,8 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
   const navigate = useNavigate();
   const settings = useViewerSettings((s) => s.settings);
   const [notice, setNotice] = useState<string | null>(null);
+  // 見出しのツリーは全部の文書の分があり、本文と一緒に描くと、開いた直後に固まる時間が延びる。本文を先に出し、ツリーは後から載せる
+  const showTree = useDeferredValue(true, false);
 
   // 本文のスクロールは中央の列だけで行う（ツリーと目次は動かさない）。スクロールの位置はこの要素で読む
   const [scrollRoot, setScrollRoot] = useState<HTMLDivElement | null>(null);
@@ -287,7 +327,11 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
               SCROLL_MARGIN_PX,
       });
     };
+    if (heading !== undefined) {
+      revealBodiesAbove(article, heading);
+    }
     scroll();
+    revealBodiesInView(article, viewport);
     if (heading === undefined) {
       return undefined;
     }
@@ -313,6 +357,15 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
       }
     };
   }, [viewport, doc.id, hashAnchor, location.key]);
+
+  // 画面の外の節は、最初の表示の後、手の空いたときに 1 つずつ本物の描画にする（後回しにしたままにしない理由は reveal-when-idle.ts）。
+  // 「すべての組み合わせを表示」などで節が増えたときも、増えた分を進める
+  useEffect(() => {
+    const article = articleRef.current;
+    return article === null
+      ? undefined
+      : revealWhenIdle(Array.from(article.querySelectorAll<HTMLElement>(SECTION_BODY)));
+  }, [doc.id, shownSections]);
 
   // 検索結果から開いたときは検索語をハイライトする。目次などで移ると URL から語が消えて解除される。
   // 本文は子の layout effect で差し込まれるので、ここでは差し込み後の DOM を探せる
@@ -374,12 +427,14 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
       {/* 中の nav が名前を持つので、ここは領域にしない（名前のない complementary が 2 つ並ぶのを避ける） */}
       <div className="hidden w-60 shrink-0 border-r @5xl:block">
         <ScrollArea className="h-full">
-          <DocTree
-            outline={outline}
-            currentId={doc.id}
-            active={active}
-            currentVisible={tocAnchors}
-          />
+          {showTree && (
+            <DocTree
+              outline={outline}
+              currentId={doc.id}
+              active={active}
+              currentVisible={tocAnchors}
+            />
+          )}
         </ScrollArea>
       </div>
       <div className="flex min-w-0 flex-1 flex-col">

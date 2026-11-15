@@ -112,17 +112,18 @@ export function SectionBody({ html, resolveAsset, active }: SectionBodyProps): J
       return;
     }
     container.replaceChildren(...nodes);
-    // 横にはみ出す表・式・コードは、キーボードでもスクロールできるようにする。幅は文字の大きさや窓の幅で変わるので、変わるたびに見直す
-    const scrollers = Array.from(container.querySelectorAll<HTMLElement>(SCROLLER_SELECTOR));
-    const updateScrollers = (): void => {
-      for (const el of scrollers) {
-        markScrollable(el);
+    // 横にはみ出す表・式・コードは、キーボードでもスクロールできるようにする。幅は文字の大きさや窓の幅で変わるので、変わるたびに見直す。
+    // NOTE: ここで幅を読まず、ResizeObserver の通知（監視を始めた直後にも 1 回来る）で、通知された箱だけを調べる。
+    // 差し込んだ直後に読むと、節の数だけ本文全体のレイアウトをやり直し、長い原稿を開くたびに画面が固まる。
+    // 画面の外の節は .manual-section-body の content-visibility でレイアウトを後回しにしていて、通知は描くときに来る
+    const resize = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.target instanceof HTMLElement) {
+          markScrollable(entry.target);
+        }
       }
-    };
-    updateScrollers();
-    const resize = new ResizeObserver(updateScrollers);
-    resize.observe(container);
-    for (const el of scrollers) {
+    });
+    for (const el of Array.from(container.querySelectorAll<HTMLElement>(SCROLLER_SELECTOR))) {
       resize.observe(el);
     }
     const loading = new AbortController();
@@ -151,7 +152,7 @@ export function SectionBody({ html, resolveAsset, active }: SectionBodyProps): J
 
   return (
     <>
-      <div ref={ref} />
+      <div ref={ref} className="manual-section-body" />
       {charts.map(({ host, spec, data, withTable }, i) =>
         createPortal(
           <Suspense fallback={null}>

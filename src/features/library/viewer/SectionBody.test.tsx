@@ -15,12 +15,17 @@ vi.mock(import("@/features/library/viewer/ManualChart"), () => ({
 }));
 
 beforeEach(() => {
-  // jsdom には ResizeObserver がない。はみ出しの見直しは、最初の 1 回だけを確かめる
+  // jsdom には ResizeObserver がない。ブラウザは監視を始めた箱ごとに最初の通知を 1 回送るので、それだけをまねる
+  // （はみ出しの見直しは、この通知で、通知された箱だけに行う）
   vi.stubGlobal(
     "ResizeObserver",
     class {
-      observe(): void {
-        // 何もしない
+      readonly #callback: (entries: { target: Element }[]) => void;
+      constructor(callback: (entries: { target: Element }[]) => void) {
+        this.#callback = callback;
+      }
+      observe(target: Element): void {
+        this.#callback([{ target }]);
       }
       disconnect(): void {
         // 何もしない

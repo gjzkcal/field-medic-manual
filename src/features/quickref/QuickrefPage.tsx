@@ -1,5 +1,5 @@
 import { SearchIcon, TriangleAlertIcon } from "lucide-react";
-import { useEffect, useMemo, type JSX } from "react";
+import { useEffect, useMemo, useRef, type JSX } from "react";
 import { useSearchParams } from "react-router";
 
 import { usePageTitle } from "@/app/use-page-title";
@@ -33,6 +33,7 @@ import { useQuickrefTable } from "@/features/quickref/use-quickref";
 import { activeMods, modSummary, useModSettings } from "@/features/settings/mod-settings";
 import { SyncStatusCard } from "@/features/sync/SyncStatusCard";
 import { useNow } from "@/hooks/use-now";
+import { revealWhenIdle } from "@/lib/reveal-when-idle";
 import type { QuickrefTable } from "@/lib/bindings/QuickrefTable";
 
 const ALL_CATEGORIES = "all";
@@ -103,6 +104,17 @@ function QuickrefBody({ table, compact }: { table: QuickrefTable; compact: boole
     document.getElementById(rowElementId(targetId))?.scrollIntoView({ block: "start" });
     recordHistory({ kind: "quickref", rowId: targetId });
   }, [targetId]);
+
+  // 画面の外のカードは、最初の表示の後、手の空いたときに 1 枚ずつ本物の描画にする（理由は reveal-when-idle.ts）。
+  // 絞り込みでカードが入れ替わるたびに、新しく出た分を進める
+  const listRef = useRef<HTMLUListElement>(null);
+  const shownIds = shown.map(({ row }) => row.id).join(" ");
+  useEffect(() => {
+    const list = listRef.current;
+    return list === null
+      ? undefined
+      : revealWhenIdle(Array.from(list.querySelectorAll<HTMLElement>(":scope > li")));
+  }, [shownIds, showTable]);
 
   if (table.rows.length === 0) {
     return (
@@ -240,9 +252,14 @@ function QuickrefBody({ table, compact }: { table: QuickrefTable; compact: boole
       ) : showTable ? (
         <QuickrefTableView rows={shown} />
       ) : (
-        <ul className={compact ? "flex flex-col gap-3" : "grid gap-4 lg:grid-cols-2"}>
+        <ul ref={listRef} className={compact ? "flex flex-col gap-3" : "grid gap-4 lg:grid-cols-2"}>
           {shown.map(({ row, hiddenByMods }) => (
-            <li key={row.id}>
+            // 画面の外のカードは、最初の表示ではレイアウトと描画を後回しにする（行が多く、一度に並べると開いた直後に固まる）。
+            // 縁取りと選択中の枠は li の外にはみ出すので、切る位置を外へ広げる
+            <li
+              key={row.id}
+              className="[contain-intrinsic-size:auto_20rem] [content-visibility:auto] [overflow-clip-margin:0.5rem]"
+            >
               <QuickrefCard
                 row={row}
                 highlighted={row.id === targetId}
