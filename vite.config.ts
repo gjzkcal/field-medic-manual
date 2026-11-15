@@ -256,6 +256,7 @@ const DOM_TESTS = [
   "src/features/triage/flows.test.ts",
   "src/features/updater/update-store.test.ts",
   "src/lib/client-error-log.test.ts",
+  "src/lib/reveal-when-idle.test.ts",
   "src/lib/tauri.test.ts",
   "src/lib/tauri.web.test.ts",
   "src/web/backend/prebuilt.test.ts",

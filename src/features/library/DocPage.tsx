@@ -61,6 +61,7 @@ import { useNow } from "@/hooks/use-now";
 import type { DocDetail } from "@/lib/bindings/DocDetail";
 import type { DocOutline } from "@/lib/bindings/DocOutline";
 import type { OutlineHeading } from "@/lib/bindings/OutlineHeading";
+import { revealWhenIdle } from "@/lib/reveal-when-idle";
 import { assetGet, errorMessage, openExternal } from "@/lib/tauri";
 
 const HEADING_TAGS = ["h1", "h2", "h3", "h4", "h5", "h6"] as const;
@@ -356,6 +357,15 @@ function DocViewer({ doc, outline, now }: DocViewerProps): JSX.Element {
       }
     };
   }, [viewport, doc.id, hashAnchor, location.key]);
+
+  // 画面の外の節は、最初の表示の後、手の空いたときに 1 つずつ本物の描画にする（後回しにしたままにしない理由は reveal-when-idle.ts）。
+  // 「すべての組み合わせを表示」などで節が増えたときも、増えた分を進める
+  useEffect(() => {
+    const article = articleRef.current;
+    return article === null
+      ? undefined
+      : revealWhenIdle(Array.from(article.querySelectorAll<HTMLElement>(SECTION_BODY)));
+  }, [doc.id, shownSections]);
 
   // 検索結果から開いたときは検索語をハイライトする。目次などで移ると URL から語が消えて解除される。
   // 本文は子の layout effect で差し込まれるので、ここでは差し込み後の DOM を探せる
