@@ -20,7 +20,8 @@ export type FormFactor = (typeof FORM_FACTORS)[number];
 
 /**
  * 性能を測るページ。画面は全部、引数を持つルートは重いものを選ぶ:
- * フローはサブフローをいちばん多く呼ぶ本体、原稿はいちばん長いもの（本文の描画が重い）と、式がいちばん多くグラフもあるもの。
+ * フローはサブフローをいちばん多く呼ぶ本体、原稿はいちばん長いもの（本文の描画が重い）と、式がいちばん多くグラフもあるもの、
+ * グラフの点がいちばん多いもの（1000 点を超える線がある）。
  * 全ページにしないのは、性能は 1 本ずつ 5 回測るので、原稿ごとに測ると 1 時間を超えるため
  */
 export const PERFORMANCE_PAGES = [
@@ -33,6 +34,7 @@ export const PERFORMANCE_PAGES = [
   "about",
   "doc/cardiac-arrest-system",
   "doc/vitals-system",
+  "doc/morphine",
 ] as const;
 
 /** 表に出す指標。Lighthouse の audits のキーと表の見出し */

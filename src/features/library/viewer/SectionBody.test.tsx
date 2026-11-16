@@ -5,9 +5,10 @@ import type { ChartData, ChartPayload, ChartSpec } from "@/features/content/char
 import { SectionBody } from "@/features/library/viewer/SectionBody";
 import { activeMods } from "@/features/settings/mod-settings";
 
-// jsdom には描画の大きさがなく Recharts はグラフを描けないので、受け取った系列を文字で出す部品に差し替える
-vi.mock(import("@/features/library/viewer/ManualChart"), () => ({
-  ManualChart: ({ spec, data }: { spec: ChartSpec; data: ChartData }) => (
+// ここで確かめるのは、どのデータでグラフを描くかまで。受け取った系列を文字で出す部品に差し替える
+// （グラフそのものは ManualLineChart.test.tsx で確かめる）
+vi.mock(import("@/features/library/viewer/ManualLineChart"), () => ({
+  ManualLineChart: ({ spec, data }: { spec: ChartSpec; data: ChartData }) => (
     <p data-testid="chart">
       {spec.x}: {data.series.map((s) => s.label).join(", ")} / {String(data.points.length)} 点
     </p>
