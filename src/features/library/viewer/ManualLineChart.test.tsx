@@ -75,6 +75,17 @@ describe("ManualLineChart", () => {
     expect(lower?.querySelector("path[fill='none']")?.getAttribute("d")).toBe("M0 48L500 12");
   });
 
+  it("横軸の目盛りの文字は、グラフが狭いときに 1 つおきに隠れる", () => {
+    render(<ManualLineChart spec={SPEC} data={DATA} withTable={false} />);
+
+    // 目盛りは 0・15・30…120 s の 9 個。最初と 4 つおきは常に出し、ほかは幅が足りないときに隠す
+    const [first] = screen.getAllByText("0 s");
+    const [second] = screen.getAllByText("15 s");
+    expect(first?.style.maxWidth).toBe("");
+    // 入れ物の幅（cqw）から決まる max-width が付く（式の書き方は jsdom が整理するので、付いていることだけを見る。幅の値は line-chart.test.ts で確かめる）
+    expect(second?.style.maxWidth).toContain("cqw");
+  });
+
   it("点が少ないグラフには点の印を付ける", () => {
     const { container } = render(<ManualLineChart spec={SPEC} data={DATA} withTable={false} />);
 

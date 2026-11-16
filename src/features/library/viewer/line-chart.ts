@@ -116,6 +116,37 @@ export function innerTicks(min: number, max: number): number[] {
   return ticks;
 }
 
+// 目盛りの文字（12 px）の幅の見積もり。半角は約 6.5 px、全角は 12 px。隣との間は 4 px 空ける
+const HALF_WIDTH = 6.5;
+const FULL_WIDTH = 12;
+const TICK_GAP = 4;
+
+function labelWidth(label: string): number {
+  let width = 0;
+  for (const char of label) {
+    width += (char.codePointAt(0) ?? 0) < 0x80 ? HALF_WIDTH : FULL_WIDTH;
+  }
+  return width;
+}
+
+/**
+ * 等間隔に並ぶ横軸の目盛りの文字を、グラフがどの幅（px）より狭いときに隠すか。狭い画面で文字が重ならないように間引く。
+ * 幅が足りなくなったら 1 つおきに、さらに足りなければ 3 つおきに隠す（最初の目盛りは常に出す）。
+ * @param margin 線を描く領域の外の幅（左右の合計）
+ * @returns 目盛りごとの幅。null は常に出す
+ */
+export function tickHideBelow(labels: readonly string[], margin: number): (number | null)[] {
+  const slot = Math.max(0, ...labels.map((label) => labelWidth(label))) + TICK_GAP;
+  const gaps = Math.max(labels.length - 1, 1);
+  return labels.map((_, i) => {
+    if (i % 4 === 0) {
+      return null;
+    }
+    // 1 つおきにした後は、隣との間が 2 倍になる
+    return Math.ceil(i % 2 === 1 ? slot * gaps + margin : (slot * gaps) / 2 + margin);
+  });
+}
+
 /** SVG の座標は小数 2 桁まで（1000 点を超える線で、属性の文字列を短くする） */
 function coordinate(value: number): string {
   return String(Math.round(value * 100) / 100);

@@ -15,6 +15,7 @@ import {
   nearestIndex,
   seriesColor,
   seriesLabel,
+  tickHideBelow,
   timeTicks,
   valueTicks,
 } from "@/features/library/viewer/line-chart";
@@ -38,6 +39,16 @@ const VIEW_WIDTH = 1000;
 /** 線を描く領域の横の位置（0〜1）を、入れ物の中の left にする */
 function leftOf(t: number): string {
   return `calc(${String(LEFT)}px + (100% - ${String(LEFT + RIGHT)}px) * ${String(t)})`;
+}
+
+/**
+ * 入れ物（グラフ 1 つ）の幅が width より狭いときに、文字を隠す max-width。null なら隠さない。
+ * NOTE: 幅を測って描き直さずに、狭い画面で目盛りの文字を間引くための書き方。
+ * 100cqw は入れ物の幅。width より広ければ (100cqw - width) × 9999 は大きな値になって何も切らず、
+ * 狭ければ負になり max() で 0 になって、文字が幅 0 に切られる（コンテナクエリの条件には、グラフごとに違う値を書けない）
+ */
+function hiddenBelow(width: number | null): string | undefined {
+  return width === null ? undefined : `max(0px, (100cqw - ${String(width)}px) * 9999)`;
 }
 
 interface PanelSeries extends LegendItem {
@@ -177,6 +188,14 @@ function Panel({
   onActive,
 }: PanelProps): JSX.Element {
   const scale = useMemo(() => scaleOf(xs, series, refs), [xs, series, refs]);
+  const hideBelow = useMemo(
+    () =>
+      tickHideBelow(
+        xTicks.map((tick) => tick.label),
+        LEFT + RIGHT,
+      ),
+    [xTicks],
+  );
 
   function onPointer(event: PointerEvent<HTMLDivElement>): void {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -192,7 +211,7 @@ function Panel({
   const activeT = activeX === undefined ? null : tOf(scale, activeX);
 
   return (
-    <div className="relative h-44 w-full text-xs">
+    <div className="@container relative h-44 w-full text-xs">
       {scale.yTicks.map((value) => (
         <span
           key={value}
@@ -202,11 +221,15 @@ function Panel({
           {String(value)}
         </span>
       ))}
-      {xTicks.map((tick) => (
+      {xTicks.map((tick, i) => (
         <span
           key={tick.value}
-          className="absolute -translate-x-1/2 whitespace-nowrap text-muted-foreground tabular-nums"
-          style={{ top: TOP + PLOT_HEIGHT + 6, left: leftOf(tOf(scale, tick.value)) }}
+          className="absolute -translate-x-1/2 overflow-hidden whitespace-nowrap text-muted-foreground tabular-nums"
+          style={{
+            top: TOP + PLOT_HEIGHT + 6,
+            left: leftOf(tOf(scale, tick.value)),
+            maxWidth: hiddenBelow(hideBelow[i] ?? null),
+          }}
         >
           {tick.label}
         </span>

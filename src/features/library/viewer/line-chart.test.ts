@@ -7,6 +7,7 @@ import {
   linePath,
   nearestIndex,
   seriesColor,
+  tickHideBelow,
   timeTicks,
   valueTicks,
 } from "@/features/library/viewer/line-chart";
@@ -77,6 +78,33 @@ describe("innerTicks", () => {
 
   it("幅が無ければ、その値だけ", () => {
     expect(innerTicks(5, 5)).toStrictEqual([5]);
+  });
+});
+
+describe("tickHideBelow", () => {
+  it("幅が足りないときは 1 つおきに、さらに足りなければ 3 つおきに隠す", () => {
+    // いちばん長い文字は「100 s」の 5 文字（32.5 px）。隣との間 4 px を足した 36.5 px が 8 区間で 292 px、左右の 76 px を足して 368 px
+    const labels = ["0 s", "20 s", "40 s", "60 s", "80 s", "100 s", "120 s", "140 s", "160 s"];
+    expect(tickHideBelow(labels, 76)).toStrictEqual([
+      null,
+      368,
+      222,
+      368,
+      null,
+      368,
+      222,
+      368,
+      null,
+    ]);
+  });
+
+  it("全角の文字は広く見積もる", () => {
+    // 「10 分」は半角 3 文字 + 全角 1 文字で 31.5 px
+    expect(tickHideBelow(["0 分", "10 分"], 0)).toStrictEqual([null, 36]);
+  });
+
+  it("目盛りが 1 つなら、隠さない", () => {
+    expect(tickHideBelow(["5"], 76)).toStrictEqual([null]);
   });
 });
 
