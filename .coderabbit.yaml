@@ -1,0 +1,70 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+# コミット・PR・原稿が日本語なので、レビューも日本語で受け取る
+language: ja-JP
+
+reviews:
+  profile: chill
+  # 読むのは 1 人なので、要約と指摘だけにして飾りを出さない
+  poem: false
+  sequence_diagrams: false
+  # ラベルは PR を作るときに人が決めて付けている
+  suggested_labels: false
+  auto_apply_labels: false
+
+  auto_review:
+    enabled: true
+    drafts: false
+    # 依存の更新は CI と Renovate の自動マージで確かめており、レビューの回数の枠（1 時間あたり）を使わせない
+    ignore_usernames:
+      - "renovate[bot]"
+
+  path_filters:
+    # ts-rs の生成物。CI が Rust から作り直して差分を確かめる
+    - "!src/lib/bindings/**"
+    - "!src-tauri/gen/**"
+    - "!pnpm-lock.yaml"
+    - "!src-tauri/Cargo.lock"
+    # CI が生成し直して比べる
+    - "!THIRD_PARTY_LICENSES.txt"
+    - "!src-tauri/icons/**"
+    # グラフ用の数値の表。計算で作っており、行ごとに読んでも指摘のしようがない
+    - "!content/manuals/data/**"
+    - "!content/**/*.schema.json"
+
+  path_instructions:
+    - path: "content/**"
+      instructions: |
+        作者が書いてアプリに同梱する、日本語のマニュアルの原稿。
+        - Arma Reforger 本体と ACE Medical の仕様・数値の正否は指摘しない。ゲームと MOD のソースを確かめて書いており、このリポジトリの中の情報だけでは確かめられない。
+        - 文体・改行・Markdown や YAML の書き方の好みは指摘しない（整形ツールの対象からも外している）。
+        - 指摘するのは、誤字・脱字、用語の表記ゆれ、リンク切れ（存在しない原稿・節・フローへの参照）、同じ PR の中での数値や記述の食い違いだけ。
+    - path: "**/*.{ts,tsx,rs}"
+      instructions: |
+        コメントは「なぜそうしたか」だけを書く方針。コードを読めば分かることを説明するコメントの追加は提案しない。
+        コメントとテストのメッセージは日本語で書く。
+    - path: "src/**"
+      instructions: |
+        - UI は shadcn/ui の部品（src/components/ui/）で組む。素の <button> などでの自作があれば指摘する。
+        - Rust のコマンドは src/lib/tauri.ts の型付きラッパを通して呼ぶ。invoke の直接の呼び出しがあれば指摘する。
+        - 原稿から作った HTML を DOM に入れる前に DOMPurify を通しているかを見る。
+        - any・as・lint の無効化は、範囲が限定され、理由のコメントがあるかを見る。
+    - path: "src-tauri/**"
+      instructions: |
+        - capabilities はウィンドウごとに最小権限にする。権限を広げる変更は、必要な理由が分かるかを見る。
+        - TypeScript と共有する型は ts-rs で出力する（#[derive(TS)]）。手書きの重複があれば指摘する。
+        - ゲームのプロセスに干渉する処理（注入、メモリの読み取り）は入れない。
+    - path: ".github/workflows/**"
+      instructions: |
+        外部のアクションはコミットの SHA で固定し、版をコメントに書く（例: `uses: owner/action@<SHA> # v1.2.3`）。タグやブランチでの指定があれば指摘する。
+
+  tools:
+    # 原稿は書き方を縛らない方針で、整形ツールの対象からも外している
+    markdownlint:
+      enabled: false
+    # 日本語の原稿では誤検出が多い
+    languagetool:
+      enabled: false
+
+chat:
+  auto_reply: true
