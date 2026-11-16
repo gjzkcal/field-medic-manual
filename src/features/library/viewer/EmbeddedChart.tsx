@@ -1,9 +1,9 @@
-// 本文の `data-chart` から描くグラフ。形の検査（zod）と Recharts を含むので、本文からは遅延読み込みで使う
+// 本文の `data-chart` から描くグラフ。形の検査（zod）を含むので、本文からは遅延読み込みで使う
 // （グラフの無い原稿を開くときに読まないため）。
 import { useLayoutEffect, useMemo, type JSX } from "react";
 
 import { readChartPayload } from "@/features/content/chart";
-import { ManualChart } from "@/features/library/viewer/ManualChart";
+import { ManualLineChart } from "@/features/library/viewer/ManualLineChart";
 
 interface EmbeddedChartProps {
   /** グラフの置き場所。本文が、差し込む前に作っておいた figure */
@@ -26,6 +26,6 @@ export function EmbeddedChart({ host, json, withTable }: EmbeddedChartProps): JS
   }, [host, payload]);
 
   return payload === null ? null : (
-    <ManualChart spec={payload.spec} data={payload.data} withTable={withTable} />
+    <ManualLineChart spec={payload.spec} data={payload.data} withTable={withTable} />
   );
 }
