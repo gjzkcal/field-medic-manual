@@ -7,7 +7,7 @@ use crate::ai::corpus::{
     Corpus, CorpusDoc, CorpusFlow, CorpusSection, condition_label, flow_source,
     meets_mod_conditions, quickref_source, section_source,
 };
-use crate::ai::types::{ClientRequest, ProposedOp};
+use crate::ai::types::{ChartRequest, ClientRequest, ProposedOp};
 use crate::db::{Db, search};
 use crate::error::AppError;
 use crate::model::{ModTarget, QuickrefRow, SearchFilter, SearchHit};
@@ -17,6 +17,7 @@ pub const READ_SECTION: &str = "read_section";
 pub const ASK_USER: &str = "ask_user";
 pub const CASUALTY_READ: &str = "casualty_read";
 pub const CASUALTY_PROPOSE: &str = "casualty_propose";
+pub const CHART_CREATE: &str = "chart_create";
 /// 同じ提案の中で直前に作った負傷者を指す
 pub const NEW_CASUALTY: &str = "new";
 
@@ -45,6 +46,18 @@ const MAX_PROPOSED_OPS: usize = 20;
 const MAX_CASUALTY_NAME_CHARS: usize = 40;
 const MAX_NOTE_CHARS: usize = 100;
 const MAX_ID_BYTES: usize = 64;
+const MAX_CHART_TITLE_CHARS: usize = 60;
+const MAX_CHART_LABEL_CHARS: usize = 40;
+const MAX_CHART_UNIT_CHARS: usize = 10;
+/// 1 つのグラフに描ける線の数（色が 5 色）。種類ごとの数もこれを超えない
+const MAX_CHART_PARTS: usize = 5;
+const MAX_CHART_DOSES: usize = 20;
+/// 仮の投与の時刻の上限（秒）。薬が体内から消えるまでを足しても、点の数が画面で描ける範囲に収まる
+const MAX_CHART_DOSE_SECONDS: u32 = 3600;
+const MIN_CHART_POINTS: usize = 2;
+const MAX_CHART_POINTS: usize = 200;
+/// 利用者の数値の絶対値の上限。目盛りの計算が桁あふれしない範囲にする
+const MAX_CHART_VALUE: f64 = 1e9;
 
 /// 根拠になる文書 1 つ分（節 1 つ、またはクイック表の 1 行）。
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -334,6 +347,108 @@ pub fn casualty_propose_request(input: &serde_json::Value) -> Result<ClientReque
     })
 }
 
+/// `chart_create` の入力を検査して、画面への要求にする。
+/// このツールは strict でないので、形・数・範囲のすべてをここで確かめ、理由を返して AI にやり直させる。
+///
+/// # Errors
+///
+/// 入力の形が違う・範囲外のとき、AI に返す文面。
+pub fn chart_create_request(input: &serde_json::Value) -> Result<ClientRequest, String> {
+    let mut chart = serde_json::from_value::<ChartRequest>(input.clone()).map_err(|e| {
+        format!("入力の形が違います（title・scenarios・casualties・values が要ります）: {e}")
+    })?;
+    chart.title = chart.title.trim().to_owned();
+    if chart.title.is_empty() || chart.title.chars().count() > MAX_CHART_TITLE_CHARS {
+        return Err(format!(
+            "title は 1〜{MAX_CHART_TITLE_CHARS} 文字にしてください"
+        ));
+    }
+    let parts = chart.scenarios.len() + chart.casualties.len() + chart.values.len();
+    if parts == 0 || parts > MAX_CHART_PARTS {
+        return Err(format!(
+            "scenarios・casualties・values は、合わせて 1〜{MAX_CHART_PARTS} 個にしてください"
+        ));
+    }
+    let label_ok = |label: &str| {
+        let len = label.chars().count();
+        len > 0 && len <= MAX_CHART_LABEL_CHARS
+    };
+    for (i, scenario) in chart.scenarios.iter_mut().enumerate() {
+        let n = i + 1;
+        scenario.label = scenario.label.trim().to_owned();
+        if !label_ok(&scenario.label) {
+            return Err(format!(
+                "scenarios の {n} 個目: label は 1〜{MAX_CHART_LABEL_CHARS} 文字にしてください"
+            ));
+        }
+        if scenario.doses.is_empty() || scenario.doses.len() > MAX_CHART_DOSES {
+            return Err(format!(
+                "scenarios の {n} 個目: doses は 1〜{MAX_CHART_DOSES} 本にしてください"
+            ));
+        }
+        if scenario
+            .doses
+            .iter()
+            .any(|d| d.seconds > MAX_CHART_DOSE_SECONDS)
+        {
+            return Err(format!(
+                "scenarios の {n} 個目: seconds は 0〜{MAX_CHART_DOSE_SECONDS} にしてください"
+            ));
+        }
+    }
+    for (i, casualty) in chart.casualties.iter_mut().enumerate() {
+        casualty.casualty = casualty.casualty.trim().to_owned();
+        if casualty.casualty.is_empty() || casualty.casualty.len() > MAX_ID_BYTES {
+            return Err(format!(
+                "casualties の {} 個目: casualty は casualty_read の id にしてください",
+                i + 1
+            ));
+        }
+    }
+    for (i, values) in chart.values.iter_mut().enumerate() {
+        let n = i + 1;
+        values.label = values.label.trim().to_owned();
+        values.unit = values.unit.trim().to_owned();
+        if !label_ok(&values.label) {
+            return Err(format!(
+                "values の {n} 個目: label は 1〜{MAX_CHART_LABEL_CHARS} 文字にしてください"
+            ));
+        }
+        if values.unit.chars().count() > MAX_CHART_UNIT_CHARS {
+            return Err(format!(
+                "values の {n} 個目: unit は {MAX_CHART_UNIT_CHARS} 文字までにしてください"
+            ));
+        }
+        if !(MIN_CHART_POINTS..=MAX_CHART_POINTS).contains(&values.points.len()) {
+            return Err(format!(
+                "values の {n} 個目: points は {MIN_CHART_POINTS}〜{MAX_CHART_POINTS} 点にしてください"
+            ));
+        }
+        let in_range = |v: f64| v.is_finite() && v.abs() <= MAX_CHART_VALUE;
+        if values
+            .points
+            .iter()
+            .any(|p| !in_range(p.x) || !in_range(p.y))
+        {
+            return Err(format!(
+                "values の {n} 個目: x と y は絶対値が {MAX_CHART_VALUE:e} までの数にしてください"
+            ));
+        }
+        values.points.sort_by(|a, b| a.x.total_cmp(&b.x));
+        // 同じ x に 2 つの値があると、線がどちらを通るか決まらない
+        if values
+            .points
+            .windows(2)
+            .any(|w| w[0].x.total_cmp(&w[1].x).is_eq())
+        {
+            return Err(format!(
+                "values の {n} 個目: 同じ x の点が 2 つあります。x ごとに 1 点にしてください"
+            ));
+        }
+    }
+    Ok(ClientRequest::ChartCreate { chart })
+}
+
 // title は引用の見出しとして画面にそのまま出るので、AI 向けのメモ（MOD の条件・図あり）は本文の頭に置く
 fn section_doc(doc: &CorpusDoc, section: &CorpusSection, max_chars: usize) -> SourceDoc {
     let title = if section.level == 0 {
@@ -512,6 +627,68 @@ mod tests {
         assert!(
             err(json!({"summary": "x", "ops": [{"action": "give_drug", "casualty": "c1", "drug": "aspirin"}]}))
                 .contains("形が違います")
+        );
+    }
+
+    #[test]
+    fn chart_requests_are_checked_before_asking() {
+        let base = || {
+            json!({
+                "title": " 比べる ",
+                "scenarios": [{"label": " 2 本 ", "metric": "effect", "doses": [
+                    {"drug": "morphine", "seconds": 0},
+                    {"drug": "naloxone", "seconds": 3600}
+                ]}],
+                "casualties": [{"casualty": " c1 ", "metric": "concentration"}],
+                "values": [{"label": "心拍数", "unit": " bpm ", "minutes": true, "points": [
+                    {"x": 2, "y": 80.5}, {"x": 0, "y": 60}
+                ]}]
+            })
+        };
+        let ok = chart_create_request(&base());
+        let Ok(ClientRequest::ChartCreate { chart }) = ok else {
+            panic!("正しい条件は通る: {ok:?}");
+        };
+        assert_eq!(chart.title, "比べる");
+        assert_eq!(chart.scenarios[0].label, "2 本");
+        assert_eq!(chart.casualties[0].casualty, "c1");
+        assert_eq!(chart.values[0].unit, "bpm");
+        let xs: Vec<f64> = chart.values[0].points.iter().map(|p| p.x).collect();
+        assert_eq!(xs, vec![0.0, 2.0], "点は x の小さい順に並べ直す");
+
+        let err = |edit: &dyn Fn(&mut serde_json::Value)| {
+            let mut input = base();
+            edit(&mut input);
+            chart_create_request(&input).unwrap_err()
+        };
+        assert!(err(&|v| v["title"] = json!(" ")).contains("title"));
+        assert!(err(&|v| v["scenarios"][0]["doses"][1]["seconds"] = json!(3601)).contains("3600"));
+        assert!(err(&|v| v["scenarios"][0]["doses"] = json!([])).contains("doses"));
+        assert!(
+            err(&|v| v["scenarios"][0]["doses"][0]["drug"] = json!("ammonium_carbonate"))
+                .contains("形が違います")
+        );
+        assert!(err(&|v| v["casualties"][0]["casualty"] = json!("")).contains("casualty"));
+        assert!(err(&|v| v["values"][0]["points"] = json!([{"x": 0, "y": 1}])).contains("points"));
+        assert!(
+            err(&|v| v["values"][0]["points"] = json!([{"x": 1, "y": 1}, {"x": 1, "y": 2}]))
+                .contains("同じ x")
+        );
+        assert!(err(&|v| v["values"][0]["points"][0]["y"] = json!(1e10)).contains("絶対値"));
+        assert!(
+            err(&|v| {
+                v["scenarios"] = json!([]);
+                v["casualties"] = json!([]);
+                v["values"] = json!([]);
+            })
+            .contains("合わせて")
+        );
+        assert!(
+            err(&|v| {
+                let one = v["casualties"][0].clone();
+                v["casualties"] = serde_json::Value::Array(vec![one; 4]);
+            })
+            .contains("合わせて")
         );
     }
 

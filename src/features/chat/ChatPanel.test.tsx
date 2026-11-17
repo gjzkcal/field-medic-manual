@@ -380,6 +380,113 @@ describe("ChatPanel", () => {
     CONVERT_TIMEOUT_MS * 2,
   );
 
+  it(
+    "グラフの条件が届いたら、画面が計算して描き、線の要約を返す",
+    async () => {
+      const backend = mockBackend({
+        before: [
+          {
+            type: "tool_activity",
+            id: "g1",
+            tool: "chart_create",
+            detail: "心拍数の推移",
+            state: "running",
+          },
+          {
+            type: "client_request",
+            toolUseId: "g1",
+            request: {
+              kind: "chart_create",
+              chart: {
+                title: "心拍数の推移",
+                scenarios: [],
+                casualties: [],
+                values: [
+                  {
+                    label: "心拍数",
+                    unit: "bpm",
+                    minutes: true,
+                    points: [
+                      { x: 0, y: 80 },
+                      { x: 2, y: 120 },
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+        ],
+        after: [
+          {
+            type: "tool_activity",
+            id: "g1",
+            tool: "chart_create",
+            detail: "心拍数の推移",
+            state: "done",
+          },
+          { type: "text", block: 1, text: "上がっています。" },
+        ],
+      });
+      renderPanel();
+      await ask("さっきの心拍数をグラフにして");
+      await waitFor(() => {
+        expect(backend.toolResult).toHaveLength(1);
+      }, RENDER_WAIT);
+      expect(backend.toolResult[0]).toMatchObject({
+        toolUseId: "g1",
+        result: {
+          kind: "chart_create",
+          error: null,
+          summary: expect.stringContaining(
+            "心拍数（bpm）: 経過 0 s で 80 bpm、経過 120 s で 120 bpm",
+          ) as unknown,
+        },
+      });
+      const figure = await screen.findByRole("figure", {}, RENDER_WAIT);
+      expect(figure.textContent).toContain("心拍数の推移");
+      expect(figure.querySelector("svg path")).not.toBeNull();
+      expect(screen.getByText("利用者が示した数値「心拍数」: 2 点")).toBeTruthy();
+      expect(screen.getByText(/AI が指定した条件から、アプリが描いたグラフです/u)).toBeTruthy();
+      expect(await screen.findByText("グラフを作りました: 心拍数の推移")).toBeTruthy();
+      expect(await axeViolations()).toStrictEqual([]);
+    },
+    CONVERT_TIMEOUT_MS * 2,
+  );
+
+  it("グラフを作れないときは、枠を出さずに理由を返す", async () => {
+    const backend = mockBackend({
+      before: [
+        {
+          type: "client_request",
+          toolUseId: "g1",
+          request: {
+            kind: "chart_create",
+            chart: {
+              title: "A の推移",
+              scenarios: [],
+              casualties: [{ casualty: "c9", metric: "effect" }],
+              values: [],
+            },
+          },
+        },
+      ],
+    });
+    renderPanel();
+    await ask("A の推移をグラフにして");
+    await waitFor(() => {
+      expect(backend.toolResult).toHaveLength(1);
+    }, RENDER_WAIT);
+    expect(backend.toolResult[0]).toMatchObject({
+      toolUseId: "g1",
+      result: {
+        kind: "chart_create",
+        summary: "",
+        error: expect.stringContaining("A（id: c1）") as unknown,
+      },
+    });
+    expect(screen.queryByRole("figure")).toBeNull();
+  });
+
   it("失敗したら、理由を出す", async () => {
     mockIPC((cmd) => {
       if (cmd === "ai_key_status") {

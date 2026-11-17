@@ -142,6 +142,8 @@ pub enum ToolKind {
     WebSearch,
     /// 負傷者の記録を読む（画面が答える）
     CasualtyRead,
+    /// グラフを作る（画面が計算して描く）
+    ChartCreate,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
@@ -153,11 +155,98 @@ pub enum ToolState {
     Failed,
 }
 
+/// グラフの薬。濃度の仕組みがある薬だけ（炭酸アンモニウムは推移を計算できない）。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+pub enum ChartDrug {
+    Epinephrine,
+    Metoprolol,
+    Morphine,
+    Naloxone,
+    Phenylephrine,
+}
+
+/// 薬の推移を何の量で描くか。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+pub enum ChartMetric {
+    /// 1 本のピークを 100 とした効能（負傷者の画面と同じ）
+    Effect,
+    /// 体内の濃度
+    Concentration,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ChartDose {
+    pub drug: ChartDrug,
+    /// グラフの始まりからの秒数
+    pub seconds: u32,
+}
+
+/// 仮の投与。画面が、負傷者の画面と同じ計算で推移にする。
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ChartScenario {
+    pub label: String,
+    pub metric: ChartMetric,
+    pub doses: Vec<ChartDose>,
+}
+
+/// 負傷者の記録にある投与からの推移。
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ChartCasualty {
+    /// `casualty_read` の負傷者の id
+    pub casualty: String,
+    pub metric: ChartMetric,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ChartValuePoint {
+    pub x: f64,
+    pub y: f64,
+}
+
+/// 利用者が渡した数値の線。AI が計算した値は入れさせない（system プロンプトで禁じる）。
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ChartValues {
+    pub label: String,
+    /// 縦の値の単位。なければ空
+    pub unit: String,
+    /// 横の値が分か（false なら秒）。秒への換算は画面が行う
+    pub minutes: bool,
+    pub points: Vec<ChartValuePoint>,
+}
+
+/// AI が指定するグラフの条件。点は持たず、画面が計算する（AI に計算させないため）。
+/// フィールド名は AI が書くので 1 語にする。
+///
+/// 種類ごとの配列に分けているのは、種類で形が変わる 1 つの配列（anyOf）より、AI が形を取り違えにくいため。
+/// このツールは strict にできない（文法の大きさの上限に当たる）ので、使わない配列を AI が省いても読めるようにする。
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ChartRequest {
+    pub title: String,
+    #[serde(default)]
+    pub scenarios: Vec<ChartScenario>,
+    #[serde(default)]
+    pub casualties: Vec<ChartCasualty>,
+    #[serde(default)]
+    pub values: Vec<ChartValues>,
+}
+
 /// 画面で答えてもらう要求。
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, TS)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 #[ts(export)]
 pub enum ClientRequest {
+    /// グラフの条件。画面が点を計算して回答の中に描き、線ごとの要約を返す
+    ChartCreate { chart: ChartRequest },
     /// AI からの聞き返し。選択肢は 2〜4 個
     #[serde(rename_all = "camelCase")]
     AskUser {
@@ -236,6 +325,11 @@ pub enum ClientToolResult {
         approved: bool,
         error: Option<String>,
     },
+    /// 描いたグラフの要約（線ごとの始め・最大・最小・終わり）。描けなかったら error に理由
+    ChartCreate {
+        summary: String,
+        error: Option<String>,
+    },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
@@ -278,7 +372,7 @@ impl ChatUsage {
 }
 
 /// 回答の途中で画面に流すもの。`block` は 1 回の質問の中で通しの番号（ツールの往復をまたいでも重ならない）。
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, TS)]
 #[serde(tag = "type", rename_all = "snake_case")]
 #[ts(export)]
 pub enum ChatEvent {

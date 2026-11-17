@@ -427,6 +427,116 @@ async fn casualty_read_returns_the_screen_text() {
     );
 }
 
+fn chart_input() -> Value {
+    json!({
+        "title": " モルヒネ 2 本 ",
+        "scenarios": [{"label": "3 分あけて", "metric": "effect", "doses": [
+            {"drug": "morphine", "seconds": 0},
+            {"drug": "morphine", "seconds": 180}
+        ]}],
+        "casualties": [],
+        "values": []
+    })
+}
+
+#[tokio::test]
+async fn chart_create_asks_the_screen_and_returns_its_summary() {
+    let env = Env::new();
+    let transport = FakeTransport::with(vec![
+        Ok(tool_response("t1", "chart_create", &chart_input())),
+        Ok(text_response("2 本目で", "end_turn")),
+    ]);
+    let (result, ()) = tokio::join!(env.ask(&transport, input("2 本打ったら？")), async {
+        let id = wait_for_request(&env).await;
+        env.state
+            .resolve_pending(
+                &id,
+                ClientToolResult::ChartCreate {
+                    summary: "モルヒネ: 最大 150 %".to_owned(),
+                    error: None,
+                },
+            )
+            .expect("渡せる");
+    });
+    assert_eq!(result.expect("答える").status, TurnStatus::Completed);
+    let events = env.events();
+    assert!(events.iter().any(|e| matches!(
+        e,
+        ChatEvent::ClientRequest { request: ClientRequest::ChartCreate { chart }, .. }
+            if chart.title == "モルヒネ 2 本" && chart.scenarios[0].doses.len() == 2
+    )));
+    assert!(events.iter().any(|e| matches!(
+        e,
+        ChatEvent::ToolActivity { tool: ToolKind::ChartCreate, state: ToolState::Done, detail, .. }
+            if detail == "モルヒネ 2 本"
+    )));
+    let bodies = transport.bodies();
+    let block = &bodies[1]["messages"][2]["content"][0];
+    assert!(block.get("is_error").is_none());
+    let text = block["content"][0]["text"].as_str().unwrap_or_default();
+    assert!(text.ends_with("モルヒネ: 最大 150 %"), "{text}");
+}
+
+#[tokio::test]
+async fn chart_error_from_the_screen_is_returned_as_an_error() {
+    let env = Env::new();
+    let transport = FakeTransport::with(vec![
+        Ok(tool_response("t1", "chart_create", &chart_input())),
+        Ok(text_response("描けません", "end_turn")),
+    ]);
+    let (result, ()) = tokio::join!(env.ask(&transport, input("グラフにして")), async {
+        let id = wait_for_request(&env).await;
+        env.state
+            .resolve_pending(
+                &id,
+                ClientToolResult::ChartCreate {
+                    summary: String::new(),
+                    error: Some("Circulation がありません".to_owned()),
+                },
+            )
+            .expect("渡せる");
+    });
+    assert_eq!(result.expect("答える").status, TurnStatus::Completed);
+    assert!(env.events().iter().any(|e| matches!(
+        e,
+        ChatEvent::ToolActivity {
+            tool: ToolKind::ChartCreate,
+            state: ToolState::Failed,
+            ..
+        }
+    )));
+    let bodies = transport.bodies();
+    let block = &bodies[1]["messages"][2]["content"][0];
+    assert_eq!(block["is_error"], true);
+    let text = block["content"][0]["text"].as_str().unwrap_or_default();
+    assert!(text.contains("Circulation がありません"), "{text}");
+}
+
+#[tokio::test]
+async fn invalid_chart_is_returned_to_the_ai_without_asking() {
+    let env = Env::new();
+    let mut bad = chart_input();
+    bad["scenarios"][0]["doses"][1]["seconds"] = json!(3601);
+    let transport = FakeTransport::with(vec![
+        Ok(tool_response("t1", "chart_create", &bad)),
+        Ok(text_response("直します", "end_turn")),
+    ]);
+    let result = env
+        .ask(&transport, input("グラフにして"))
+        .await
+        .expect("答える");
+    assert_eq!(result.status, TurnStatus::Completed);
+    assert!(
+        !env.events().iter().any(|e| matches!(
+            e,
+            ChatEvent::ClientRequest { .. } | ChatEvent::ToolActivity { .. }
+        )),
+        "画面には出さない"
+    );
+    let bodies = transport.bodies();
+    assert_eq!(bodies[1]["messages"][2]["content"][0]["is_error"], true);
+}
+
 #[tokio::test]
 async fn cancel_while_waiting_discards_the_turn() {
     let env = Env::new();

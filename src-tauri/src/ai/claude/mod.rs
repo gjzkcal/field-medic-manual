@@ -7,7 +7,8 @@ pub mod sse;
 use serde_json::{Map, Value, json};
 
 use crate::ai::tools::{
-    ASK_USER, CASUALTY_PROPOSE, CASUALTY_READ, READ_SECTION, SEARCH_MANUAL, SourceDoc, ToolOutput,
+    ASK_USER, CASUALTY_PROPOSE, CASUALTY_READ, CHART_CREATE, READ_SECTION, SEARCH_MANUAL,
+    SourceDoc, ToolOutput,
 };
 use crate::ai::types::{AiEffort, AiModel, ChatCitation, ChatImage, ChatUsage};
 
@@ -60,6 +61,54 @@ fn proposed_op_schema() -> Value {
         object(&json!({"action": tag("remove_record"), "casualty": casualty, "record": {"type": "string", "description": "casualty_read の記録の id"}}), &["action", "casualty", "record"]),
         object(&json!({"action": tag("set_pain"), "casualty": casualty, "pain": {"type": "boolean", "description": "痛み・気胸あり"}}), &["action", "casualty", "pain"]),
     ]})
+}
+
+/// グラフの条件。`ChartRequest` の serde の形と同じにする（Rust で同じ型に読み直して検査する）。
+/// 本数や秒の上限は説明に書き、Rust で検査する（理由の文を AI に返せるように）
+fn chart_schema() -> Value {
+    let metric = json!({"type": "string", "enum": ["effect", "concentration"], "description": "effect は 1 本のピークを 100 とした効能（%）、concentration は体内の濃度（nM）"});
+    let drug = json!({"type": "string", "enum": ["epinephrine", "metoprolol", "morphine", "naloxone", "phenylephrine"]});
+    let dose = object(
+        &json!({"drug": drug, "seconds": {"type": "integer", "description": "グラフの始まりからの秒数。0〜3600"}}),
+        &["drug", "seconds"],
+    );
+    let scenario = object(
+        &json!({
+            "label": {"type": "string", "description": "この条件の名前（例: 「2 本を 3 分あけて」）。薬の名前と単位は画面が線の名前に付けるので、薬の名前や「効能」「濃度」は入れない。40 文字まで"},
+            "metric": metric,
+            "doses": {"type": "array", "items": dose, "description": "打つ薬と時刻。1〜20 本"}
+        }),
+        &["label", "metric", "doses"],
+    );
+    let casualty = object(
+        &json!({
+            "casualty": {"type": "string", "description": "casualty_read の負傷者の id"},
+            "metric": metric
+        }),
+        &["casualty", "metric"],
+    );
+    let point = object(
+        &json!({"x": {"type": "number"}, "y": {"type": "number"}}),
+        &["x", "y"],
+    );
+    let values = object(
+        &json!({
+            "label": {"type": "string", "description": "線の名前。40 文字まで"},
+            "unit": {"type": "string", "description": "縦の値の単位（例: bpm）。なければ空"},
+            "minutes": {"type": "boolean", "description": "x が分なら true、秒なら false"},
+            "points": {"type": "array", "items": point, "description": "利用者が示した数値をそのまま。2〜200 点。計算した値は入れない"}
+        }),
+        &["label", "unit", "minutes", "points"],
+    );
+    object(
+        &json!({
+            "title": {"type": "string", "description": "グラフの題。60 文字まで"},
+            "scenarios": {"type": "array", "items": scenario, "description": "仮の投与（これから打つ・もし打ったら）。アプリが推移を計算する。なければ空"},
+            "casualties": {"type": "array", "items": casualty, "description": "負傷者の記録にある投与からの推移。なければ空"},
+            "values": {"type": "array", "items": values, "description": "利用者が会話や画像で示した数値の線。なければ空"}
+        }),
+        &["title", "scenarios", "casualties", "values"],
+    )
 }
 
 /// ツールの定義。会話の間は同じものを送る（変えると thinking の署名が無効になる）。
@@ -132,6 +181,14 @@ pub fn tools(web_search: bool) -> Value {
                 "required": ["summary", "ops"],
                 "additionalProperties": false
             }
+        }),
+        json!({
+            "name": CHART_CREATE,
+            "description": "条件を指定して折れ線グラフを作る。点はアプリが計算し、回答のこの位置に描く。結果として、線ごとの始め・最大・最小・終わりの値が返る。線は全部で 5 本まで、縦軸の量の種類は 2 つまで。scenarios・casualties・values のうち使わないものは空の配列にする。",
+            // strict にしない。strict のツールは全部のスキーマが 1 つの文法にまとめられ、これを足すと
+            // 「compiled grammar is too large」で要求ごと 400 になる（実際の API で確かめた）。
+            // 形の誤りは Rust で ChartRequest に読み直して見つけ、AI に返してやり直させる
+            "input_schema": chart_schema()
         }),
     ];
     if web_search {
@@ -344,7 +401,48 @@ pub fn usage(map: &Map<String, Value>) -> ChatUsage {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ai::types::{ImageMediaType, ProposedOp};
+    use crate::ai::types::{ChartRequest, ImageMediaType, ProposedOp};
+
+    /// スキーマに合う見本の値。
+    fn sample(schema: &Value) -> Value {
+        match schema["type"].as_str() {
+            Some("object") => Value::Object(
+                schema["properties"]
+                    .as_object()
+                    .expect("properties")
+                    .iter()
+                    .map(|(key, prop)| (key.clone(), sample(prop)))
+                    .collect(),
+            ),
+            Some("array") => json!([sample(&schema["items"])]),
+            Some("boolean") => json!(true),
+            Some("integer") => json!(1),
+            Some("number") => json!(1.5),
+            _ => schema["enum"].get(0).cloned().unwrap_or_else(|| json!("x")),
+        }
+    }
+
+    #[test]
+    fn chart_schema_matches_the_request_type_and_is_not_strict() {
+        // 形の見本が ChartRequest として読めること（スキーマと型の食い違いを見つける）
+        let request: ChartRequest = serde_json::from_value(sample(&chart_schema()))
+            .expect("見本を ChartRequest として読める");
+        assert_eq!(request.scenarios[0].doses.len(), 1);
+        assert_eq!(request.values[0].points.len(), 1);
+        let list = tools(false);
+        let list = list.as_array().expect("ツールの一覧");
+        let tool = list
+            .iter()
+            .find(|t| t["name"] == CHART_CREATE)
+            .expect("chart_create がある");
+        assert!(
+            tool.get("strict").is_none(),
+            "strict にすると、全部のツールを合わせた文法が API の上限を超える"
+        );
+        // strict のツールを増やすと同じ上限に当たるので、増やすときはここで気づけるようにする
+        let strict = list.iter().filter(|t| t["strict"] == json!(true)).count();
+        assert_eq!(strict, 5);
+    }
 
     #[test]
     fn effort_changes_are_read_back_from_the_history() {

@@ -12,10 +12,12 @@ import {
   mergeWithMarks,
   numberMarks,
   newTurn,
+  setChart,
   turnCitations,
   type ChatTurn,
   type TextItem,
 } from "@/features/chat/chat-turn";
+import type { AiChart } from "@/features/chat/chat-chart";
 import { splitCitationMarks } from "@/features/chat/chat-markdown";
 import { parseAiSettings } from "@/features/chat/ai-settings";
 import type { ChatCitation } from "@/lib/bindings/ChatCitation";
@@ -233,6 +235,58 @@ describe("負傷者の記録とフロー", () => {
     ]);
     expect(answerForCopy(turn)).toMatch(
       /^痛みを抑える（https:\/\/.+\/triage\/pain）を開いてください。$/u,
+    );
+  });
+});
+
+function chartTurn(): ChatTurn {
+  return apply([
+    { type: "text", block: 0, text: "推移です。" },
+    {
+      type: "client_request",
+      toolUseId: "g1",
+      request: {
+        kind: "chart_create",
+        chart: { title: "心拍数", scenarios: [], casualties: [], values: [] },
+      },
+    },
+    { type: "text", block: 1, text: "上がっています。" },
+  ]);
+}
+
+describe("グラフ", () => {
+  const CHART: AiChart = {
+    spec: { x: "経過", y: ["心拍数"], y2: [], ref: [], title: "心拍数", data: null, unit: null },
+    data: {
+      xLabel: "経過",
+      xUnit: "s",
+      series: [{ key: "s0", label: "心拍数", panel: "y", unit: "bpm" }],
+      points: [
+        { x: 0, values: { s0: 80 } },
+        { x: 60, values: { s0: 120 } },
+      ],
+    },
+    conditions: ["利用者が示した数値「心拍数」: 2 点"],
+  };
+
+  it("AI が呼んだ位置に場所を取り、計算が済んだらグラフを入れる", () => {
+    const turn = chartTurn();
+    expect(turn.items.map((i) => i.kind)).toStrictEqual(["text", "chart", "text"]);
+    expect(turn.items[1]).toStrictEqual({
+      kind: "chart",
+      toolUseId: "g1",
+      title: "心拍数",
+      chart: null,
+    });
+    expect(setChart(turn, "g1", CHART).items[1]).toMatchObject({ chart: CHART });
+    expect(setChart(turn, "other", CHART)).toStrictEqual(turn);
+  });
+
+  it("コピーする文には、描けたグラフの題だけを残す", () => {
+    const turn = chartTurn();
+    expect(answerForCopy(turn)).toBe("推移です。上がっています。");
+    expect(answerForCopy(setChart(turn, "g1", CHART))).toBe(
+      "推移です。\n\n（グラフ: 心拍数）\n\n上がっています。",
     );
   });
 });
