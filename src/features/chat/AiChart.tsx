@@ -1,8 +1,8 @@
 import type { JSX } from "react";
-import { useNavigate } from "react-router";
+import { Link } from "react-router";
 
+import { LinkButton } from "@/components/LinkButton";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import type { AnswerItem } from "@/features/chat/chat-turn";
 import { docHref } from "@/features/library/link";
 import { ManualLineChart } from "@/features/library/viewer/ManualLineChart";
@@ -17,7 +17,6 @@ interface AiChartProps {
  * （AI が条件を取り違えても、利用者が気づけるように）。
  */
 export function AiChart({ item }: AiChartProps): JSX.Element | null {
-  const navigate = useNavigate();
   if (item.chart === null) {
     return null;
   }
@@ -36,17 +35,15 @@ export function AiChart({ item }: AiChartProps): JSX.Element | null {
         // 原稿の線は、その節に書いてある条件のもの。条件を確かめられるよう、節を開けるようにする
         <div className="flex flex-wrap gap-x-2 gap-y-1">
           {sources.map((source) => (
-            <Button
+            <LinkButton
               key={`${source.docId}#${source.anchor}`}
               variant="link"
               size="xs"
               className="h-auto p-0"
-              onClick={() => {
-                void navigate(docHref(source.docId, source.anchor));
-              }}
+              render={<Link to={docHref(source.docId, source.anchor)} />}
             >
               {source.title} を開く
-            </Button>
+            </LinkButton>
           ))}
         </div>
       )}

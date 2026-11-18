@@ -30,6 +30,12 @@ const X_LABEL = "経過";
 
 const METRIC_LABELS: Record<ChartMetric, string> = { effect: "効能", concentration: "濃度" };
 
+const ORIGIN_TEXT: Record<ChartPart["kind"], string> = {
+  computed: "アプリの計算",
+  manual: "原稿の節のグラフ・表の値",
+  user: "利用者が示した数値",
+};
+
 /** まとめる前の線 1 本。 */
 export interface ChartLine {
   label: string;
@@ -49,6 +55,8 @@ export interface ChartLine {
 
 /** 条件 1 つ分の線。 */
 export interface ChartPart {
+  /** 値の出どころ。AI に返す要約に書き、アプリが計算した値と原稿の値を取り違えないようにする */
+  kind: "computed" | "manual" | "user";
   lines: ChartLine[];
   condition: string;
   /** 原稿の節から取った線なら、その節（グラフの下に、開くボタンを出す） */
@@ -154,6 +162,7 @@ function casualtyPart(
     condition: `負傷者「${casualty.name}」の記録（${METRIC_LABELS[target.metric]}）: ${doseText(
       doses.map((d) => ({ drug: d.drug, seconds: Math.round(d.atMs / MS) })),
     )}。横軸の 0 は ${spokenDuration(input.nowMs - startMs)} 前の投与`,
+    kind: "computed",
     source: null,
   };
 }
@@ -182,8 +191,13 @@ export function composeChart(
   if (other !== undefined) {
     return `横軸の単位が合いません（「${first.label}」は ${unitText(first.xUnit)}、「${other.label}」は ${unitText(other.xUnit)}）。同じ横軸の線だけを 1 つのグラフにしてください`;
   }
-  // 時間どうしなら、節ごとに違う見出し（「付けてからの時間」など）をまとめて「経過」にする
-  const xLabel = lines.every((l) => l.xLabel === first.xLabel) ? first.xLabel : X_LABEL;
+  const differs = lines.find((l) => l.xLabel !== first.xLabel);
+  // 時間どうしなら、節ごとに違う見出し（「付けてからの時間」など）を「経過」にまとめてよい。
+  // 時間でない横軸は、単位が同じでも別の量かもしれない（出血量と輸液量）ので、まとめない
+  if (differs !== undefined && first.xUnit !== "s") {
+    return `横軸が違います（「${first.label}」は ${first.xLabel}、「${differs.label}」は ${differs.xLabel}）。同じ横軸の線だけを 1 つのグラフにしてください`;
+  }
+  const xLabel = differs === undefined ? first.xLabel : X_LABEL;
   const short = lines.find((l) => l.points.length < 2);
   if (short !== undefined) {
     return `「${short.label}」の点が 2 つ未満です`;
@@ -243,6 +257,7 @@ export function buildAiChart(input: AiChartInput): AiChartResult {
         scenario.label,
       ),
       condition: `仮の投与「${scenario.label}」（${METRIC_LABELS[scenario.metric]}）: ${doseText(scenario.doses)}`,
+      kind: "computed",
       source: null,
     });
   }
@@ -268,6 +283,7 @@ export function buildAiChart(input: AiChartInput): AiChartResult {
         },
       ],
       condition: `利用者が示した数値「${values.label}」: ${String(values.points.length)} 点`,
+      kind: "user",
       source: null,
     });
   }
@@ -279,9 +295,22 @@ export function buildAiChart(input: AiChartInput): AiChartResult {
     return { ok: false, error: composed };
   }
   const conditions = parts.map((p) => p.condition);
+  // 同じ節を 2 つの指定で使っても、開くボタンは 1 つにする
+  const sources = new Map<string, ChartSource>();
+  for (const { source } of parts) {
+    if (source !== null) {
+      sources.set(`${source.docId}#${source.anchor}`, source);
+    }
+  }
   return {
     ok: true,
-    chart: { ...composed, conditions, sources: parts.flatMap((p) => p.source ?? []) },
-    summary: [chartSummary(composed.data), "条件:", ...conditions.map((c) => `- ${c}`)].join("\n"),
+    chart: { ...composed, conditions, sources: [...sources.values()] },
+    summary: [
+      chartSummary(composed.data),
+      "線の値の出どころ:",
+      ...parts.flatMap((p) => p.lines.map((l) => `- ${l.label}: ${ORIGIN_TEXT[p.kind]}`)),
+      "条件:",
+      ...conditions.map((c) => `- ${c}`),
+    ].join("\n"),
   };
 }

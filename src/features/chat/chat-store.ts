@@ -142,12 +142,16 @@ export const useChatStore = create<ChatState>()((set, get) => {
         // 負傷者を指していなければ、記録は読まない
         request.casualties.length === 0 ? [] : casualtyList(),
       ]);
+      // 記録を読んだ時点の時刻にする。この後の節の読み込みの間に投与が足されると、
+      // その投与を含まない線を「今」の線として描いてしまう
+      const nowMs = Date.now();
+      const active = activeMods(useModSettings.getState().settings);
       // 節の線を使うときだけ、節の HTML を読む部分（グラフの形の検査を含む）を読み込む
       const sections =
         request.sections.length === 0
           ? []
           : await import("@/features/chat/chat-chart-sections").then((m) =>
-              m.loadSectionParts(request.sections),
+              m.loadSectionParts(request.sections, active),
             );
       result =
         typeof sections === "string"
@@ -157,18 +161,16 @@ export const useChatStore = create<ChatState>()((set, get) => {
               medication,
               casualties,
               sections,
-              circulation: modsActive(
-                ["circulation"],
-                activeMods(useModSettings.getState().settings),
-              ),
-              nowMs: Date.now(),
+              circulation: modsActive(["circulation"], active),
+              nowMs,
             });
     } catch (error: unknown) {
       result = { ok: false, error: errorMessage(error) };
     }
     if (result.ok) {
       const { chart } = result;
-      updateTurn(turnId, (t) => setChart(t, toolUseId, chart));
+      // 計算を待つ間に回答を止めたときは、止めた回答に後からグラフを足さない
+      updateTurn(turnId, (t) => (t.state === "streaming" ? setChart(t, toolUseId, chart) : t));
     }
     await sendResult(
       toolUseId,

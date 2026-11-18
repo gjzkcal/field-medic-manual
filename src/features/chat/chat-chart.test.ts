@@ -217,6 +217,7 @@ describe("負傷者の記録", () => {
 
 describe("原稿の節の線", () => {
   const manual: ChartPart = {
+    kind: "manual",
     lines: [{ ...line("濃度（モルヒネ）", "unit:nM", "nM"), xLabel: "経過" }],
     condition: "原稿「モルヒネ > 濃度の推移」のグラフの線: 濃度",
     source: { title: "モルヒネ > 濃度の推移", docId: "doc-morphine", anchor: "濃度の推移" },
@@ -245,7 +246,17 @@ describe("原稿の節の線", () => {
       ["濃度（モルヒネ）", "y"],
     ]);
     expect(chart.sources).toStrictEqual([manual.source]);
+    // AI が、計算した値と原稿の値を取り違えないように、線ごとの出どころを返す
+    expect(summary).toContain("- モルヒネ（2 本）: アプリの計算");
+    expect(summary).toContain("- 濃度（モルヒネ）: 原稿の節のグラフ・表の値");
     expect(summary).toContain("- 原稿「モルヒネ > 濃度の推移」のグラフの線: 濃度");
+  });
+
+  it("同じ節を 2 つの指定で使っても、開く節は 1 つにまとめる", () => {
+    const other: ChartPart = { ...manual, lines: [line("鎮痛量（モルヒネ）", "unit:")] };
+    expect(built(input({}, { sections: [manual, other] })).chart.sources).toStrictEqual([
+      manual.source,
+    ]);
   });
 
   it("薬の線がなければ、Circulation なしでも描ける", () => {
@@ -337,7 +348,15 @@ describe("composeChart", () => {
     expect(composed).toContain("横軸の単位が合いません（「a」は s、「b」は kPa）");
   });
 
-  it("横軸の見出しは、全部の線で同じならそのまま、違えば「経過」にする", () => {
+  it("時間でない横軸は、見出しが違えば 1 つのグラフにしない", () => {
+    const composed = composeChart("題", [
+      { ...line("a", "x"), xUnit: "mL", xLabel: "出血量" },
+      { ...line("b", "x"), xUnit: "mL", xLabel: "輸液量" },
+    ]);
+    expect(composed).toContain("横軸が違います（「a」は 出血量、「b」は 輸液量）");
+  });
+
+  it("時間の横軸の見出しは、全部の線で同じならそのまま、違えば「経過」にする", () => {
     const same = composeChart("題", [
       { ...line("a", "x"), xLabel: "付けてからの時間" },
       { ...line("b", "x"), xLabel: "付けてからの時間" },

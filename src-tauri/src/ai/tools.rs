@@ -438,10 +438,15 @@ fn check_chart_section(
         .filter(|l| !l.is_empty())
         .collect();
     // 近い節の名前を返せるのは、索引を持つこちらだけ
-    if !section.source.starts_with("doc:") || corpus.section_by_source(&section.source).is_none() {
+    // 見出しのない導入部（doc:<ファイル名> だけ）は受けない。画面は見出しのある節から配下を探す
+    let anchored = section
+        .source
+        .split_once('#')
+        .is_some_and(|(file, anchor)| file.starts_with("doc:") && !anchor.is_empty());
+    if !anchored || corpus.section_by_source(&section.source).is_none() {
         let near = corpus.suggestions(&section.source, 10);
         return Err(format!(
-            "sections の {n} 個目: {} という節はありません。索引の source（doc:<ファイル名>#<アンカー>）をそのまま使ってください{}",
+            "sections の {n} 個目: {} という節はありません。見出しのある節の、索引の source（doc:<ファイル名>#<アンカー>）をそのまま使ってください{}",
             section.source,
             if near.is_empty() {
                 String::new()
@@ -751,6 +756,11 @@ mod tests {
         );
         assert!(
             err(&|v| v["sections"][0]["source"] = json!("quickref:tq")).contains("節はありません")
+        );
+        assert!(
+            err(&|v| v["sections"][0]["source"] = json!("doc:hemorrhage.md"))
+                .contains("見出しのある節"),
+            "見出しのない導入部は、画面が配下を探せないので止める"
         );
         assert!(
             err(&|v| {

@@ -1,9 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { clearMocks, mockIPC } from "@tauri-apps/api/mocks";
+import { afterEach, describe, expect, it } from "vitest";
 
-import { sectionPart, type SectionScope } from "@/features/chat/chat-chart-sections";
+import {
+  loadSectionParts,
+  sectionPart,
+  type SectionScope,
+} from "@/features/chat/chat-chart-sections";
 import type { ChartPart } from "@/features/chat/chat-chart";
 import type { ChartPayload } from "@/features/content/chart";
 import type { ChartSection } from "@/lib/bindings/ChartSection";
+import type { DocDetail } from "@/lib/bindings/DocDetail";
+import type { ModTarget } from "@/lib/bindings/ModTarget";
+import type { Section } from "@/lib/bindings/Section";
 
 const SOURCE = "doc:oxygen-mask.md#効果";
 
@@ -59,7 +67,14 @@ const PLAIN_TABLE = `<table><thead><tr><th>血液</th><th>心拍数</th><th>状�
 <tr><td>60%</td><td>140 bpm</td><td>—</td></tr></tbody></table>`;
 
 function scope(...htmls: string[]): SectionScope {
-  return { docId: "doc-mask", docTitle: "酸素マスク", anchor: "効果", title: "効果", htmls };
+  return {
+    docId: "doc-mask",
+    docTitle: "酸素マスク",
+    anchor: "効果",
+    title: "効果",
+    // 先頭が指した節、後ろは配下の節
+    sections: htmls.map((html, i) => ({ title: i === 0 ? "効果" : `小見出し ${String(i)}`, html })),
+  };
 }
 
 function target(lines: string[] = [], x = ""): ChartSection {
@@ -167,5 +182,156 @@ describe("グラフになっていない表", () => {
     expect(sectionPart(target(["心拍数"], "血液"), scope("<p>文だけ</p>"))).toBe(
       `${SOURCE} に表がありません`,
     );
+  });
+});
+
+describe("どれを指したか決められないとき", () => {
+  const chart = `<figure ${chartAttribute(CONCENTRATION)}></figure>`;
+
+  it("同じ名前の線が複数の節にあれば、名前で選ばせずに節を選び直させる", () => {
+    const message = sectionPart(target(["濃度"]), scope("<p>親</p>", chart, chart));
+    expect(message).toBe(
+      `${SOURCE} には「濃度」という線が 2 本あります（節: 「小見出し 1」、「小見出し 2」）。使う線のある節の source を指定してください`,
+    );
+  });
+
+  it("線を全部使うときは、名前の重なる線の凡例に節の見出しを付ける", () => {
+    const made = part(sectionPart(target(), scope("<p>親</p>", chart, chart)));
+    expect(made.lines.map((l) => l.label)).toStrictEqual([
+      "濃度（酸素マスク > 小見出し 1）",
+      "濃度（酸素マスク > 小見出し 2）",
+    ]);
+  });
+
+  it("列の合う表が複数あれば、最初の表を使わずに節を選び直させる", () => {
+    const message = sectionPart(target(["心拍数"], "血液"), scope(PLAIN_TABLE, PLAIN_TABLE));
+    expect(message).toBe(
+      `${SOURCE} には、列の合う表が 2 つあります（節: 「効果」、「小見出し 1」）。使う表のある節の source を指定してください`,
+    );
+  });
+});
+
+function section(
+  id: number,
+  level: number,
+  title: string,
+  html: string,
+  mods: ModTarget[] = [],
+): Section {
+  return {
+    id,
+    parentId: null,
+    level,
+    title,
+    anchor: title,
+    orderIndex: id,
+    html,
+    plainText: "",
+    page: null,
+    tags: [],
+    mods,
+    withoutMods: [],
+  };
+}
+
+describe("loadSectionParts", () => {
+  afterEach(() => {
+    clearMocks();
+  });
+
+  const META = {
+    modTarget: null,
+    modChannel: null,
+    modVersion: null,
+    verifiedAt: null,
+    tags: [],
+    order: null,
+    category: null,
+    aceCommit: null,
+    gameVersion: null,
+  };
+  const chart = `<figure ${chartAttribute(CONCENTRATION)}></figure>`;
+  const DETAIL: DocDetail = {
+    id: "doc-mask",
+    title: "酸素マスク",
+    sourceType: "markdown",
+    sourcePath: "bundle://manuals/oxygen-mask.md",
+    sourceHash: "h",
+    meta: META,
+    sectionCount: 4,
+    createdAt: "2026-11-01T00:00:00Z",
+    updatedAt: "2026-11-01T00:00:00Z",
+    originalAssetId: null,
+    assets: [],
+    sections: [
+      section(1, 1, "効果", "<p>親</p>"),
+      section(2, 2, "Circulation あり", chart, ["circulation"]),
+      section(3, 2, "いつでも", `<table ${chartAttribute(MASK)}><tbody></tbody></table>`),
+      section(4, 1, "次の節", chart),
+    ],
+  };
+
+  function mockDocs(): void {
+    mockIPC((cmd) => {
+      if (cmd === "doc_outline") {
+        return [
+          {
+            id: "doc-mask",
+            title: "酸素マスク",
+            sourcePath: DETAIL.sourcePath,
+            meta: META,
+            headings: [],
+          },
+        ];
+      }
+      return cmd === "doc_get" ? DETAIL : null;
+    });
+  }
+
+  it("配下の節は、利用者の MOD に合うものだけを探す（同じレベルの次の節は探さない）", async () => {
+    mockDocs();
+    const withCirculation = await loadSectionParts([target()], new Set<ModTarget>(["circulation"]));
+    const without = await loadSectionParts([target()], new Set<ModTarget>());
+    if (typeof withCirculation === "string" || typeof without === "string") {
+      throw new TypeError("作れるはず");
+    }
+    expect(withCirculation[0]?.lines.map((l) => l.label)).toStrictEqual([
+      "濃度（酸素マスク）",
+      "SpO2（酸素マスク）",
+      "肺の酸素（酸素マスク）",
+    ]);
+    expect(without[0]?.lines.map((l) => l.label)).toStrictEqual([
+      "SpO2（酸素マスク）",
+      "肺の酸素（酸素マスク）",
+    ]);
+  });
+
+  it("別々の指定で同じ名前の線を取ったら、凡例に節の見出しを付ける", async () => {
+    mockDocs();
+    const parts = await loadSectionParts(
+      [
+        { source: "doc:oxygen-mask.md#Circulation あり", x: "", lines: [] },
+        { source: "doc:oxygen-mask.md#次の節", x: "", lines: [] },
+      ],
+      new Set<ModTarget>(["circulation"]),
+    );
+    if (typeof parts === "string") {
+      throw new TypeError(parts);
+    }
+    expect(parts.flatMap((p) => p.lines.map((l) => l.label))).toStrictEqual([
+      "濃度（酸素マスク > Circulation あり）",
+      "濃度（酸素マスク > 次の節）",
+    ]);
+  });
+
+  it("見出しのない source と、ない節は理由を返す", async () => {
+    mockDocs();
+    const active = new Set<ModTarget>();
+    expect(
+      await loadSectionParts([{ source: "doc:oxygen-mask.md", x: "", lines: [] }], active),
+    ).toContain("節を指していません");
+    expect(
+      await loadSectionParts([{ source: "doc:oxygen-mask.md#ない", x: "", lines: [] }], active),
+    ).toBe("doc:oxygen-mask.md#ない の節が見つかりません");
   });
 });

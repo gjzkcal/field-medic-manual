@@ -546,6 +546,8 @@ describe("ChatPanel", () => {
             },
           },
         ],
+        // Rust はグラフの結果を待ってから続きを送る。待たずに回答を終えると、遅れて届いたグラフは入らない
+        after: [{ type: "text", block: 1, text: "重ねました。" }],
       });
       renderPanel();
       await ask("止血帯の圧をグラフにして");
@@ -564,7 +566,8 @@ describe("ChatPanel", () => {
         },
       });
       expect(await screen.findByText("原稿「止血帯 > 巻く」のグラフの線: 圧")).toBeTruthy();
-      fireEvent.click(screen.getByRole("button", { name: "止血帯 > 巻く を開く" }));
+      // 節へ移るリンク（別のタブで開く・リンク先をコピーする操作ができるよう、ボタンではなくリンクにしている）
+      fireEvent.click(screen.getByRole("link", { name: "止血帯 > 巻く を開く" }));
       expect(await screen.findByText("ビューア")).toBeTruthy();
     },
     CONVERT_TIMEOUT_MS * 2,
