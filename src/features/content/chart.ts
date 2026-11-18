@@ -247,8 +247,7 @@ export function chartFromTable(table: HTMLTableElement, spec: ChartSpec): TableC
     return cell?.values.length === 1 ? cell : null;
   });
   const xs = xCells.map((cell) => cell?.values[0] ?? null);
-  const xUnits = unitsOf(xCells);
-  const mixedUnits = xUnits.length > 1 ? [{ name: spec.x, units: xUnits }] : [];
+  const mixedUnits: TableChart["mixedUnits"] = [];
   const values: Record<string, number>[] = rows.map(() => ({}));
   const tolerances: Record<string, number>[] = rows.map(() => ({}));
 
@@ -297,6 +296,15 @@ export function chartFromTable(table: HTMLTableElement, spec: ChartSpec): TableC
       }
       series.push({ key, label, panel, unit });
     }
+  }
+
+  // 横軸の単位は、どれかの線の点になった行からだけ数える。縦の値が 1 つも無い行は線に出ないので、
+  // その行の横軸の単位（`1 L` など）で、単位が決まらなくなったり混在と見誤ったりしないようにする
+  const xUnits = unitsOf(
+    xCells.map((cell, row) => (Object.keys(values[row] ?? {}).length > 0 ? cell : null)),
+  );
+  if (xUnits.length > 1) {
+    mixedUnits.unshift({ name: spec.x, units: xUnits });
   }
 
   const rowsWithX = xs

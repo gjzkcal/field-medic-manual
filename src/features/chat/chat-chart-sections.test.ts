@@ -305,6 +305,16 @@ describe("どれを指したか決められないとき", () => {
     expect(sectionPart(target(["心拍数"], "量"), scope(mixed))).toContain(
       "単位が混ざっているので線にできません: 「心拍数」（bpm、%）",
     );
+    // 縦の値が無い行も線に出ないので、その行の横軸の単位（L）は数えない
+    const missing = amountTable(
+      "<tr><td>500 mL</td><td>80 bpm</td></tr><tr><td>1000 mL</td><td>110 bpm</td></tr><tr><td>1 L</td><td>—</td></tr>",
+    );
+    const [kept] = part(sectionPart(target(["心拍数"], "量"), scope(missing))).lines;
+    expect(kept?.xUnit).toBe("mL");
+    expect(kept?.points).toStrictEqual([
+      { x: 500, y: 80 },
+      { x: 1000, y: 110 },
+    ]);
   });
 });
 
