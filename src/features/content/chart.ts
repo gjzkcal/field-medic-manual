@@ -183,6 +183,42 @@ function commonUnit(cells: (ChartCell | null)[]): string | null {
   return units.size === 1 && only !== undefined ? only : null;
 }
 
+/**
+ * 表の列の見出し（空白をそろえたもの）。列を名前で探すところは、必ずこれを使う
+ * （探し方が場所ごとに違うと、線にする列と、検査する列がずれる）
+ */
+export function tableHeaders(table: HTMLTableElement): string[] {
+  return Array.from(table.tHead?.rows[0]?.cells ?? [], (cell) =>
+    cell.textContent.replaceAll(/\s+/gu, " ").trim(),
+  );
+}
+
+/**
+ * 表の列のうち、点になるセルの単位が 2 種類以上あるもの（`500 mL` と `1 L` など。秒と分は秒にそろえるので数えない）。
+ * 原稿のグラフは作者が描いた結果を見て確かめるが、作者の見ていない表を線にするときは、
+ * 単位の違う値を同じ軸に並べて大小が逆に見えるのを、先に止める必要がある
+ */
+export function mixedUnitColumns(
+  table: HTMLTableElement,
+  names: readonly string[],
+): { name: string; units: string[] }[] {
+  const headers = tableHeaders(table);
+  const rows = Array.from(table.tBodies).flatMap((body) => Array.from(body.rows));
+  return names.flatMap((name) => {
+    const index = headers.indexOf(name);
+    if (index === -1) {
+      return [];
+    }
+    const units = new Set(
+      rows.flatMap((row) => {
+        const unit = readCell(row.cells[index]?.textContent ?? "")?.unit;
+        return typeof unit === "string" ? [unit] : [];
+      }),
+    );
+    return units.size > 1 ? [{ name, units: [...units] }] : [];
+  });
+}
+
 export interface TableChart {
   data: ChartData;
   /** data.points と同じ並びで、値ごとに許す丸めの差（表の桁の半分） */
@@ -197,9 +233,7 @@ const onPanel =
 /** 表の中身と印から系列を作る。印の列が表にないときや、点が 2 つ未満の線は警告にする。 */
 export function chartFromTable(table: HTMLTableElement, spec: ChartSpec): TableChart {
   const warnings: string[] = [];
-  const headers = Array.from(table.tHead?.rows[0]?.cells ?? [], (cell) =>
-    cell.textContent.replaceAll(/\s+/gu, " ").trim(),
-  );
+  const headers = tableHeaders(table);
   const rows = Array.from(table.tBodies).flatMap((body) =>
     Array.from(body.rows, (row) => Array.from(row.cells, (cell) => cell.textContent)),
   );
@@ -207,6 +241,13 @@ export function chartFromTable(table: HTMLTableElement, spec: ChartSpec): TableC
     const index = headers.indexOf(name);
     if (index === -1) {
       warnings.push(`列「${name}」が表にありません（表の列: ${headers.join(", ")}）`);
+      return null;
+    }
+    // 同じ見出しの列が 2 つあると、どちらを指したか決められない。先頭を使うと、意図と違う列の線になる
+    if (headers.includes(name, index + 1)) {
+      warnings.push(
+        `列「${name}」が表に 2 つ以上あります（表の列: ${headers.join(", ")}）。見出しを区別できる表だけをグラフにできます`,
+      );
       return null;
     }
     return index;

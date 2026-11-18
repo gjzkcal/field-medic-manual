@@ -100,14 +100,23 @@ fn chart_schema() -> Value {
         }),
         &["label", "unit", "minutes", "points"],
     );
+    let section = object(
+        &json!({
+            "source": {"type": "string", "description": "索引に「グラフあり」とある節の source（doc:<ファイル名>#<アンカー>）。配下の節のグラフも対象"},
+            "x": {"type": "string", "description": "ふつうは空。節のグラフではなく、グラフになっていない表を使うときだけ、横軸にする列の見出しを書く"},
+            "lines": {"type": "array", "items": {"type": "string"}, "description": "使う線の名前。空なら節のグラフの線を全部。名前が分からなければ空で呼ぶ（合わないときは、使える名前が返る）。x を書いたときは、縦にする列の見出し"}
+        }),
+        &["source", "x", "lines"],
+    );
     object(
         &json!({
             "title": {"type": "string", "description": "グラフの題。60 文字まで"},
             "scenarios": {"type": "array", "items": scenario, "description": "仮の投与（これから打つ・もし打ったら）。アプリが推移を計算する。なければ空"},
             "casualties": {"type": "array", "items": casualty, "description": "負傷者の記録にある投与からの推移。なければ空"},
+            "sections": {"type": "array", "items": section, "description": "原稿の節にあるグラフ・表の線。値は画面が節から取る。なければ空"},
             "values": {"type": "array", "items": values, "description": "利用者が会話や画像で示した数値の線。なければ空"}
         }),
-        &["title", "scenarios", "casualties", "values"],
+        &["title", "scenarios", "casualties", "sections", "values"],
     )
 }
 
@@ -184,7 +193,7 @@ pub fn tools(web_search: bool) -> Value {
         }),
         json!({
             "name": CHART_CREATE,
-            "description": "条件を指定して折れ線グラフを作る。点はアプリが計算し、回答のこの位置に描く。結果として、線ごとの始め・最大・最小・終わりの値が返る。線は全部で 5 本まで、縦軸の量の種類は 2 つまで。scenarios・casualties・values のうち使わないものは空の配列にする。",
+            "description": "条件を指定して折れ線グラフを作る。点はアプリが計算し、回答のこの位置に描く。結果として、線ごとの始め・最大・最小・終わりの値が返る。線は全部で 5 本まで、縦軸の量の種類は 2 つまで。scenarios・casualties・sections・values のうち使わないものは空の配列にする。",
             // strict にしない。strict のツールは全部のスキーマが 1 つの文法にまとめられ、これを足すと
             // 「compiled grammar is too large」で要求ごと 400 になる（実際の API で確かめた）。
             // 形の誤りは Rust で ChartRequest に読み直して見つけ、AI に返してやり直させる
@@ -429,6 +438,7 @@ mod tests {
             .expect("見本を ChartRequest として読める");
         assert_eq!(request.scenarios[0].doses.len(), 1);
         assert_eq!(request.values[0].points.len(), 1);
+        assert_eq!(request.sections[0].lines.len(), 1);
         let list = tools(false);
         let list = list.as_array().expect("ツールの一覧");
         let tool = list

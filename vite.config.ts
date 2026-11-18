@@ -351,6 +351,7 @@ function webStorePlugin(prebuild: boolean): Plugin {
 const DOM_TESTS = [
   "src/app/reveal.test.ts",
   "src/features/chat/ai-settings.test.ts",
+  "src/features/chat/chat-chart-sections.test.ts",
   "src/features/chat/chat-markdown.test.ts",
   "src/features/chat/chat-store.test.ts",
   "src/features/chat/chat-turn.test.ts",

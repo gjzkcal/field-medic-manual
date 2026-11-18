@@ -572,7 +572,7 @@ impl<T: Transport> Run<'_, T> {
                 "グラフは 1 つの質問につき {MAX_CHARTS} 個までです"
             )));
         }
-        let request = match tools::chart_create_request(input) {
+        let request = match tools::chart_create_request(&self.fixed.corpus, input) {
             Ok(r) => r,
             Err(message) => return Ok(ToolOutput::Error(message)),
         };

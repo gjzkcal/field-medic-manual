@@ -1,7 +1,8 @@
 import { Channel } from "@tauri-apps/api/core";
 import { clearMocks, mockIPC } from "@tauri-apps/api/mocks";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import type { JSX } from "react";
+import { createMemoryRouter, RouterProvider, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +12,7 @@ import { ChatPanelHost } from "@/features/chat/ChatPanel";
 import { useContentSync } from "@/features/content/sync";
 import type { ChatEvent } from "@/lib/bindings/ChatEvent";
 import type { Casualty } from "@/lib/bindings/Casualty";
+import type { DocDetail } from "@/lib/bindings/DocDetail";
 import type { DocOutline } from "@/lib/bindings/DocOutline";
 import { axeViolations } from "@/test/axe";
 import { CONVERT_TIMEOUT_MS } from "@/test/samples";
@@ -83,6 +85,74 @@ const CASUALTY: Casualty = {
   records: [],
 };
 
+const TQ_CHART = JSON.stringify({
+  spec: { x: "経過", y: ["圧"], y2: [], ref: [], title: null, data: null, unit: null },
+  data: {
+    xLabel: "経過",
+    xUnit: "s",
+    series: [{ key: "s0", label: "圧", panel: "y", unit: "kPa" }],
+    points: [
+      { x: 0, values: { s0: 0 } },
+      { x: 30, values: { s0: 40 } },
+    ],
+  },
+}).replaceAll('"', "&quot;");
+
+/** 止血帯の原稿。「巻く」の配下の節に、表のグラフがある */
+const TQ_DOC: DocDetail = {
+  id: "doc-tq",
+  title: "止血帯",
+  sourceType: "markdown",
+  sourcePath: "bundle://manuals/tourniquet.md",
+  sourceHash: "h",
+  meta: OUTLINE[0]?.meta ?? {
+    modTarget: null,
+    modChannel: null,
+    modVersion: null,
+    verifiedAt: null,
+    tags: [],
+    order: null,
+    category: null,
+    aceCommit: null,
+    gameVersion: null,
+  },
+  sectionCount: 2,
+  createdAt: "2026-11-01T00:00:00Z",
+  updatedAt: "2026-11-01T00:00:00Z",
+  originalAssetId: null,
+  assets: [],
+  sections: [
+    {
+      id: 1,
+      parentId: null,
+      level: 1,
+      title: "巻く",
+      anchor: "巻く",
+      orderIndex: 0,
+      html: "<p>腕か脚に巻く。</p>",
+      plainText: "腕か脚に巻く。",
+      page: null,
+      tags: [],
+      mods: [],
+      withoutMods: [],
+    },
+    {
+      id: 2,
+      parentId: 1,
+      level: 2,
+      title: "圧の推移",
+      anchor: "圧の推移",
+      orderIndex: 1,
+      html: `<table data-chart="${TQ_CHART}"><tbody></tbody></table>`,
+      plainText: "",
+      page: null,
+      tags: [],
+      mods: [],
+      withoutMods: [],
+    },
+  ],
+};
+
 /**
  * ai_chat_send が呼ばれたら、before を Channel に流す。after があれば、聞き返しの答え（ai_chat_tool_result）を待ってから流す。
  * Rust が聞き返しの答えを待ってから続きを送るのと同じ順にするため。
@@ -103,6 +173,8 @@ function mockBackend(options: {
         return options.keyStatus ?? "set";
       case "doc_outline":
         return OUTLINE;
+      case "doc_get":
+        return TQ_DOC;
       case "casualty_list":
         return [CASUALTY];
       case "casualty_apply":
@@ -135,11 +207,21 @@ function mockBackend(options: {
   return backend;
 }
 
+/** 原稿のビューアの代わり。どの文書のどの節へ移ったかを、テストで確かめられるように出す */
+function ViewerStub(): JSX.Element {
+  const location = useLocation();
+  return (
+    <p>
+      ビューア {location.pathname} {decodeURIComponent(location.hash)}
+    </p>
+  );
+}
+
 function renderPanel(): void {
   const router = createMemoryRouter(
     [
       { path: "/", element: <ChatPanelHost /> },
-      { path: "/doc/:id", element: <p>ビューア</p> },
+      { path: "/doc/:id", element: <ViewerStub /> },
     ],
     { initialEntries: ["/"] },
   );
@@ -401,6 +483,7 @@ describe("ChatPanel", () => {
                 title: "心拍数の推移",
                 scenarios: [],
                 casualties: [],
+                sections: [],
                 values: [
                   {
                     label: "心拍数",
@@ -454,6 +537,54 @@ describe("ChatPanel", () => {
     CONVERT_TIMEOUT_MS * 2,
   );
 
+  it(
+    "原稿の節の線は、節の HTML から値を取り、節を開くボタンを出す",
+    async () => {
+      const backend = mockBackend({
+        before: [
+          {
+            type: "client_request",
+            toolUseId: "g1",
+            request: {
+              kind: "chart_create",
+              chart: {
+                title: "止血帯の圧",
+                scenarios: [],
+                casualties: [],
+                sections: [{ source: "doc:tourniquet.md#巻く", x: "", lines: [] }],
+                values: [],
+              },
+            },
+          },
+        ],
+        // Rust はグラフの結果を待ってから続きを送る。待たずに回答を終えると、遅れて届いたグラフは入らない
+        after: [{ type: "text", block: 1, text: "重ねました。" }],
+      });
+      renderPanel();
+      await ask("止血帯の圧をグラフにして");
+      await waitFor(() => {
+        expect(backend.toolResult).toHaveLength(1);
+      }, RENDER_WAIT);
+      expect(backend.toolResult[0]).toMatchObject({
+        toolUseId: "g1",
+        result: {
+          kind: "chart_create",
+          error: null,
+          // expect.stringContaining の戻り値の型は any。そのまま入れると any の代入になるので unknown にする
+          summary: expect.stringContaining(
+            "圧（止血帯）（kPa）: 経過 0 s で 0 kPa、経過 30 s で 40 kPa",
+          ) as unknown,
+        },
+      });
+      expect(await screen.findByText("原稿「止血帯 > 巻く」のグラフの線: 圧")).toBeTruthy();
+      // 節へ移るリンク（別のタブで開く・リンク先をコピーする操作ができるよう、ボタンではなくリンクにしている）
+      fireEvent.click(screen.getByRole("link", { name: "止血帯 > 巻く を開く" }));
+      // 押した後に、線を取った文書の、AI が指した節へ移っていること
+      expect(await screen.findByText("ビューア /doc/doc-tq #巻く")).toBeTruthy();
+    },
+    CONVERT_TIMEOUT_MS * 2,
+  );
+
   it("グラフを作れないときは、枠を出さずに理由を返す", async () => {
     const backend = mockBackend({
       before: [
@@ -466,6 +597,7 @@ describe("ChatPanel", () => {
               title: "A の推移",
               scenarios: [],
               casualties: [{ casualty: "c9", metric: "effect" }],
+              sections: [],
               values: [],
             },
           },

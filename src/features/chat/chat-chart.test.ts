@@ -7,6 +7,7 @@ import {
   type AiChart,
   type AiChartInput,
   type ChartLine,
+  type ChartPart,
 } from "@/features/chat/chat-chart";
 import { loadMedication } from "@/features/medication/bundle";
 import type { Casualty } from "@/lib/bindings/Casualty";
@@ -16,13 +17,20 @@ const medication = await loadMedication();
 const NOW = 1_793_000_000_000;
 const S = 1000;
 
-const EMPTY: ChartRequest = { title: "題", scenarios: [], casualties: [], values: [] };
+const EMPTY: ChartRequest = {
+  title: "題",
+  scenarios: [],
+  casualties: [],
+  sections: [],
+  values: [],
+};
 
 function input(request: Partial<ChartRequest>, extra: Partial<AiChartInput> = {}): AiChartInput {
   return {
     request: { ...EMPTY, ...request },
     medication,
     casualties: [],
+    sections: [],
     circulation: true,
     nowMs: NOW,
     ...extra,
@@ -55,6 +63,9 @@ function line(label: string, axis: string, unit: string | null = null): ChartLin
     label,
     axis,
     unit,
+    xLabel: "経過",
+    xUnit: "s",
+    origin: "テストの線",
     points: [
       { x: 0, y: 1 },
       { x: 10, y: 2 },
@@ -205,6 +216,66 @@ describe("負傷者の記録", () => {
   });
 });
 
+describe("原稿の節の線", () => {
+  const manual: ChartPart = {
+    lines: [
+      {
+        ...line("濃度（モルヒネ）", "unit:nM", "nM"),
+        origin: "原稿「モルヒネ > 濃度の推移」のグラフの値",
+      },
+    ],
+    condition: "原稿「モルヒネ > 濃度の推移」のグラフの線: 濃度",
+    source: { title: "モルヒネ > 濃度の推移", docId: "doc-morphine", anchor: "濃度の推移" },
+  };
+
+  it("計算した濃度と同じ軸に重ね、元の節を残す", () => {
+    const { chart, summary } = built(
+      input(
+        {
+          scenarios: [
+            {
+              label: "2 本",
+              metric: "concentration",
+              doses: [
+                { drug: "morphine", seconds: 0 },
+                { drug: "morphine", seconds: 180 },
+              ],
+            },
+          ],
+        },
+        { sections: [manual] },
+      ),
+    );
+    expect(chart.data.series.map((s) => [s.label, s.panel])).toStrictEqual([
+      ["モルヒネ（2 本）", "y"],
+      ["濃度（モルヒネ）", "y"],
+    ]);
+    expect(chart.sources).toStrictEqual([manual.source]);
+    // AI が、計算した値と原稿の値を取り違えないように、線ごとの出どころを返す
+    // 値と出どころは同じ行に書く（名前の同じ線があっても対応が取れるように）
+    expect(summary).toMatch(
+      /^- モルヒネ（2 本）（nM）: 経過 0 s で 0 nM、.+。［値の出どころ: アプリの計算］$/mu,
+    );
+    expect(summary).toContain(
+      "- 濃度（モルヒネ）（nM）: 経過 0 s で 1 nM、経過 10 s で 2 nM。［値の出どころ: 原稿「モルヒネ > 濃度の推移」のグラフの値］",
+    );
+    expect(summary).toContain("- 原稿「モルヒネ > 濃度の推移」のグラフの線: 濃度");
+  });
+
+  it("同じ節を 2 つの指定で使っても、開く節は 1 つにまとめる", () => {
+    const other: ChartPart = { ...manual, lines: [line("鎮痛量（モルヒネ）", "unit:")] };
+    expect(built(input({}, { sections: [manual, other] })).chart.sources).toStrictEqual([
+      manual.source,
+    ]);
+  });
+
+  it("薬の線がなければ、Circulation なしでも描ける", () => {
+    expect(built(input({}, { sections: [manual], circulation: false })).chart.sources).toHaveLength(
+      1,
+    );
+  });
+});
+
 describe("利用者の数値", () => {
   it("分は秒に直し、Circulation なしでも描ける", () => {
     const { chart } = built(
@@ -280,6 +351,50 @@ describe("composeChart", () => {
       { x: 5, values: { s1: 9 } },
       { x: 10, values: { s0: 2, s1: 8 } },
     ]);
+  });
+
+  it("横軸の単位が違う線は、1 つのグラフにしない", () => {
+    const composed = composeChart("題", [line("a", "x"), { ...line("b", "x"), xUnit: "kPa" }]);
+    expect(composed).toContain("横軸の単位が合いません（「a」は s、「b」は kPa）");
+  });
+
+  it("時間でない横軸は、見出しが違えば 1 つのグラフにしない", () => {
+    const composed = composeChart("題", [
+      { ...line("a", "x"), xUnit: "mL", xLabel: "出血量" },
+      { ...line("b", "x"), xUnit: "mL", xLabel: "輸液量" },
+    ]);
+    expect(composed).toContain("横軸が違います（「a」は 出血量、「b」は 輸液量）");
+  });
+
+  it("時間の横軸の見出しは、全部の線で同じならそのまま、違えば「経過」にする", () => {
+    const same = composeChart("題", [
+      { ...line("a", "x"), xLabel: "付けてからの時間" },
+      { ...line("b", "x"), xLabel: "付けてからの時間" },
+    ]);
+    const mixed = composeChart("題", [
+      line("a", "x"),
+      { ...line("b", "x"), xLabel: "付けてからの時間" },
+    ]);
+    if (typeof same === "string" || typeof mixed === "string") {
+      throw new TypeError("作れるはず");
+    }
+    expect(same.data.xLabel).toBe("付けてからの時間");
+    expect(mixed.data.xLabel).toBe("経過");
+  });
+
+  it("同じ線に、横軸が同じ点が 2 つあれば止める（別の線どうしなら同じ横軸でよい）", () => {
+    const twice = {
+      ...line("a", "x"),
+      points: [
+        { x: 60, y: 80 },
+        { x: 60, y: 120 },
+        { x: 90, y: 100 },
+      ],
+    };
+    expect(composeChart("題", [twice])).toBe(
+      "「a」に、横軸が同じ点が 2 つあります（経過 60 s）。横軸ごとに 1 点の線だけをグラフにできます",
+    );
+    expect(typeof composeChart("題", [line("a", "x"), line("b", "x")])).toBe("object");
   });
 
   it("線が 6 本・量が 3 種類・点が 1 つなら、理由を返す", () => {

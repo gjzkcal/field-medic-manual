@@ -247,7 +247,7 @@ function chartTurn(): ChatTurn {
       toolUseId: "g1",
       request: {
         kind: "chart_create",
-        chart: { title: "心拍数", scenarios: [], casualties: [], values: [] },
+        chart: { title: "心拍数", scenarios: [], casualties: [], sections: [], values: [] },
       },
     },
     { type: "text", block: 1, text: "上がっています。" },
@@ -267,6 +267,7 @@ describe("グラフ", () => {
       ],
     },
     conditions: ["利用者が示した数値「心拍数」: 2 点"],
+    sources: [],
   };
 
   it("AI が呼んだ位置に場所を取り、計算が済んだらグラフを入れる", () => {

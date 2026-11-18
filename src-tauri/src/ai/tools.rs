@@ -7,7 +7,7 @@ use crate::ai::corpus::{
     Corpus, CorpusDoc, CorpusFlow, CorpusSection, condition_label, flow_source,
     meets_mod_conditions, quickref_source, section_source,
 };
-use crate::ai::types::{ChartRequest, ClientRequest, ProposedOp};
+use crate::ai::types::{ChartRequest, ChartSection, ChartValues, ClientRequest, ProposedOp};
 use crate::db::{Db, search};
 use crate::error::AppError;
 use crate::model::{ModTarget, QuickrefRow, SearchFilter, SearchHit};
@@ -49,6 +49,8 @@ const MAX_ID_BYTES: usize = 64;
 const MAX_CHART_TITLE_CHARS: usize = 60;
 const MAX_CHART_LABEL_CHARS: usize = 40;
 const MAX_CHART_UNIT_CHARS: usize = 10;
+/// 節の線の名前（表の列の見出し）の上限。原稿の見出しが収まる長さ
+const MAX_CHART_COLUMN_CHARS: usize = 60;
 /// 1 つのグラフに描ける線の数（色が 5 色）。種類ごとの数もこれを超えない
 const MAX_CHART_PARTS: usize = 5;
 const MAX_CHART_DOSES: usize = 20;
@@ -353,9 +355,14 @@ pub fn casualty_propose_request(input: &serde_json::Value) -> Result<ClientReque
 /// # Errors
 ///
 /// 入力の形が違う・範囲外のとき、AI に返す文面。
-pub fn chart_create_request(input: &serde_json::Value) -> Result<ClientRequest, String> {
+pub fn chart_create_request(
+    corpus: &Corpus,
+    input: &serde_json::Value,
+) -> Result<ClientRequest, String> {
     let mut chart = serde_json::from_value::<ChartRequest>(input.clone()).map_err(|e| {
-        format!("入力の形が違います（title・scenarios・casualties・values が要ります）: {e}")
+        format!(
+            "入力の形が違います（title・scenarios・casualties・sections・values が要ります）: {e}"
+        )
     })?;
     chart.title = chart.title.trim().to_owned();
     if chart.title.is_empty() || chart.title.chars().count() > MAX_CHART_TITLE_CHARS {
@@ -363,20 +370,17 @@ pub fn chart_create_request(input: &serde_json::Value) -> Result<ClientRequest, 
             "title は 1〜{MAX_CHART_TITLE_CHARS} 文字にしてください"
         ));
     }
-    let parts = chart.scenarios.len() + chart.casualties.len() + chart.values.len();
+    let parts =
+        chart.scenarios.len() + chart.casualties.len() + chart.sections.len() + chart.values.len();
     if parts == 0 || parts > MAX_CHART_PARTS {
         return Err(format!(
-            "scenarios・casualties・values は、合わせて 1〜{MAX_CHART_PARTS} 個にしてください"
+            "scenarios・casualties・sections・values は、合わせて 1〜{MAX_CHART_PARTS} 個にしてください"
         ));
     }
-    let label_ok = |label: &str| {
-        let len = label.chars().count();
-        len > 0 && len <= MAX_CHART_LABEL_CHARS
-    };
     for (i, scenario) in chart.scenarios.iter_mut().enumerate() {
         let n = i + 1;
         scenario.label = scenario.label.trim().to_owned();
-        if !label_ok(&scenario.label) {
+        if !chart_label_ok(&scenario.label) {
             return Err(format!(
                 "scenarios の {n} 個目: label は 1〜{MAX_CHART_LABEL_CHARS} 文字にしてください"
             ));
@@ -405,53 +409,117 @@ pub fn chart_create_request(input: &serde_json::Value) -> Result<ClientRequest, 
             ));
         }
     }
+    for (i, section) in chart.sections.iter_mut().enumerate() {
+        check_chart_section(corpus, i + 1, section)?;
+    }
     for (i, values) in chart.values.iter_mut().enumerate() {
-        let n = i + 1;
-        values.label = values.label.trim().to_owned();
-        values.unit = values.unit.trim().to_owned();
-        if !label_ok(&values.label) {
-            return Err(format!(
-                "values の {n} 個目: label は 1〜{MAX_CHART_LABEL_CHARS} 文字にしてください"
-            ));
-        }
-        if values.unit.chars().count() > MAX_CHART_UNIT_CHARS {
-            return Err(format!(
-                "values の {n} 個目: unit は {MAX_CHART_UNIT_CHARS} 文字までにしてください"
-            ));
-        }
-        if !(MIN_CHART_POINTS..=MAX_CHART_POINTS).contains(&values.points.len()) {
-            return Err(format!(
-                "values の {n} 個目: points は {MIN_CHART_POINTS}〜{MAX_CHART_POINTS} 点にしてください"
-            ));
-        }
-        let in_range = |v: f64| v.is_finite() && v.abs() <= MAX_CHART_VALUE;
-        if values
-            .points
-            .iter()
-            .any(|p| !in_range(p.x) || !in_range(p.y))
-        {
-            return Err(format!(
-                "values の {n} 個目: x と y は絶対値が {MAX_CHART_VALUE:e} までの数にしてください"
-            ));
-        }
-        // -0.0 を 0.0 にそろえる。total_cmp は 2 つを別の値として並べるが、画面は同じ x として扱うので、
-        // そろえないと下の重複の検査をすり抜けて、片方の点が消える
-        for point in &mut values.points {
-            point.x += 0.0;
-        }
-        values.points.sort_by(|a, b| a.x.total_cmp(&b.x));
-        // 同じ x に 2 つの値があると、線がどちらを通るか決まらない
-        if values
-            .points
-            .windows(2)
-            .any(|w| w[0].x.total_cmp(&w[1].x).is_eq())
-        {
-            return Err(format!(
-                "values の {n} 個目: 同じ x の点が 2 つあります。x ごとに 1 点にしてください"
-            ));
-        }
+        check_chart_values(i + 1, values)?;
     }
     Ok(ClientRequest::ChartCreate { chart })
+}
+
+fn chart_label_ok(label: &str) -> bool {
+    let len = label.chars().count();
+    len > 0 && len <= MAX_CHART_LABEL_CHARS
+}
+
+/// 原稿の節の線の指定を整えて確かめる。節があるかは、画面に頼む前にここで確かめる。
+fn check_chart_section(
+    corpus: &Corpus,
+    n: usize,
+    section: &mut ChartSection,
+) -> Result<(), String> {
+    section.source = section.source.trim().to_owned();
+    section.x = section.x.trim().to_owned();
+    section.lines = section
+        .lines
+        .iter()
+        .map(|l| l.trim().to_owned())
+        .filter(|l| !l.is_empty())
+        .collect();
+    // 近い節の名前を返せるのは、索引を持つこちらだけ
+    // 見出しのない導入部（doc:<ファイル名> だけ）は受けない。画面は見出しのある節から配下を探す
+    let anchored = section
+        .source
+        .split_once('#')
+        .is_some_and(|(file, anchor)| file.starts_with("doc:") && !anchor.is_empty());
+    if !anchored || corpus.section_by_source(&section.source).is_none() {
+        let near = corpus.suggestions(&section.source, 10);
+        return Err(format!(
+            "sections の {n} 個目: {} という節はありません。見出しのある節の、索引の source（doc:<ファイル名>#<アンカー>）をそのまま使ってください{}",
+            section.source,
+            if near.is_empty() {
+                String::new()
+            } else {
+                format!("。近い節: {}", near.join("、"))
+            }
+        ));
+    }
+    if section.lines.len() > MAX_CHART_PARTS
+        || section
+            .lines
+            .iter()
+            .chain(std::iter::once(&section.x))
+            .any(|name| name.chars().count() > MAX_CHART_COLUMN_CHARS)
+    {
+        return Err(format!(
+            "sections の {n} 個目: lines は {MAX_CHART_PARTS} 個まで、名前は {MAX_CHART_COLUMN_CHARS} 文字までにしてください"
+        ));
+    }
+    if !section.x.is_empty() && section.lines.is_empty() {
+        return Err(format!(
+            "sections の {n} 個目: x（表の横軸の列）を書いたときは、lines に縦にする列の見出しを書いてください"
+        ));
+    }
+    Ok(())
+}
+
+/// 利用者の数値の線を整えて確かめる。点は x の小さい順に並べ直す。
+fn check_chart_values(n: usize, values: &mut ChartValues) -> Result<(), String> {
+    values.label = values.label.trim().to_owned();
+    values.unit = values.unit.trim().to_owned();
+    if !chart_label_ok(&values.label) {
+        return Err(format!(
+            "values の {n} 個目: label は 1〜{MAX_CHART_LABEL_CHARS} 文字にしてください"
+        ));
+    }
+    if values.unit.chars().count() > MAX_CHART_UNIT_CHARS {
+        return Err(format!(
+            "values の {n} 個目: unit は {MAX_CHART_UNIT_CHARS} 文字までにしてください"
+        ));
+    }
+    if !(MIN_CHART_POINTS..=MAX_CHART_POINTS).contains(&values.points.len()) {
+        return Err(format!(
+            "values の {n} 個目: points は {MIN_CHART_POINTS}〜{MAX_CHART_POINTS} 点にしてください"
+        ));
+    }
+    let in_range = |v: f64| v.is_finite() && v.abs() <= MAX_CHART_VALUE;
+    if values
+        .points
+        .iter()
+        .any(|p| !in_range(p.x) || !in_range(p.y))
+    {
+        return Err(format!(
+            "values の {n} 個目: x と y は絶対値が {MAX_CHART_VALUE:e} までの数にしてください"
+        ));
+    }
+    // -0.0 を 0.0 にそろえる。total_cmp は 2 つを別の値として並べるが、画面は同じ x として扱うので、
+    // そろえないと下の重複の検査をすり抜けて、片方の点が消える
+    for point in &mut values.points {
+        point.x += 0.0;
+    }
+    values.points.sort_by(|a, b| a.x.total_cmp(&b.x));
+    // 同じ x に 2 つの値があると、線がどちらを通るか決まらない
+    if values
+        .points
+        .windows(2)
+        .any(|w| w[0].x.total_cmp(&w[1].x).is_eq())
+    {
+        return Err(format!(
+            "values の {n} 個目: 同じ x の点が 2 つあります。x ごとに 1 点にしてください"
+        ));
+    }
+    Ok(())
 }
 
 // title は引用の見出しとして画面にそのまま出るので、AI 向けのメモ（MOD の条件・図あり）は本文の頭に置く
@@ -467,6 +535,9 @@ fn section_doc(doc: &CorpusDoc, section: &CorpusSection, max_chars: usize) -> So
     }
     if section.has_figure {
         notes.push("図あり".to_owned());
+    }
+    if section.has_usable_chart() {
+        notes.push("グラフあり".to_owned());
     }
     let mut lines = paragraphs(&section.text, max_chars);
     if !notes.is_empty() {
@@ -645,12 +716,14 @@ mod tests {
                     {"drug": "naloxone", "seconds": 3600}
                 ]}],
                 "casualties": [{"casualty": " c1 ", "metric": "concentration"}],
+                "sections": [{"source": " doc:hemorrhage.md#止血帯を使う ", "x": "", "lines": [" 血液 ", ""]}],
                 "values": [{"label": "心拍数", "unit": " bpm ", "minutes": true, "points": [
                     {"x": 2, "y": 80.5}, {"x": 0, "y": 60}
                 ]}]
             })
         };
-        let ok = chart_create_request(&base());
+        let corpus = fixtures::corpus();
+        let ok = chart_create_request(&corpus, &base());
         let Ok(ClientRequest::ChartCreate { chart }) = ok else {
             panic!("正しい条件は通る: {ok:?}");
         };
@@ -658,13 +731,15 @@ mod tests {
         assert_eq!(chart.scenarios[0].label, "2 本");
         assert_eq!(chart.casualties[0].casualty, "c1");
         assert_eq!(chart.values[0].unit, "bpm");
+        assert_eq!(chart.sections[0].source, "doc:hemorrhage.md#止血帯を使う");
+        assert_eq!(chart.sections[0].lines, vec!["血液"]);
         let xs: Vec<f64> = chart.values[0].points.iter().map(|p| p.x).collect();
         assert_eq!(xs, vec![0.0, 2.0], "点は x の小さい順に並べ直す");
 
         let err = |edit: &dyn Fn(&mut serde_json::Value)| {
             let mut input = base();
             edit(&mut input);
-            chart_create_request(&input).unwrap_err()
+            chart_create_request(&corpus, &input).unwrap_err()
         };
         assert!(err(&|v| v["title"] = json!(" ")).contains("title"));
         assert!(err(&|v| v["scenarios"][0]["doses"][1]["seconds"] = json!(3601)).contains("3600"));
@@ -674,6 +749,26 @@ mod tests {
                 .contains("形が違います")
         );
         assert!(err(&|v| v["casualties"][0]["casualty"] = json!("")).contains("casualty"));
+        assert!(
+            err(&|v| v["sections"][0]["source"] = json!("doc:hemorrhage.md#止血帯"))
+                .contains("近い節: doc:hemorrhage.md#止血帯を使う"),
+            "ない節は、近い節を添えて止める"
+        );
+        assert!(
+            err(&|v| v["sections"][0]["source"] = json!("quickref:tq")).contains("節はありません")
+        );
+        assert!(
+            err(&|v| v["sections"][0]["source"] = json!("doc:hemorrhage.md"))
+                .contains("見出しのある節"),
+            "見出しのない導入部は、画面が配下を探せないので止める"
+        );
+        assert!(
+            err(&|v| {
+                v["sections"][0]["x"] = json!("経過");
+                v["sections"][0]["lines"] = json!([]);
+            })
+            .contains("lines に縦にする列")
+        );
         assert!(err(&|v| v["values"][0]["points"] = json!([{"x": 0, "y": 1}])).contains("points"));
         assert!(
             err(&|v| v["values"][0]["points"] = json!([{"x": 1, "y": 1}, {"x": 1, "y": 2}]))
@@ -689,6 +784,7 @@ mod tests {
             err(&|v| {
                 v["scenarios"] = json!([]);
                 v["casualties"] = json!([]);
+                v["sections"] = json!([]);
                 v["values"] = json!([]);
             })
             .contains("合わせて")
