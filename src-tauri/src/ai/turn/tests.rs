@@ -435,6 +435,7 @@ fn chart_input() -> Value {
             {"drug": "morphine", "seconds": 180}
         ]}],
         "casualties": [],
+        "sections": [],
         "values": []
     })
 }

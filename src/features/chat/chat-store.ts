@@ -142,13 +142,27 @@ export const useChatStore = create<ChatState>()((set, get) => {
         // 負傷者を指していなければ、記録は読まない
         request.casualties.length === 0 ? [] : casualtyList(),
       ]);
-      result = buildAiChart({
-        request,
-        medication,
-        casualties,
-        circulation: modsActive(["circulation"], activeMods(useModSettings.getState().settings)),
-        nowMs: Date.now(),
-      });
+      // 節の線を使うときだけ、節の HTML を読む部分（グラフの形の検査を含む）を読み込む
+      const sections =
+        request.sections.length === 0
+          ? []
+          : await import("@/features/chat/chat-chart-sections").then((m) =>
+              m.loadSectionParts(request.sections),
+            );
+      result =
+        typeof sections === "string"
+          ? { ok: false, error: sections }
+          : buildAiChart({
+              request,
+              medication,
+              casualties,
+              sections,
+              circulation: modsActive(
+                ["circulation"],
+                activeMods(useModSettings.getState().settings),
+              ),
+              nowMs: Date.now(),
+            });
     } catch (error: unknown) {
       result = { ok: false, error: errorMessage(error) };
     }

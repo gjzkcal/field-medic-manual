@@ -1,7 +1,10 @@
 import type { JSX } from "react";
+import { useNavigate } from "react-router";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import type { AnswerItem } from "@/features/chat/chat-turn";
+import { docHref } from "@/features/library/link";
 import { ManualLineChart } from "@/features/library/viewer/ManualLineChart";
 
 interface AiChartProps {
@@ -14,10 +17,11 @@ interface AiChartProps {
  * （AI が条件を取り違えても、利用者が気づけるように）。
  */
 export function AiChart({ item }: AiChartProps): JSX.Element | null {
+  const navigate = useNavigate();
   if (item.chart === null) {
     return null;
   }
-  const { spec, data, conditions } = item.chart;
+  const { spec, data, conditions, sources } = item.chart;
   return (
     <div className="flex flex-col gap-2 rounded-lg border p-3">
       <figure className="m-0 text-sm">
@@ -28,6 +32,24 @@ export function AiChart({ item }: AiChartProps): JSX.Element | null {
           <li key={condition}>{condition}</li>
         ))}
       </ul>
+      {sources.length > 0 && (
+        // 原稿の線は、その節に書いてある条件のもの。条件を確かめられるよう、節を開けるようにする
+        <div className="flex flex-wrap gap-x-2 gap-y-1">
+          {sources.map((source) => (
+            <Button
+              key={`${source.docId}#${source.anchor}`}
+              variant="link"
+              size="xs"
+              className="h-auto p-0"
+              onClick={() => {
+                void navigate(docHref(source.docId, source.anchor));
+              }}
+            >
+              {source.title} を開く
+            </Button>
+          ))}
+        </div>
+      )}
       <p className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
         <Badge variant="secondary">AI が条件を指定</Badge>
         AI が指定した条件から、アプリが描いたグラフです。条件が合っているか確かめてください

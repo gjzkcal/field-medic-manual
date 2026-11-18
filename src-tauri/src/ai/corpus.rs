@@ -27,6 +27,8 @@ pub struct CorpusSection {
     pub without_mods: Vec<ModTarget>,
     /// グラフ・フローチャート・画像がある
     pub has_figure: bool,
+    /// グラフがある（`chart_create` で線を使える）
+    pub has_chart: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -194,7 +196,8 @@ pub fn load(conn: &Connection) -> Result<Corpus, AppError> {
     let mut stmt = conn.prepare(
         "SELECT document_id, id, level, title, anchor, plain_text, keywords, mods, without_mods,
            instr(html, 'data-chart') > 0 OR instr(html, 'data-flowchart') > 0
-             OR instr(html, 'data-asset-id') > 0
+             OR instr(html, 'data-asset-id') > 0,
+           instr(html, 'data-chart') > 0
          FROM sections ORDER BY document_id, order_index",
     )?;
     let rows = stmt.query_map([], |r| {
@@ -211,6 +214,7 @@ pub fn load(conn: &Connection) -> Result<Corpus, AppError> {
                 mods: json_column(r, 7)?,
                 without_mods: json_column(r, 8)?,
                 has_figure: r.get(9)?,
+                has_chart: r.get(10)?,
             },
         ))
     })?;
@@ -486,6 +490,7 @@ pub mod fixtures {
             mods: Vec::new(),
             without_mods: Vec::new(),
             has_figure: false,
+            has_chart: false,
         }
     }
 

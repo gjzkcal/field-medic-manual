@@ -226,6 +226,20 @@ pub struct ChartValues {
 /// AI が指定するグラフの条件。点は持たず、画面が計算する（AI に計算させないため）。
 /// フィールド名は AI が書くので 1 語にする。
 ///
+/// 原稿の節にあるグラフ・表の線。値は画面が節から取る（AI に数値を書き写させないため）。
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ChartSection {
+    /// 節の source（`doc:<ファイル名>#<アンカー>`）。配下の節も探す
+    pub source: String,
+    /// グラフになっていない表を使うときの、横軸の列の見出し。節のグラフを使うなら空
+    #[serde(default)]
+    pub x: String,
+    /// 使う線の名前（表なら列の見出し）。空なら、節のグラフの線を全部
+    #[serde(default)]
+    pub lines: Vec<String>,
+}
+
 /// 種類ごとの配列に分けているのは、種類で形が変わる 1 つの配列（anyOf）より、AI が形を取り違えにくいため。
 /// このツールは strict にできない（文法の大きさの上限に当たる）ので、使わない配列を AI が省いても読めるようにする。
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
@@ -236,6 +250,8 @@ pub struct ChartRequest {
     pub scenarios: Vec<ChartScenario>,
     #[serde(default)]
     pub casualties: Vec<ChartCasualty>,
+    #[serde(default)]
+    pub sections: Vec<ChartSection>,
     #[serde(default)]
     pub values: Vec<ChartValues>,
 }
