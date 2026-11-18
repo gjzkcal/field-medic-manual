@@ -278,9 +278,13 @@ struct Segment {
     web_citations: u32,
 }
 
-/// 画面の代わりに答える。聞き返しは case の答え、記録は空、提案は却下。
+/// 画面の代わりに答える。聞き返しは case の答え、記録は空、提案は却下、グラフは描いたことにする。
 fn client_answer(request: &ClientRequest, ask_answer: Option<&str>) -> ClientToolResult {
     match request {
+        ClientRequest::ChartCreate { .. } => ClientToolResult::ChartCreate {
+            summary: "（評価では点を計算しません）".to_owned(),
+            error: None,
+        },
         ClientRequest::AskUser { .. } => ClientToolResult::AskUser {
             answer: ask_answer.unwrap_or_default().to_owned(),
         },
@@ -317,7 +321,7 @@ fn collect(
             ToolKind::SearchManual => c.searches.push(detail),
             ToolKind::ReadSection => c.reads.push(detail),
             ToolKind::WebSearch => c.web_searches += 1,
-            ToolKind::CasualtyRead => {}
+            ToolKind::CasualtyRead | ToolKind::ChartCreate => {}
         },
         ChatEvent::ToolActivity { .. } | ChatEvent::RequestStarted => {}
         ChatEvent::ClientRequest {

@@ -3,4 +3,4 @@
 /**
  * `ClientRequest` への答え。
  */
-export type ClientToolResult = { "kind": "ask_user", answer: string, } | { "kind": "casualty_read", text: string, } | { "kind": "casualty_propose", approved: boolean, error: string | null, };
+export type ClientToolResult = { "kind": "ask_user", answer: string, } | { "kind": "casualty_read", text: string, } | { "kind": "casualty_propose", approved: boolean, error: string | null, } | { "kind": "chart_create", summary: string, error: string | null, };

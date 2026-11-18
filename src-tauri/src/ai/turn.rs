@@ -20,7 +20,8 @@ use crate::ai::conversation::{AiState, Fixed};
 use crate::ai::corpus::{self, Corpus};
 use crate::ai::prompt;
 use crate::ai::tools::{
-    self, ASK_USER, CASUALTY_PROPOSE, CASUALTY_READ, READ_SECTION, SEARCH_MANUAL, ToolOutput,
+    self, ASK_USER, CASUALTY_PROPOSE, CASUALTY_READ, CHART_CREATE, READ_SECTION, SEARCH_MANUAL,
+    ToolOutput,
 };
 use crate::ai::types::{
     ChatEvent, ChatImage, ChatNotice, ChatSendInput, ChatTurnResult, ChatUsage, ClientRequest,
@@ -44,6 +45,10 @@ const MAX_ANSWER_CHARS: usize = 1000;
 /// 画面が返す負傷者の記録の文の上限。20 人 × 100 件の記録でも収まり、入力が際限なく増えない長さ
 const MAX_CASUALTY_TEXT_CHARS: usize = 30_000;
 const MAX_ERROR_CHARS: usize = 500;
+/// グラフの上限（1 つの質問につき）。回答がグラフで埋まらないようにする
+const MAX_CHARTS: u32 = 3;
+/// 画面が返すグラフの要約の上限。5 本の線の始め・最大・最小・終わりが収まる長さ
+const MAX_CHART_SUMMARY_CHARS: usize = 4000;
 const MAX_IMAGES: usize = 3;
 /// API の 1 枚あたりの上限
 const MAX_IMAGE_BYTES: usize = 5 * 1024 * 1024;
@@ -212,7 +217,7 @@ enum Interrupted {
 impl<T: Transport> Run<'_, T> {
     async fn answer(&mut self, messages: &mut Vec<Value>) -> Result<Outcome, AppError> {
         let mut tool_rounds = 0;
-        let mut asks = 0;
+        let mut limits = Limits::default();
         loop {
             let force = tool_rounds >= MAX_TOOL_ROUNDS;
             let message = match self.call(messages, force).await {
@@ -286,7 +291,7 @@ impl<T: Transport> Run<'_, T> {
                     }
                     let mut results = Vec::with_capacity(calls.len());
                     for call in &calls {
-                        match self.run_tool(call, &mut asks).await {
+                        match self.run_tool(call, &mut limits).await {
                             Ok(block) => results.push(block),
                             Err(Interrupted::Cancelled) => {
                                 return Ok(Outcome::Discard(TurnStatus::Cancelled));
@@ -466,7 +471,7 @@ impl<T: Transport> Run<'_, T> {
     }
 
     /// 自作のツールを 1 つ実行し、`tool_result` のブロックを返す。
-    async fn run_tool(&mut self, call: &Value, asks: &mut u32) -> Result<Value, Interrupted> {
+    async fn run_tool(&mut self, call: &Value, limits: &mut Limits) -> Result<Value, Interrupted> {
         let id = str_of(call, "id");
         let name = call.get("name").and_then(Value::as_str).unwrap_or_default();
         let input = call.get("input").cloned().unwrap_or(Value::Null);
@@ -499,7 +504,8 @@ impl<T: Transport> Run<'_, T> {
                 self.activity(&id, kind, &detail, state)?;
                 output
             }
-            ASK_USER => self.ask(&id, &input, asks).await?,
+            ASK_USER => self.ask(&id, &input, &mut limits.asks).await?,
+            CHART_CREATE => self.chart(&id, &input, &mut limits.charts).await?,
             CASUALTY_READ => {
                 self.activity(&id, ToolKind::CasualtyRead, "", ToolState::Running)?;
                 let output = match self.client_call(&id, ClientRequest::CasualtyRead).await? {
@@ -554,6 +560,58 @@ impl<T: Transport> Run<'_, T> {
         })
     }
 
+    /// グラフを画面に作らせる。点の計算は画面が行い、AI には線ごとの要約だけを返す。
+    async fn chart(
+        &mut self,
+        id: &str,
+        input: &Value,
+        charts: &mut u32,
+    ) -> Result<ToolOutput, Interrupted> {
+        if *charts >= MAX_CHARTS {
+            return Ok(ToolOutput::Error(format!(
+                "グラフは 1 つの質問につき {MAX_CHARTS} 個までです"
+            )));
+        }
+        let request = match tools::chart_create_request(input) {
+            Ok(r) => r,
+            Err(message) => return Ok(ToolOutput::Error(message)),
+        };
+        let detail = input
+            .get("title")
+            .and_then(Value::as_str)
+            .unwrap_or_default()
+            .trim()
+            .to_owned();
+        *charts += 1;
+        self.activity(id, ToolKind::ChartCreate, &detail, ToolState::Running)?;
+        let output = match self.client_call(id, request).await? {
+            ClientToolResult::ChartCreate {
+                summary,
+                error: None,
+            } => ToolOutput::Text(format!(
+                "グラフを回答のこの位置に描きました。本文に図を書き直す必要はありません。アプリが計算した値:\n{}",
+                summary
+                    .chars()
+                    .take(MAX_CHART_SUMMARY_CHARS)
+                    .collect::<String>()
+            )),
+            ClientToolResult::ChartCreate {
+                error: Some(error), ..
+            } => ToolOutput::Error(format!(
+                "グラフを描けませんでした: {}",
+                error.chars().take(MAX_ERROR_CHARS).collect::<String>()
+            )),
+            _ => ToolOutput::Error("画面からグラフの結果を受け取れませんでした".to_owned()),
+        };
+        let state = if matches!(output, ToolOutput::Error(_)) {
+            ToolState::Failed
+        } else {
+            ToolState::Done
+        };
+        self.activity(id, ToolKind::ChartCreate, &detail, state)?;
+        Ok(output)
+    }
+
     /// 画面で実行するツール。要求を画面へ送り、`ai_chat_tool_result` で結果が返るまで待つ。
     async fn client_call(
         &mut self,
@@ -599,6 +657,13 @@ impl<T: Transport> Run<'_, T> {
     fn emit_event(&self, event: ChatEvent) {
         let _ = (self.emit)(event);
     }
+}
+
+/// 1 つの質問の中で数える、ツールごとの回数。
+#[derive(Default)]
+struct Limits {
+    asks: u32,
+    charts: u32,
 }
 
 /// 提案への答えを、AI に返す文にする。

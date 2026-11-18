@@ -5,6 +5,7 @@ import { create } from "zustand";
 import { useAiSettings, type AiSettings } from "@/features/chat/ai-settings";
 import { applyProposedOps } from "@/features/casualties/casualty-store";
 import { casualtyBrief } from "@/features/chat/casualty-brief";
+import { buildAiChart } from "@/features/chat/chat-chart";
 import {
   answerAsk,
   applyEvent,
@@ -12,6 +13,7 @@ import {
   failTurn,
   finishTurn,
   newTurn,
+  setChart,
   type AnswerItem,
   type ChatImageView,
   type ChatTurn,
@@ -20,6 +22,7 @@ import { modsActive } from "@/features/triage/runner";
 import { loadMedication } from "@/features/medication/bundle";
 import { activeMods, useModSettings } from "@/features/settings/mod-settings";
 import { useViewerSettings } from "@/features/settings/viewer-settings";
+import type { ChartRequest } from "@/lib/bindings/ChartRequest";
 import type { ChatImage } from "@/lib/bindings/ChatImage";
 import type { ChatUsage } from "@/lib/bindings/ChatUsage";
 import type { ClientToolResult } from "@/lib/bindings/ClientToolResult";
@@ -126,6 +129,41 @@ export const useChatStore = create<ChatState>()((set, get) => {
     set((state) => ({ turns: state.turns.map((t) => (t.id === id ? update(t) : t)) }));
   }
 
+  /** AI がグラフの条件を指定したとき。点を計算して回答に入れ、AI には線ごとの要約を返す。 */
+  async function answerChartCreate(
+    turnId: number,
+    toolUseId: string,
+    request: ChartRequest,
+  ): Promise<void> {
+    let result: ReturnType<typeof buildAiChart>;
+    try {
+      const [medication, casualties] = await Promise.all([
+        loadMedication(),
+        // 負傷者を指していなければ、記録は読まない
+        request.casualties.length === 0 ? [] : casualtyList(),
+      ]);
+      result = buildAiChart({
+        request,
+        medication,
+        casualties,
+        circulation: modsActive(["circulation"], activeMods(useModSettings.getState().settings)),
+        nowMs: Date.now(),
+      });
+    } catch (error: unknown) {
+      result = { ok: false, error: errorMessage(error) };
+    }
+    if (result.ok) {
+      const { chart } = result;
+      updateTurn(turnId, (t) => setChart(t, toolUseId, chart));
+    }
+    await sendResult(
+      toolUseId,
+      result.ok
+        ? { kind: "chart_create", summary: result.summary, error: null }
+        : { kind: "chart_create", summary: "", error: result.error },
+    );
+  }
+
   /** 1 回の質問を送り、終わった状態を返す。 */
   async function run(
     text: string,
@@ -163,6 +201,9 @@ export const useChatStore = create<ChatState>()((set, get) => {
           updateTurn(turn.id, (t) => applyEvent(t, event));
           if (event.type === "client_request" && event.request.kind === "casualty_read") {
             void answerCasualtyRead(event.toolUseId);
+          }
+          if (event.type === "client_request" && event.request.kind === "chart_create") {
+            void answerChartCreate(turn.id, event.toolUseId, event.request.chart);
           }
           // キャッシュの期限は要求の開始から数えるので、ツールの往復ごとの最後の要求の開始を覚える
           if (event.type === "request_started") {

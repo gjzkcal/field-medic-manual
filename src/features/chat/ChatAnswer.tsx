@@ -2,6 +2,7 @@ import { cn } from "cn";
 import {
   BookOpenIcon,
   BrainIcon,
+  ChartLineIcon,
   ChevronRightIcon,
   CopyIcon,
   GlobeIcon,
@@ -38,6 +39,7 @@ import {
   TraceLine,
   TraceTitle,
 } from "@/components/ui/trace";
+import { AiChart } from "@/features/chat/AiChart";
 import { splitFigures } from "@/features/chat/chat-markdown";
 import {
   answerForCopy,
@@ -98,6 +100,8 @@ export function ChatAnswer({ turn, onAnswer, onDecide }: ChatAnswerProps): JSX.E
             disabled={!streaming}
             onDecide={onDecide}
           />
+        ) : group.item.kind === "chart" ? (
+          <AiChart key={group.key} item={group.item} />
         ) : null,
       )}
       {streaming && !hasText && (
@@ -288,6 +292,11 @@ function toolText(
           : failed
             ? "負傷者の記録を読めませんでした"
             : "負傷者の記録を読みました",
+      };
+    case "chart_create":
+      return {
+        icon: <ChartLineIcon />,
+        title: `${running ? "グラフを作っています" : failed ? "グラフを作れませんでした" : "グラフを作りました"}: ${item.detail}`,
       };
   }
 }

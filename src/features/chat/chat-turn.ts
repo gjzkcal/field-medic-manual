@@ -9,6 +9,7 @@ import type { ChatEvent } from "@/lib/bindings/ChatEvent";
 import type { ChatNotice } from "@/lib/bindings/ChatNotice";
 import type { ChatTurnResult } from "@/lib/bindings/ChatTurnResult";
 import type { ChatUsage } from "@/lib/bindings/ChatUsage";
+import type { AiChart } from "@/features/chat/chat-chart";
 import type { ClientRequest } from "@/lib/bindings/ClientRequest";
 import type { ProposedOp } from "@/lib/bindings/ProposedOp";
 import type { ToolKind } from "@/lib/bindings/ToolKind";
@@ -36,6 +37,13 @@ export type AnswerItem =
       /** 承認を待っている・記録した・却下した・記録の途中で失敗した */
       status: ProposalStatus;
       error: string | null;
+    }
+  | {
+      kind: "chart";
+      toolUseId: string;
+      title: string;
+      /** 画面が計算したグラフ。計算が終わるまでと、作れなかったときは null（枠を出さない） */
+      chart: AiChart | null;
     };
 
 export type ProposalStatus = "pending" | "applying" | "approved" | "rejected" | "failed";
@@ -200,7 +208,26 @@ function withRequest(turn: ChatTurn, toolUseId: string, request: ClientRequest):
     // 記録を読む要求は、画面が黙って答える（読んだことは Rust が「調べた様子」に出す）
     case "casualty_read":
       return turn;
+    // グラフは AI が呼んだ位置に出すので、計算の前に場所を取っておく
+    case "chart_create":
+      return {
+        ...turn,
+        items: [
+          ...turn.items,
+          { kind: "chart", toolUseId, title: request.chart.title, chart: null },
+        ],
+      };
   }
+}
+
+/** 計算したグラフを、取っておいた場所に入れる。 */
+export function setChart(turn: ChatTurn, toolUseId: string, chart: AiChart): ChatTurn {
+  return {
+    ...turn,
+    items: turn.items.map((item) =>
+      item.kind === "chart" && item.toolUseId === toolUseId ? { ...item, chart } : item,
+    ),
+  };
 }
 
 /** 聞き返しへの答えを表示に残す。 */
@@ -391,8 +418,17 @@ export function citationNumbering(turn: ChatTurn): (citation: ChatCitation) => n
 
 /** コピーするときの文。本文の Markdown（引用の番号付き）に、出典の一覧（見出しと Web 版の URL）を付ける。 */
 export function answerForCopy(turn: ChatTurn): string {
-  const texts = turn.items.filter((item): item is TextItem => item.kind === "text");
-  const body = mergeTextRun(texts, numberMarks(citationNumbering(turn)))
+  const mark = numberMarks(citationNumbering(turn));
+  // グラフは文字にできないので、あった場所に題だけを残す
+  const body = turn.items
+    .map((item) =>
+      item.kind === "text"
+        ? mergeTextRun([item], mark)
+        : item.kind === "chart" && item.chart !== null
+          ? `\n\n（グラフ: ${item.title}）\n\n`
+          : "",
+    )
+    .join("")
     .replaceAll(/```figure[ \t]*\r?\n[^\n]*\r?\n```/gu, "")
     // フローへのリンクは、貼った先でも開けるよう Web 版の URL にする
     .replaceAll(
