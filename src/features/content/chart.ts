@@ -176,11 +176,15 @@ function readCell(text: string): ChartCell | null {
     : null;
 }
 
-/** 点になったセルの単位がすべて同じならその単位。単位の無いセルは数えない（`0` だけ単位を省く書き方があるため） */
-function commonUnit(cells: (ChartCell | null)[]): string | null {
-  const units = new Set(cells.flatMap((c) => (typeof c?.unit === "string" ? [c.unit] : [])));
+/** セルにある単位の種類。単位の無いセルは数えない（`0` だけ単位を省く書き方があるため） */
+function unitsOf(cells: readonly (ChartCell | null)[]): string[] {
+  return [...new Set(cells.flatMap((c) => (typeof c?.unit === "string" ? [c.unit] : [])))];
+}
+
+/** 単位が 1 種類ならその単位 */
+function commonUnit(units: readonly string[]): string | null {
   const [only] = units;
-  return units.size === 1 && only !== undefined ? only : null;
+  return units.length === 1 && only !== undefined ? only : null;
 }
 
 /**
@@ -193,37 +197,17 @@ export function tableHeaders(table: HTMLTableElement): string[] {
   );
 }
 
-/**
- * 表の列のうち、点になるセルの単位が 2 種類以上あるもの（`500 mL` と `1 L` など。秒と分は秒にそろえるので数えない）。
- * 原稿のグラフは作者が描いた結果を見て確かめるが、作者の見ていない表を線にするときは、
- * 単位の違う値を同じ軸に並べて大小が逆に見えるのを、先に止める必要がある
- */
-export function mixedUnitColumns(
-  table: HTMLTableElement,
-  names: readonly string[],
-): { name: string; units: string[] }[] {
-  const headers = tableHeaders(table);
-  const rows = Array.from(table.tBodies).flatMap((body) => Array.from(body.rows));
-  return names.flatMap((name) => {
-    const index = headers.indexOf(name);
-    if (index === -1) {
-      return [];
-    }
-    const units = new Set(
-      rows.flatMap((row) => {
-        const unit = readCell(row.cells[index]?.textContent ?? "")?.unit;
-        return typeof unit === "string" ? [unit] : [];
-      }),
-    );
-    return units.size > 1 ? [{ name, units: [...units] }] : [];
-  });
-}
-
 export interface TableChart {
   data: ChartData;
   /** data.points と同じ並びで、値ごとに許す丸めの差（表の桁の半分） */
   tolerances: Record<string, number>[];
   warnings: string[];
+  /**
+   * 点になったセルの単位が 2 種類以上ある列（`500 mL` と `1 L` など。秒と分は秒にそろえるので数えない）。
+   * 作者が印を付けた表は、描いた結果を作者が見て確かめるので止めない。
+   * 作者の見ていない表を線にする側が、大小が逆に見えるグラフを出さないために見る
+   */
+  mixedUnits: { name: string; units: string[] }[];
 }
 
 const onPanel =
@@ -263,6 +247,7 @@ export function chartFromTable(table: HTMLTableElement, spec: ChartSpec): TableC
     return cell?.values.length === 1 ? cell : null;
   });
   const xs = xCells.map((cell) => cell?.values[0] ?? null);
+  const mixedUnits: TableChart["mixedUnits"] = [];
   const values: Record<string, number>[] = rows.map(() => ({}));
   const tolerances: Record<string, number>[] = rows.map(() => ({}));
 
@@ -273,10 +258,19 @@ export function chartFromTable(table: HTMLTableElement, spec: ChartSpec): TableC
     if (index === null || xIndex === null) {
       continue;
     }
-    const cells = rows.map((rowCells) => readCell(rowCells[index] ?? ""));
-    const unit = commonUnit(cells);
+    const read = rows.map((rowCells) => readCell(rowCells[index] ?? ""));
     // 1 つでも「上/下」の組があれば、列を上と下の 2 本の線に分ける
-    const size = cells.some((c) => c?.values.length === 2) ? 2 : 1;
+    const size = read.some((c) => c?.values.length === 2) ? 2 : 1;
+    // 点になるセルだけを残す。単位もここから数える（点にならない行の単位まで数えると、
+    // 線に出ない値のせいで単位が決まらなくなったり、使える表を混在と見誤ったりする）
+    const cells = read.map((cell, row) =>
+      typeof xs[row] === "number" && cell?.values.length === size ? cell : null,
+    );
+    const units = unitsOf(cells);
+    const unit = commonUnit(units);
+    if (units.length > 1) {
+      mixedUnits.push({ name, units });
+    }
     const parts =
       size === 2
         ? [
@@ -288,15 +282,10 @@ export function chartFromTable(table: HTMLTableElement, spec: ChartSpec): TableC
       const key = `s${String(series.length)}`;
       let count = 0;
       for (const [row, cell] of cells.entries()) {
-        const value = cell?.values.length === size ? cell.values[pick] : undefined;
+        const value = cell?.values[pick];
         const target = values[row];
         const tolerance = tolerances[row];
-        if (
-          value !== undefined &&
-          target !== undefined &&
-          tolerance !== undefined &&
-          typeof xs[row] === "number"
-        ) {
+        if (value !== undefined && target !== undefined && tolerance !== undefined) {
           target[key] = value;
           tolerance[key] = 0.5 * 10 ** -(cell?.decimals[pick] ?? 0);
           count += 1;
@@ -309,6 +298,15 @@ export function chartFromTable(table: HTMLTableElement, spec: ChartSpec): TableC
     }
   }
 
+  // 横軸の単位は、どれかの線の点になった行からだけ数える。縦の値が 1 つも無い行は線に出ないので、
+  // その行の横軸の単位（`1 L` など）で、単位が決まらなくなったり混在と見誤ったりしないようにする
+  const xUnits = unitsOf(
+    xCells.map((cell, row) => (Object.keys(values[row] ?? {}).length > 0 ? cell : null)),
+  );
+  if (xUnits.length > 1) {
+    mixedUnits.unshift({ name: spec.x, units: xUnits });
+  }
+
   const rowsWithX = xs
     .flatMap((x, row) =>
       x === null ? [] : [{ x, values: values[row] ?? {}, tolerance: tolerances[row] ?? {} }],
@@ -318,12 +316,13 @@ export function chartFromTable(table: HTMLTableElement, spec: ChartSpec): TableC
   return {
     data: {
       xLabel: spec.x,
-      xUnit: commonUnit(xCells),
+      xUnit: commonUnit(xUnits),
       series,
       points: rowsWithX.map(({ x, values: rowValues }) => ({ x, values: rowValues })),
     },
     tolerances: rowsWithX.map((r) => r.tolerance),
     warnings,
+    mixedUnits,
   };
 }
 
@@ -354,6 +353,7 @@ export function chartWithoutTable(spec: ChartSpec): TableChart {
     },
     tolerances: [],
     warnings,
+    mixedUnits: [],
   };
 }
 
