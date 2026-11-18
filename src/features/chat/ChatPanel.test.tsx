@@ -567,7 +567,12 @@ describe("ChatPanel", () => {
       });
       expect(await screen.findByText("原稿「止血帯 > 巻く」のグラフの線: 圧")).toBeTruthy();
       // 節へ移るリンク（別のタブで開く・リンク先をコピーする操作ができるよう、ボタンではなくリンクにしている）
-      fireEvent.click(screen.getByRole("link", { name: "止血帯 > 巻く を開く" }));
+      const link = screen.getByRole("link", { name: "止血帯 > 巻く を開く" });
+      // 線を取った文書の、AI が指した節へ移る（別の文書や、節のない URL でも「ビューア」は出るので、行き先を確かめる）
+      const href = new URL(link.getAttribute("href") ?? "", "http://localhost");
+      expect(href.pathname).toBe("/doc/doc-tq");
+      expect(decodeURIComponent(href.hash)).toBe("#巻く");
+      fireEvent.click(link);
       expect(await screen.findByText("ビューア")).toBeTruthy();
     },
     CONVERT_TIMEOUT_MS * 2,
