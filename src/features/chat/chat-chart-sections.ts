@@ -6,6 +6,7 @@ import {
   chartFromTable,
   mixedUnitColumns,
   readChartPayload,
+  tableHeaders,
   type ChartData,
 } from "@/features/content/chart";
 import { findDocByFile } from "@/features/content/link-target";
@@ -84,12 +85,6 @@ function withDistinctLabels(
           line: { ...named.line, label: `${named.name}（${docTitle} > ${named.section}）` },
         }
       : named,
-  );
-}
-
-function tableHeaders(table: HTMLTableElement): string[] {
-  return Array.from(table.tHead?.rows[0]?.cells ?? [], (cell) =>
-    cell.textContent.replaceAll(/\s+/gu, " ").trim(),
   );
 }
 

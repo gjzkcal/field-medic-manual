@@ -255,6 +255,11 @@ describe("どれを指したか決められないとき", () => {
     expect(sectionPart(target(["心拍数"], "量"), scope(mixed))).toBe(
       `${SOURCE} の表は、列の中で単位が混ざっているので線にできません: 「量」（mL、L）`,
     );
+    // 見出しに s を含む列も見つけて調べる（空白をそろえる処理が、見出しの文字を変えないこと）
+    const english = mixed.replace("<th>量</th>", "<th>Dose  given</th>");
+    expect(sectionPart(target(["心拍数"], "Dose given"), scope(english))).toContain(
+      "単位が混ざっているので線にできません: 「Dose given」（mL、L）",
+    );
     const time = amountTable(
       "<tr><td>30 秒</td><td>80 bpm</td></tr><tr><td>2 分</td><td>110 bpm</td></tr>",
     );

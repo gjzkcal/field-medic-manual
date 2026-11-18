@@ -201,12 +201,14 @@ impl Corpus {
 ///
 /// DB の読み取りに失敗した場合。
 pub fn load(conn: &Connection) -> Result<Corpus, AppError> {
+    // グラフの有無は、属性の形（` data-chart=`）で探す。本文に data-chart という語が出てくるだけの節を
+    // 「グラフあり」と見せると、AI が線を頼んで画面に断られる
     let mut sections: HashMap<String, Vec<CorpusSection>> = HashMap::new();
     let mut stmt = conn.prepare(
         "SELECT document_id, id, level, title, anchor, plain_text, keywords, mods, without_mods,
            instr(html, 'data-chart') > 0 OR instr(html, 'data-flowchart') > 0
              OR instr(html, 'data-asset-id') > 0,
-           instr(html, 'data-chart') > 0
+           instr(html, ' data-chart=') > 0
          FROM sections ORDER BY document_id, order_index",
     )?;
     let rows = stmt.query_map([], |r| {

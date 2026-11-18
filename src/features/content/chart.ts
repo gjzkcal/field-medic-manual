@@ -184,6 +184,16 @@ function commonUnit(cells: (ChartCell | null)[]): string | null {
 }
 
 /**
+ * 表の列の見出し（空白をそろえたもの）。列を名前で探すところは、必ずこれを使う
+ * （探し方が場所ごとに違うと、線にする列と、検査する列がずれる）
+ */
+export function tableHeaders(table: HTMLTableElement): string[] {
+  return Array.from(table.tHead?.rows[0]?.cells ?? [], (cell) =>
+    cell.textContent.replaceAll(/\s+/gu, " ").trim(),
+  );
+}
+
+/**
  * 表の列のうち、点になるセルの単位が 2 種類以上あるもの（`500 mL` と `1 L` など。秒と分は秒にそろえるので数えない）。
  * 原稿のグラフは作者が描いた結果を見て確かめるが、作者の見ていない表を線にするときは、
  * 単位の違う値を同じ軸に並べて大小が逆に見えるのを、先に止める必要がある
@@ -192,9 +202,7 @@ export function mixedUnitColumns(
   table: HTMLTableElement,
   names: readonly string[],
 ): { name: string; units: string[] }[] {
-  const headers = Array.from(table.tHead?.rows[0]?.cells ?? [], (cell) =>
-    cell.textContent.replaceAll(/s+/gu, " ").trim(),
-  );
+  const headers = tableHeaders(table);
   const rows = Array.from(table.tBodies).flatMap((body) => Array.from(body.rows));
   return names.flatMap((name) => {
     const index = headers.indexOf(name);
@@ -225,9 +233,7 @@ const onPanel =
 /** 表の中身と印から系列を作る。印の列が表にないときや、点が 2 つ未満の線は警告にする。 */
 export function chartFromTable(table: HTMLTableElement, spec: ChartSpec): TableChart {
   const warnings: string[] = [];
-  const headers = Array.from(table.tHead?.rows[0]?.cells ?? [], (cell) =>
-    cell.textContent.replaceAll(/\s+/gu, " ").trim(),
-  );
+  const headers = tableHeaders(table);
   const rows = Array.from(table.tBodies).flatMap((body) =>
     Array.from(body.rows, (row) => Array.from(row.cells, (cell) => cell.textContent)),
   );
