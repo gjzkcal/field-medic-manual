@@ -437,6 +437,7 @@ describe("ChatPanel", () => {
         result: {
           kind: "chart_create",
           error: null,
+          // expect.stringContaining の戻り値の型は any。そのまま入れると any の代入になるので unknown にする
           summary: expect.stringContaining(
             "心拍数（bpm）: 経過 0 s で 80 bpm、経過 120 s で 120 bpm",
           ) as unknown,
@@ -481,6 +482,7 @@ describe("ChatPanel", () => {
       result: {
         kind: "chart_create",
         summary: "",
+        // expect.stringContaining の戻り値の型は any。そのまま入れると any の代入になるので unknown にする
         error: expect.stringContaining("A（id: c1）") as unknown,
       },
     });

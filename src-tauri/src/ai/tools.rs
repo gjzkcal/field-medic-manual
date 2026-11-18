@@ -434,6 +434,11 @@ pub fn chart_create_request(input: &serde_json::Value) -> Result<ClientRequest, 
                 "values の {n} 個目: x と y は絶対値が {MAX_CHART_VALUE:e} までの数にしてください"
             ));
         }
+        // -0.0 を 0.0 にそろえる。total_cmp は 2 つを別の値として並べるが、画面は同じ x として扱うので、
+        // そろえないと下の重複の検査をすり抜けて、片方の点が消える
+        for point in &mut values.points {
+            point.x += 0.0;
+        }
         values.points.sort_by(|a, b| a.x.total_cmp(&b.x));
         // 同じ x に 2 つの値があると、線がどちらを通るか決まらない
         if values
@@ -673,6 +678,11 @@ mod tests {
         assert!(
             err(&|v| v["values"][0]["points"] = json!([{"x": 1, "y": 1}, {"x": 1, "y": 2}]))
                 .contains("同じ x")
+        );
+        assert!(
+            err(&|v| v["values"][0]["points"] = json!([{"x": -0.0, "y": 1}, {"x": 0.0, "y": 2}]))
+                .contains("同じ x"),
+            "符号の違うゼロも同じ x として止める"
         );
         assert!(err(&|v| v["values"][0]["points"][0]["y"] = json!(1e10)).contains("絶対値"));
         assert!(
