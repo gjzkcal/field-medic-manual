@@ -243,6 +243,13 @@ export function chartFromTable(table: HTMLTableElement, spec: ChartSpec): TableC
       warnings.push(`列「${name}」が表にありません（表の列: ${headers.join(", ")}）`);
       return null;
     }
+    // 同じ見出しの列が 2 つあると、どちらを指したか決められない。先頭を使うと、意図と違う列の線になる
+    if (headers.includes(name, index + 1)) {
+      warnings.push(
+        `列「${name}」が表に 2 つ以上あります（表の列: ${headers.join(", ")}）。見出しを区別できる表だけをグラフにできます`,
+      );
+      return null;
+    }
     return index;
   };
 

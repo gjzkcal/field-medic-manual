@@ -191,6 +191,22 @@ describe("グラフになっていない表", () => {
       "グラフになっていない表がありません",
     );
   });
+
+  it("同じ見出しの列が 2 つある表は、先頭の列を使わずに理由を返す", () => {
+    const twice = `<table><thead><tr><th>経過</th><th>圧</th><th>圧</th></tr></thead>
+<tbody><tr><td>0 s</td><td>10 kPa</td><td>90 kPa</td></tr><tr><td>30 s</td><td>20 kPa</td><td>80 kPa</td></tr></tbody></table>`;
+    expect(sectionPart(target(["圧"], "経過"), scope(twice))).toContain(
+      "列「圧」が表に 2 つ以上あります（表の列: 経過, 圧, 圧）",
+    );
+    // 指していない列が重なっているだけなら、使える
+    const other = `<table><thead><tr><th>経過</th><th>脈</th><th>圧</th><th>圧</th></tr></thead>
+<tbody><tr><td>0 s</td><td>60 bpm</td><td>10 kPa</td><td>90 kPa</td></tr>
+<tr><td>30 s</td><td>70 bpm</td><td>20 kPa</td><td>80 kPa</td></tr></tbody></table>`;
+    expect(part(sectionPart(target(["脈"], "経過"), scope(other))).lines[0]?.points).toStrictEqual([
+      { x: 0, y: 60 },
+      { x: 30, y: 70 },
+    ]);
+  });
 });
 
 /** 「量」と「心拍数」の列の表。 */
