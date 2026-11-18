@@ -4,7 +4,6 @@
 import type { ChartLine, ChartPart } from "@/features/chat/chat-chart";
 import {
   chartFromTable,
-  mixedUnitColumns,
   readChartPayload,
   tableHeaders,
   type ChartData,
@@ -168,7 +167,7 @@ function fromTables(
   }
   // 原稿のグラフは作者が目で確かめているが、ここで選んだ表は誰も確かめていない。
   // 単位の違う値（500 mL と 1 L）を同じ軸に並べると、大小が逆に見える
-  const mixed = mixedUnitColumns(picked.table, [target.x, ...target.lines]);
+  const mixed = picked.chart.mixedUnits;
   if (mixed.length > 0) {
     const detail = mixed.map((m) => `「${m.name}」（${m.units.join("、")}）`).join("、");
     return `${target.source} の表は、列の中で単位が混ざっているので線にできません: ${detail}`;

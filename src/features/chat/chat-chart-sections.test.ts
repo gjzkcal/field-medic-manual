@@ -286,6 +286,26 @@ describe("どれを指したか決められないとき", () => {
       ],
     );
   });
+
+  it("点にならない行の単位は数えない（線に出ない値のせいで、使える表を断らない）", () => {
+    // 横軸が「—」の行は点にならない。その行の心拍数の単位（%）は、線の単位にも混在の検査にも入れない
+    const usable = amountTable(
+      "<tr><td>500 mL</td><td>80 bpm</td></tr><tr><td>1000 mL</td><td>110 bpm</td></tr><tr><td>—</td><td>50 %</td></tr>",
+    );
+    const [line] = part(sectionPart(target(["心拍数"], "量"), scope(usable))).lines;
+    expect(line?.unit).toBe("bpm");
+    expect(line?.points).toStrictEqual([
+      { x: 500, y: 80 },
+      { x: 1000, y: 110 },
+    ]);
+    // 点になる行の中で混ざっていれば、縦の列でも断る
+    const mixed = amountTable(
+      "<tr><td>500 mL</td><td>80 bpm</td></tr><tr><td>1000 mL</td><td>50 %</td></tr>",
+    );
+    expect(sectionPart(target(["心拍数"], "量"), scope(mixed))).toContain(
+      "単位が混ざっているので線にできません: 「心拍数」（bpm、%）",
+    );
+  });
 });
 
 function section(
