@@ -57,9 +57,9 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: taiki-e/install-action@c509219cf42fba86913069efd0ade2458c59337b # v2.90.1
+      - uses: taiki-e/install-action@ab49d3c64680143e184118bed66a46419fc15519 # v2.90.5
         with:
-          tool: cargo-audit@0.22.2
+          tool: cargo-audit@0.23.0
 
       # src-tauri の中で動かすと rust-toolchain.toml の版を入れ始めるので、ルートから lockfile を指定する。
       # 脆弱性があれば失敗し、メンテ終了などの警告は表示だけにする（cargo audit の既定）
