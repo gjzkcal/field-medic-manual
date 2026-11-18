@@ -65,6 +65,7 @@ function line(label: string, axis: string, unit: string | null = null): ChartLin
     unit,
     xLabel: "経過",
     xUnit: "s",
+    origin: "テストの線",
     points: [
       { x: 0, y: 1 },
       { x: 10, y: 2 },
@@ -217,8 +218,12 @@ describe("負傷者の記録", () => {
 
 describe("原稿の節の線", () => {
   const manual: ChartPart = {
-    kind: "manual",
-    lines: [{ ...line("濃度（モルヒネ）", "unit:nM", "nM"), xLabel: "経過" }],
+    lines: [
+      {
+        ...line("濃度（モルヒネ）", "unit:nM", "nM"),
+        origin: "原稿「モルヒネ > 濃度の推移」のグラフの値",
+      },
+    ],
     condition: "原稿「モルヒネ > 濃度の推移」のグラフの線: 濃度",
     source: { title: "モルヒネ > 濃度の推移", docId: "doc-morphine", anchor: "濃度の推移" },
   };
@@ -247,8 +252,13 @@ describe("原稿の節の線", () => {
     ]);
     expect(chart.sources).toStrictEqual([manual.source]);
     // AI が、計算した値と原稿の値を取り違えないように、線ごとの出どころを返す
-    expect(summary).toContain("- モルヒネ（2 本）: アプリの計算");
-    expect(summary).toContain("- 濃度（モルヒネ）: 原稿の節のグラフ・表の値");
+    // 値と出どころは同じ行に書く（名前の同じ線があっても対応が取れるように）
+    expect(summary).toMatch(
+      /^- モルヒネ（2 本）（nM）: 経過 0 s で 0 nM、.+。［値の出どころ: アプリの計算］$/mu,
+    );
+    expect(summary).toContain(
+      "- 濃度（モルヒネ）（nM）: 経過 0 s で 1 nM、経過 10 s で 2 nM。［値の出どころ: 原稿「モルヒネ > 濃度の推移」のグラフの値］",
+    );
     expect(summary).toContain("- 原稿「モルヒネ > 濃度の推移」のグラフの線: 濃度");
   });
 
@@ -370,6 +380,21 @@ describe("composeChart", () => {
     }
     expect(same.data.xLabel).toBe("付けてからの時間");
     expect(mixed.data.xLabel).toBe("経過");
+  });
+
+  it("同じ線に、横軸が同じ点が 2 つあれば止める（別の線どうしなら同じ横軸でよい）", () => {
+    const twice = {
+      ...line("a", "x"),
+      points: [
+        { x: 60, y: 80 },
+        { x: 60, y: 120 },
+        { x: 90, y: 100 },
+      ],
+    };
+    expect(composeChart("題", [twice])).toBe(
+      "「a」に、横軸が同じ点が 2 つあります（経過 60 s）。横軸ごとに 1 点の線だけをグラフにできます",
+    );
+    expect(typeof composeChart("題", [line("a", "x"), line("b", "x")])).toBe("object");
   });
 
   it("線が 6 本・量が 3 種類・点が 1 つなら、理由を返す", () => {

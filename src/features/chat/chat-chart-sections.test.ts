@@ -100,6 +100,7 @@ describe("節のグラフ", () => {
         unit: "%",
         xLabel: "経過",
         xUnit: "s",
+        origin: "原稿「酸素マスク > 効果」のグラフの値",
         points: [
           { x: 0, y: 97.15 },
           { x: 10, y: 98.05 },
@@ -112,6 +113,7 @@ describe("節のグラフ", () => {
         unit: "kPa",
         xLabel: "経過",
         xUnit: "s",
+        origin: "原稿「酸素マスク > 効果」のグラフの値",
         // 値のない点は飛ばす
         points: [
           { x: 0, y: 13.3 },
@@ -137,7 +139,11 @@ describe("節のグラフ", () => {
   it("配下の節にある、表のないグラフも探す", () => {
     const child = `<figure ${chartAttribute(CONCENTRATION)}></figure>`;
     const made = part(sectionPart(target(["濃度"]), scope("<p>親の節</p>", child)));
-    expect(made.lines[0]).toMatchObject({ label: "濃度（酸素マスク）", axis: "unit:nM" });
+    expect(made.lines[0]).toMatchObject({
+      label: "濃度（酸素マスク）",
+      axis: "unit:nM",
+      origin: "原稿「酸素マスク > 小見出し 1」のグラフの値",
+    });
   });
 
   it("ない線は、使える線の名前と表の列を添えて理由を返す", () => {
@@ -164,6 +170,8 @@ describe("グラフになっていない表", () => {
         unit: "bpm",
         xLabel: "血液",
         xUnit: "%",
+        // 値を取ったのは配下の節。指した節ではなく、実際の節を返す
+        origin: "原稿「酸素マスク > 小見出し 1」の表の値",
         // 表は血液の多い順に並んでいるが、線の点は横軸の小さい順にする
         points: [
           { x: 60, y: 140 },
@@ -179,11 +187,16 @@ describe("グラフになっていない表", () => {
     const message = sectionPart(target(["血圧"], "血液"), scope(PLAIN_TABLE));
     expect(message).toContain("表から線を作れませんでした");
     expect(message).toContain("列「血圧」が表にありません（表の列: 血液, 心拍数, 状態）");
-    expect(sectionPart(target(["心拍数"], "血液"), scope("<p>文だけ</p>"))).toBe(
-      `${SOURCE} に表がありません`,
+    expect(sectionPart(target(["心拍数"], "血液"), scope("<p>文だけ</p>"))).toContain(
+      "グラフになっていない表がありません",
     );
   });
 });
+
+/** 「量」と「心拍数」の列の表。 */
+function amountTable(rows: string): string {
+  return `<table><thead><tr><th>量</th><th>心拍数</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
 
 describe("どれを指したか決められないとき", () => {
   const chart = `<figure ${chartAttribute(CONCENTRATION)}></figure>`;
@@ -203,10 +216,53 @@ describe("どれを指したか決められないとき", () => {
     ]);
   });
 
-  it("列の合う表が複数あれば、最初の表を使わずに節を選び直させる", () => {
-    const message = sectionPart(target(["心拍数"], "血液"), scope(PLAIN_TABLE, PLAIN_TABLE));
+  it("指した節そのものに 1 本だけあれば、配下の節に同じ名前があってもそれを使う", () => {
+    const made = part(sectionPart(target(["濃度"]), scope(chart, chart)));
+    expect(made.lines.map((l) => l.origin)).toStrictEqual([
+      "原稿「酸素マスク > 効果」のグラフの値",
+    ]);
+  });
+
+  it("列の合う表が配下の節に複数あれば、最初の表を使わずに節を選び直させる", () => {
+    const message = sectionPart(
+      target(["心拍数"], "血液"),
+      scope("<p>親</p>", PLAIN_TABLE, PLAIN_TABLE),
+    );
     expect(message).toBe(
-      `${SOURCE} には、列の合う表が 2 つあります（節: 「効果」、「小見出し 1」）。使う表のある節の source を指定してください`,
+      `${SOURCE} には、列の合う表が 2 つあります（節: 「小見出し 1」、「小見出し 2」）。使う表のある節の source を指定してください`,
+    );
+    // 指した節そのものの表は、配下に同じ列の表があっても選べる
+    const made = part(sectionPart(target(["心拍数"], "血液"), scope(PLAIN_TABLE, PLAIN_TABLE)));
+    expect(made.lines[0]?.origin).toBe("原稿「酸素マスク > 効果」の表の値");
+  });
+
+  it("表を使う指定では、グラフ付きの表を候補にしない", () => {
+    // グラフ付きの表にも「血液」「心拍数」の列があるが、こちらは節のグラフの線として使うもの
+    const charted = PLAIN_TABLE.replace("<table>", `<table ${chartAttribute(MASK)}>`);
+    const made = part(
+      sectionPart(target(["心拍数"], "血液"), scope("<p>親</p>", charted, PLAIN_TABLE)),
+    );
+    expect(made.lines[0]?.origin).toBe("原稿「酸素マスク > 小見出し 2」の表の値");
+    expect(sectionPart(target(["心拍数"], "血液"), scope(charted))).toContain(
+      "グラフになっていない表がありません",
+    );
+  });
+
+  it("列の中で単位が混ざった表は、線にしない（秒と分は秒にそろえるので使える）", () => {
+    const mixed = amountTable(
+      "<tr><td>500 mL</td><td>80 bpm</td></tr><tr><td>1 L</td><td>110 bpm</td></tr>",
+    );
+    expect(sectionPart(target(["心拍数"], "量"), scope(mixed))).toBe(
+      `${SOURCE} の表は、列の中で単位が混ざっているので線にできません: 「量」（mL、L）`,
+    );
+    const time = amountTable(
+      "<tr><td>30 秒</td><td>80 bpm</td></tr><tr><td>2 分</td><td>110 bpm</td></tr>",
+    );
+    expect(part(sectionPart(target(["心拍数"], "量"), scope(time))).lines[0]?.points).toStrictEqual(
+      [
+        { x: 30, y: 80 },
+        { x: 120, y: 110 },
+      ],
     );
   });
 });

@@ -183,6 +183,34 @@ function commonUnit(cells: (ChartCell | null)[]): string | null {
   return units.size === 1 && only !== undefined ? only : null;
 }
 
+/**
+ * 表の列のうち、点になるセルの単位が 2 種類以上あるもの（`500 mL` と `1 L` など。秒と分は秒にそろえるので数えない）。
+ * 原稿のグラフは作者が描いた結果を見て確かめるが、作者の見ていない表を線にするときは、
+ * 単位の違う値を同じ軸に並べて大小が逆に見えるのを、先に止める必要がある
+ */
+export function mixedUnitColumns(
+  table: HTMLTableElement,
+  names: readonly string[],
+): { name: string; units: string[] }[] {
+  const headers = Array.from(table.tHead?.rows[0]?.cells ?? [], (cell) =>
+    cell.textContent.replaceAll(/s+/gu, " ").trim(),
+  );
+  const rows = Array.from(table.tBodies).flatMap((body) => Array.from(body.rows));
+  return names.flatMap((name) => {
+    const index = headers.indexOf(name);
+    if (index === -1) {
+      return [];
+    }
+    const units = new Set(
+      rows.flatMap((row) => {
+        const unit = readCell(row.cells[index]?.textContent ?? "")?.unit;
+        return typeof unit === "string" ? [unit] : [];
+      }),
+    );
+    return units.size > 1 ? [{ name, units: [...units] }] : [];
+  });
+}
+
 export interface TableChart {
   data: ChartData;
   /** data.points と同じ並びで、値ごとに許す丸めの差（表の桁の半分） */

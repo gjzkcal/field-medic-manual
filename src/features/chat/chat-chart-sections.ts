@@ -2,7 +2,12 @@
 // 値は節の HTML にあるものをそのまま使う（AI に数値を書き写させると、桁や行を取り違えた線が出るため）。
 // chat-chart.ts と分けてあるのは、グラフの形の検査（zod）を、節の線を使うときだけ読み込むため。
 import type { ChartLine, ChartPart } from "@/features/chat/chat-chart";
-import { chartFromTable, readChartPayload, type ChartData } from "@/features/content/chart";
+import {
+  chartFromTable,
+  mixedUnitColumns,
+  readChartPayload,
+  type ChartData,
+} from "@/features/content/chart";
 import { findDocByFile } from "@/features/content/link-target";
 import { meetsModConditions } from "@/features/settings/mod-conditions";
 import { parseFlowLink } from "@/features/triage/links";
@@ -21,18 +26,30 @@ export interface SectionScope {
   sections: readonly { title: string; html: string }[];
 }
 
-interface NamedLine {
+/** 線や表のあった節。 */
+interface Place {
+  /** 節の見出し */
+  section: string;
+  /** AI が指した節そのものか（配下の節ではなく） */
+  head: boolean;
+}
+
+interface NamedLine extends Place {
   /** 原稿での線の名前（表の列の見出し） */
   name: string;
-  /** 線のあった節の見出し */
-  section: string;
   line: ChartLine;
 }
 
-function namedLines(data: ChartData, docTitle: string, section: string): NamedLine[] {
+function namedLines(
+  data: ChartData,
+  docTitle: string,
+  place: Place,
+  kind: "グラフ" | "表",
+): NamedLine[] {
   return data.series.map((series) => ({
+    section: place.section,
+    head: place.head,
     name: series.label,
-    section,
     line: {
       // どの原稿の線かが凡例で分かるようにする（別の原稿の同じ名前の線と重ねて比べるため）
       label: `${series.label}（${docTitle}）`,
@@ -40,6 +57,8 @@ function namedLines(data: ChartData, docTitle: string, section: string): NamedLi
       unit: series.unit,
       xLabel: data.xLabel,
       xUnit: data.xUnit,
+      // 値を実際に取った節（指した節の配下のこともある）。AI が引用する節を取り違えないように返す
+      origin: `原稿「${docTitle} > ${place.section}」の${kind}の値`,
       points: data.points.flatMap((p) => {
         const y = p.values[series.key];
         return y === undefined ? [] : [{ x: p.x, y }];
@@ -51,14 +70,15 @@ function namedLines(data: ChartData, docTitle: string, section: string): NamedLi
 /**
  * 凡例の名前が重なる線には、節の見出しも付ける（同じ原稿の別の節の、同じ名前の線を見分けるため）。
  * 重なるときだけにするのは、いつも付けると凡例が長くなって線が読みにくくなるため。
+ * @param all 重なりを見る範囲（別々の指定で取った線も含める）
  */
-function withDistinctLabels(lines: readonly NamedLine[], docTitle: string): NamedLine[] {
-  const count = new Map<string, number>();
-  for (const { line } of lines) {
-    count.set(line.label, (count.get(line.label) ?? 0) + 1);
-  }
+function withDistinctLabels(
+  lines: readonly NamedLine[],
+  all: readonly NamedLine[],
+  docTitle: string,
+): NamedLine[] {
   return lines.map((named) =>
-    (count.get(named.line.label) ?? 0) > 1
+    all.some((other) => other !== named && other.line.label === named.line.label)
       ? {
           ...named,
           line: { ...named.line, label: `${named.name}（${docTitle} > ${named.section}）` },
@@ -73,19 +93,20 @@ function tableHeaders(table: HTMLTableElement): string[] {
   );
 }
 
-interface ParsedSection {
-  title: string;
+interface ParsedSection extends Place {
   doc: Document;
 }
 
-interface SectionTable {
-  section: string;
+interface SectionTable extends Place {
   table: HTMLTableElement;
 }
 
-function tablesOf(sections: readonly ParsedSection[]): SectionTable[] {
-  return sections.flatMap(({ title, doc }) =>
-    Array.from(doc.querySelectorAll("table"), (table) => ({ section: title, table })),
+/** グラフになっていない表。グラフ付きの表は、節のグラフの線として（x を空にして）使う */
+function plainTables(sections: readonly ParsedSection[]): SectionTable[] {
+  return sections.flatMap(({ section, head, doc }) =>
+    Array.from(doc.querySelectorAll("table"))
+      .filter((table) => !Object.hasOwn(table.dataset, "chart"))
+      .map((table) => ({ section, head, table })),
   );
 }
 
@@ -95,12 +116,24 @@ function quoted(names: readonly string[]): string {
 
 /** グラフになっていない表の列の一覧（AI が x と lines を書き直せるように返す）。 */
 function plainTablesHint(tables: readonly SectionTable[]): string {
-  const plain = tables.filter(({ table }) => !Object.hasOwn(table.dataset, "chart"));
-  if (plain.length === 0) {
+  if (tables.length === 0) {
     return "";
   }
-  const columns = plain.map(({ table }) => `[${tableHeaders(table).join(", ")}]`).join("、");
+  const columns = tables.map(({ table }) => `[${tableHeaders(table).join(", ")}]`).join("、");
   return `グラフになっていない表の列: ${columns}。表を使うときは、x に横軸の列、lines に縦の列の見出しを書いてください`;
+}
+
+/**
+ * 候補が複数あるときに 1 つに決める。指した節そのものに 1 つだけあれば、それを使う
+ * （配下の節にも同じ名前があるとき、親の節を指せば親のものを選べるようにするため）。決められなければ null
+ */
+function pickOne<T extends Place>(found: readonly T[]): T | null {
+  const [first] = found;
+  if (first === undefined || found.length === 1) {
+    return first ?? null;
+  }
+  const inHead = found.filter((f) => f.head);
+  return inHead.length === 1 ? (inHead[0] ?? null) : null;
 }
 
 /** 表の列から線を作る。 */
@@ -110,11 +143,11 @@ function fromTables(
   docTitle: string,
 ): NamedLine[] | string {
   if (tables.length === 0) {
-    return `${target.source} に表がありません`;
+    return `${target.source} に、グラフになっていない表がありません。節のグラフの線を使うときは、x を空にしてください`;
   }
-  const tried = tables.map(({ section, table }) => ({
-    section,
-    chart: chartFromTable(table, {
+  const tried = tables.map((place) => ({
+    ...place,
+    chart: chartFromTable(place.table, {
       x: target.x,
       y: target.lines,
       y2: [],
@@ -127,18 +160,25 @@ function fromTables(
   const usable = tried.filter(
     ({ chart }) => chart.warnings.length === 0 && chart.data.series.length > 0,
   );
-  const only = usable[0];
-  if (only === undefined) {
+  if (usable.length === 0) {
     const reasons = tried.map(
       ({ chart }, i) => `表 ${String(i + 1)}: ${chart.warnings.join("。")}`,
     );
     return `${target.source} の表から線を作れませんでした。${reasons.join(" ／ ")}`;
   }
+  const picked = pickOne(usable);
   // 黙って最初の表を使うと、意図と違う表の値のグラフになる
-  if (usable.length > 1) {
+  if (picked === null) {
     return `${target.source} には、列の合う表が ${String(usable.length)} つあります（節: ${quoted(usable.map((u) => u.section))}）。使う表のある節の source を指定してください`;
   }
-  return namedLines(only.chart.data, docTitle, only.section);
+  // 原稿のグラフは作者が目で確かめているが、ここで選んだ表は誰も確かめていない。
+  // 単位の違う値（500 mL と 1 L）を同じ軸に並べると、大小が逆に見える
+  const mixed = mixedUnitColumns(picked.table, [target.x, ...target.lines]);
+  if (mixed.length > 0) {
+    const detail = mixed.map((m) => `「${m.name}」（${m.units.join("、")}）`).join("、");
+    return `${target.source} の表は、列の中で単位が混ざっているので線にできません: ${detail}`;
+  }
+  return namedLines(picked.chart.data, docTitle, picked, "表");
 }
 
 /** 節のグラフ（原稿で作者がグラフにしたもの）から線を選ぶ。 */
@@ -147,12 +187,14 @@ function fromCharts(
   sections: readonly ParsedSection[],
   docTitle: string,
 ): NamedLine[] | string {
-  const tables = tablesOf(sections);
-  const all = sections.flatMap(({ title, doc }) =>
+  const tables = plainTables(sections);
+  const all = sections.flatMap(({ section, head, doc }) =>
     Array.from(doc.querySelectorAll<HTMLElement>("table[data-chart], figure[data-chart]")).flatMap(
       (element) => {
         const payload = readChartPayload(element.dataset["chart"] ?? "");
-        return payload === null ? [] : namedLines(payload.data, docTitle, title);
+        return payload === null
+          ? []
+          : namedLines(payload.data, docTitle, { section, head }, "グラフ");
       },
     ),
   );
@@ -169,14 +211,14 @@ function fromCharts(
   const missing: string[] = [];
   for (const wanted of target.lines) {
     const found = all.filter((l) => matches(wanted, l));
-    const only = found[0];
-    if (only === undefined) {
+    const picked = pickOne(found);
+    if (found.length === 0) {
       missing.push(wanted);
-    } else if (found.length > 1) {
+    } else if (picked === null) {
       // どれを指したのか決められない。全部を返すと、頼んでいない線が混ざる
       return `${target.source} には「${wanted}」という線が ${String(found.length)} 本あります（節: ${quoted(found.map((f) => f.section))}）。使う線のある節の source を指定してください`;
-    } else if (!chosen.includes(only)) {
-      chosen.push(only);
+    } else if (!chosen.includes(picked)) {
+      chosen.push(picked);
     }
   }
   if (missing.length > 0) {
@@ -189,19 +231,19 @@ function fromCharts(
 }
 
 function chosenLines(target: ChartSection, scope: SectionScope): NamedLine[] | string {
-  const sections = scope.sections.map(({ title, html }) => ({
-    title,
+  const sections = scope.sections.map(({ title, html }, index) => ({
+    section: title,
+    head: index === 0,
     doc: new DOMParser().parseFromString(html, "text/html"),
   }));
   return target.x === ""
     ? fromCharts(target, sections, scope.docTitle)
-    : fromTables(target, tablesOf(sections), scope.docTitle);
+    : fromTables(target, plainTables(sections), scope.docTitle);
 }
 
 function toPart(target: ChartSection, scope: SectionScope, found: readonly NamedLine[]): ChartPart {
   const title = `${scope.docTitle} > ${scope.title}`;
   return {
-    kind: "manual",
     lines: found.map((l) => l.line),
     condition: `原稿「${title}」の${target.x === "" ? "グラフ" : "表"}の線: ${found.map((l) => l.name).join("、")}`,
     source: { title, docId: scope.docId, anchor: scope.anchor },
@@ -213,7 +255,7 @@ export function sectionPart(target: ChartSection, scope: SectionScope): ChartPar
   const found = chosenLines(target, scope);
   return typeof found === "string"
     ? found
-    : toPart(target, scope, withDistinctLabels(found, scope.docTitle));
+    : toPart(target, scope, withDistinctLabels(found, found, scope.docTitle));
 }
 
 /**
@@ -272,15 +314,7 @@ export async function loadSectionParts(
   }
   // 名前の重なりは、指定をまたいで見る（同じ原稿の別の節を 2 つ指したときも見分けられるように）
   const all = found.flatMap((f) => f.lines);
-  return found.map(({ target, scope, lines }) => {
-    const distinct = lines.map((named) =>
-      all.some((other) => other !== named && other.line.label === named.line.label)
-        ? {
-            ...named,
-            line: { ...named.line, label: `${named.name}（${scope.docTitle} > ${named.section}）` },
-          }
-        : named,
-    );
-    return toPart(target, scope, distinct);
-  });
+  return found.map(({ target, scope, lines }) =>
+    toPart(target, scope, withDistinctLabels(lines, all, scope.docTitle)),
+  );
 }

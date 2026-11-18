@@ -31,6 +31,15 @@ pub struct CorpusSection {
     pub has_chart: bool,
 }
 
+impl CorpusSection {
+    /// `chart_create` で線を使えるグラフがあるか。見出しのない導入部（level 0）は、
+    /// 画面が見出しのある節から配下を探すので使えない。使えないものを AI に「グラフあり」と見せない
+    #[must_use]
+    pub const fn has_usable_chart(&self) -> bool {
+        self.has_chart && self.level > 0
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct CorpusDoc {
     /// 原稿のファイル名（`hemorrhage.md`）
@@ -602,6 +611,18 @@ mod tests {
             Some("Circulation あり・Breathing なし")
         );
         assert_eq!(condition_label(&[], &[]), None);
+    }
+
+    #[test]
+    fn charts_in_the_introduction_are_not_offered() {
+        let mut heading = fixtures::section(2, 1, "効き方", "");
+        heading.has_chart = true;
+        assert!(heading.has_usable_chart());
+        // 導入部の source（doc:<ファイル名>）は chart_create が受けないので、使えると見せない
+        let mut intro = fixtures::section(1, 0, "出血", "");
+        intro.has_chart = true;
+        assert!(!intro.has_usable_chart());
+        assert!(!fixtures::section(3, 1, "表だけ", "").has_usable_chart());
     }
 
     #[test]

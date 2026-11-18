@@ -536,7 +536,7 @@ fn section_doc(doc: &CorpusDoc, section: &CorpusSection, max_chars: usize) -> So
     if section.has_figure {
         notes.push("図あり".to_owned());
     }
-    if section.has_chart {
+    if section.has_usable_chart() {
         notes.push("グラフあり".to_owned());
     }
     let mut lines = paragraphs(&section.text, max_chars);

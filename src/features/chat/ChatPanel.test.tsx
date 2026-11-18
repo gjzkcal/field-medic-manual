@@ -1,7 +1,8 @@
 import { Channel } from "@tauri-apps/api/core";
 import { clearMocks, mockIPC } from "@tauri-apps/api/mocks";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import type { JSX } from "react";
+import { createMemoryRouter, RouterProvider, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -206,11 +207,21 @@ function mockBackend(options: {
   return backend;
 }
 
+/** 原稿のビューアの代わり。どの文書のどの節へ移ったかを、テストで確かめられるように出す */
+function ViewerStub(): JSX.Element {
+  const location = useLocation();
+  return (
+    <p>
+      ビューア {location.pathname} {decodeURIComponent(location.hash)}
+    </p>
+  );
+}
+
 function renderPanel(): void {
   const router = createMemoryRouter(
     [
       { path: "/", element: <ChatPanelHost /> },
-      { path: "/doc/:id", element: <p>ビューア</p> },
+      { path: "/doc/:id", element: <ViewerStub /> },
     ],
     { initialEntries: ["/"] },
   );
@@ -567,13 +578,9 @@ describe("ChatPanel", () => {
       });
       expect(await screen.findByText("原稿「止血帯 > 巻く」のグラフの線: 圧")).toBeTruthy();
       // 節へ移るリンク（別のタブで開く・リンク先をコピーする操作ができるよう、ボタンではなくリンクにしている）
-      const link = screen.getByRole("link", { name: "止血帯 > 巻く を開く" });
-      // 線を取った文書の、AI が指した節へ移る（別の文書や、節のない URL でも「ビューア」は出るので、行き先を確かめる）
-      const href = new URL(link.getAttribute("href") ?? "", "http://localhost");
-      expect(href.pathname).toBe("/doc/doc-tq");
-      expect(decodeURIComponent(href.hash)).toBe("#巻く");
-      fireEvent.click(link);
-      expect(await screen.findByText("ビューア")).toBeTruthy();
+      fireEvent.click(screen.getByRole("link", { name: "止血帯 > 巻く を開く" }));
+      // 押した後に、線を取った文書の、AI が指した節へ移っていること
+      expect(await screen.findByText("ビューア /doc/doc-tq #巻く")).toBeTruthy();
     },
     CONVERT_TIMEOUT_MS * 2,
   );

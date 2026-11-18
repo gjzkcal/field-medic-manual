@@ -153,7 +153,7 @@ pub fn index(corpus: &Corpus) -> String {
             if section.has_figure {
                 fields.push("図あり".to_owned());
             }
-            if section.has_chart {
+            if section.has_usable_chart() {
                 fields.push("グラフあり".to_owned());
             }
             let lead = lead(&section.text);
