@@ -29,6 +29,8 @@ pub struct CorpusSection {
     pub has_figure: bool,
     /// グラフがある（`chart_create` で線を使える）
     pub has_chart: bool,
+    /// 節のグラフの線の名前。AI が `chart_create` の lines に書けるように見せる。読めなければ空
+    pub chart_lines: Vec<String>,
 }
 
 impl CorpusSection {
@@ -208,7 +210,8 @@ pub fn load(conn: &Connection) -> Result<Corpus, AppError> {
         "SELECT document_id, id, level, title, anchor, plain_text, keywords, mods, without_mods,
            instr(html, 'data-chart') > 0 OR instr(html, 'data-flowchart') > 0
              OR instr(html, 'data-asset-id') > 0,
-           instr(html, ' data-chart=') > 0
+           instr(html, ' data-chart=') > 0,
+           CASE WHEN instr(html, ' data-chart=') > 0 THEN html END
          FROM sections ORDER BY document_id, order_index",
     )?;
     let rows = stmt.query_map([], |r| {
@@ -226,6 +229,10 @@ pub fn load(conn: &Connection) -> Result<Corpus, AppError> {
                 without_mods: json_column(r, 8)?,
                 has_figure: r.get(9)?,
                 has_chart: r.get(10)?,
+                chart_lines: r
+                    .get::<_, Option<String>>(11)?
+                    .map(|html| chart_line_names(&html))
+                    .unwrap_or_default(),
             },
         ))
     })?;
@@ -426,6 +433,44 @@ fn node_line(id: &str, node: &Value) -> String {
     }
 }
 
+/// 節の HTML にあるグラフ（`data-chart` の JSON）から、線の名前を本文の順に取る。
+///
+/// NOTE: HTML の解析器を入れず、属性の値を文字列として切り出す。AI への手がかりにしか使わないので、
+/// 依存を増やすほどの正確さは要らない（読めなければ名前なしの「グラフあり」に落ち、画面が線の一覧を返す）。
+/// 原稿の HTML は変換が直列化したもので、属性は二重引用符で囲まれ、値の中の `"` は `&quot;` になっている。
+/// だから次の `"` までが値で、実体参照を戻せば JSON になる。
+fn chart_line_names(html: &str) -> Vec<String> {
+    const ATTR: &str = " data-chart=\"";
+    let mut names: Vec<String> = Vec::new();
+    let mut rest = html;
+    while let Some(start) = rest.find(ATTR) {
+        rest = &rest[start + ATTR.len()..];
+        let Some(end) = rest.find('"') else { break };
+        // `&amp;` を最後に戻す。先に戻すと、値にあった `&amp;quot;`（文字としての `&quot;`）が `"` に化ける
+        let json = rest[..end]
+            .replace("&quot;", "\"")
+            .replace("&lt;", "<")
+            .replace("&gt;", ">")
+            .replace("&nbsp;", "\u{a0}")
+            .replace("&amp;", "&");
+        rest = &rest[end..];
+        let Ok(payload) = serde_json::from_str::<serde_json::Value>(&json) else {
+            continue;
+        };
+        let labels = payload["data"]["series"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(|series| series["label"].as_str());
+        for label in labels {
+            if !names.iter().any(|n| n == label) {
+                names.push(label.to_owned());
+            }
+        }
+    }
+    names
+}
+
 fn json_column(row: &rusqlite::Row<'_>, index: usize) -> rusqlite::Result<Vec<ModTarget>> {
     let text: String = row.get(index)?;
     serde_json::from_str(&text).map_err(|e| {
@@ -502,6 +547,7 @@ pub mod fixtures {
             without_mods: Vec::new(),
             has_figure: false,
             has_chart: false,
+            chart_lines: Vec::new(),
         }
     }
 
@@ -625,6 +671,34 @@ mod tests {
         intro.has_chart = true;
         assert!(!intro.has_usable_chart());
         assert!(!fixtures::section(3, 1, "表だけ", "").has_usable_chart());
+    }
+
+    #[test]
+    fn chart_line_names_are_read_from_the_attribute() {
+        let html = concat!(
+            r#"<p>前置き</p><table data-chart="{&quot;spec&quot;:{},&quot;data&quot;:{&quot;series&quot;:["#,
+            r#"{&quot;key&quot;:&quot;s0&quot;,&quot;label&quot;:&quot;血中の酸素&quot;},"#,
+            r#"{&quot;key&quot;:&quot;s1&quot;,&quot;label&quot;:&quot;A &amp; B &lt;nM&gt; &amp;lt;&quot;}]}}"><tr></tr></table>"#,
+            r#"<figure data-chart="{&quot;data&quot;:{&quot;series&quot;:["#,
+            r#"{&quot;label&quot;:&quot;血中の酸素&quot;},{&quot;label&quot;:&quot;肺の酸素&quot;}]}}"></figure>"#,
+        );
+        // 2 つ目のグラフの「血中の酸素」は、同じ名前なので 1 つにまとめる
+        assert_eq!(
+            chart_line_names(html),
+            ["血中の酸素", "A & B <nM> &lt;", "肺の酸素"]
+        );
+    }
+
+    #[test]
+    fn unreadable_charts_give_no_line_names() {
+        for html in [
+            r#"<table data-chart="{壊れた JSON"></table>"#,
+            r#"<table data-chart="{&quot;data&quot;:1}"></table>"#,
+            r#"<table data-chart="閉じていない"#,
+            "<p>data-chart という語だけ</p>",
+        ] {
+            assert_eq!(chart_line_names(html), Vec::<String>::new(), "{html}");
+        }
     }
 
     #[test]

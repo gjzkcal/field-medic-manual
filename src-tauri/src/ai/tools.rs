@@ -537,7 +537,12 @@ fn section_doc(doc: &CorpusDoc, section: &CorpusSection, max_chars: usize) -> So
         notes.push("図あり".to_owned());
     }
     if section.has_usable_chart() {
-        notes.push("グラフあり".to_owned());
+        // 線の名前を見せないと、AI は lines を空で呼ぶしかなく、頼まれていない線までグラフに入る
+        notes.push(if section.chart_lines.is_empty() {
+            "グラフあり".to_owned()
+        } else {
+            format!("グラフあり（線: {}）", section.chart_lines.join("、"))
+        });
     }
     let mut lines = paragraphs(&section.text, max_chars);
     if !notes.is_empty() {
@@ -831,6 +836,29 @@ mod tests {
                 "巻いた時刻を覚える。"
             ]
         );
+    }
+
+    #[test]
+    fn section_notes_name_the_chart_lines() {
+        let doc = &fixtures::corpus().docs[0];
+        let mut section = fixtures::section(9, 2, "効き方", "本文。");
+        section.has_chart = true;
+        section.chart_lines = vec!["血中の酸素".to_owned(), "肺の酸素".to_owned()];
+        assert_eq!(
+            section_doc(doc, &section, 1000).paragraphs[0],
+            "（この節: グラフあり（線: 血中の酸素、肺の酸素））"
+        );
+        // 名前を読めなかったグラフも、グラフがあることは伝える
+        section.chart_lines.clear();
+        assert_eq!(
+            section_doc(doc, &section, 1000).paragraphs[0],
+            "（この節: グラフあり）"
+        );
+        // 導入部のグラフは chart_create が受けないので、線の名前も出さない
+        let mut intro = fixtures::section(1, 0, "出血", "本文。");
+        intro.has_chart = true;
+        intro.chart_lines = vec!["血中の酸素".to_owned()];
+        assert_eq!(section_doc(doc, &intro, 1000).paragraphs[0], "本文。");
     }
 
     #[test]

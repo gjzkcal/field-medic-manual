@@ -391,6 +391,18 @@ async fn run(args: Args) -> Result<(), AppError> {
         corpus.flows.len(),
         prompt::index(&corpus).chars().count()
     );
+    // 線の名前は HTML の属性を文字列として切り出しているので、原稿の変換が変わると読めなくなる。本物の DB で数を見る
+    let charts: Vec<_> = corpus
+        .docs
+        .iter()
+        .flat_map(|d| &d.sections)
+        .filter(|s| s.has_usable_chart())
+        .collect();
+    println!(
+        "グラフのある節: {}（線の名前を読めた節 {}）",
+        charts.len(),
+        charts.iter().filter(|s| !s.chart_lines.is_empty()).count()
+    );
 
     let runs = args.models.len() * args.efforts.len() * cases.len() * args.repeat as usize;
     if args.dry_run {
