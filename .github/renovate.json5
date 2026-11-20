@@ -6,8 +6,12 @@
   // 要るものだけを足す。ワークフローの外部アクションはコミットの SHA で固定し、版をコメントに書いているので、
   // pinGitHubActionDigests で SHA と「# v7.0.1」のコメントを一緒に更新させる
   extends: ["config:recommended", "helpers:pinGitHubActionDigests", ":configMigration"],
-  // 開いたまま残り続ける Issue になるので、ダッシュボードは作らず PR だけを届ける
-  dependencyDashboard: false,
+  dependencyDashboard: {
+    // 開いたまま残り続ける Issue になるので、ダッシュボードは作らず PR だけを届ける
+    enabled: false,
+    // ダッシュボードを止めると、Renovate はこの表題で既存の Issue を探して閉じるので残しておく
+    title: "依存の更新ダッシュボード",
+  },
   timezone: "Asia/Tokyo",
   schedule: ["before 9am on monday"],
   // pnpm 11 は既定で公開から 1 日たっていない版を入れないので、それより若い版を選ぶとロックファイルの更新が失敗する。
@@ -38,8 +42,6 @@
   semanticCommits: "disabled",
   // グループの表題に「(major)」などを足さず、コミットメッセージと同じにする
   prTitleStrict: true,
-  // ダッシュボードを止めると、Renovate はこの表題で既存の Issue を探して閉じるので残しておく
-  dependencyDashboardTitle: "依存の更新ダッシュボード",
   commitMessageAction: "",
   commitMessageTopic: "{{depName}} を",
   commitMessageExtra: "{{#if isPinDigest}}{{{newDigestShort}}}{{else}}{{#if isMajor}}{{prettyNewMajor}}{{else}}{{#if isSingleVersion}}{{prettyNewVersion}}{{else}}{{#if newValue}}{{{newValue}}}{{else}}{{{newDigestShort}}}{{/if}}{{/if}}{{/if}}{{/if}} に更新",
