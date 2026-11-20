@@ -19,6 +19,11 @@ reviews:
     ignore_usernames:
       - "renovate[bot]"
 
+  # 指摘が片付いたことを、PR の一覧で承認の印として見分けられるようにする。
+  # main のルールは承認を求めていないので、印が付くだけでマージは止まらない
+  auto_approvals:
+    enabled: true
+
   path_filters:
     # ts-rs の生成物。CI が Rust から作り直して差分を確かめる
     - "!src/lib/bindings/**"
