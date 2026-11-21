@@ -1,6 +1,6 @@
 import { clearMocks, mockIPC } from "@tauri-apps/api/mocks";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useContentSync } from "@/features/content/sync";
 import { BackupSection } from "@/features/settings/BackupSection";
@@ -302,6 +302,67 @@ describe("BackupSection", () => {
       );
     },
   );
+
+  // 同期が失敗したときは、原稿がそろっているか分からない。そのまま復元すると、行き先の無い項目を捨ててしまう
+  it("マニュアルの準備に失敗したときも、復元を押せない。理由と直し方を出す", async () => {
+    useContentSync.setState({ state: { status: "error", message: "読めませんでした" } });
+    mock({ backup_list: ENTRIES });
+    render(<BackupSection />);
+
+    expect(screen.getByRole("button", { name: "ファイルから復元" })).toHaveProperty(
+      "disabled",
+      true,
+    );
+    const pick = await screen.findByRole("button", {
+      name: "この時点に戻す: 自動 2026/11/20 12:00 JST",
+    });
+    expect(pick).toHaveProperty("disabled", true);
+    expect(
+      screen.getByText(
+        "マニュアルの準備に失敗したので、復元はできません。アプリを起動し直してください。",
+      ),
+    ).toBeDefined();
+  });
+
+  it("確認を開いている間にマニュアルの準備が済んでいない状態になったら、置き換えを押せない", async () => {
+    mock({ backup_list: ENTRIES, backup_open_auto: PREVIEW });
+    render(<BackupSection />);
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "この時点に戻す: 自動 2026/11/20 12:00 JST",
+      }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "バックアップから復元" });
+    const confirm = within(dialog).getByRole("button", { name: "置き換えて再起動" });
+    expect(confirm).toHaveProperty("disabled", false);
+
+    // デバッグの欄から同期し直したとき
+    act(() => {
+      useContentSync.setState({ state: { status: "syncing" } });
+    });
+    expect(confirm).toHaveProperty("disabled", true);
+  });
+
+  // 起動してすぐ設定を開くと、最初の一覧は空。約 1 分後にアプリが 1 つ目を取る
+  it("設定を開いたままでも、アプリが取った新しいバックアップが一覧に出る", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      let taken: BackupEntry[] = [];
+      mock({}, { backup_list: () => taken });
+      render(<BackupSection />);
+      expect(await screen.findByText(/自動のバックアップは、まだありません/u)).toBeDefined();
+
+      taken = ENTRIES;
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30_000);
+      });
+      const list = await screen.findByRole("list", { name: "アプリが取ったバックアップ" });
+      expect(within(list).getAllByRole("listitem")).toHaveLength(2);
+      expect(screen.queryByText(/まだありません/u)).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 
   it("一覧と確認のダイアログに、axe の違反がない（WCAG 2.2 A・AA）", async () => {
     mock({

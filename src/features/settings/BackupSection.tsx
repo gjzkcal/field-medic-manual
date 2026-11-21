@@ -34,6 +34,9 @@ const KIND_LABEL: Record<BackupKind, string> = {
 
 type Notice = { kind: "status" | "alert"; text: string } | null;
 
+/** 一覧を読み直す間隔。設定を開いたままでも、アプリが取った新しいバックアップが出るようにする */
+const LIST_REFRESH_MS = 30_000;
+
 function when(iso: string): string {
   return formatReleaseDate(iso) ?? iso;
 }
@@ -45,9 +48,10 @@ export function BackupSection(): JSX.Element {
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState<BackupPreview | null>(null);
   const [restarting, setRestarting] = useState(false);
-  // 原稿を DB に入れ終わる前に復元すると、お気に入りと履歴の行き先（原稿）が見つからず、戻せない
+  // 原稿を DB に入れ終わる前に復元すると、お気に入りと履歴の行き先（原稿）が見つからず、戻せない。
+  // 同期が失敗したときも、原稿がそろっているかは分からないので、成功するまで復元させない
   const syncStatus = useContentSync((s) => s.state.status);
-  const syncing = syncStatus === "idle" || syncStatus === "syncing";
+  const notReady = syncStatus !== "done";
 
   const fail = useCallback((what: string, cause: unknown) => {
     setNotice({ kind: "alert", text: `${what}: ${errorMessage(cause)}` });
@@ -61,6 +65,13 @@ export function BackupSection(): JSX.Element {
 
   useEffect(() => {
     reload();
+    const timer = window.setInterval(() => {
+      // 定期の読み直しの失敗は知らせない（操作の結果の知らせを、30 秒ごとに上書きしないため）
+      backupList().then(setEntries, () => undefined);
+    }, LIST_REFRESH_MS);
+    return () => {
+      window.clearInterval(timer);
+    };
   }, [reload]);
 
   /** 保存先やファイルを選ぶダイアログが出ている間は、ほかの操作を受けない。 */
@@ -125,7 +136,7 @@ export function BackupSection(): JSX.Element {
         </Button>
         <Button
           variant="outline"
-          disabled={busy || syncing}
+          disabled={busy || notReady}
           onClick={() => {
             handleOpen(backupOpenFile);
           }}
@@ -134,9 +145,11 @@ export function BackupSection(): JSX.Element {
           ファイルから復元
         </Button>
       </div>
-      {syncing && (
+      {notReady && (
         <p className="text-xs text-muted-foreground">
-          マニュアルの準備が終わるまで、復元はできません。
+          {syncStatus === "error"
+            ? "マニュアルの準備に失敗したので、復元はできません。アプリを起動し直してください。"
+            : "マニュアルの準備が終わるまで、復元はできません。"}
         </p>
       )}
       {notice !== null && (
@@ -149,7 +162,7 @@ export function BackupSection(): JSX.Element {
       )}
       <BackupList
         entries={entries}
-        disabled={busy || syncing}
+        disabled={busy || notReady}
         onPick={(id) => {
           handleOpen(() => backupOpenAuto(id));
         }}
@@ -157,6 +170,7 @@ export function BackupSection(): JSX.Element {
       <RestoreDialog
         preview={preview}
         restarting={restarting}
+        blocked={notReady}
         onCancel={() => {
           setPreview(null);
         }}
@@ -215,11 +229,14 @@ function BackupList({
 function RestoreDialog({
   preview,
   restarting,
+  blocked,
   onCancel,
   onConfirm,
 }: {
   preview: BackupPreview | null;
   restarting: boolean;
+  /** 確認を開いている間に、マニュアルの準備が済んでいない状態になった */
+  blocked: boolean;
   onCancel: () => void;
   onConfirm: (token: string) => void;
 }): JSX.Element {
@@ -283,7 +300,7 @@ function RestoreDialog({
           </DialogClose>
           <Button
             variant="destructive"
-            disabled={restarting || preview === null}
+            disabled={restarting || blocked || preview === null}
             onClick={() => {
               if (preview !== null) {
                 onConfirm(preview.token);

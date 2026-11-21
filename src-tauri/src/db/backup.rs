@@ -7,7 +7,7 @@
 //! 同義語の辞書は入れない。編集する画面が無く中身は初期値のままなので、入れると、
 //! 後の版で足した初期値を古いバックアップが消してしまう。負傷者の記録（終了で消す）と API キーも入れない。
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use rusqlite::{Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
@@ -360,17 +360,61 @@ fn check_target(target: &BackupTarget) -> Result<(), AppError> {
 
 /// 日時は画面にそのまま出すので、アプリが書く形（UTC の ISO 8601）だけを受ける。
 fn check_timestamp(text: &str) -> Result<(), AppError> {
-    let ok = text.len() <= MAX_TIMESTAMP_LEN
-        && text.ends_with('Z')
-        && text.contains('T')
-        && text
-            .chars()
-            .all(|c| c.is_ascii_digit() || matches!(c, '-' | ':' | '.' | 'T' | 'Z'));
-    if ok {
+    if text.len() <= MAX_TIMESTAMP_LEN && is_utc_timestamp(text) {
         Ok(())
     } else {
         Err(invalid("バックアップの日時の形が合いません"))
     }
+}
+
+/// `YYYY-MM-DDTHH:MM:SS[.fff…]Z` で、実在する日付と時刻か。
+/// 日時のクレートを増やさずに確かめる（形だけを見ると、`2026-99-99T99:99:99Z` が通ってしまう）。
+fn is_utc_timestamp(text: &str) -> bool {
+    /// `text[range]` が数字だけなら、その数。
+    fn number(text: &str, range: std::ops::Range<usize>) -> Option<u32> {
+        let digits = text.get(range)?;
+        if digits.bytes().all(|b| b.is_ascii_digit()) {
+            digits.parse().ok()
+        } else {
+            None
+        }
+    }
+
+    let Some(body) = text.strip_suffix('Z') else {
+        return false;
+    };
+    let (main, fraction) = body
+        .split_once('.')
+        .map_or((body, None), |(m, f)| (m, Some(f)));
+    let separators = main.len() == 19
+        && [(4, b'-'), (7, b'-'), (10, b'T'), (13, b':'), (16, b':')]
+            .into_iter()
+            .all(|(at, expected)| main.as_bytes().get(at) == Some(&expected));
+    if !separators {
+        return false;
+    }
+    if fraction.is_some_and(|f| f.is_empty() || !f.bytes().all(|b| b.is_ascii_digit())) {
+        return false;
+    }
+    let (Some(year), Some(month), Some(day), Some(hour), Some(minute), Some(second)) = (
+        number(main, 0..4),
+        number(main, 5..7),
+        number(main, 8..10),
+        number(main, 11..13),
+        number(main, 14..16),
+        number(main, 17..19),
+    ) else {
+        return false;
+    };
+    let leap = (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
+    let days = match month {
+        1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
+        4 | 6 | 9 | 11 => 30,
+        2 if leap => 29,
+        2 => 28,
+        _ => return false,
+    };
+    (1..=days).contains(&day) && hour < 24 && minute < 60 && second < 60
 }
 
 /// 原稿の場所から、今の DB の文書の id を引く。
@@ -420,13 +464,17 @@ impl IdBySource {
 pub fn preview(conn: &Connection, backup: &ValidBackup) -> Result<RestoreCounts, AppError> {
     let mut ids = IdBySource::default();
     let mut counts = RestoreCounts::default();
+    // お気に入りは対象ごとに 1 つしか持てない。同じ対象が 2 回書かれたファイルでも、実際に入る数を出す
+    let mut favorites = HashSet::new();
     for entry in &backup.file.favorites {
-        if ids.pref_row(conn, &entry.target)?.is_some() {
-            counts.favorites += 1;
-        } else {
-            counts.unresolved_favorites += 1;
+        match ids.pref_row(conn, &entry.target)? {
+            Some(row) => {
+                favorites.insert(row);
+            }
+            None => counts.unresolved_favorites += 1,
         }
     }
+    counts.favorites = favorites.len();
     for entry in &backup.file.history {
         if ids.pref_row(conn, &entry.target)?.is_some() {
             counts.history += 1;
@@ -891,6 +939,93 @@ mod tests {
             broken["history"][0]["viewedAt"] = json!(at);
             assert!(rejected(&broken).contains("日時の形が合いません"), "{at}");
         }
+    }
+
+    #[test]
+    fn timestamps_must_be_real_utc_dates() {
+        for at in [
+            "2026-11-21T09:30:00.123Z",
+            "2026-11-21T09:30:00Z",
+            "2024-02-29T23:59:59.999999Z",
+            "2000-02-29T00:00:00Z",
+        ] {
+            assert!(is_utc_timestamp(at), "{at}");
+        }
+        for at in [
+            "TZ",
+            "",
+            "2026-99-99T99:99:99Z",
+            "2026-02-29T00:00:00Z",
+            "2100-02-29T00:00:00Z",
+            "2026-04-31T00:00:00Z",
+            "2026-00-10T00:00:00Z",
+            "2026-11-00T00:00:00Z",
+            "2026-11-21T24:00:00Z",
+            "2026-11-21T09:60:00Z",
+            "2026-11-21T09:30:60Z",
+            "2026-11-21T09:30:00.Z",
+            "2026-11-21T09:30:00.12aZ",
+            "2026-11-21T09:30:00+09:00",
+            "2026-11-21 09:30:00Z",
+            "2026-1-21T09:30:00Z",
+            "+026-11-21T09:30:00Z",
+            "2026-11-21T09:30:00",
+            "２０２６-11-21T09:30:00Z",
+        ] {
+            assert!(!is_utc_timestamp(at), "{at}");
+        }
+        let mut broken = sample();
+        broken["favorites"][0]["createdAt"] = json!("2026-99-99T99:99:99Z");
+        assert!(rejected(&broken).contains("日時の形が合いません"));
+    }
+
+    #[test]
+    fn preview_counts_what_restore_really_puts_in() {
+        let mut value = sample();
+        let favorite = value["favorites"][0].clone();
+        let viewed = value["history"][0].clone();
+        // 同じ対象が 2 回。お気に入りは 1 つにまとまり、履歴は開いた回数だけ入る
+        value["favorites"] = json!([favorite, favorite]);
+        value["history"] = json!([viewed, viewed]);
+        let backup = check(&value).expect("検査を通る");
+        let mut conn = test_conn();
+        seed(&mut conn);
+
+        let expected = RestoreCounts {
+            favorites: 1,
+            history: 2,
+            unresolved_favorites: 0,
+            unresolved_history: 0,
+        };
+        assert_eq!(preview(&conn, &backup).expect("数えられる"), expected);
+        assert_eq!(apply(&mut conn, &backup).expect("復元できる"), expected);
+    }
+
+    #[test]
+    fn hotkeys_never_end_up_on_the_same_key() {
+        let sanitized = |hotkeys: Value| {
+            let mut value = sample();
+            value["settings"] = json!({ "hotkeys": hotkeys });
+            check(&value).expect("検査を通る").file().settings["hotkeys"].clone()
+        };
+        let defaults =
+            json!({ "toggle": "Ctrl+Shift+M", "search": "Ctrl+Shift+F", "triage": "Ctrl+Shift+T" });
+        // 後ろの動作を既定値に戻すと、その既定値が前の動作と同じキーになる
+        assert_eq!(
+            sanitized(json!({ "toggle": "Ctrl+Shift+F", "search": "Ctrl+Shift+F" })),
+            defaults
+        );
+        assert_eq!(
+            sanitized(json!({ "toggle": "Ctrl+Shift+T", "triage": "Ctrl+Shift+T" })),
+            defaults
+        );
+        // 重なりが無ければ、そのまま残す
+        assert_eq!(
+            sanitized(
+                json!({ "toggle": "Ctrl+Shift+F", "search": "Ctrl+Shift+M", "triage": "Ctrl+Alt+T" })
+            ),
+            json!({ "toggle": "Ctrl+Shift+F", "search": "Ctrl+Shift+M", "triage": "Ctrl+Alt+T" })
+        );
     }
 
     #[test]

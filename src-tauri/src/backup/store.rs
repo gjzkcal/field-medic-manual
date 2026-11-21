@@ -229,17 +229,27 @@ pub fn write_snapshot(
         BackupKind::BeforeRestore => KEEP_BEFORE_RESTORE,
         BackupKind::Auto | BackupKind::Manual => KEEP_AUTO,
     };
-    rotate(data_dir, kind, keep)?;
-    Ok(name)
+    rotate(data_dir, kind, keep, &name)?;
+    // 呼ぶ側は「今の状態を残せた」ことを前提に、DB を置き換える。残っていることを確かめてから返す
+    if backups_dir(data_dir).join(&name).is_file() {
+        Ok(name)
+    } else {
+        Err(AppError::Internal(
+            "書いたバックアップが見つかりません".to_owned(),
+        ))
+    }
 }
 
-/// その種類のバックアップを、新しい順に `keep` 個だけ残す。
-fn rotate(data_dir: &Path, kind: BackupKind, keep: usize) -> Result<(), AppError> {
+/// その種類のバックアップを、今書いた `written` と、それ以外の新しい順の `keep - 1` 個だけ残す。
+///
+/// `written` を名前の順に頼らずに残すのは、PC の時計を戻した後だと、前からあるファイルのほうが
+/// 名前の時刻が新しく、今書いたばかりのもの（復元で置き換える直前の状態）が古い側に並んで消えるため。
+fn rotate(data_dir: &Path, kind: BackupKind, keep: usize, written: &str) -> Result<(), AppError> {
     let dir = backups_dir(data_dir);
     let old = list(data_dir)?
         .into_iter()
-        .filter(|entry| entry.kind == kind)
-        .skip(keep);
+        .filter(|entry| entry.kind == kind && entry.id != written)
+        .skip(keep.saturating_sub(1));
     for entry in old {
         std::fs::remove_file(dir.join(entry.id))?;
     }
@@ -397,8 +407,20 @@ mod tests {
         }
         touch(dir.path(), "notes.txt");
 
-        rotate(dir.path(), BackupKind::Auto, KEEP_AUTO).expect("刈れる");
-        rotate(dir.path(), BackupKind::BeforeRestore, KEEP_BEFORE_RESTORE).expect("刈れる");
+        rotate(
+            dir.path(),
+            BackupKind::Auto,
+            KEEP_AUTO,
+            "auto-20261119T000000Z.json",
+        )
+        .expect("刈れる");
+        rotate(
+            dir.path(),
+            BackupKind::BeforeRestore,
+            KEEP_BEFORE_RESTORE,
+            "before-restore-20261101T140000Z.json",
+        )
+        .expect("刈れる");
 
         let left = names(dir.path());
         assert_eq!(left.iter().filter(|n| n.starts_with("auto-")).count(), 7);
@@ -416,6 +438,33 @@ mod tests {
         );
         // アプリが付けた名前でないファイルは、消さない
         assert!(backups_dir(dir.path()).join("notes.txt").is_file());
+    }
+
+    // PC の時計を戻した後。前からあるファイルのほうが、名前の時刻が新しい
+    #[test]
+    fn the_file_just_written_survives_rotation_after_the_clock_goes_back() {
+        let dir = tempfile::tempdir().expect("一時フォルダを作れる");
+        for year in 2090..2093 {
+            touch(
+                dir.path(),
+                &format!("before-restore-{year}0101T000000Z.json"),
+            );
+        }
+        let conn = test_conn();
+        let name =
+            write_snapshot(&conn, dir.path(), BackupKind::BeforeRestore, "0.9.0").expect("書ける");
+
+        let left = names(dir.path());
+        assert!(left.contains(&name), "今取った分が消えている: {left:?}");
+        assert_eq!(left.len(), KEEP_BEFORE_RESTORE);
+        // 押し出されるのは、残りのうち一番古いもの
+        assert!(!left.contains(&"before-restore-20900101T000000Z.json".to_owned()));
+        // 復元の前に取った状態を、読んで確かめられる
+        let bytes = read(&path_of(dir.path(), &name).expect("パスにできる")).expect("読める");
+        assert_eq!(
+            backup::parse(&bytes).expect("読める").kind,
+            BackupKind::BeforeRestore
+        );
     }
 
     #[test]
