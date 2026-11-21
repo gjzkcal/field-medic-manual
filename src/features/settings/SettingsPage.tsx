@@ -18,7 +18,8 @@ import { WindowSettingsCard } from "@/features/settings/WindowSettingsCard";
  * 画面の中だけで移るアプリなので、ブラウザのようにアンカーへは自動で移らない
  */
 function useCardAnchor(): RefObject<HTMLElement | null> {
-  const { hash } = useLocation();
+  // key は移動のたびに変わる。同じ `#ai` をもう一度押したとき（設定を開いたまま別のカードを見ていたとき）も移るために見る
+  const { hash, key } = useLocation();
   const rootRef = useRef<HTMLElement>(null);
   useEffect(() => {
     const card = hash === "" ? null : document.getElementById(hash.slice(1));
@@ -28,7 +29,7 @@ function useCardAnchor(): RefObject<HTMLElement | null> {
     card.scrollIntoView({ block: "start" });
     // 読み上げとキーボードの位置も、移った先のカードに合わせる
     focusTarget(card.querySelector<HTMLElement>("h2") ?? card);
-  }, [hash]);
+  }, [hash, key]);
   return rootRef;
 }
 

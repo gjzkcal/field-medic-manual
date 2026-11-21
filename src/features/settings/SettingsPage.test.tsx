@@ -1,6 +1,6 @@
 import { clearMocks, mockIPC } from "@tauri-apps/api/mocks";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
+import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { DEFAULT_MOD_SETTINGS, useModSettings } from "@/features/settings/mod-settings";
@@ -105,6 +105,29 @@ describe("SettingsPage", () => {
     });
     expect(scrollIntoView).toHaveBeenCalledWith({ block: "start" });
     expect(scrollIntoView.mock.contexts[0]).toBe(title.closest("#ai"));
+  });
+
+  // 設定を開いたまま別のカードを見ていて、チャットの「設定を開く」をもう一度押したとき。アドレスは変わらない
+  it("同じ #ai へもう一度移っても、AI チャットのカードへ移ってフォーカスを置く", async () => {
+    const scrollIntoView = vi.fn<Element["scrollIntoView"]>();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    mockIPC(() => []);
+    const router = createMemoryRouter([{ path: "/settings", element: <SettingsPage /> }], {
+      initialEntries: ["/settings#ai"],
+    });
+    render(<RouterProvider router={router} />);
+
+    const title = await screen.findByRole("heading", { level: 2, name: "AI チャット" });
+    await waitFor(() => {
+      expect(scrollIntoView).toHaveBeenCalledOnce();
+    });
+    screen.getByRole("button", { name: "保存場所を開く" }).focus();
+
+    await router.navigate("/settings#ai");
+    await waitFor(() => {
+      expect(scrollIntoView).toHaveBeenCalledTimes(2);
+    });
+    expect(document.activeElement).toBe(title);
   });
 
   it("アドレスに # が無いとき、または設定のカードを指していないときは、移らない", () => {
