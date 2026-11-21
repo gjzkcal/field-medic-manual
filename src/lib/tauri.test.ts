@@ -4,6 +4,11 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   appVersion,
   assetPut,
+  backupExport,
+  backupList,
+  backupOpenAuto,
+  backupOpenFile,
+  backupRestore,
   dataFolderOpen,
   docDelete,
   docUpsert,
@@ -44,6 +49,29 @@ describe("dataFolderOpen", () => {
 
     await dataFolderOpen();
     expect(calls).toStrictEqual([["data_folder_open", {}]]);
+  });
+});
+
+describe("バックアップ", () => {
+  it("保存先や読み込むファイルの場所を、画面から渡さない（Rust の側のダイアログで選ぶ）", async () => {
+    const calls: unknown[] = [];
+    mockIPC((cmd, args) => {
+      calls.push([cmd, args]);
+      return cmd === "backup_list" ? [] : null;
+    });
+
+    await expect(backupList()).resolves.toStrictEqual([]);
+    await expect(backupExport()).resolves.toBeNull();
+    await expect(backupOpenFile()).resolves.toBeNull();
+    await backupOpenAuto("auto-20261121T030000Z.json");
+    await backupRestore("token-1");
+    expect(calls).toStrictEqual([
+      ["backup_list", {}],
+      ["backup_export", {}],
+      ["backup_open_file", {}],
+      ["backup_open_auto", { id: "auto-20261121T030000Z.json" }],
+      ["backup_restore", { token: "token-1" }],
+    ]);
   });
 });
 

@@ -7,6 +7,34 @@ use crate::error::AppError;
 
 const MAX_KEY_LEN: usize = 64;
 
+/// 画面から読み書きする設定のキー。`hotkeys` は `hotkey_list` / `hotkey_set` だけで扱うので含めない。
+/// 画面で新しい設定を保存するようにしたら、ここにも足す（バックアップの対象にもなる）。
+pub const KNOWN_KEYS: [&str; 7] = [
+    "viewer", "search", "quickref", "mods", "overlay", "window", "ai",
+];
+
+/// 設定の値の大きさの上限（JSON のバイト数）。どの設定も数百バイトなので、桁違いに大きいものは不正な値とみなす
+pub const MAX_VALUE_LEN: usize = 64 * 1024;
+
+/// 値の形の全体は読む側（画面）が検査し、不正なら既定値に戻す。ここでは DB に入れてよい最低限を確かめる。
+///
+/// # Errors
+///
+/// オブジェクトでない、または大きすぎれば `InvalidInput`。
+pub fn check_value(value: &Value) -> Result<(), AppError> {
+    if !value.is_object() {
+        return Err(AppError::InvalidInput(
+            "設定の値は JSON のオブジェクトにしてください".to_owned(),
+        ));
+    }
+    if value.to_string().len() > MAX_VALUE_LEN {
+        return Err(AppError::InvalidInput(format!(
+            "設定の値は {MAX_VALUE_LEN} バイトまでです"
+        )));
+    }
+    Ok(())
+}
+
 /// 値を返す。保存されていなければ `None`。
 ///
 /// # Errors
@@ -109,5 +137,21 @@ mod tests {
         )
         .expect("入れられる");
         assert!(matches!(get(&conn, "viewer"), Err(AppError::Internal(_))));
+    }
+
+    #[test]
+    fn value_must_be_a_small_object() {
+        assert!(check_value(&json!({ "closeToTray": true })).is_ok());
+        for value in [
+            json!(null),
+            json!("text"),
+            json!([1, 2]),
+            json!({ "long": "a".repeat(MAX_VALUE_LEN) }),
+        ] {
+            assert!(matches!(
+                check_value(&value),
+                Err(AppError::InvalidInput(_))
+            ));
+        }
     }
 }

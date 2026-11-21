@@ -12,15 +12,6 @@ pub const SETTINGS_CHANGED_EVENT: &str = "settings-changed";
 /// 常に最前面で開いている小窓から、×ボタンの動作（`window`）・使っている MOD・小窓の透明度を変えられないようにするため（最小権限）。
 const OVERLAY_WRITABLE_KEYS: [&str; 3] = ["viewer", "search", "quickref"];
 
-/// 画面から読み書きする設定のキー。`hotkeys` は `hotkey_list` / `hotkey_set` だけで扱うので含めない。
-/// 画面で新しい設定を保存するようにしたら、ここにも足す。
-const KNOWN_KEYS: [&str; 7] = [
-    "viewer", "search", "quickref", "mods", "overlay", "window", "ai",
-];
-
-/// 設定の値の大きさの上限（JSON のバイト数）。どの設定も数百バイトなので、桁違いに大きいものは不正な値とみなす
-const MAX_VALUE_LEN: usize = 64 * 1024;
-
 /// 設定の値（JSON オブジェクト）を返す。保存されていなければ `null`。
 ///
 /// # Errors
@@ -46,7 +37,7 @@ pub async fn settings_set(
     value: Value,
 ) -> Result<(), AppError> {
     check_writable(window.label(), &key)?;
-    check_value(&value)?;
+    settings::check_value(&value)?;
     let key = key.trim().to_owned();
     let saved_key = key.clone();
     db.run(move |conn, _| settings::set(conn, &saved_key, &value))
@@ -82,32 +73,15 @@ fn check_writable(window_label: &str, key: &str) -> Result<(), AppError> {
 }
 
 fn check_known(key: &str) -> Result<(), AppError> {
-    if KNOWN_KEYS.contains(&key.trim()) {
+    if settings::KNOWN_KEYS.contains(&key.trim()) {
         Ok(())
     } else {
         Err(AppError::InvalidInput(format!("知らない設定です: {key}")))
     }
 }
 
-/// 値の形の全体は読む側（画面）が検査し、不正なら既定値に戻す。ここでは DB に入れてよい最低限を確かめる。
-fn check_value(value: &Value) -> Result<(), AppError> {
-    if !value.is_object() {
-        return Err(AppError::InvalidInput(
-            "設定の値は JSON のオブジェクトにしてください".to_owned(),
-        ));
-    }
-    if value.to_string().len() > MAX_VALUE_LEN {
-        return Err(AppError::InvalidInput(format!(
-            "設定の値は {MAX_VALUE_LEN} バイトまでです"
-        )));
-    }
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
-    use serde_json::json;
-
     use super::*;
 
     #[test]
@@ -157,21 +131,5 @@ mod tests {
             check_known(hotkey::SETTINGS_KEY),
             Err(AppError::InvalidInput(_))
         ));
-    }
-
-    #[test]
-    fn value_must_be_a_small_object() {
-        assert!(check_value(&json!({ "closeToTray": true })).is_ok());
-        for value in [
-            json!(null),
-            json!("text"),
-            json!([1, 2]),
-            json!({ "long": "a".repeat(MAX_VALUE_LEN) }),
-        ] {
-            assert!(matches!(
-                check_value(&value),
-                Err(AppError::InvalidInput(_))
-            ));
-        }
     }
 }

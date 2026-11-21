@@ -9,6 +9,8 @@ import { check } from "@tauri-apps/plugin-updater";
 
 import type { AiKeyStatus } from "@/lib/bindings/AiKeyStatus";
 import type { AiModel } from "@/lib/bindings/AiModel";
+import type { BackupEntry } from "@/lib/bindings/BackupEntry";
+import type { BackupPreview } from "@/lib/bindings/BackupPreview";
 import type { Casualty } from "@/lib/bindings/Casualty";
 import type { CasualtyOp } from "@/lib/bindings/CasualtyOp";
 import type { ChatEvent } from "@/lib/bindings/ChatEvent";
@@ -20,6 +22,7 @@ import type { DocDetail } from "@/lib/bindings/DocDetail";
 import type { DocOutline } from "@/lib/bindings/DocOutline";
 import type { DocSummary } from "@/lib/bindings/DocSummary";
 import type { DocUpsertInput } from "@/lib/bindings/DocUpsertInput";
+import type { ExportResult } from "@/lib/bindings/ExportResult";
 import type { HotkeyAction } from "@/lib/bindings/HotkeyAction";
 import type { HotkeyBinding } from "@/lib/bindings/HotkeyBinding";
 import type { OverlayMode } from "@/lib/bindings/OverlayMode";
@@ -46,6 +49,31 @@ export async function appVersion(): Promise<string> {
 /** お気に入り・履歴・設定の保存場所を OS で開く。場所は Rust が決め、画面からパスは渡さない。 */
 export async function dataFolderOpen(): Promise<void> {
   await invoke("data_folder_open");
+}
+
+/** アプリが取ったバックアップ（毎日の分と、復元の前の分）。新しい順 */
+export async function backupList(): Promise<BackupEntry[]> {
+  return invoke<BackupEntry[]>("backup_list");
+}
+
+/** 保存先を選んでもらい、今の状態を書き出す。保存先は Rust の側のダイアログで選ぶ。取り消したら null */
+export async function backupExport(): Promise<ExportResult | null> {
+  return invoke<ExportResult | null>("backup_export");
+}
+
+/** 復元するファイルを選んでもらい、確かめる内容を返す。取り消したら null */
+export async function backupOpenFile(): Promise<BackupPreview | null> {
+  return invoke<BackupPreview | null>("backup_open_file");
+}
+
+/** アプリが取ったバックアップ（`backupList` の id）を選び、確かめる内容を返す */
+export async function backupOpenAuto(id: string): Promise<BackupPreview> {
+  return invoke<BackupPreview>("backup_open_auto", { id });
+}
+
+/** 確かめたバックアップ（`BackupPreview` の token）で置き換える。成功すると Rust がアプリを再起動する */
+export async function backupRestore(token: string): Promise<void> {
+  await invoke("backup_restore", { token });
 }
 
 /** 画面で起きた例外をログに書く。ログのプラグインを JS に開けず、書ける内容をこのコマンドに限る。 */

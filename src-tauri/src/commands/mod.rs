@@ -1,6 +1,7 @@
 pub mod ai;
 pub mod app;
 pub mod assets;
+pub mod backup;
 pub mod casualties;
 pub mod dict;
 pub mod docs;

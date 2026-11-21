@@ -58,6 +58,11 @@
     "allow-ai-chat-tool-result",
     "allow-ai-chat-cancel",
     "allow-ai-chat-reset",
-    "allow-ai-chat-keep-alive"
+    "allow-ai-chat-keep-alive",
+    "allow-backup-list",
+    "allow-backup-export",
+    "allow-backup-open-file",
+    "allow-backup-open-auto",
+    "allow-backup-restore"
   ]
 }

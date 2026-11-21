@@ -66,6 +66,9 @@ tempfile = "3"
 # AI チャットの API キーを Windows の資格情報マネージャーに置く（WebView や DB に平文で残さない）
 keyring-core = "1"
 windows-native-keyring-store = "1.1"
+# バックアップの保存先と読み込むファイルを選ぶダイアログ。既定の機能（xdg-portal・wayland）は Linux 用なので外す。
+# tauri-plugin-dialog を使わないのは、ファイルの読み書きのプラグインと、画面から呼べる口が一緒に増えるため
+rfd = { version = "0.18", default-features = false }
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 # 既定の機能の `zip` は、Windows で zip に包んだ更新を展開するためだけのもの。リリースは -setup.exe と .msi をそのまま配るので要らない。

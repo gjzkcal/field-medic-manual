@@ -109,6 +109,35 @@ fn to_setting(config: &HashMap<HotkeyAction, String>) -> Value {
     Value::Object(map)
 }
 
+/// 外から来たホットキーの設定（バックアップのファイル）を、保存してよい形にそろえる。
+/// 項目ごとに検査して不正なものは既定値に戻し、同じキーが 2 つの動作に付いていれば後ろの動作を既定値に戻す
+/// （登録は 1 つしか通らないので、そのまま入れると片方が起動のたびに失敗する）。
+/// 戻した既定値がほかの動作のキーと重なるときは、全部を既定値に戻す（既定値どうしは重ならない）。
+#[must_use]
+pub fn sanitize_setting(value: &Value) -> Value {
+    let mut config = parse_config(Some(value));
+    let mut seen: Vec<String> = Vec::new();
+    for action in ACTIONS {
+        let Some(accelerator) = config.get(&action).cloned() else {
+            continue;
+        };
+        if seen.contains(&accelerator) {
+            config.insert(action, default_accelerator(action).to_owned());
+        }
+        if let Some(kept) = config.get(&action) {
+            seen.push(kept.clone());
+        }
+    }
+    let distinct: std::collections::HashSet<&String> = config.values().collect();
+    if distinct.len() < config.len() {
+        config = ACTIONS
+            .iter()
+            .map(|&action| (action, default_accelerator(action).to_owned()))
+            .collect();
+    }
+    to_setting(&config)
+}
+
 struct Binding {
     accelerator: String,
     /// 登録できたキー。失敗したときは None

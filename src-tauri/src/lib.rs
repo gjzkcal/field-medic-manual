@@ -1,4 +1,5 @@
 pub mod ai;
+pub mod backup;
 pub mod commands;
 pub mod db;
 pub mod error;
@@ -61,6 +62,7 @@ pub fn run() {
         .manage(overlay::MainRevealed::default())
         .manage(overlay::ViewMode::default())
         .manage(Arc::new(ai::AiState::default()))
+        .manage(backup::pending::PendingRestore::default())
         .setup(|app| {
             log::info!("起動しました: 版 {}", app.package_info().version);
             // updater のクレートはデスクトップだけの依存にしてある（Cargo.toml）
@@ -69,6 +71,7 @@ pub fn run() {
                 .plugin(tauri_plugin_updater::Builder::new().build())?;
             let data_dir = app.path().app_data_dir()?;
             app.manage(db::Db::open(&data_dir)?);
+            backup::schedule::start(app.handle());
             // メインはまだ出していない。出す前に背景色をテーマに合わせ、ライトの人に黒を見せない
             tauri::async_runtime::block_on(theme::apply_main_background(app.handle()));
             tray::create(app)?;
@@ -131,6 +134,11 @@ pub fn run() {
             commands::ai::ai_chat_cancel,
             commands::ai::ai_chat_reset,
             commands::ai::ai_chat_keep_alive,
+            commands::backup::backup_list,
+            commands::backup::backup_export,
+            commands::backup::backup_open_file,
+            commands::backup::backup_open_auto,
+            commands::backup::backup_restore,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

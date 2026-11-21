@@ -67,6 +67,17 @@ describe("コマンドの登録", () => {
     expect(permissionNames("main.json")).toContain("allow-data-folder-open");
     expect(permissionNames("overlay.json")).not.toContain("allow-data-folder-open");
   });
+
+  it("バックアップと復元のコマンドはメインだけに許し、小窓には許さない", () => {
+    const backupPermissions = manifestCommands()
+      .filter((name) => name.startsWith("backup_"))
+      .map((name) => `allow-${name.replaceAll("_", "-")}`);
+    expect(backupPermissions).toHaveLength(5);
+    expect(permissionNames("main.json")).toStrictEqual(expect.arrayContaining(backupPermissions));
+    expect(
+      permissionNames("overlay.json").filter((name) => name.startsWith("allow-backup-")),
+    ).toStrictEqual([]);
+  });
 });
 
 // まとめの権限は、プラグインの更新で中身が増えると気づかないうちに権限が広がるので、使うものを列挙する
@@ -81,6 +92,8 @@ describe.each(["main.json", "overlay.json"])("%s", (file) => {
     expect(names).not.toContain("opener:allow-reveal-item-in-dir");
     // 保存場所を開くのは引数なしの data_folder_open だけ。画面からパスを渡して開く口は作らない
     expect(names).not.toContain("opener:allow-open-path");
+    // 保存先を選ぶダイアログとファイルの読み書きは Rust の側で行う。画面にその権限を渡さない
+    expect(names.filter((name) => /^(?:dialog|fs):/u.test(name))).toStrictEqual([]);
   });
 
   it("ログは client_log だけで書き、ログのプラグインを画面に開けない", () => {
