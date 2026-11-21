@@ -1,6 +1,7 @@
 //! `SQLite` への保存と全文検索。本文・クイック表・フローは同梱の原稿の写しで、起動時に TS が入れ直す。
 
 pub mod assets;
+pub mod backup;
 pub mod casualties;
 pub mod dict;
 pub mod docs;
@@ -96,7 +97,7 @@ fn configure(conn: &Connection) -> Result<(), AppError> {
 }
 
 /// 保存用の現在時刻（UTC の ISO 8601）。日時のクレートを増やさないため `SQLite` に作らせる。
-fn now(conn: &Connection) -> Result<String, AppError> {
+pub(crate) fn now(conn: &Connection) -> Result<String, AppError> {
     Ok(
         conn.query_row("SELECT strftime('%Y-%m-%dT%H:%M:%fZ', 'now')", [], |row| {
             row.get(0)

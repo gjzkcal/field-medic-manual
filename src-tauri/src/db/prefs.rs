@@ -8,9 +8,9 @@ use crate::model::{PrefItem, PrefTarget};
 
 /// 履歴に残す件数。「最近見たもの」に出すには十分で、表が際限なく伸びない数
 pub const HISTORY_LIMIT: usize = 200;
-const MAX_ID_LEN: usize = 512;
+pub(crate) const MAX_ID_LEN: usize = 512;
 /// お気に入りの件数の上限。一覧を読むたびに全件の対象を引くので、表が際限なく伸びないようにする
-const MAX_FAVORITES: i64 = 1000;
+pub(crate) const MAX_FAVORITES: i64 = 1000;
 
 /// お気に入りに入れる / 外す。入れたら true、外したら false。
 ///
@@ -131,13 +131,13 @@ pub fn history_list(conn: &Connection, limit: usize) -> Result<Vec<PrefItem>, Ap
     Ok(items)
 }
 
-const SECTION: &str = "section";
-const DOCUMENT: &str = "document";
-const FLOW: &str = "flow";
-const QUICKREF: &str = "quickref";
+pub(crate) const SECTION: &str = "section";
+pub(crate) const DOCUMENT: &str = "document";
+pub(crate) const FLOW: &str = "flow";
+pub(crate) const QUICKREF: &str = "quickref";
 
 /// DB に保存する (`target_type`, `target_id`)。文書の id は UUID で `#` を含まないので、節は最初の `#` で分けられる。
-fn encode(target: &PrefTarget) -> Result<(&'static str, String), AppError> {
+pub(crate) fn encode(target: &PrefTarget) -> Result<(&'static str, String), AppError> {
     let (kind, parts): (&'static str, Vec<&str>) = match target {
         PrefTarget::Section {
             document_id,

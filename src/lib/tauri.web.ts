@@ -75,6 +75,12 @@ const noopUnlisten = (): Promise<() => void> =>
 export const appVersion: typeof Desktop.appVersion = () => Promise.resolve(version);
 export const dataFolderOpen: typeof Desktop.dataFolderOpen = () =>
   unsupported("保存場所を開く操作");
+// Web 版が保存するのは設定と負傷者の記録だけで、どちらもブラウザの中にある。バックアップは無い
+export const backupList: typeof Desktop.backupList = () => Promise.resolve([]);
+export const backupExport: typeof Desktop.backupExport = () => unsupported("バックアップ");
+export const backupOpenFile: typeof Desktop.backupOpenFile = () => unsupported("バックアップ");
+export const backupOpenAuto: typeof Desktop.backupOpenAuto = () => unsupported("バックアップ");
+export const backupRestore: typeof Desktop.backupRestore = () => unsupported("バックアップ");
 // ブラウザには読み返せる保存先がなく、外へは送らない
 export const clientLog: typeof Desktop.clientLog = noop;
 

@@ -649,3 +649,63 @@ pub enum CasualtyOp {
         in_pain: bool,
     },
 }
+
+/// バックアップの種類。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+pub enum BackupKind {
+    /// 1 日 1 回、アプリが取るもの
+    Auto,
+    /// 復元で置き換える直前に、アプリが取るもの
+    BeforeRestore,
+    /// 利用者が保存先を選んで書き出したもの
+    Manual,
+}
+
+/// アプリのデータのフォルダにあるバックアップの 1 つ。
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct BackupEntry {
+    /// ファイルの名前。復元するときに、これをそのまま返す
+    pub id: String,
+    pub kind: BackupKind,
+    /// 取った日時（UTC の ISO 8601）
+    pub created_at: String,
+    pub size_bytes: u32,
+}
+
+/// 復元の前に確かめてもらう内容。中身は Rust が預かり、画面には `token` だけを渡す
+/// （確かめた後にファイルが差し替えられても、確かめたものを復元するため）。
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct BackupPreview {
+    pub token: String,
+    pub kind: BackupKind,
+    pub created_at: String,
+    pub app_version: String,
+    /// 戻す件数
+    pub favorites: u32,
+    pub history: u32,
+    /// 戻す設定のキー
+    pub settings: Vec<String>,
+    /// 今のマニュアルに原稿が見つからず、戻せない件数
+    pub unresolved_favorites: u32,
+    pub unresolved_history: u32,
+    /// このアプリが知らないので戻さない設定のキー
+    pub skipped_settings: Vec<String>,
+}
+
+/// 書き出した結果。保存先のパスは画面に返さない（ユーザー名を含むため。名前だけを返す）。
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct ExportResult {
+    pub file_name: String,
+    pub favorites: u32,
+    pub history: u32,
+    /// 原稿がもう無いなどで、書き出せなかった件数
+    pub skipped: u32,
+}

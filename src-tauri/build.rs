@@ -47,6 +47,11 @@ const COMMANDS: &[&str] = &[
     "ai_chat_cancel",
     "ai_chat_reset",
     "ai_chat_keep_alive",
+    "backup_list",
+    "backup_export",
+    "backup_open_file",
+    "backup_open_auto",
+    "backup_restore",
 ];
 
 fn main() {

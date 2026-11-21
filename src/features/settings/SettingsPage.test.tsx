@@ -52,7 +52,14 @@ describe("SettingsPage", () => {
       "デバッグ（開発ビルドのみ）",
     ]);
     expect(headings(3)).toStrictEqual(
-      expect.arrayContaining(["ホットキー", "トリアージ", "メインのウィンドウ", "小窓"]),
+      expect.arrayContaining([
+        "ホットキー",
+        "トリアージ",
+        "メインのウィンドウ",
+        "小窓",
+        "バックアップ",
+        "保存場所",
+      ]),
     );
     expect(headings(4)).toStrictEqual([]);
   });
