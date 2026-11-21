@@ -15,6 +15,7 @@ import {
   AI_MODELS,
   useAiSettings,
 } from "@/features/chat/ai-settings";
+import { SettingsSaveError } from "@/features/settings/SettingsSaveError";
 import { aiKeyCheck, errorMessage, openExternal } from "@/lib/tauri";
 
 const CONSOLE_URL = "https://platform.claude.com/settings/keys";
@@ -52,7 +53,8 @@ export function AiSettingsCard(): JSX.Element {
   }
 
   return (
-    <Card id="ai">
+    // 「設定を開く」で移ってきたとき、上の帯にくっつけず少し空ける（scroll-mt）
+    <Card id="ai" className="scroll-mt-4">
       <CardHeader>
         <CardTitle>
           <h2>AI チャット</h2>
@@ -226,11 +228,7 @@ export function AiSettingsCard(): JSX.Element {
             の変更は次の質問から、モデルの変更は新しい会話から使われます。
           </p>
         </div>
-        {storageError !== null && (
-          <p role="alert" className="text-sm text-destructive">
-            設定を保存できませんでした: {storageError}
-          </p>
-        )}
+        <SettingsSaveError error={storageError} />
       </CardContent>
     </Card>
   );

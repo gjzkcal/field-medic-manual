@@ -1,0 +1,94 @@
+import { MonitorIcon } from "lucide-react";
+import type { JSX } from "react";
+
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { OPACITY_MAX, OPACITY_MIN, useOverlaySettings } from "@/features/settings/overlay-settings";
+import { SettingsSaveError } from "@/features/settings/SettingsSaveError";
+import { SettingsSection } from "@/features/settings/SettingsSection";
+
+/** メインのウィンドウの×ボタンの動作と、小窓の見た目。 */
+export function WindowSettingsCard(): JSX.Element {
+  const opacity = useOverlaySettings((s) => s.overlay.opacity);
+  const closeToTray = useOverlaySettings((s) => s.window.closeToTray);
+  const updateOverlay = useOverlaySettings((s) => s.updateOverlay);
+  const updateWindow = useOverlaySettings((s) => s.updateWindow);
+  const storageError = useOverlaySettings((s) => s.storageError);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          <h2>ウィンドウと小窓</h2>
+        </CardTitle>
+        <CardDescription>
+          このウィンドウを閉じたときの動作と、ゲームの上に重ねて出す小窓の設定です。
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-6">
+        <SettingsSection title="メインのウィンドウ">
+          <label className="flex max-w-sm items-start justify-between gap-4 text-sm">
+            <span className="flex flex-col gap-0.5">
+              <span className="font-medium">× で閉じたらタスクトレイに格納する</span>
+              <span className="text-xs text-muted-foreground">
+                オフにすると × でアプリを終了し、ホットキーも効かなくなります。
+              </span>
+            </span>
+            <Switch
+              checked={closeToTray}
+              onCheckedChange={(checked) => {
+                updateWindow({ closeToTray: checked });
+              }}
+            />
+          </label>
+        </SettingsSection>
+        <SettingsSection title="小窓">
+          <p className="text-sm text-muted-foreground">
+            ゲームの上に重ねて出す、常に最前面の小さなウィンドウ。位置と大きさは次に起動したときも残ります。
+          </p>
+          <div className="flex flex-col gap-5 pt-2">
+            {/* 設定画面に常に出ている案内なので、読み上げを遮らない補足（note）にする */}
+            <Alert role="note">
+              <MonitorIcon />
+              <AlertTitle>ゲームは「ボーダーレス」で動かしてください</AlertTitle>
+              <AlertDescription>
+                Arma Reforger
+                の表示モードを「ボーダーレス（ウィンドウ化フルスクリーン）」か「ウィンドウ」にしてください。「フルスクリーン」（排他的）では、小窓はゲームの上に出ません。
+              </AlertDescription>
+            </Alert>
+            <div className="flex max-w-sm flex-col gap-2">
+              <div className="flex items-center justify-between text-sm">
+                <span id="overlay-opacity-label" className="font-medium">
+                  背景の不透明度
+                </span>
+                <span className="text-muted-foreground tabular-nums">{opacity}%</span>
+              </div>
+              <Slider
+                aria-labelledby="overlay-opacity-label"
+                min={OPACITY_MIN}
+                max={OPACITY_MAX}
+                step={5}
+                value={[opacity]}
+                // 数だけでなく「%」まで読み上げる（画面の横の表示と同じ）
+                format={{ style: "unit", unit: "percent" }}
+                onValueChange={(value) => {
+                  // Array.isArray は readonly の配列を any[] に絞ってしまうので、数かどうかで分ける
+                  const next = typeof value === "number" ? value : value[0];
+                  if (next !== undefined) {
+                    updateOverlay({ opacity: next });
+                  }
+                }}
+              />
+              <p className="text-xs text-muted-foreground">
+                下げると後ろのゲームが透けて見えます。文字は透けませんが、後ろの明るさによっては読みにくくなるので、そのときは上げてください。
+              </p>
+            </div>
+          </div>
+        </SettingsSection>
+        <SettingsSaveError error={storageError} />
+      </CardContent>
+    </Card>
+  );
+}

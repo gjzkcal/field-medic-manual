@@ -4,7 +4,8 @@ import type { JSX } from "react";
 import { LinkButton } from "@/components/LinkButton";
 import { usePageTitle } from "@/app/use-page-title";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AboutDetails, AboutSection } from "@/features/settings/AboutCard";
+import { AboutDetails } from "@/features/settings/AboutCard";
+import { SettingsSection } from "@/features/settings/SettingsSection";
 import { version } from "../../package.json";
 import { DOWNLOAD_URL } from "@/web/links";
 
@@ -25,7 +26,7 @@ export function WebAboutPage(): JSX.Element {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-5 text-sm">
-          <AboutSection title="版とデスクトップ版">
+          <SettingsSection title="版とデスクトップ版">
             <p>
               v{version}
               のデスクトップ版と同じ内容です。マニュアルの閲覧・検索・クイック表・トリアージのフローを使えます。
@@ -44,7 +45,7 @@ export function WebAboutPage(): JSX.Element {
                 デスクトップ版をダウンロード（GitHub Releases）
               </LinkButton>
             </div>
-          </AboutSection>
+          </SettingsSection>
           <AboutDetails />
         </CardContent>
       </Card>

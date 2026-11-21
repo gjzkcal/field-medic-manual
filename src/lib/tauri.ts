@@ -43,6 +43,11 @@ export async function appVersion(): Promise<string> {
   return invoke<string>("app_version");
 }
 
+/** お気に入り・履歴・設定の保存場所を OS で開く。場所は Rust が決め、画面からパスは渡さない。 */
+export async function dataFolderOpen(): Promise<void> {
+  await invoke("data_folder_open");
+}
+
 /** 画面で起きた例外をログに書く。ログのプラグインを JS に開けず、書ける内容をこのコマンドに限る。 */
 export async function clientLog(message: string): Promise<void> {
   return invoke("client_log", { message });

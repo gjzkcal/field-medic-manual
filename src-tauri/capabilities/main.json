@@ -20,6 +20,7 @@
     "updater:default",
     "process:allow-restart",
     "allow-app-version",
+    "allow-data-folder-open",
     "allow-doc-upsert",
     "allow-doc-list",
     "allow-doc-get",

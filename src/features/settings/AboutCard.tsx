@@ -5,6 +5,7 @@ import { AppVersion } from "@/app/AppVersion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { SettingsSection } from "@/features/settings/SettingsSection";
 import { checkForUpdates, openUpdateDialog, useUpdateStore } from "@/features/updater/update-store";
 import { IS_WEB } from "@/lib/platform";
 import { errorMessage, openExternal } from "@/lib/tauri";
@@ -56,7 +57,7 @@ export function AboutDetails(): JSX.Element {
 
   return (
     <>
-      <AboutSection title="ライセンス">
+      <SettingsSection title="ライセンス">
         <p>
           Copyright (C) 2026 gjzkcal。GNU General Public License v3.0
           またはそれ以降の版（GPL-3.0-or-later）で、無料・非営利で配布しています。無保証です。
@@ -69,9 +70,9 @@ export function AboutDetails(): JSX.Element {
             ライセンスの全文
           </ExternalLink>
         </div>
-      </AboutSection>
+      </SettingsSection>
 
-      <AboutSection title="マニュアルの出典">
+      <SettingsSection title="マニュアルの出典">
         <p>
           {IS_WEB
             ? "このサイトのマニュアル・クイック表・トリアージのフローは"
@@ -88,9 +89,9 @@ export function AboutDetails(): JSX.Element {
             ACE Anvil – Medical（Dev）
           </ExternalLink>
         </div>
-      </AboutSection>
+      </SettingsSection>
 
-      <AboutSection title="免責事項">
+      <SettingsSection title="免責事項">
         <p lang="en">
           This project is not affiliated with or authorized by Bohemia Interactive a.s. Bohemia
           Interactive, ARMA, DAYZ and all associated logos and designs are trademarks or registered
@@ -102,7 +103,7 @@ export function AboutDetails(): JSX.Element {
           および関連するすべてのロゴとデザインは、Bohemia Interactive a.s.
           の商標または登録商標です。
         </p>
-      </AboutSection>
+      </SettingsSection>
 
       <ThirdPartyLicenses />
 
@@ -112,22 +113,6 @@ export function AboutDetails(): JSX.Element {
         </p>
       )}
     </>
-  );
-}
-
-export function AboutSection({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}): JSX.Element {
-  return (
-    <section className="flex flex-col gap-1.5">
-      {/* カードの表題（h2）の下の節 */}
-      <h3 className="font-medium">{title}</h3>
-      {children}
-    </section>
   );
 }
 
@@ -159,7 +144,7 @@ function UpdateSection(): JSX.Element {
   const busy = status.kind === "checking" || status.kind === "installing";
 
   return (
-    <AboutSection title="版と更新">
+    <SettingsSection title="版と更新">
       <div className="flex flex-wrap items-center gap-3">
         <span>
           今の版: <AppVersion />
@@ -186,7 +171,7 @@ function UpdateSection(): JSX.Element {
       <p className="text-xs text-muted-foreground">
         起動時にも自動で確かめます。インターネットに接続するのは、この確認と更新のときだけです。
       </p>
-    </AboutSection>
+    </SettingsSection>
   );
 }
 

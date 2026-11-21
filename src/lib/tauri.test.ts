@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   appVersion,
   assetPut,
+  dataFolderOpen,
   docDelete,
   docUpsert,
   errorMessage,
@@ -30,6 +31,19 @@ describe("appVersion", () => {
 
     await expect(appVersion()).resolves.toBe("0.1.0");
     expect(calls).toStrictEqual(["app_version"]);
+  });
+});
+
+describe("dataFolderOpen", () => {
+  it("開く場所を渡さずに data_folder_open を呼ぶ（場所は Rust が決める）", async () => {
+    const calls: unknown[] = [];
+    mockIPC((cmd, args) => {
+      calls.push([cmd, args]);
+      return null;
+    });
+
+    await dataFolderOpen();
+    expect(calls).toStrictEqual([["data_folder_open", {}]]);
   });
 });
 
