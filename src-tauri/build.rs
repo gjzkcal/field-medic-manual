@@ -6,6 +6,7 @@
 const COMMANDS: &[&str] = &[
     "app_version",
     "client_log",
+    "data_folder_open",
     "doc_upsert",
     "doc_list",
     "doc_get",

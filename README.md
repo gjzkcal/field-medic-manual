@@ -43,6 +43,7 @@ Arma Reforger の ACE Medical MOD 向けの**非公式**デスクトップ マ�
 
 Windows の「設定」→「アプリ」→「インストールされているアプリ」から Field Medic Manual をアンインストールします。
 お気に入り・履歴・設定は `%APPDATA%\com.gjzkcal.fieldmedicmanual\` に残ります。要らなければフォルダごと消してください。
+このフォルダは、アンインストールの前なら「設定」→「データ」→「保存場所を開く」で開けます。
 
 ## 使い方のコツ
 

@@ -2,7 +2,6 @@ import { KeyboardIcon, RotateCcwIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type JSX, type KeyboardEvent } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { acceleratorFromKey, displayAccelerator } from "@/features/settings/hotkey-recorder";
 import type { HotkeyAction } from "@/lib/bindings/HotkeyAction";
@@ -30,8 +29,8 @@ type LoadState =
   | { status: "ready"; bindings: HotkeyBinding[] }
   | { status: "error"; message: string };
 
-/** ホットキーの設定。変えるとすぐ登録し直し、再起動後も残る（Rust が DB から読んで登録する）。 */
-export function HotkeySettings(): JSX.Element {
+/** ホットキーの欄。変えるとすぐ登録し直し、再起動後も残る（Rust が DB から読んで登録する）。 */
+export function HotkeyFields(): JSX.Element {
   const [state, setState] = useState<LoadState>({ status: "loading" });
 
   const reload = useCallback(() => {
@@ -50,29 +49,22 @@ export function HotkeySettings(): JSX.Element {
   }, [reload]);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          <h2>ホットキー</h2>
-        </CardTitle>
-        <CardDescription>
-          ゲーム中でも効くキーです。欄を押してから、新しい組み合わせを押してください（Esc
-          で取り消し）。いま割り当てているキーや、ほかのアプリが使っているキーは、押しても欄に入りません。
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        {state.status === "loading" && <p className="text-sm text-muted-foreground">読み込み中…</p>}
-        {state.status === "error" && (
-          <p role="alert" className="text-sm text-destructive">
-            ホットキーの設定を読み込めませんでした: {state.message}
-          </p>
-        )}
-        {state.status === "ready" &&
-          state.bindings.map((binding) => (
-            <HotkeyRow key={binding.action} binding={binding} onChanged={reload} />
-          ))}
-      </CardContent>
-    </Card>
+    <div className="flex flex-col gap-4">
+      <p className="text-sm text-muted-foreground">
+        ゲーム中でも効くキーです。欄を押してから、新しい組み合わせを押してください（Esc
+        で取り消し）。いま割り当てているキーや、ほかのアプリが使っているキーは、押しても欄に入りません。
+      </p>
+      {state.status === "loading" && <p className="text-sm text-muted-foreground">読み込み中…</p>}
+      {state.status === "error" && (
+        <p role="alert" className="text-sm text-destructive">
+          ホットキーの設定を読み込めませんでした: {state.message}
+        </p>
+      )}
+      {state.status === "ready" &&
+        state.bindings.map((binding) => (
+          <HotkeyRow key={binding.action} binding={binding} onChanged={reload} />
+        ))}
+    </div>
   );
 }
 

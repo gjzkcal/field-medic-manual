@@ -57,6 +57,12 @@ impl Db {
         })
     }
 
+    /// DB と画像を置いているフォルダ。
+    #[must_use]
+    pub fn data_dir(&self) -> &Path {
+        &self.data_dir
+    }
+
     /// 接続を別スレッドで使って `f` を実行する。
     ///
     /// Tauri の非同期コマンドから Mutex を直接取ると、DB の処理中に非同期ランタイムのスレッドが止まるため、

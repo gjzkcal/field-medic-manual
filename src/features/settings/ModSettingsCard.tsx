@@ -8,6 +8,7 @@ import {
   useModSettings,
   type SelectableMod,
 } from "@/features/settings/mod-settings";
+import { SettingsSaveError } from "@/features/settings/SettingsSaveError";
 import { IS_WEB } from "@/lib/platform";
 
 const MOD_DESCRIPTIONS: Record<SelectableMod, string> = {
@@ -54,11 +55,7 @@ export function ModSettingsCard(): JSX.Element {
             <p className="text-xs text-muted-foreground">{MOD_DESCRIPTIONS[mod]}</p>
           </div>
         ))}
-        {storageError !== null && (
-          <p role="alert" className="text-sm text-destructive">
-            設定を保存できませんでした: {storageError}
-          </p>
-        )}
+        <SettingsSaveError error={storageError} />
       </CardContent>
     </Card>
   );

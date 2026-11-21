@@ -73,6 +73,8 @@ const noopUnlisten = (): Promise<() => void> =>
   });
 
 export const appVersion: typeof Desktop.appVersion = () => Promise.resolve(version);
+export const dataFolderOpen: typeof Desktop.dataFolderOpen = () =>
+  unsupported("保存場所を開く操作");
 // ブラウザには読み返せる保存先がなく、外へは送らない
 export const clientLog: typeof Desktop.clientLog = noop;
 

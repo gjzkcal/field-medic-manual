@@ -17,6 +17,24 @@ use crate::window::{hotkey, overlay, theme, tray};
 
 const MAIN_REVEAL_TIMEOUT: Duration = Duration::from_secs(5);
 
+fn shortcut_plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
+    tauri_plugin_global_shortcut::Builder::new()
+        .with_handler(|app, shortcut, event| {
+            // 押しっぱなしで何度も切り替わらないよう、押した瞬間だけ反応する
+            if event.state != ShortcutState::Pressed {
+                return;
+            }
+            let Some(action) = hotkey::action_of(app, shortcut) else {
+                return;
+            };
+            let _ = match hotkey::overlay_mode(action) {
+                model::OverlayMode::View => overlay::toggle(app),
+                mode => overlay::show(app, mode),
+            };
+        })
+        .build()
+}
+
 /// # Panics
 ///
 /// Tauri の初期化に失敗した場合（WebView2 がない、DB を開けないなど）。起動できない状態なので続行しない。
@@ -36,23 +54,7 @@ pub fn run() {
                 .with_state_flags(StateFlags::all() - StateFlags::VISIBLE)
                 .build(),
         )
-        .plugin(
-            tauri_plugin_global_shortcut::Builder::new()
-                .with_handler(|app, shortcut, event| {
-                    // 押しっぱなしで何度も切り替わらないよう、押した瞬間だけ反応する
-                    if event.state != ShortcutState::Pressed {
-                        return;
-                    }
-                    let Some(action) = hotkey::action_of(app, shortcut) else {
-                        return;
-                    };
-                    let _ = match hotkey::overlay_mode(action) {
-                        model::OverlayMode::View => overlay::toggle(app),
-                        mode => overlay::show(app, mode),
-                    };
-                })
-                .build(),
-        )
+        .plugin(shortcut_plugin())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_process::init())
         .manage(hotkey::HotkeyState::default())
@@ -87,6 +89,7 @@ pub fn run() {
         .on_window_event(window::on_window_event)
         .invoke_handler(tauri::generate_handler![
             commands::app::app_version,
+            commands::app::data_folder_open,
             commands::log::client_log,
             commands::docs::doc_upsert,
             commands::docs::doc_list,

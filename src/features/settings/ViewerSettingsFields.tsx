@@ -1,6 +1,7 @@
 import type { JSX } from "react";
 
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { SettingsSaveError } from "@/features/settings/SettingsSaveError";
 import {
   FONT_SIZE_LABEL,
   FONT_SIZES,
@@ -86,11 +87,7 @@ export function ViewerSettingsFields(): JSX.Element {
           ))}
         </ToggleGroup>
       </div>
-      {storageError !== null && (
-        <p role="alert" className="text-xs text-destructive">
-          設定を保存できませんでした: {storageError}
-        </p>
-      )}
+      <SettingsSaveError error={storageError} className="text-xs" />
     </div>
   );
 }

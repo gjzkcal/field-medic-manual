@@ -2,6 +2,7 @@ import type { JSX } from "react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { OverdoseLineToggle } from "@/features/casualties/OverdoseLineToggle";
+import { SettingsSaveError } from "@/features/settings/SettingsSaveError";
 import { useViewerSettings } from "@/features/settings/viewer-settings";
 
 /** 負傷者の画面の設定。カードの上の帯でも同じ値を切り替えられる。 */
@@ -21,11 +22,7 @@ export function CasualtySettingsCard(): JSX.Element {
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <OverdoseLineToggle />
-        {storageError !== null && (
-          <p role="alert" className="text-sm text-destructive">
-            設定を保存できませんでした: {storageError}
-          </p>
-        )}
+        <SettingsSaveError error={storageError} />
       </CardContent>
     </Card>
   );

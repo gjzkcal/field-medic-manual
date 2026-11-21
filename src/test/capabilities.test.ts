@@ -60,6 +60,13 @@ describe("コマンドの登録", () => {
       permissionNames("overlay.json").filter((name) => name.startsWith("allow-ai-")),
     ).toStrictEqual([]);
   });
+
+  // PC の中のフォルダを開く・ファイルを読み書きする操作は、設定画面のあるメインだけに置く
+  it("保存場所を開くコマンドはメインだけに許し、小窓には許さない", () => {
+    expect(manifestCommands()).toContain("data_folder_open");
+    expect(permissionNames("main.json")).toContain("allow-data-folder-open");
+    expect(permissionNames("overlay.json")).not.toContain("allow-data-folder-open");
+  });
 });
 
 // まとめの権限は、プラグインの更新で中身が増えると気づかないうちに権限が広がるので、使うものを列挙する
@@ -72,6 +79,8 @@ describe.each(["main.json", "overlay.json"])("%s", (file) => {
     expect(names).not.toContain("opener:default");
     expect(names).not.toContain("opener:allow-default-urls");
     expect(names).not.toContain("opener:allow-reveal-item-in-dir");
+    // 保存場所を開くのは引数なしの data_folder_open だけ。画面からパスを渡して開く口は作らない
+    expect(names).not.toContain("opener:allow-open-path");
   });
 
   it("ログは client_log だけで書き、ログのプラグインを画面に開けない", () => {
