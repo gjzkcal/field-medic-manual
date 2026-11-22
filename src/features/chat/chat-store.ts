@@ -162,6 +162,7 @@ export const useChatStore = create<ChatState>()((set, get) => {
               casualties,
               sections,
               circulation: modsActive(["circulation"], active),
+              breathing: modsActive(["breathing"], active),
               nowMs,
             });
     } catch (error: unknown) {

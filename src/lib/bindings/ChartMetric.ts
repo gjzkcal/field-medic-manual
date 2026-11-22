@@ -3,4 +3,4 @@
 /**
  * 投与からの推移を何の量で描くか。
  */
-export type ChartMetric = "effect" | "concentration" | "heart_rate" | "blood_pressure" | "mean_pressure";
+export type ChartMetric = "effect" | "concentration" | "heart_rate" | "blood_pressure" | "mean_pressure" | "spo2";

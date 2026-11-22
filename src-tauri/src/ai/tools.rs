@@ -8,7 +8,8 @@ use crate::ai::corpus::{
     meets_mod_conditions, quickref_source, section_source,
 };
 use crate::ai::types::{
-    ChartMetric, ChartPatient, ChartRequest, ChartSection, ChartValues, ClientRequest, ProposedOp,
+    ChartChange, ChartMetric, ChartPatient, ChartRequest, ChartSection, ChartValues, ClientRequest,
+    ProposedOp,
 };
 use crate::db::{Db, search};
 use crate::error::AppError;
@@ -63,6 +64,9 @@ const MAX_CHART_METRICS: usize = 3;
 /// 血液量の下限（%）。0 は、心拍出量が 0 になり計算する意味がない
 const MIN_CHART_BLOOD_PERCENT: u8 = 1;
 const MAX_CHART_PERCENT: u8 = 100;
+/// 気胸の大きさの上限（%）。ゲームでは 75 に達すると同時に心停止になるので、その手前の段階まで
+const MAX_CHART_PNEUMOTHORAX_PERCENT: u8 = 72;
+const MAX_CHART_CHANGES: usize = 10;
 /// 描く範囲の終わり（秒）の下限。点は 5 秒おきなので、線になる 2 点以上を確保する
 const MIN_CHART_UNTIL_SECONDS: u32 = 10;
 /// 描く範囲の終わり（秒）の上限。モルヒネを最も遅い時刻に打っても、消えるまでが収まる
@@ -396,9 +400,14 @@ pub fn chart_create_request(
                 "scenarios の {n} 個目: label は 1〜{MAX_CHART_LABEL_CHARS} 文字にしてください"
             ));
         }
-        if scenario.doses.is_empty() || scenario.doses.len() > MAX_CHART_DOSES {
+        if scenario.doses.len() > MAX_CHART_DOSES {
             return Err(format!(
-                "scenarios の {n} 個目: doses は 1〜{MAX_CHART_DOSES} 本にしてください"
+                "scenarios の {n} 個目: doses は {MAX_CHART_DOSES} 本までにしてください"
+            ));
+        }
+        if scenario.doses.is_empty() && scenario.until == 0 {
+            return Err(format!(
+                "scenarios の {n} 個目: doses が空のときは、until に何秒まで描くかを書いてください（薬がないと、描く範囲が決まりません）"
             ));
         }
         if scenario
@@ -411,6 +420,7 @@ pub fn chart_create_request(
             ));
         }
         check_chart_metrics(&mut scenario.metrics, scenario.patient, scenario.until)
+            .and_then(|()| check_chart_changes(&mut scenario.changes))
             .map_err(|e| format!("scenarios の {n} 個目: {e}"))?;
     }
     for (i, casualty) in chart.casualties.iter_mut().enumerate() {
@@ -422,6 +432,7 @@ pub fn chart_create_request(
             ));
         }
         check_chart_metrics(&mut casualty.metrics, casualty.patient, casualty.until)
+            .and_then(|()| check_chart_changes(&mut casualty.changes))
             .map_err(|e| format!("casualties の {n} 個目: {e}"))?;
     }
     for (i, section) in chart.sections.iter_mut().enumerate() {
@@ -461,10 +472,77 @@ fn check_chart_metrics(
             "patient の pain は 0〜{MAX_CHART_PERCENT} にしてください"
         ));
     }
+    if patient.pneumothorax > MAX_CHART_PNEUMOTHORAX_PERCENT {
+        return Err(pneumothorax_range("patient"));
+    }
     if until != 0 && !(MIN_CHART_UNTIL_SECONDS..=MAX_CHART_UNTIL_SECONDS).contains(&until) {
         return Err(format!(
             "until は 0（薬が消えるまで）か {MIN_CHART_UNTIL_SECONDS}〜{MAX_CHART_UNTIL_SECONDS} にしてください"
         ));
+    }
+    Ok(())
+}
+
+fn pneumothorax_range(place: &str) -> String {
+    format!(
+        "{place} の pneumothorax は 0〜{MAX_CHART_PNEUMOTHORAX_PERCENT} にしてください（気胸が 75 に達すると、同時に心停止になります）"
+    )
+}
+
+/// 途中の変更を確かめ、時刻の早い順に並べ直す。
+fn check_chart_changes(changes: &mut [ChartChange]) -> Result<(), String> {
+    if changes.len() > MAX_CHART_CHANGES {
+        return Err(format!(
+            "changes は {MAX_CHART_CHANGES} 個までにしてください"
+        ));
+    }
+    changes.sort_by_key(|c| c.seconds);
+    for (i, change) in changes.iter().enumerate() {
+        let n = i + 1;
+        if change.seconds > MAX_CHART_UNTIL_SECONDS {
+            return Err(format!(
+                "changes の seconds は 0〜{MAX_CHART_UNTIL_SECONDS} にしてください"
+            ));
+        }
+        if i > 0 && changes[i - 1].seconds == change.seconds {
+            return Err(format!(
+                "changes に、seconds が同じもの（{}）が 2 つあります。同じ時刻の変更は 1 つにまとめてください",
+                change.seconds
+            ));
+        }
+        let ChartChange {
+            seconds: _,
+            blood,
+            pain,
+            blocked,
+            pneumothorax,
+            tension,
+            mask,
+        } = *change;
+        if blood.is_none()
+            && pain.is_none()
+            && blocked.is_none()
+            && pneumothorax.is_none()
+            && tension.is_none()
+            && mask.is_none()
+        {
+            return Err(format!(
+                "changes の {n} 個目（時刻の早い順）: 変える項目がありません"
+            ));
+        }
+        if blood.is_some_and(|v| !(MIN_CHART_BLOOD_PERCENT..=MAX_CHART_PERCENT).contains(&v)) {
+            return Err(format!(
+                "changes の blood は {MIN_CHART_BLOOD_PERCENT}〜{MAX_CHART_PERCENT} にしてください"
+            ));
+        }
+        if pain.is_some_and(|v| v > MAX_CHART_PERCENT) {
+            return Err(format!(
+                "changes の pain は 0〜{MAX_CHART_PERCENT} にしてください"
+            ));
+        }
+        if pneumothorax.is_some_and(|v| v > MAX_CHART_PNEUMOTHORAX_PERCENT) {
+            return Err(pneumothorax_range("changes"));
+        }
     }
     Ok(())
 }
@@ -790,8 +868,8 @@ mod tests {
         assert_eq!(
             chart.scenarios[0].patient,
             ChartPatient {
-                blood: 100,
-                pain: 30
+                pain: 30,
+                ..ChartPatient::default()
             },
             "渡さなかった項目は健康な患者の値"
         );
@@ -810,11 +888,91 @@ mod tests {
                 json!(["effect", "concentration", "heart_rate", "mean_pressure"]))
             .contains("metrics")
         );
-        assert!(err(&|v| v["scenarios"][0]["metrics"] = json!(["spo2"])).contains("形が違います"));
+        assert!(
+            err(&|v| v["scenarios"][0]["metrics"] = json!(["blood_volume"]))
+                .contains("形が違います")
+        );
         assert!(err(&|v| v["scenarios"][0]["patient"] = json!({"blood": 0})).contains("blood"));
         assert!(err(&|v| v["casualties"][0]["patient"] = json!({"pain": 101})).contains("pain"));
         assert!(err(&|v| v["scenarios"][0]["until"] = json!(9)).contains("until"));
         assert!(err(&|v| v["casualties"][0]["until"] = json!(21601)).contains("until"));
+    }
+
+    #[test]
+    fn chart_breathing_conditions_and_changes_are_checked() {
+        let base = || {
+            json!({
+                "title": "SpO2",
+                "scenarios": [{
+                    "label": "a",
+                    "metrics": ["spo2"],
+                    "doses": [],
+                    "patient": {"blocked": true, "pneumothorax": 36},
+                    "changes": [
+                        {"seconds": 240, "mask": true},
+                        {"seconds": 120, "blocked": false, "pneumothorax": 0}
+                    ],
+                    "until": 600
+                }]
+            })
+        };
+        let corpus = fixtures::corpus();
+        let ok = chart_create_request(&corpus, &base());
+        let Ok(ClientRequest::ChartCreate { chart }) = ok else {
+            panic!("正しい条件は通る: {ok:?}");
+        };
+        let scenario = &chart.scenarios[0];
+        assert_eq!(scenario.metrics, vec![ChartMetric::Spo2]);
+        assert!(scenario.doses.is_empty(), "until があれば、薬なしでも通る");
+        assert_eq!(
+            scenario.patient,
+            ChartPatient {
+                blocked: true,
+                pneumothorax: 36,
+                ..ChartPatient::default()
+            }
+        );
+        let seconds: Vec<u32> = scenario.changes.iter().map(|c| c.seconds).collect();
+        assert_eq!(seconds, vec![120, 240], "時刻の早い順に並べ直す");
+        assert_eq!(scenario.changes[0].blocked, Some(false));
+        assert_eq!(scenario.changes[0].mask, None, "書かなかった項目は変えない");
+
+        let err = |edit: &dyn Fn(&mut serde_json::Value)| {
+            let mut input = base();
+            edit(&mut input);
+            chart_create_request(&corpus, &input).unwrap_err()
+        };
+        assert!(err(&|v| v["scenarios"][0]["until"] = json!(0)).contains("doses が空"));
+        assert!(err(&|v| v["scenarios"][0]["patient"]["pneumothorax"] = json!(75)).contains("72"));
+        assert!(
+            err(&|v| v["scenarios"][0]["changes"][0]["seconds"] = json!(120))
+                .contains("同じもの（120）")
+        );
+        assert!(
+            err(&|v| v["scenarios"][0]["changes"][0] = json!({"seconds": 300}))
+                .contains("変える項目がありません")
+        );
+        assert!(
+            err(&|v| v["scenarios"][0]["changes"][0]["pneumothorax"] = json!(73)).contains("72")
+        );
+        assert!(err(&|v| v["scenarios"][0]["changes"][0]["blood"] = json!(0)).contains("blood"));
+        assert!(
+            err(&|v| v["scenarios"][0]["changes"][0]["seconds"] = json!(21601)).contains("seconds")
+        );
+        assert!(
+            err(&|v| {
+                let one = json!({"seconds": 1, "mask": true});
+                let many: Vec<_> = (0..11)
+                    .map(|i| {
+                        let mut c = one.clone();
+                        c["seconds"] = json!(i);
+                        c
+                    })
+                    .collect();
+                v["scenarios"][0]["changes"] = serde_json::Value::Array(many);
+            })
+            .contains("10 個まで")
+        );
     }
 
     #[test]
@@ -854,7 +1012,7 @@ mod tests {
         };
         assert!(err(&|v| v["title"] = json!(" ")).contains("title"));
         assert!(err(&|v| v["scenarios"][0]["doses"][1]["seconds"] = json!(3601)).contains("3600"));
-        assert!(err(&|v| v["scenarios"][0]["doses"] = json!([])).contains("doses"));
+        assert!(err(&|v| v["scenarios"][0]["doses"] = json!([])).contains("until"));
         assert!(
             err(&|v| v["scenarios"][0]["doses"][0]["drug"] = json!("ammonium_carbonate"))
                 .contains("形が違います")
