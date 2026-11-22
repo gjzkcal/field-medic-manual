@@ -1028,6 +1028,32 @@ describe("描く範囲と途中の変更", () => {
     );
   });
 
+  it("薬が消える時刻に小数の秒があるとき、切り下げた終わりの秒の変更は理由を返す", () => {
+    // エピネフリン（164 s で消える）を 0.4 s 前の記録から始めるので、終わりは 164 s ちょうどではなく小数になる
+    const casualty = withRecords([
+      ["epinephrine", 100.4],
+      ["epinephrine", 100],
+    ]);
+    const at = (seconds: number): AiChartInput =>
+      input(
+        {
+          casualties: [
+            {
+              casualty: "c1",
+              metrics: ["spo2"],
+              patient: HEALTHY,
+              changes: [{ ...NO_CHANGE, seconds, mask: true }],
+              until: 0,
+            },
+          ],
+        },
+        { casualties: [casualty], breathing: true },
+      );
+    // 描く範囲は 164.4 s まで。計算は 164 s までなので、164 s の変更は次の更新がなく、線に出ない
+    expect(errorOf(at(164))).toContain("164 秒は、描く範囲（経過 164 s まで）の外");
+    expect(built(at(163)).chart.data.points.at(-1)?.x).toBe(164);
+  });
+
   it("過量投与で心停止になれば、薬だけの条件でも SpO2 が下がる", () => {
     const { chart } = chartOf({
       doses: Array.from({ length: 5 }, () => ({ drug: "epinephrine" as const, seconds: 0 })),

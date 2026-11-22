@@ -441,7 +441,9 @@ function doseParts(
   // 薬ごとの線は、消えた後は 0 のままなので、消える時刻で終える
   const endSeconds = vitalMetrics.length > 0 && target.until > 0 ? target.until : drugEndSeconds;
   const range = target.until === 0 ? "" : `。経過 ${String(endSeconds)} s まで`;
-  const late = target.changes.find((c) => c.seconds >= endSeconds);
+  // 計算は、切り下げた終わりの秒まで。変更は次の 1 s の更新から効くので、その秒より前でないと線に出ない
+  // （負傷者の記録では、薬が消える時刻に小数の秒が入る）
+  const late = target.changes.find((c) => c.seconds >= Math.floor(endSeconds));
   if (vitalMetrics.length > 0 && late !== undefined) {
     return `「${name}」の changes の ${String(late.seconds)} 秒は、描く範囲（経過 ${String(Math.floor(endSeconds))} s まで）の外です。until を、変更の時刻より後にしてください`;
   }
