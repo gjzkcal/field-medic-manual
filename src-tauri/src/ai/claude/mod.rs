@@ -66,26 +66,45 @@ fn proposed_op_schema() -> Value {
 /// グラフの条件。`ChartRequest` の serde の形と同じにする（Rust で同じ型に読み直して検査する）。
 /// 本数や秒の上限は説明に書き、Rust で検査する（理由の文を AI に返せるように）
 fn chart_schema() -> Value {
-    let metric = json!({"type": "string", "enum": ["effect", "concentration"], "description": "effect は 1 本のピークを 100 とした効能（%）、concentration は体内の濃度（nM）"});
+    let metrics = json!({
+        "type": "array",
+        "items": {"type": "string", "enum": ["effect", "concentration", "heart_rate", "blood_pressure", "mean_pressure"]},
+        "description": "出す量。1〜3 個。effect は薬ごとの効能（1 本のピークを 100 とした %）、concentration は薬ごとの体内の濃度（nM）、heart_rate は心拍数（bpm）、blood_pressure は収縮期と拡張期の血圧（mmHg。線は 2 本）、mean_pressure は平均血圧（mmHg）"
+    });
+    let mut patient = object(
+        &json!({
+            "blood": {"type": "integer", "description": "血液量（%）。1〜100。分からなければ 100"},
+            "pain": {"type": "integer", "description": "痛みの HP（%）。0〜100。100 で痛みなし、低いほど痛い。分からなければ 100"}
+        }),
+        &["blood", "pain"],
+    );
+    patient["description"] = json!(
+        "心拍数・血圧を計算する患者の状態。利用者が示したときだけ値を変え、ほかは 100 にする。計算の間は一定として扱う。effect と concentration には影響しない"
+    );
     let drug = json!({"type": "string", "enum": ["epinephrine", "metoprolol", "morphine", "naloxone", "phenylephrine"]});
     let dose = object(
         &json!({"drug": drug, "seconds": {"type": "integer", "description": "グラフの始まりからの秒数。0〜3600"}}),
         &["drug", "seconds"],
     );
+    let until = json!({"type": "integer", "description": "何秒まで描くか。0 なら、すべての投与が体内から消えるまで（モルヒネは 1 時間半近く）。打ってから数分の血圧のように、見たい時間帯が短いときに、その終わりの秒数を書く。0 か 10〜21600"});
     let scenario = object(
         &json!({
             "label": {"type": "string", "description": "この条件の名前（例: 「2 本を 3 分あけて」）。薬の名前と単位は画面が線の名前に付けるので、薬の名前や「効能」「濃度」は入れない。40 文字まで"},
-            "metric": metric,
-            "doses": {"type": "array", "items": dose, "description": "打つ薬と時刻。1〜20 本"}
+            "metrics": metrics,
+            "doses": {"type": "array", "items": dose, "description": "打つ薬と時刻。1〜20 本"},
+            "patient": patient,
+            "until": until
         }),
-        &["label", "metric", "doses"],
+        &["label", "metrics", "doses", "patient", "until"],
     );
     let casualty = object(
         &json!({
             "casualty": {"type": "string", "description": "casualty_read の負傷者の id"},
-            "metric": metric
+            "metrics": metrics,
+            "patient": patient,
+            "until": until
         }),
-        &["casualty", "metric"],
+        &["casualty", "metrics", "patient", "until"],
     );
     let point = object(
         &json!({"x": {"type": "number"}, "y": {"type": "number"}}),
@@ -437,6 +456,8 @@ mod tests {
         let request: ChartRequest = serde_json::from_value(sample(&chart_schema()))
             .expect("見本を ChartRequest として読める");
         assert_eq!(request.scenarios[0].doses.len(), 1);
+        assert_eq!(request.scenarios[0].metrics.len(), 1);
+        assert_eq!(request.casualties[0].patient.blood, 1);
         assert_eq!(request.values[0].points.len(), 1);
         assert_eq!(request.sections[0].lines.len(), 1);
         let list = tools(false);
