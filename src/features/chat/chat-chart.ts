@@ -215,7 +215,11 @@ export interface AiChartInput {
   casualties: readonly Casualty[];
   /** request.sections の節から取った線（節の HTML を読むのは chat-chart-sections。読めなかった節があれば、ここへ来る前に止める） */
   sections: readonly ChartPart[];
-  /** Circulation を使っているか。使っていなければ薬の濃度の仕組みがないので、投与からの推移は出さない（負傷者の画面と同じ） */
+  /**
+   * Circulation を使っているか。使っていなければ薬の濃度の仕組みも、心拍数・血圧の計算もないので、
+   * 仮の条件と負傷者の記録からの推移は出さない（負傷者の画面と同じ）。
+   * ゲームの Breathing は Circulation がないと入れられず、SpO2 の計算も Circulation の心拍出量を使うので、薬なしの SpO2 も同じ
+   */
   circulation: boolean;
   /** Breathing を使っているか。使っていなければ、SpO2 と、気道・気胸・酸素マスクの指定は受けない */
   breathing: boolean;
@@ -431,9 +435,16 @@ function doseParts(
   if (!breathing && (target.metrics.includes("spo2") || needsBreathing(target))) {
     return "SpO2 と、気道・気胸・酸素マスクの指定は、Breathing を使っているときだけ計算できます（利用者の設定の「使っている MOD」に Breathing がありません）";
   }
-  const endSeconds = endSecondsOf(medication, doses, target.until);
-  const range = target.until === 0 ? "" : `。経過 ${String(endSeconds)} s まで`;
+  const drugEndSeconds = endSecondsOf(medication, doses, target.until);
   const vitalMetrics = target.metrics.filter(isVitalMetric);
+  // 心拍数・血圧・SpO2 は、薬が消えた後も患者の状態の変更で動くので、範囲の指定があればそこまで描く。
+  // 薬ごとの線は、消えた後は 0 のままなので、消える時刻で終える
+  const endSeconds = vitalMetrics.length > 0 && target.until > 0 ? target.until : drugEndSeconds;
+  const range = target.until === 0 ? "" : `。経過 ${String(endSeconds)} s まで`;
+  const late = target.changes.find((c) => c.seconds >= endSeconds);
+  if (vitalMetrics.length > 0 && late !== undefined) {
+    return `「${name}」の changes の ${String(late.seconds)} 秒は、描く範囲（経過 ${String(Math.floor(endSeconds))} s まで）の外です。until を、変更の時刻より後にしてください`;
+  }
   const vitals =
     vitalMetrics.length === 0
       ? null
@@ -445,7 +456,7 @@ function doseParts(
     lines: target.metrics.flatMap((metric) =>
       isVitalMetric(metric)
         ? (vitals?.lines.get(metric) ?? [])
-        : drugLines(medication, doses, metric, name, endSeconds),
+        : drugLines(medication, doses, metric, name, drugEndSeconds),
     ),
     metricText: target.metrics.map((m) => METRIC_LABELS[m]).join("・"),
     note: vitals === null ? range : `${range}。${vitals.note}`,
@@ -577,7 +588,7 @@ export function buildAiChart(input: AiChartInput): AiChartResult {
     return {
       ok: false,
       error:
-        "投与からの推移は、Circulation を使っているときだけ計算できます（利用者の設定の「使っている MOD」に Circulation がありません）",
+        "scenarios と casualties の推移は、Circulation を使っているときだけ計算できます（利用者の設定の「使っている MOD」に Circulation がありません。SpO2 を計算する Breathing も、Circulation の心拍出量を使います）",
     };
   }
   const parts: ChartPart[] = [];

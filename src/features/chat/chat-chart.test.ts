@@ -981,3 +981,66 @@ describe("SpO2（Breathing）", () => {
     expect(chart.conditions[0]).toContain("途中の変更: 経過 60 s から 痛みの HP 30%");
   });
 });
+
+/** Breathing を使っている利用者で、spo2Scenario の条件が返す理由。 */
+function spo2Error(over: Partial<ChartRequest["scenarios"][number]>): string {
+  return errorOf(input({ scenarios: [spo2Scenario(over)] }, { breathing: true }));
+}
+
+describe("描く範囲と途中の変更", () => {
+  const NO_CHANGE = {
+    blood: null,
+    pain: null,
+    blocked: null,
+    pneumothorax: null,
+    tension: null,
+    mask: null,
+  };
+
+  it("範囲を指定すれば、薬が消えた後の変更まで SpO2 を描き、薬ごとの線は消える時刻で終わる", () => {
+    // エピネフリンは 164 s で消える。気道が塞がるのは、その後の 300 s
+    const { chart } = chartOf({
+      metrics: ["spo2", "effect"],
+      doses: [{ drug: "epinephrine", seconds: 0 }],
+      changes: [{ ...NO_CHANGE, seconds: 300, blocked: true }],
+      until: 480,
+    });
+    const last = (key: string): number | undefined =>
+      chart.data.points.findLast((p) => p.values[key] !== undefined)?.x;
+    expect(last("s0")).toBe(480);
+    expect(last("s1")).toBe(164);
+    expect(valueAt(chart, "s0", 300)).toBeCloseTo(97.1486, 2);
+    expect(valueAt(chart, "s0", 480)).toBeLessThan(80);
+    expect(chart.conditions[0]).toContain("経過 480 s まで");
+  });
+
+  it("描く範囲の外の変更は、線に出ないので理由を返す", () => {
+    // 範囲の指定がなければ、薬が消える時刻（164 s）まで
+    expect(
+      spo2Error({
+        doses: [{ drug: "epinephrine", seconds: 0 }],
+        changes: [{ ...NO_CHANGE, seconds: 300, blocked: true }],
+        until: 0,
+      }),
+    ).toContain("300 秒は、描く範囲（経過 164 s まで）の外");
+    expect(spo2Error({ changes: [{ ...NO_CHANGE, seconds: 600, mask: true }] })).toContain(
+      "600 秒は、描く範囲（経過 600 s まで）の外",
+    );
+  });
+
+  it("過量投与で心停止になれば、薬だけの条件でも SpO2 が下がる", () => {
+    const { chart } = chartOf({
+      doses: Array.from({ length: 5 }, () => ({ drug: "epinephrine" as const, seconds: 0 })),
+      until: 300,
+    });
+    expect(valueAt(chart, "s0", 15)).toBeCloseTo(97.1486, 1);
+    expect(valueAt(chart, "s0", 300)).toBeLessThan(65);
+    expect(chart.conditions[0]).toContain("経過 15 s で心停止になる");
+  });
+
+  it("Circulation がなければ、Breathing があっても薬なしの SpO2 は理由を返す", () => {
+    expect(
+      errorOf(input({ scenarios: [spo2Scenario({})] }, { breathing: true, circulation: false })),
+    ).toContain("Circulation を使っているときだけ");
+  });
+});
