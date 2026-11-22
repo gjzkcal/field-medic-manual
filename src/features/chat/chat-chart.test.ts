@@ -313,6 +313,64 @@ describe("心拍数と血圧", () => {
     expect(chart.conditions[0]).toContain("経過 164 s まで");
   });
 
+  it("前の薬が体内から消えてから次を打っても、前の薬の分が線に出る", () => {
+    // エピネフリンは 164 s で消えるので、300 s のナロキソンとは、体内にある間が重ならない
+    const { chart } = built(
+      input({
+        scenarios: [
+          {
+            label: "a",
+            metrics: ["heart_rate"],
+            doses: [
+              { drug: "epinephrine", seconds: 0 },
+              { drug: "naloxone", seconds: 300 },
+            ],
+            patient: HEALTHY,
+            until: 0,
+          },
+        ],
+      }),
+    );
+    const alone = built(
+      input({
+        scenarios: [
+          {
+            label: "a",
+            metrics: ["heart_rate"],
+            doses: [{ drug: "epinephrine", seconds: 0 }],
+            patient: HEALTHY,
+            until: 0,
+          },
+        ],
+      }),
+    ).chart;
+    expect(valueAt(chart, "s0", 30)).toBeGreaterThan(100);
+    expect(valueAt(chart, "s0", 30)).toBe(valueAt(alone, "s0", 30));
+    expect(valueAt(chart, "s0", 300)).toBeCloseTo(80, 6);
+    expect(chart.conditions[0]).not.toContain("記録にある前の投与");
+  });
+
+  it("前の薬で心停止になれば、消えた後に次を打つ条件でも、線は心停止で終わる", () => {
+    const { chart } = built(
+      input({
+        scenarios: [
+          {
+            label: "a",
+            metrics: ["heart_rate"],
+            doses: [
+              ...Array.from({ length: 5 }, () => ({ drug: "epinephrine" as const, seconds: 0 })),
+              { drug: "naloxone", seconds: 300 },
+            ],
+            patient: HEALTHY,
+            until: 0,
+          },
+        ],
+      }),
+    );
+    expect(chart.data.points.at(-1)?.x).toBe(15);
+    expect(chart.conditions[0]).toContain("経過 15 s で心停止");
+  });
+
   it("患者の状態で値が変わり、効能には影響しない", () => {
     const doses: typeof mixed = [{ drug: "morphine", seconds: 0 }];
     const make = (patient: typeof HEALTHY): AiChart =>

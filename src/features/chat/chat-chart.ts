@@ -236,8 +236,12 @@ function vitalLines(
     return `「${name}」の患者の状態（${state}）では、薬を打つ前に心停止になっていて、推移を計算できません`;
   }
   const earlierArrest = `「${name}」は、記録にある前の投与で心停止に当たっています（グラフの始まりより前）。蘇生は計算に入っていないので、その後の心拍数・血圧は計算できません`;
+  // 横軸の 0 までに薬がすべて消えているまとまりは、心停止に当たったかだけを見る（心拍数は、患者の状態だけの値に戻っている）。
+  // 0 より後まで残るまとまりは、間が空いていても全部を続けて計算する（仮の投与で、前の薬が消えてから次を打つ場合も線に出す）
   const groups = doseGroups(medication, [...earlier, ...doses]);
-  for (const group of groups.slice(0, -1)) {
+  const endsBeforeStart = (group: readonly Dose[]): boolean =>
+    endSecondsOf(medication, group, 0) <= 0;
+  for (const group of groups.filter((g) => endsBeforeStart(g))) {
     const past = simulateVitals({
       ...base,
       doses: group,
@@ -248,7 +252,7 @@ function vitalLines(
       return earlierArrest;
     }
   }
-  const current = groups.at(-1) ?? [];
+  const current = groups.filter((g) => !endsBeforeStart(g)).flat();
   // 描く範囲を超える点を出さないように、終わりは切り下げる（負傷者の記録の投与は、間隔に小数の秒が入る）
   const { points, unconsciousAtSeconds, arrestAtSeconds } = simulateVitals({
     ...base,
