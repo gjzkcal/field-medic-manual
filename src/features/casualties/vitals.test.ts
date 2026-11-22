@@ -199,6 +199,37 @@ describe("過量投与", () => {
     expect(at(timeline, 10).heartRate).toBeCloseTo(168.9947, 3);
   });
 
+  it("0 s より前の投与から進めると、前の投与の心停止が残る", () => {
+    const given: Dose[] = [
+      ...Array.from({ length: 5 }, () => ({ drug: "epinephrine" as const, atMs: -100 * MS })),
+      { drug: "naloxone", atMs: 0 },
+    ];
+    const timeline = simulateVitals({
+      medication,
+      doses: given,
+      patient: HEALTHY_PATIENT,
+      endSeconds: 300,
+      startSeconds: -100,
+    });
+    expect(timeline.arrestAtSeconds).toBe(-85);
+    expect(timeline.points).toHaveLength(0);
+  });
+
+  it("0 s より前の投与が体内に残っていれば、0 s の値に入る", () => {
+    const given: Dose[] = [{ drug: "epinephrine", atMs: -30 * MS }];
+    const timeline = simulateVitals({
+      medication,
+      doses: given,
+      patient: HEALTHY_PATIENT,
+      endSeconds: 60,
+      startSeconds: -30,
+    });
+    // 30 s 前に打った 1 本を最初から進めた値は、0 s に打って 30 s 進めた値と同じ
+    const shifted = run(doses(["epinephrine", 0]), 60);
+    expect(at(timeline, 0).heartRate).toBeCloseTo(at(shifted, 30).heartRate, 9);
+    expect(at(timeline, 30).heartRate).toBeCloseTo(at(shifted, 60).heartRate, 9);
+  });
+
   it("メトプロロール 4 本は、先に意識を失い、その後で心停止になる", () => {
     const timeline = run(
       Array.from({ length: 4 }, () => ({ drug: "metoprolol" as const, atMs: 0 })),

@@ -89,9 +89,12 @@ export interface VitalsPoint {
 export interface VitalsTimeline {
   /** 0 s から 1 s ごと。心停止に当たったら、その時刻の点で終わる */
   points: readonly VitalsPoint[];
-  /** 意識を失う状態（Critical）に最初に入った時刻。薬を打つ前からなら 0。入らなければ null */
+  /**
+   * 0 s 以降で、意識を失う状態（Critical）に最初に入った時刻。0 s の時点でその状態なら 0。入らなければ null。
+   * 0 s より前に入って抜けた分は数えない（抜けた後に、いつ意識が戻るかはここでは計算していない）
+   */
   unconsciousAtSeconds: number | null;
-  /** 心停止に入った時刻。薬を打つ前からなら 0。入らなければ null */
+  /** 心停止に入った時刻。0 s より前なら負の値（計算の始まりより前には、さかのぼらない）。入らなければ null */
   arrestAtSeconds: number | null;
 }
 
@@ -101,6 +104,11 @@ export interface VitalsInput {
   patient: PatientState;
   /** 計算する長さ（横軸の 0 = atMs の 0 からの秒数） */
   endSeconds: number;
+  /**
+   * 計算を始める時刻（0 以下の整数の秒）。0 s より前に打った投与があるときに、その投与から進めるために渡す
+   * （心拍数と状態は前の値に依存するので、途中から始めると、前の投与の分が抜ける）。点は 0 s 以降だけを返す
+   */
+  startSeconds?: number;
   /** 薬を打つ前に進めておく秒数。原稿の表（既定の心拍数から始めた値）と突き合わせるときだけ 0 にする */
   settleSeconds?: number;
 }
@@ -184,9 +192,11 @@ export function simulateVitals(input: VitalsInput): VitalsTimeline {
   let arrestAtSeconds: number | null = null;
   const points: VitalsPoint[] = [];
 
-  for (let seconds = -settleSeconds; seconds <= endSeconds; seconds += 1) {
+  const startSeconds = input.startSeconds ?? 0;
+  const firstSeconds = startSeconds - settleSeconds;
+  for (let seconds = firstSeconds; seconds <= endSeconds; seconds += 1) {
     // 始めの点（進める前の値）は、更新せずにそのまま出す
-    if (seconds > -settleSeconds) {
+    if (seconds > firstSeconds) {
       const concentrations = concentrationsAt(medication, doses, seconds * MS);
       // ACE_Medical_CriticalState.c: 出血性ショックの頻脈。前の更新の心拍数と平均血圧から決まる
       const base =
@@ -212,12 +222,11 @@ export function simulateVitals(input: VitalsInput): VitalsTimeline {
         (DEFAULT_RESISTANCE + totalEffect(medication, "vascularResistance", concentrations));
       state = nextState(state, heartRate, pressureKpa, patient.blood);
     }
-    const shown = Math.max(seconds, 0);
-    if (state === "critical" || state === "arrest") {
-      unconsciousAtSeconds ??= shown;
-    }
     if (state === "arrest") {
-      arrestAtSeconds = shown;
+      arrestAtSeconds = Math.max(seconds, startSeconds);
+      unconsciousAtSeconds ??= Math.max(arrestAtSeconds, 0);
+    } else if (state === "critical" && seconds >= 0) {
+      unconsciousAtSeconds ??= seconds;
     }
     if (seconds >= 0) {
       points.push({ seconds, heartRate, meanPressureKpa: pressureKpa });

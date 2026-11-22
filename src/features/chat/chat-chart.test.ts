@@ -10,6 +10,7 @@ import {
   type ChartPart,
 } from "@/features/chat/chat-chart";
 import { loadMedication } from "@/features/medication/bundle";
+import type { DrugId } from "@/features/medication/ids";
 import type { Casualty } from "@/lib/bindings/Casualty";
 import type { ChartRequest } from "@/lib/bindings/ChartRequest";
 
@@ -57,6 +58,30 @@ function errorOf(value: AiChartInput): string {
 /** 線 key の、x での値。 */
 function valueAt(chart: AiChart, key: string, x: number): number | undefined {
   return chart.data.points.find((p) => p.x === x)?.values[key];
+}
+
+/** 打った薬と、何秒前に打ったか。 */
+type GivenDrug = [DrugId, number];
+
+function withRecords(records: readonly GivenDrug[]): Casualty {
+  return {
+    id: "c1",
+    name: "A",
+    createdAtMs: NOW - 9000 * S,
+    inPain: false,
+    records: records.map(([drug, secondsAgo], i) => ({
+      id: `r${String(i)}`,
+      atMs: NOW - secondsAgo * S,
+      entry: { kind: "drug", drug },
+    })),
+  };
+}
+
+function heartRateOf(casualty: Casualty): AiChartInput {
+  return input(
+    { casualties: [{ casualty: "c1", metrics: ["heart_rate"], patient: HEALTHY, until: 0 }] },
+    { casualties: [casualty] },
+  );
 }
 
 function line(label: string, axis: string, unit: string | null = null): ChartLine {
@@ -363,6 +388,77 @@ describe("心拍数と血圧", () => {
         }),
       ),
     ).toContain("血液量 20%、痛みの HP 100%）では、薬を打つ前に心停止");
+  });
+
+  describe("負傷者の記録にある前の投与", () => {
+    it("薬ごとの線から外した投与も、体内に残っている間は心拍数に入れる", () => {
+      // エピネフリン（164 s で消える）は、最後の投与（300 s 前から 200 s 後）の時点で消えているので薬ごとの線から外れる。
+      // グラフは 1 本目のモルヒネ（エピネフリンの 100 s 後）から始まり、その時点ではまだ体内に残っている
+      const { chart } = built(
+        heartRateOf(
+          withRecords([
+            ["epinephrine", 300],
+            ["morphine", 200],
+            ["morphine", 100],
+          ]),
+        ),
+      );
+      const alone = built(
+        heartRateOf(
+          withRecords([
+            ["morphine", 200],
+            ["morphine", 100],
+          ]),
+        ),
+      ).chart;
+      expect(valueAt(alone, "s0", 0)).toBe(80);
+      expect(valueAt(chart, "s0", 0)).toBeGreaterThan(83);
+      // エピネフリンが消えた後は、モルヒネだけのときと同じ値に戻る
+      expect(valueAt(chart, "s0", 600)).toBeCloseTo(valueAt(alone, "s0", 600) ?? Number.NaN, 6);
+      expect(chart.conditions[0]).toContain(
+        "記録にある前の投与（エピネフリン）も、体内に残っている間の分を計算に入れている",
+      );
+      expect(alone.conditions[0]).not.toContain("記録にある前の投与");
+    });
+
+    it("前の投与で心停止に当たっていたら、後の投与だけで計算し直さず、理由を返す", () => {
+      const records: GivenDrug[] = [
+        ...Array.from({ length: 5 }, (): GivenDrug => ["epinephrine", 400]),
+        ["naloxone", 100],
+      ];
+      expect(errorOf(heartRateOf(withRecords(records)))).toContain(
+        "記録にある前の投与で心停止に当たっています",
+      );
+      // 効能は、今までどおり体内に残っている投与から作れる
+      const effect = built(
+        input(
+          { casualties: [{ casualty: "c1", metrics: ["effect"], patient: HEALTHY, until: 0 }] },
+          { casualties: [withRecords(records)] },
+        ),
+      ).chart;
+      expect(effect.data.series.map((s) => s.label)).toStrictEqual(["ナロキソン（A）"]);
+    });
+
+    it("投与の間隔に小数の秒があっても、線は描く範囲を超えない", () => {
+      const casualty = withRecords([
+        ["epinephrine", 90.25],
+        ["morphine", 0],
+      ]);
+      const { chart } = built(
+        input(
+          {
+            casualties: [
+              { casualty: "c1", metrics: ["heart_rate", "effect"], patient: HEALTHY, until: 0 },
+            ],
+          },
+          { casualties: [casualty] },
+        ),
+      );
+      // モルヒネは 90.25 s に打ち、5150 s 後に消える
+      expect(chart.data.points.at(-1)?.x).toBe(5240.25);
+      const lastHeartRate = chart.data.points.findLast((p) => p.values["s0"] !== undefined);
+      expect(lastHeartRate?.x).toBe(5240);
+    });
   });
 
   it("負傷者の記録からも作れる", () => {
