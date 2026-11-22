@@ -600,7 +600,15 @@ describe("ChatPanel", () => {
                 {
                   casualty: "c9",
                   metrics: ["effect"],
-                  patient: { blood: 100, pain: 100 },
+                  patient: {
+                    blood: 100,
+                    pain: 100,
+                    blocked: false,
+                    pneumothorax: 0,
+                    tension: false,
+                    mask: false,
+                  },
+                  changes: [],
                   until: 0,
                 },
               ],

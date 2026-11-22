@@ -17,7 +17,14 @@ import type { ChartRequest } from "@/lib/bindings/ChartRequest";
 const medication = await loadMedication();
 const NOW = 1_793_000_000_000;
 const S = 1000;
-const HEALTHY = { blood: 100, pain: 100 };
+const HEALTHY = {
+  blood: 100,
+  pain: 100,
+  blocked: false,
+  pneumothorax: 0,
+  tension: false,
+  mask: false,
+};
 
 const EMPTY: ChartRequest = {
   title: "題",
@@ -34,6 +41,7 @@ function input(request: Partial<ChartRequest>, extra: Partial<AiChartInput> = {}
     casualties: [],
     sections: [],
     circulation: true,
+    breathing: false,
     nowMs: NOW,
     ...extra,
   };
@@ -79,7 +87,11 @@ function withRecords(records: readonly GivenDrug[]): Casualty {
 
 function heartRateOf(casualty: Casualty): AiChartInput {
   return input(
-    { casualties: [{ casualty: "c1", metrics: ["heart_rate"], patient: HEALTHY, until: 0 }] },
+    {
+      casualties: [
+        { casualty: "c1", metrics: ["heart_rate"], patient: HEALTHY, changes: [], until: 0 },
+      ],
+    },
     { casualties: [casualty] },
   );
 }
@@ -108,6 +120,7 @@ describe("仮の投与", () => {
             label: "1 本",
             metrics: ["effect"],
             patient: HEALTHY,
+            changes: [],
             until: 0,
             doses: [{ drug: "morphine", seconds: 0 }],
           },
@@ -136,6 +149,7 @@ describe("仮の投与", () => {
             label: "10 分あけて",
             metrics: ["effect"],
             patient: HEALTHY,
+            changes: [],
             until: 0,
             doses: [
               { drug: "epinephrine", seconds: 0 },
@@ -159,7 +173,14 @@ describe("仮の投与", () => {
     const { chart, summary } = built(
       input({
         scenarios: [
-          { label: "2 本", metrics: ["concentration"], patient: HEALTHY, until: 0, doses },
+          {
+            label: "2 本",
+            metrics: ["concentration"],
+            patient: HEALTHY,
+            changes: [],
+            until: 0,
+            doses,
+          },
         ],
       }),
     );
@@ -182,6 +203,7 @@ describe("仮の投与", () => {
             label: "a",
             metrics: ["effect"],
             patient: HEALTHY,
+            changes: [],
             until: 0,
             doses: [{ drug: "morphine", seconds: 0 }],
           },
@@ -195,6 +217,7 @@ describe("仮の投与", () => {
             label: "a",
             metrics: ["effect"],
             patient: HEALTHY,
+            changes: [],
             until: 0,
             doses: [
               { drug: "naloxone", seconds: 60 },
@@ -217,6 +240,7 @@ describe("仮の投与", () => {
         label: "a",
         metrics: ["effect"],
         patient: HEALTHY,
+        changes: [],
         until: 0,
         doses: [{ drug: "morphine", seconds: 0 }],
       },
@@ -241,6 +265,7 @@ describe("心拍数と血圧", () => {
             metrics: ["blood_pressure", "heart_rate"],
             doses: mixed,
             patient: HEALTHY,
+            changes: [],
             until: 0,
           },
         ],
@@ -274,6 +299,7 @@ describe("心拍数と血圧", () => {
             metrics: ["blood_pressure", "concentration"],
             doses: mixed,
             patient: HEALTHY,
+            changes: [],
             until: 240,
           },
         ],
@@ -304,6 +330,7 @@ describe("心拍数と血圧", () => {
             metrics: ["effect"],
             doses: [{ drug: "epinephrine", seconds: 0 }],
             patient: HEALTHY,
+            changes: [],
             until: 600,
           },
         ],
@@ -326,6 +353,7 @@ describe("心拍数と血圧", () => {
               { drug: "naloxone", seconds: 300 },
             ],
             patient: HEALTHY,
+            changes: [],
             until: 0,
           },
         ],
@@ -339,6 +367,7 @@ describe("心拍数と血圧", () => {
             metrics: ["heart_rate"],
             doses: [{ drug: "epinephrine", seconds: 0 }],
             patient: HEALTHY,
+            changes: [],
             until: 0,
           },
         ],
@@ -362,6 +391,7 @@ describe("心拍数と血圧", () => {
               { drug: "naloxone", seconds: 300 },
             ],
             patient: HEALTHY,
+            changes: [],
             until: 0,
           },
         ],
@@ -376,11 +406,20 @@ describe("心拍数と血圧", () => {
     const make = (patient: typeof HEALTHY): AiChart =>
       built(
         input({
-          scenarios: [{ label: "a", metrics: ["heart_rate", "effect"], doses, patient, until: 0 }],
+          scenarios: [
+            {
+              label: "a",
+              metrics: ["heart_rate", "effect"],
+              doses,
+              patient,
+              changes: [],
+              until: 0,
+            },
+          ],
         }),
       ).chart;
     const healthy = make(HEALTHY);
-    const inPain = make({ blood: 100, pain: 30 });
+    const inPain = make({ ...HEALTHY, blood: 100, pain: 30 });
     expect(healthy.data.series.map((s) => s.label)).toStrictEqual(["心拍数（a）", "モルヒネ（a）"]);
     expect(valueAt(healthy, "s0", 0)).toBe(80);
     // 激痛の患者は、打つ前から心拍数が上がっている
@@ -397,7 +436,8 @@ describe("心拍数と血圧", () => {
             label: "a",
             metrics: ["mean_pressure"],
             doses: [{ drug: "phenylephrine", seconds: 0 }],
-            patient: { blood: 60, pain: 100 },
+            patient: { ...HEALTHY, blood: 60, pain: 100 },
+            changes: [],
             until: 0,
           },
         ],
@@ -418,6 +458,7 @@ describe("心拍数と血圧", () => {
             metrics: ["heart_rate"],
             doses: Array.from({ length: 4 }, () => ({ drug: "metoprolol" as const, seconds: 0 })),
             patient: HEALTHY,
+            changes: [],
             until: 0,
           },
         ],
@@ -439,7 +480,8 @@ describe("心拍数と血圧", () => {
               label: "a",
               metrics: ["heart_rate"],
               doses: [{ drug: "epinephrine", seconds: 0 }],
-              patient: { blood: 20, pain: 100 },
+              patient: { ...HEALTHY, blood: 20, pain: 100 },
+              changes: [],
               until: 0,
             },
           ],
@@ -490,7 +532,11 @@ describe("心拍数と血圧", () => {
       // 効能は、今までどおり体内に残っている投与から作れる
       const effect = built(
         input(
-          { casualties: [{ casualty: "c1", metrics: ["effect"], patient: HEALTHY, until: 0 }] },
+          {
+            casualties: [
+              { casualty: "c1", metrics: ["effect"], patient: HEALTHY, changes: [], until: 0 },
+            ],
+          },
           { casualties: [withRecords(records)] },
         ),
       ).chart;
@@ -506,7 +552,13 @@ describe("心拍数と血圧", () => {
         input(
           {
             casualties: [
-              { casualty: "c1", metrics: ["heart_rate", "effect"], patient: HEALTHY, until: 0 },
+              {
+                casualty: "c1",
+                metrics: ["heart_rate", "effect"],
+                patient: HEALTHY,
+                changes: [],
+                until: 0,
+              },
             ],
           },
           { casualties: [casualty] },
@@ -529,7 +581,11 @@ describe("心拍数と血圧", () => {
     };
     const { chart } = built(
       input(
-        { casualties: [{ casualty: "c1", metrics: ["heart_rate"], patient: HEALTHY, until: 0 }] },
+        {
+          casualties: [
+            { casualty: "c1", metrics: ["heart_rate"], patient: HEALTHY, changes: [], until: 0 },
+          ],
+        },
         { casualties: [casualty] },
       ),
     );
@@ -558,7 +614,11 @@ describe("負傷者の記録", () => {
   it("体内に残っている投与から作り、横軸の 0 を最初の投与にする", () => {
     const { chart } = built(
       input(
-        { casualties: [{ casualty: "c1", metrics: ["effect"], patient: HEALTHY, until: 0 }] },
+        {
+          casualties: [
+            { casualty: "c1", metrics: ["effect"], patient: HEALTHY, changes: [], until: 0 },
+          ],
+        },
         { casualties: [casualty] },
       ),
     );
@@ -576,7 +636,7 @@ describe("負傷者の記録", () => {
 
   it("いない負傷者と、薬の記録のない負傷者は理由を返す", () => {
     const target: ChartRequest["casualties"] = [
-      { casualty: "c9", metrics: ["effect"], patient: HEALTHY, until: 0 },
+      { casualty: "c9", metrics: ["effect"], patient: HEALTHY, changes: [], until: 0 },
     ];
     expect(errorOf(input({ casualties: target }, { casualties: [casualty] }))).toContain(
       "A（id: c1）",
@@ -586,7 +646,11 @@ describe("負傷者の記録", () => {
     expect(
       errorOf(
         input(
-          { casualties: [{ casualty: "c1", metrics: ["effect"], patient: HEALTHY, until: 0 }] },
+          {
+            casualties: [
+              { casualty: "c1", metrics: ["effect"], patient: HEALTHY, changes: [], until: 0 },
+            ],
+          },
           { casualties: [noDrug] },
         ),
       ),
@@ -615,6 +679,7 @@ describe("原稿の節の線", () => {
               label: "2 本",
               metrics: ["concentration"],
               patient: HEALTHY,
+              changes: [],
               until: 0,
               doses: [
                 { drug: "morphine", seconds: 0 },
@@ -786,5 +851,222 @@ describe("composeChart", () => {
     expect(composeChart("題", [{ ...line("a", "x"), points: [{ x: 0, y: 1 }] }])).toContain(
       "2 つ未満",
     );
+  });
+});
+
+/** 薬なしで SpO2 を 600 s まで見る条件。over で上書きする。 */
+function spo2Scenario(
+  over: Partial<ChartRequest["scenarios"][number]>,
+): ChartRequest["scenarios"][number] {
+  return {
+    label: "a",
+    metrics: ["spo2"],
+    doses: [],
+    patient: HEALTHY,
+    changes: [],
+    until: 600,
+    ...over,
+  };
+}
+
+/** Breathing を使っている利用者で、spo2Scenario の条件からグラフを作る。 */
+function chartOf(over: Partial<ChartRequest["scenarios"][number]>): {
+  chart: AiChart;
+  summary: string;
+} {
+  return built(input({ scenarios: [spo2Scenario(over)] }, { breathing: true }));
+}
+
+describe("SpO2（Breathing）", () => {
+  const NO_CHANGE = {
+    blood: null,
+    pain: null,
+    blocked: null,
+    pneumothorax: null,
+    tension: null,
+    mask: null,
+  };
+
+  it("薬なしで、気道が塞がってから確保するまでの SpO2 を描く", () => {
+    const { chart, summary } = chartOf({
+      label: "2 分後に確保",
+      patient: { ...HEALTHY, blocked: true },
+      changes: [{ ...NO_CHANGE, seconds: 120, blocked: false }],
+    });
+    expect(chart.data.series).toStrictEqual([
+      { key: "s0", label: "SpO2（2 分後に確保）", panel: "y", unit: "%" },
+    ]);
+    expect(valueAt(chart, "s0", 0)).toBeCloseTo(97.1486, 3);
+    expect(valueAt(chart, "s0", 120)).toBeCloseTo(76.79, 3);
+    expect(valueAt(chart, "s0", 300)).toBeCloseTo(97.0531, 3);
+    expect(chart.data.points.at(-1)?.x).toBe(600);
+    expect(chart.conditions).toStrictEqual([
+      "仮の投与「2 分後に確保」（SpO2）: 薬なし。経過 600 s まで。患者の状態: 血液量 100%、痛みの HP 100%、気道が塞がっている（0 s から）。途中の変更: 経過 120 s から 気道を確保",
+    ]);
+    // 最小は、確保した次の 1 s（5 s おきの点の間にあるが、残す）
+    expect(summary).toMatch(/最小 76\.68 %（経過 121 s）/u);
+  });
+
+  it("心停止の後は、心拍数の線は終わり、SpO2 の線は続く", () => {
+    const { chart } = chartOf({
+      metrics: ["spo2", "heart_rate"],
+      patient: { ...HEALTHY, blocked: true },
+    });
+    const last = (key: string): number | undefined =>
+      chart.data.points.findLast((p) => p.values[key] !== undefined)?.x;
+    expect(last("s0")).toBe(600);
+    expect(last("s1")).toBe(382);
+    expect(valueAt(chart, "s0", 600)).toBeCloseTo(48.8963, 3);
+    expect(chart.conditions[0]).toContain(
+      "経過 382 s で心停止になる（心拍数と血圧の線はそこで終わる。SpO2 は、CPR をしない前提でその後も続く）",
+    );
+    expect(chart.conditions[0]).toContain("で意識を失う");
+  });
+
+  it("気胸と、チェストシール・酸素マスクの変更を条件に書く", () => {
+    const { chart } = chartOf({
+      patient: { ...HEALTHY, pneumothorax: 72, tension: true },
+      changes: [
+        { ...NO_CHANGE, seconds: 60, pneumothorax: 0, mask: true },
+        { ...NO_CHANGE, seconds: 90, tension: false },
+      ],
+    });
+    expect(valueAt(chart, "s0", 0)).toBeCloseTo(84.3932, 3);
+    expect(valueAt(chart, "s0", 600)).toBeGreaterThan(99);
+    expect(chart.conditions[0]).toContain(
+      "患者の状態: 血液量 100%、痛みの HP 100%、気胸の大きさ 72%、緊張性気胸。途中の変更: 経過 60 s から 気胸の大きさ 0%・酸素マスクを付ける、経過 90 s から 緊張性気胸を解除",
+    );
+    expect(chart.conditions[0]).toContain("気胸の悪化は計算に入れていない");
+  });
+
+  it("薬と一緒でも、SpO2 は薬では動かない", () => {
+    const { chart } = chartOf({
+      metrics: ["spo2", "blood_pressure"],
+      doses: [{ drug: "phenylephrine", seconds: 0 }],
+      until: 0,
+    });
+    const spo2 = chart.data.points.flatMap((p) => p.values["s0"] ?? []);
+    expect(Math.max(...spo2) - Math.min(...spo2)).toBeLessThan(0.01);
+    expect(valueAt(chart, "s1", 30)).toBeGreaterThan(150);
+    expect(chart.data.series.map((s) => s.panel)).toStrictEqual(["y", "y2", "y2"]);
+  });
+
+  it("Breathing がなければ、SpO2 と気道・気胸・マスクの指定は理由を返す", () => {
+    const without = (over: Partial<ChartRequest["scenarios"][number]>): string =>
+      errorOf(input({ scenarios: [spo2Scenario(over)] }));
+    expect(without({})).toContain("Breathing を使っているときだけ");
+    expect(without({ metrics: ["heart_rate"], patient: { ...HEALTHY, mask: true } })).toContain(
+      "Breathing",
+    );
+    expect(
+      without({
+        metrics: ["heart_rate"],
+        changes: [{ ...NO_CHANGE, seconds: 10, tension: true }],
+      }),
+    ).toContain("Breathing");
+    // 血液量と痛みの変更は、Breathing がなくても使える
+    const { chart } = built(
+      input({
+        scenarios: [
+          spo2Scenario({
+            metrics: ["heart_rate"],
+            changes: [{ ...NO_CHANGE, seconds: 60, pain: 30 }],
+            until: 120,
+          }),
+        ],
+      }),
+    );
+    expect(valueAt(chart, "s0", 60)).toBe(80);
+    expect(valueAt(chart, "s0", 120)).toBeCloseTo(130, 3);
+    expect(chart.conditions[0]).toContain("途中の変更: 経過 60 s から 痛みの HP 30%");
+  });
+});
+
+/** Breathing を使っている利用者で、spo2Scenario の条件が返す理由。 */
+function spo2Error(over: Partial<ChartRequest["scenarios"][number]>): string {
+  return errorOf(input({ scenarios: [spo2Scenario(over)] }, { breathing: true }));
+}
+
+describe("描く範囲と途中の変更", () => {
+  const NO_CHANGE = {
+    blood: null,
+    pain: null,
+    blocked: null,
+    pneumothorax: null,
+    tension: null,
+    mask: null,
+  };
+
+  it("範囲を指定すれば、薬が消えた後の変更まで SpO2 を描き、薬ごとの線は消える時刻で終わる", () => {
+    // エピネフリンは 164 s で消える。気道が塞がるのは、その後の 300 s
+    const { chart } = chartOf({
+      metrics: ["spo2", "effect"],
+      doses: [{ drug: "epinephrine", seconds: 0 }],
+      changes: [{ ...NO_CHANGE, seconds: 300, blocked: true }],
+      until: 480,
+    });
+    const last = (key: string): number | undefined =>
+      chart.data.points.findLast((p) => p.values[key] !== undefined)?.x;
+    expect(last("s0")).toBe(480);
+    expect(last("s1")).toBe(164);
+    expect(valueAt(chart, "s0", 300)).toBeCloseTo(97.1486, 2);
+    expect(valueAt(chart, "s0", 480)).toBeLessThan(80);
+    expect(chart.conditions[0]).toContain("経過 480 s まで");
+  });
+
+  it("描く範囲の外の変更は、線に出ないので理由を返す", () => {
+    // 範囲の指定がなければ、薬が消える時刻（164 s）まで
+    expect(
+      spo2Error({
+        doses: [{ drug: "epinephrine", seconds: 0 }],
+        changes: [{ ...NO_CHANGE, seconds: 300, blocked: true }],
+        until: 0,
+      }),
+    ).toContain("300 秒は、描く範囲（経過 164 s まで）の外");
+    expect(spo2Error({ changes: [{ ...NO_CHANGE, seconds: 600, mask: true }] })).toContain(
+      "600 秒は、描く範囲（経過 600 s まで）の外",
+    );
+  });
+
+  it("薬が消える時刻に小数の秒があるとき、切り下げた終わりの秒の変更は理由を返す", () => {
+    // エピネフリン（164 s で消える）を 0.4 s 前の記録から始めるので、終わりは 164 s ちょうどではなく小数になる
+    const casualty = withRecords([
+      ["epinephrine", 100.4],
+      ["epinephrine", 100],
+    ]);
+    const at = (seconds: number): AiChartInput =>
+      input(
+        {
+          casualties: [
+            {
+              casualty: "c1",
+              metrics: ["spo2"],
+              patient: HEALTHY,
+              changes: [{ ...NO_CHANGE, seconds, mask: true }],
+              until: 0,
+            },
+          ],
+        },
+        { casualties: [casualty], breathing: true },
+      );
+    // 描く範囲は 164.4 s まで。計算は 164 s までなので、164 s の変更は次の更新がなく、線に出ない
+    expect(errorOf(at(164))).toContain("164 秒は、描く範囲（経過 164 s まで）の外");
+    expect(built(at(163)).chart.data.points.at(-1)?.x).toBe(164);
+  });
+
+  it("過量投与で心停止になれば、薬だけの条件でも SpO2 が下がる", () => {
+    const { chart } = chartOf({
+      doses: Array.from({ length: 5 }, () => ({ drug: "epinephrine" as const, seconds: 0 })),
+      until: 300,
+    });
+    expect(valueAt(chart, "s0", 15)).toBeCloseTo(97.1486, 1);
+    expect(valueAt(chart, "s0", 300)).toBeLessThan(65);
+    expect(chart.conditions[0]).toContain("経過 15 s で心停止になる");
+  });
+
+  it("Circulation がなければ、Breathing があっても薬なしの SpO2 は理由を返す", () => {
+    expect(
+      errorOf(input({ scenarios: [spo2Scenario({})] }, { breathing: true, circulation: false })),
+    ).toContain("Circulation を使っているときだけ");
   });
 });

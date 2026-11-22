@@ -68,19 +68,44 @@ fn proposed_op_schema() -> Value {
 fn chart_schema() -> Value {
     let metrics = json!({
         "type": "array",
-        "items": {"type": "string", "enum": ["effect", "concentration", "heart_rate", "blood_pressure", "mean_pressure"]},
-        "description": "出す量。1〜3 個。effect は薬ごとの効能（1 本のピークを 100 とした %）、concentration は薬ごとの体内の濃度（nM）、heart_rate は心拍数（bpm）、blood_pressure は収縮期と拡張期の血圧（mmHg。線は 2 本）、mean_pressure は平均血圧（mmHg）"
+        "items": {"type": "string", "enum": ["effect", "concentration", "heart_rate", "blood_pressure", "mean_pressure", "spo2"]},
+        "description": "出す量。1〜3 個。effect は薬ごとの効能（1 本のピークを 100 とした %）、concentration は薬ごとの体内の濃度（nM）、heart_rate は心拍数（bpm）、blood_pressure は収縮期と拡張期の血圧（mmHg。線は 2 本）、mean_pressure は平均血圧（mmHg）、spo2 は SpO2（%。Breathing のある利用者だけ）"
     });
+    let blocked = "気道が塞がっている（舌根・嘔吐）なら true。Breathing のある利用者だけ";
+    let pneumothorax = "気胸の大きさ（%）。0〜72。原稿の段階の値（18・36・54・72）を使う。Breathing のある利用者だけ";
+    let tension = "緊張性気胸なら true。Breathing のある利用者だけ";
+    let mask = "酸素マスクを付けているなら true。Breathing のある利用者だけ";
     let mut patient = object(
         &json!({
             "blood": {"type": "integer", "description": "血液量（%）。1〜100。分からなければ 100"},
-            "pain": {"type": "integer", "description": "痛みの HP（%）。0〜100。100 で痛みなし、低いほど痛い。分からなければ 100"}
+            "pain": {"type": "integer", "description": "痛みの HP（%）。0〜100。100 で痛みなし、低いほど痛い。分からなければ 100"},
+            "blocked": {"type": "boolean", "description": format!("{blocked}。グラフの 0 秒に塞がったものとして計算する。省略すれば false")},
+            "pneumothorax": {"type": "integer", "description": format!("{pneumothorax}。省略すれば 0")},
+            "tension": {"type": "boolean", "description": format!("{tension}。省略すれば false")},
+            "mask": {"type": "boolean", "description": format!("{mask}。省略すれば false")}
         }),
         &["blood", "pain"],
     );
     patient["description"] = json!(
-        "心拍数・血圧を計算する患者の状態。利用者が示したときだけ値を変え、ほかは 100 にする。計算の間は一定として扱う。effect と concentration には影響しない"
+        "心拍数・血圧・SpO2 を計算する患者の、グラフの始まりの状態。利用者が示したときだけ値を変え、ほかは健康な患者の値（100・false・0）にする。途中で変えるなら changes に書く。effect と concentration には影響しない"
     );
+    let change = object(
+        &json!({
+            "seconds": {"type": "integer", "description": "グラフの始まりからの秒数。0〜21600。この時刻の次の 1 秒から効く"},
+            "blood": {"type": "integer", "description": "血液量（%）。1〜100"},
+            "pain": {"type": "integer", "description": "痛みの HP（%）。0〜100"},
+            "blocked": {"type": "boolean", "description": format!("{blocked}。気道を確保したら false")},
+            "pneumothorax": {"type": "integer", "description": format!("{pneumothorax}。チェストシールを貼ったら 0")},
+            "tension": {"type": "boolean", "description": format!("{tension}。NCD で解除したら false")},
+            "mask": {"type": "boolean", "description": format!("{mask}。外したら false")}
+        }),
+        &["seconds"],
+    );
+    let changes = json!({
+        "type": "array",
+        "items": change,
+        "description": "患者の状態を途中で変える（処置や悪化）。変える項目だけを書く。0〜10 個。なければ空"
+    });
     let drug = json!({"type": "string", "enum": ["epinephrine", "metoprolol", "morphine", "naloxone", "phenylephrine"]});
     let dose = object(
         &json!({"drug": drug, "seconds": {"type": "integer", "description": "グラフの始まりからの秒数。0〜3600"}}),
@@ -91,20 +116,22 @@ fn chart_schema() -> Value {
         &json!({
             "label": {"type": "string", "description": "この条件の名前（例: 「2 本を 3 分あけて」）。薬の名前と単位は画面が線の名前に付けるので、薬の名前や「効能」「濃度」は入れない。40 文字まで"},
             "metrics": metrics,
-            "doses": {"type": "array", "items": dose, "description": "打つ薬と時刻。1〜20 本"},
+            "doses": {"type": "array", "items": dose, "description": "打つ薬と時刻。0〜20 本。薬を打たずに患者の状態だけの推移を見るなら空にして、until を書く"},
             "patient": patient,
+            "changes": changes,
             "until": until
         }),
-        &["label", "metrics", "doses", "patient", "until"],
+        &["label", "metrics", "doses", "patient", "changes", "until"],
     );
     let casualty = object(
         &json!({
             "casualty": {"type": "string", "description": "casualty_read の負傷者の id"},
             "metrics": metrics,
             "patient": patient,
+            "changes": changes,
             "until": until
         }),
-        &["casualty", "metrics", "patient", "until"],
+        &["casualty", "metrics", "patient", "changes", "until"],
     );
     let point = object(
         &json!({"x": {"type": "number"}, "y": {"type": "number"}}),
@@ -458,6 +485,9 @@ mod tests {
         assert_eq!(request.scenarios[0].doses.len(), 1);
         assert_eq!(request.scenarios[0].metrics.len(), 1);
         assert_eq!(request.casualties[0].patient.blood, 1);
+        assert!(request.scenarios[0].patient.blocked);
+        assert_eq!(request.scenarios[0].changes[0].pneumothorax, Some(1));
+        assert_eq!(request.casualties[0].changes[0].mask, Some(true));
         assert_eq!(request.values[0].points.len(), 1);
         assert_eq!(request.sections[0].lines.len(), 1);
         let list = tools(false);

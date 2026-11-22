@@ -10,6 +10,7 @@ import {
   HEALTHY_PATIENT,
   kpaToMmhg,
   simulateVitals,
+  type PatientChange,
   type PatientState,
   type VitalsTimeline,
 } from "@/features/casualties/vitals";
@@ -89,7 +90,7 @@ describe("原稿のグラフの値と合う", () => {
     {
       file: "morphine.csv",
       drug: "morphine",
-      patient: { blood: 1, painHealth: 0.3 },
+      patient: { ...HEALTHY_PATIENT, blood: 1, painHealth: 0.3 },
       columns: ["心拍数", "平均血圧"],
     },
   ];
@@ -153,7 +154,11 @@ describe("健康な患者", () => {
 
 describe("患者の状態", () => {
   it("激痛の患者は、打つ前から心拍数が上がっていて、モルヒネで下がる", () => {
-    const timeline = run(doses(["morphine", 0]), 600, { blood: 1, painHealth: 0.3 });
+    const timeline = run(doses(["morphine", 0]), 600, {
+      ...HEALTHY_PATIENT,
+      blood: 1,
+      painHealth: 0.3,
+    });
     expect(at(timeline, 0).heartRate).toBeCloseTo(130, 6);
     expect(at(timeline, 5).heartRate).toBeCloseTo(128.3137, 3);
     expect(at(timeline, 60).heartRate).toBeCloseTo(68.2399, 3);
@@ -162,7 +167,11 @@ describe("患者の状態", () => {
   });
 
   it("血液が減っていると、同じ薬でも血圧が低い", () => {
-    const timeline = run(doses(["phenylephrine", 0]), 200, { blood: 0.6, painHealth: 1 });
+    const timeline = run(doses(["phenylephrine", 0]), 200, {
+      ...HEALTHY_PATIENT,
+      blood: 0.6,
+      painHealth: 1,
+    });
     expect(at(timeline, 0).meanPressureKpa).toBeCloseTo(7.4658, 4);
     expect(at(timeline, 30).meanPressureKpa).toBeCloseTo(10.96975, 4);
     expect(at(timeline, 30).heartRate).toBe(80);
@@ -170,7 +179,7 @@ describe("患者の状態", () => {
   });
 
   it("血液が 40% を下回ると、打つ前から意識がなく、頻脈になっている", () => {
-    const timeline = run([], 30, { blood: 0.35, painHealth: 1 });
+    const timeline = run([], 30, { ...HEALTHY_PATIENT, blood: 0.35, painHealth: 1 });
     expect(timeline.unconsciousAtSeconds).toBe(0);
     expect(timeline.arrestAtSeconds).toBeNull();
     expect(at(timeline, 0).heartRate).toBeCloseTo(177.3114, 3);
@@ -178,7 +187,11 @@ describe("患者の状態", () => {
   });
 
   it("血液が 20% 以下なら、打つ前に心停止していて、点がない", () => {
-    const timeline = run(doses(["epinephrine", 0]), 30, { blood: 0.2, painHealth: 1 });
+    const timeline = run(doses(["epinephrine", 0]), 30, {
+      ...HEALTHY_PATIENT,
+      blood: 0.2,
+      painHealth: 1,
+    });
     expect(timeline.arrestAtSeconds).toBe(0);
     expect(timeline.unconsciousAtSeconds).toBe(0);
     expect(timeline.points).toHaveLength(0);
@@ -238,5 +251,191 @@ describe("過量投与", () => {
     expect(timeline.unconsciousAtSeconds).toBe(11);
     expect(timeline.arrestAtSeconds).toBe(13);
     expect(at(timeline, 10).heartRate).toBeCloseTo(36.0816, 3);
+  });
+});
+
+// CSV は、既定の値から始めた値なので、打つ前に進める分を 0 にして比べる
+function spo2Rows(file: string): { seconds: number; spo2: number }[] {
+  const { header, rows } = csvRows(file);
+  const column = header.indexOf("SpO2");
+  expect(column).toBeGreaterThan(0);
+  return rows.map((row) => ({ seconds: row[0] ?? Number.NaN, spo2: row[column] ?? Number.NaN }));
+}
+
+describe("Breathing: 原稿のグラフの値と合う", () => {
+  it("apnea-spo2.csv（気道が塞がったまま。心停止の後まで）", () => {
+    const rows = spo2Rows("apnea-spo2.csv");
+    expect(rows.length).toBeGreaterThan(50);
+    const timeline = simulateVitals({
+      medication,
+      doses: [],
+      patient: { ...HEALTHY_PATIENT, airwayBlocked: true },
+      endSeconds: rows.at(-1)?.seconds ?? 0,
+      breathing: true,
+      settleSeconds: 0,
+    });
+    for (const row of rows) {
+      // CSV は小数 3 桁
+      expect(at(timeline, row.seconds).spo2).toBeCloseTo(row.spo2, 2);
+    }
+    // 65% を割った時刻で心停止になり、その後も SpO2 は下がり続ける
+    expect(timeline.arrestAtSeconds).toBe(382);
+    expect(timeline.points.at(-1)?.seconds).toBe(400);
+    expect(at(timeline, 400).heartRate).toBe(0);
+    expect(at(timeline, 400).meanPressureKpa).toBe(0);
+  });
+
+  it("oxygen-mask.csv（0 s で酸素マスクを付ける）", () => {
+    const rows = spo2Rows("oxygen-mask.csv");
+    expect(rows.length).toBeGreaterThan(100);
+    const timeline = simulateVitals({
+      medication,
+      doses: [],
+      patient: HEALTHY_PATIENT,
+      changes: [{ seconds: 0, patch: { mask: true } }],
+      endSeconds: rows.at(-1)?.seconds ?? 0,
+      breathing: true,
+      settleSeconds: 0,
+    });
+    for (const row of rows) {
+      expect(at(timeline, row.seconds).spo2).toBeCloseTo(row.spo2, 2);
+    }
+  });
+});
+
+function breathe(
+  patient: Partial<PatientState>,
+  endSeconds: number,
+  changes: readonly PatientChange[] = [],
+): VitalsTimeline {
+  return simulateVitals({
+    medication,
+    doses: [],
+    patient: { ...HEALTHY_PATIENT, ...patient },
+    changes,
+    endSeconds,
+    breathing: true,
+  });
+}
+
+describe("Breathing: 患者の状態", () => {
+  // 期待値は、ACE の式を別に写した計算で出した値
+  it("健康な患者は、既定の値のまま動かず、心拍数と血圧は Breathing なしと同じ", () => {
+    const timeline = breathe({}, 60);
+    expect(at(timeline, 0).spo2).toBeCloseTo(97.1486, 3);
+    expect(at(timeline, 60).spo2).toBeCloseTo(97.1486, 3);
+    expect(at(timeline, 60).heartRate).toBeCloseTo(80, 9);
+    expect(at(timeline, 60).meanPressureKpa).toBeCloseTo(12.443, 9);
+    expect(run([], 60).points[0]?.spo2).toBeNull();
+  });
+
+  it("薬は SpO2 を動かさず、心拍数と血圧は Breathing なしと同じ", () => {
+    const given = doses(["phenylephrine", 0], ["epinephrine", 0], ["morphine", 90]);
+    const without = run(given, 400);
+    const withBreathing = simulateVitals({
+      medication,
+      doses: given,
+      patient: HEALTHY_PATIENT,
+      endSeconds: 400,
+      breathing: true,
+    });
+    for (const seconds of [0, 27, 90, 240, 400]) {
+      expect(at(withBreathing, seconds).heartRate).toBeCloseTo(at(without, seconds).heartRate, 9);
+      expect(at(withBreathing, seconds).meanPressureKpa).toBeCloseTo(
+        at(without, seconds).meanPressureKpa,
+        9,
+      );
+      expect(at(withBreathing, seconds).spo2).toBeCloseTo(97.1486, 2);
+    }
+  });
+
+  it("気胸は、大きさに応じて SpO2 を下げ、呼吸数が増える分だけ心拍数を上げる", () => {
+    const small = breathe({ pneumothorax: 0.36 }, 60);
+    expect(at(small, 0).spo2).toBeCloseTo(93.5596, 3);
+    expect(at(small, 60).spo2).toBeCloseTo(93.5596, 3);
+    expect(at(small, 0).heartRate).toBeCloseTo(96.3946, 3);
+    const large = breathe({ pneumothorax: 0.72 }, 60);
+    expect(at(large, 0).spo2).toBeCloseTo(88.8073, 3);
+    expect(at(large, 0).heartRate).toBeCloseTo(130.854, 3);
+    expect(at(large, 0).meanPressureKpa).toBeCloseTo(20.3527, 4);
+  });
+
+  it("緊張性気胸は 1 回拍出量を減らし、血圧を下げる", () => {
+    const tension = breathe({ tension: true }, 60);
+    expect(at(tension, 0).meanPressureKpa).toBeCloseTo(5.66157, 4);
+    expect(at(tension, 0).spo2).toBeCloseTo(97.1486, 3);
+    const both = breathe({ tension: true, pneumothorax: 0.72 }, 600);
+    expect(at(both, 0).meanPressureKpa).toBeCloseTo(9.26048, 4);
+    expect(at(both, 600).spo2).toBeCloseTo(84.3932, 3);
+    expect(both.arrestAtSeconds).toBeNull();
+  });
+
+  it("血液が減っていると、同じ気胸でも SpO2 が低い", () => {
+    const timeline = breathe({ pneumothorax: 0.36, blood: 0.6 }, 60);
+    expect(at(timeline, 0).spo2).toBeCloseTo(91.6859, 3);
+    expect(at(timeline, 0).meanPressureKpa).toBeCloseTo(8.99579, 4);
+  });
+
+  it("酸素マスクを付けている患者は、高い SpO2 で落ち着いている", () => {
+    expect(at(breathe({ mask: true }, 60), 0).spo2).toBeCloseTo(99.9823, 3);
+  });
+
+  it("気道が塞がっている状態は 0 s から始まり、途中で確保すると戻る", () => {
+    const timeline = breathe({ airwayBlocked: true }, 600, [
+      { seconds: 120, patch: { airwayBlocked: false } },
+    ]);
+    const expected = [
+      [0, 97.1486],
+      [60, 89.3812],
+      [120, 76.79],
+      [121, 76.685],
+      [150, 89.2433],
+      [180, 94.618],
+      [300, 97.0531],
+      [600, 97.1485],
+    ] as const;
+    for (const [seconds, spo2] of expected) {
+      expect(at(timeline, seconds).spo2).toBeCloseTo(spo2, 3);
+    }
+    // 75% は割っていないので、意識は失わない
+    expect(timeline.unconsciousAtSeconds).toBeNull();
+    expect(timeline.arrestAtSeconds).toBeNull();
+  });
+
+  it("酸素マスクを付けたまま気道が塞がり、240 s で確保する", () => {
+    const timeline = breathe({ airwayBlocked: true, mask: true }, 600, [
+      { seconds: 240, patch: { airwayBlocked: false } },
+    ]);
+    expect(at(timeline, 0).spo2).toBeCloseTo(99.9823, 3);
+    expect(at(timeline, 120).spo2).toBeCloseTo(87.4391, 3);
+    expect(at(timeline, 240).spo2).toBeCloseTo(73.2205, 3);
+    expect(at(timeline, 270).spo2).toBeCloseTo(96.1124, 3);
+    expect(at(timeline, 600).spo2).toBeCloseTo(99.9823, 3);
+    expect(timeline.unconsciousAtSeconds).not.toBeNull();
+  });
+
+  it("気道を塞いだまま放置すると心停止になり、その後も SpO2 は下がり続ける", () => {
+    const timeline = breathe({ airwayBlocked: true }, 600);
+    expect(timeline.arrestAtSeconds).toBe(382);
+    expect(at(timeline, 300).spo2).toBeCloseTo(68.5655, 3);
+    expect(at(timeline, 385).spo2).toBeCloseTo(64.741, 3);
+    expect(at(timeline, 600).spo2).toBeCloseTo(48.8963, 3);
+    expect(at(timeline, 600).heartRate).toBe(0);
+  });
+
+  it("チェストシールで気胸を 0 にすると、SpO2 と心拍数が戻る", () => {
+    const timeline = breathe({ pneumothorax: 0.72 }, 600, [
+      { seconds: 60, patch: { pneumothorax: 0 } },
+    ]);
+    expect(at(timeline, 60).spo2).toBeCloseTo(88.8073, 3);
+    expect(at(timeline, 90).spo2).toBeCloseTo(96.5308, 3);
+    expect(at(timeline, 90).heartRate).toBeCloseTo(80, 3);
+    expect(at(timeline, 600).spo2).toBeCloseTo(97.1486, 3);
+  });
+
+  it("Breathing がなければ、気道や気胸を渡しても効かない", () => {
+    const timeline = run([], 60, { ...HEALTHY_PATIENT, airwayBlocked: true, pneumothorax: 0.72 });
+    expect(at(timeline, 60).heartRate).toBe(80);
+    expect(at(timeline, 60).spo2).toBeNull();
   });
 });

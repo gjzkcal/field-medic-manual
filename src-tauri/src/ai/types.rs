@@ -182,14 +182,16 @@ pub enum ChartMetric {
     BloodPressure,
     /// 平均血圧（mmHg）
     MeanPressure,
+    /// SpO2（%）。Breathing を使っているときだけ
+    Spo2,
 }
 
 const fn full_percent() -> u8 {
     100
 }
 
-/// 心拍数・血圧を計算する患者の状態。AI が渡さなかった項目は、健康な患者の値にする。
-/// 計算の間は一定として扱う（出血で減っていく分は、画面の計算に入っていない）。
+/// 心拍数・血圧・SpO2 を計算する患者の状態。AI が渡さなかった項目は、健康な患者の値にする。
+/// 渡した値と `changes` だけで決まる（出血や気胸の悪化のように、ゲームの中で進む分は、画面の計算に入っていない）。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct ChartPatient {
@@ -199,6 +201,18 @@ pub struct ChartPatient {
     /// 痛みの HP（%）。100 で痛みなし、低いほど痛い
     #[serde(default = "full_percent")]
     pub pain: u8,
+    /// 気道が塞がっている（舌根・嘔吐）。グラフの 0 秒に塞がったものとして計算する
+    #[serde(default)]
+    pub blocked: bool,
+    /// 気胸の大きさ（%）。ゲームでは 18 刻みで、75 に達すると心停止になる
+    #[serde(default)]
+    pub pneumothorax: u8,
+    /// 緊張性気胸
+    #[serde(default)]
+    pub tension: bool,
+    /// 酸素マスクを付けている
+    #[serde(default)]
+    pub mask: bool,
 }
 
 impl Default for ChartPatient {
@@ -206,8 +220,32 @@ impl Default for ChartPatient {
         Self {
             blood: full_percent(),
             pain: full_percent(),
+            blocked: false,
+            pneumothorax: 0,
+            tension: false,
+            mask: false,
         }
     }
+}
+
+/// 患者の状態を途中で変える（処置や悪化）。書いた項目だけが変わる。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ChartChange {
+    /// グラフの始まりからの秒数。この時刻の次の 1 秒から効く
+    pub seconds: u32,
+    #[serde(default)]
+    pub blood: Option<u8>,
+    #[serde(default)]
+    pub pain: Option<u8>,
+    #[serde(default)]
+    pub blocked: Option<bool>,
+    #[serde(default)]
+    pub pneumothorax: Option<u8>,
+    #[serde(default)]
+    pub tension: Option<bool>,
+    #[serde(default)]
+    pub mask: Option<bool>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -225,9 +263,12 @@ pub struct ChartScenario {
     pub label: String,
     /// 同じ投与から出す量。量ごとに線になる
     pub metrics: Vec<ChartMetric>,
+    /// 薬を打たずに、患者の状態だけの推移を見るなら空（そのときは `until` が要る）
     pub doses: Vec<ChartDose>,
     #[serde(default)]
     pub patient: ChartPatient,
+    #[serde(default)]
+    pub changes: Vec<ChartChange>,
     /// 何秒まで描くか。0 なら、すべての投与が体内から消えるまで
     #[serde(default)]
     pub until: u32,
@@ -242,6 +283,8 @@ pub struct ChartCasualty {
     pub metrics: Vec<ChartMetric>,
     #[serde(default)]
     pub patient: ChartPatient,
+    #[serde(default)]
+    pub changes: Vec<ChartChange>,
     /// 何秒まで描くか。0 なら、すべての投与が体内から消えるまで
     #[serde(default)]
     pub until: u32,
