@@ -167,7 +167,7 @@ pub enum ChartDrug {
     Phenylephrine,
 }
 
-/// 薬の推移を何の量で描くか。
+/// 投与からの推移を何の量で描くか。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "snake_case")]
 #[ts(export)]
@@ -176,6 +176,38 @@ pub enum ChartMetric {
     Effect,
     /// 体内の濃度
     Concentration,
+    /// 心拍数（bpm）
+    HeartRate,
+    /// 収縮期と拡張期の血圧（mmHg）。線は 2 本
+    BloodPressure,
+    /// 平均血圧（mmHg）
+    MeanPressure,
+}
+
+const fn full_percent() -> u8 {
+    100
+}
+
+/// 心拍数・血圧を計算する患者の状態。AI が渡さなかった項目は、健康な患者の値にする。
+/// 計算の間は一定として扱う（出血で減っていく分は、画面の計算に入っていない）。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct ChartPatient {
+    /// 血液量（%）
+    #[serde(default = "full_percent")]
+    pub blood: u8,
+    /// 痛みの HP（%）。100 で痛みなし、低いほど痛い
+    #[serde(default = "full_percent")]
+    pub pain: u8,
+}
+
+impl Default for ChartPatient {
+    fn default() -> Self {
+        Self {
+            blood: full_percent(),
+            pain: full_percent(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -186,13 +218,19 @@ pub struct ChartDose {
     pub seconds: u32,
 }
 
-/// 仮の投与。画面が、負傷者の画面と同じ計算で推移にする。
+/// 仮の投与。画面が推移を計算する（効能と濃度は負傷者の画面と同じ計算）。
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct ChartScenario {
     pub label: String,
-    pub metric: ChartMetric,
+    /// 同じ投与から出す量。量ごとに線になる
+    pub metrics: Vec<ChartMetric>,
     pub doses: Vec<ChartDose>,
+    #[serde(default)]
+    pub patient: ChartPatient,
+    /// 何秒まで描くか。0 なら、すべての投与が体内から消えるまで
+    #[serde(default)]
+    pub until: u32,
 }
 
 /// 負傷者の記録にある投与からの推移。
@@ -201,7 +239,12 @@ pub struct ChartScenario {
 pub struct ChartCasualty {
     /// `casualty_read` の負傷者の id
     pub casualty: String,
-    pub metric: ChartMetric,
+    pub metrics: Vec<ChartMetric>,
+    #[serde(default)]
+    pub patient: ChartPatient,
+    /// 何秒まで描くか。0 なら、すべての投与が体内から消えるまで
+    #[serde(default)]
+    pub until: u32,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, TS)]

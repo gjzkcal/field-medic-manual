@@ -430,7 +430,7 @@ async fn casualty_read_returns_the_screen_text() {
 fn chart_input() -> Value {
     json!({
         "title": " モルヒネ 2 本 ",
-        "scenarios": [{"label": "3 分あけて", "metric": "effect", "doses": [
+        "scenarios": [{"label": "3 分あけて", "metrics": ["effect"], "doses": [
             {"drug": "morphine", "seconds": 0},
             {"drug": "morphine", "seconds": 180}
         ]}],

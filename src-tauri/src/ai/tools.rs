@@ -7,7 +7,9 @@ use crate::ai::corpus::{
     Corpus, CorpusDoc, CorpusFlow, CorpusSection, condition_label, flow_source,
     meets_mod_conditions, quickref_source, section_source,
 };
-use crate::ai::types::{ChartRequest, ChartSection, ChartValues, ClientRequest, ProposedOp};
+use crate::ai::types::{
+    ChartMetric, ChartPatient, ChartRequest, ChartSection, ChartValues, ClientRequest, ProposedOp,
+};
 use crate::db::{Db, search};
 use crate::error::AppError;
 use crate::model::{ModTarget, QuickrefRow, SearchFilter, SearchHit};
@@ -56,6 +58,15 @@ const MAX_CHART_PARTS: usize = 5;
 const MAX_CHART_DOSES: usize = 20;
 /// 仮の投与の時刻の上限（秒）。薬が体内から消えるまでを足しても、点の数が画面で描ける範囲に収まる
 const MAX_CHART_DOSE_SECONDS: u32 = 3600;
+/// 1 つの条件から出す量の数。縦軸の量の種類が 2 つまでなので、それ以上を並べる使い道がない
+const MAX_CHART_METRICS: usize = 3;
+/// 血液量の下限（%）。0 は、心拍出量が 0 になり計算する意味がない
+const MIN_CHART_BLOOD_PERCENT: u8 = 1;
+const MAX_CHART_PERCENT: u8 = 100;
+/// 描く範囲の終わり（秒）の下限。点は 5 秒おきなので、線になる 2 点以上を確保する
+const MIN_CHART_UNTIL_SECONDS: u32 = 10;
+/// 描く範囲の終わり（秒）の上限。モルヒネを最も遅い時刻に打っても、消えるまでが収まる
+const MAX_CHART_UNTIL_SECONDS: u32 = 21600;
 const MIN_CHART_POINTS: usize = 2;
 const MAX_CHART_POINTS: usize = 200;
 /// 利用者の数値の絶対値の上限。目盛りの計算が桁あふれしない範囲にする
@@ -399,15 +410,19 @@ pub fn chart_create_request(
                 "scenarios の {n} 個目: seconds は 0〜{MAX_CHART_DOSE_SECONDS} にしてください"
             ));
         }
+        check_chart_metrics(&mut scenario.metrics, scenario.patient, scenario.until)
+            .map_err(|e| format!("scenarios の {n} 個目: {e}"))?;
     }
     for (i, casualty) in chart.casualties.iter_mut().enumerate() {
+        let n = i + 1;
         casualty.casualty = casualty.casualty.trim().to_owned();
         if casualty.casualty.is_empty() || casualty.casualty.len() > MAX_ID_BYTES {
             return Err(format!(
-                "casualties の {} 個目: casualty は casualty_read の id にしてください",
-                i + 1
+                "casualties の {n} 個目: casualty は casualty_read の id にしてください"
             ));
         }
+        check_chart_metrics(&mut casualty.metrics, casualty.patient, casualty.until)
+            .map_err(|e| format!("casualties の {n} 個目: {e}"))?;
     }
     for (i, section) in chart.sections.iter_mut().enumerate() {
         check_chart_section(corpus, i + 1, section)?;
@@ -416,6 +431,42 @@ pub fn chart_create_request(
         check_chart_values(i + 1, values)?;
     }
     Ok(ClientRequest::ChartCreate { chart })
+}
+
+/// 出す量・患者の状態・描く範囲を確かめる。同じ量の重複は、同じ線が 2 本できるので 1 つにまとめる。
+fn check_chart_metrics(
+    metrics: &mut Vec<ChartMetric>,
+    patient: ChartPatient,
+    until: u32,
+) -> Result<(), String> {
+    let mut unique = Vec::with_capacity(metrics.len());
+    for metric in metrics.iter() {
+        if !unique.contains(metric) {
+            unique.push(*metric);
+        }
+    }
+    *metrics = unique;
+    if metrics.is_empty() || metrics.len() > MAX_CHART_METRICS {
+        return Err(format!(
+            "metrics は 1〜{MAX_CHART_METRICS} 個にしてください"
+        ));
+    }
+    if !(MIN_CHART_BLOOD_PERCENT..=MAX_CHART_PERCENT).contains(&patient.blood) {
+        return Err(format!(
+            "patient の blood は {MIN_CHART_BLOOD_PERCENT}〜{MAX_CHART_PERCENT} にしてください"
+        ));
+    }
+    if patient.pain > MAX_CHART_PERCENT {
+        return Err(format!(
+            "patient の pain は 0〜{MAX_CHART_PERCENT} にしてください"
+        ));
+    }
+    if until != 0 && !(MIN_CHART_UNTIL_SECONDS..=MAX_CHART_UNTIL_SECONDS).contains(&until) {
+        return Err(format!(
+            "until は 0（薬が消えるまで）か {MIN_CHART_UNTIL_SECONDS}〜{MAX_CHART_UNTIL_SECONDS} にしてください"
+        ));
+    }
+    Ok(())
 }
 
 fn chart_label_ok(label: &str) -> bool {
@@ -712,15 +763,70 @@ mod tests {
     }
 
     #[test]
+    fn chart_metrics_and_patient_are_checked() {
+        let base = || {
+            json!({
+                "title": "血圧",
+                "scenarios": [{
+                    "label": "a",
+                    "metrics": ["heart_rate", "blood_pressure", "heart_rate"],
+                    "patient": {"pain": 30},
+                    "until": 300,
+                    "doses": [{"drug": "morphine", "seconds": 0}]
+                }],
+                "casualties": [{"casualty": "c1", "metrics": ["concentration"]}]
+            })
+        };
+        let corpus = fixtures::corpus();
+        let ok = chart_create_request(&corpus, &base());
+        let Ok(ClientRequest::ChartCreate { chart }) = ok else {
+            panic!("正しい条件は通る: {ok:?}");
+        };
+        assert_eq!(
+            chart.scenarios[0].metrics,
+            vec![ChartMetric::HeartRate, ChartMetric::BloodPressure],
+            "同じ量の重複はまとめる"
+        );
+        assert_eq!(
+            chart.scenarios[0].patient,
+            ChartPatient {
+                blood: 100,
+                pain: 30
+            },
+            "渡さなかった項目は健康な患者の値"
+        );
+        assert_eq!(chart.casualties[0].patient, ChartPatient::default());
+        assert_eq!(chart.scenarios[0].until, 300);
+        assert_eq!(chart.casualties[0].until, 0, "渡さなければ、薬が消えるまで");
+
+        let err = |edit: &dyn Fn(&mut serde_json::Value)| {
+            let mut input = base();
+            edit(&mut input);
+            chart_create_request(&corpus, &input).unwrap_err()
+        };
+        assert!(err(&|v| v["scenarios"][0]["metrics"] = json!([])).contains("metrics"));
+        assert!(
+            err(&|v| v["casualties"][0]["metrics"] =
+                json!(["effect", "concentration", "heart_rate", "mean_pressure"]))
+            .contains("metrics")
+        );
+        assert!(err(&|v| v["scenarios"][0]["metrics"] = json!(["spo2"])).contains("形が違います"));
+        assert!(err(&|v| v["scenarios"][0]["patient"] = json!({"blood": 0})).contains("blood"));
+        assert!(err(&|v| v["casualties"][0]["patient"] = json!({"pain": 101})).contains("pain"));
+        assert!(err(&|v| v["scenarios"][0]["until"] = json!(9)).contains("until"));
+        assert!(err(&|v| v["casualties"][0]["until"] = json!(21601)).contains("until"));
+    }
+
+    #[test]
     fn chart_requests_are_checked_before_asking() {
         let base = || {
             json!({
                 "title": " 比べる ",
-                "scenarios": [{"label": " 2 本 ", "metric": "effect", "doses": [
+                "scenarios": [{"label": " 2 本 ", "metrics": ["effect"], "doses": [
                     {"drug": "morphine", "seconds": 0},
                     {"drug": "naloxone", "seconds": 3600}
                 ]}],
-                "casualties": [{"casualty": " c1 ", "metric": "concentration"}],
+                "casualties": [{"casualty": " c1 ", "metrics": ["concentration"]}],
                 "sections": [{"source": " doc:hemorrhage.md#止血帯を使う ", "x": "", "lines": [" 血液 ", ""]}],
                 "values": [{"label": "心拍数", "unit": " bpm ", "minutes": true, "points": [
                     {"x": 2, "y": 80.5}, {"x": 0, "y": 60}

@@ -96,6 +96,20 @@ export function drugEffect(
   return effect.kind === "hill" ? ((effect.maxEffect ?? 1) * value) / (1 + value) : value;
 }
 
+/**
+ * すべての薬を合わせた効果。ゲームが体に効かせる値（ACE_Medical_LinearDrugEffectConfig.c・ACE_Medical_HillDrugEffectConfig.c）。
+ * 頭打ちの効果は、薬ごとの χ を足してから頭打ちにするので、drugEffect の和とは一致しない。
+ */
+export function totalEffect(
+  medication: MedicationFile,
+  effectId: EffectId,
+  concentrations: Concentrations,
+): number {
+  const effect = effectConfig(medication, effectId);
+  const sum = effect.drugs.reduce((total, config) => total + chi(config, concentrations), 0);
+  return effect.kind === "hill" ? ((effect.maxEffect ?? 1) * sum) / (1 + sum) : sum;
+}
+
 /** モルヒネの濃度をナロキソンが割る分の割合（0〜1）。ナロキソンのカードの効能 */
 export function antagonismRatio(
   medication: MedicationFile,

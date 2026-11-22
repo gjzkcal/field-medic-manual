@@ -1,6 +1,7 @@
 // AI が指定した条件（chart_create）から、グラフの点を作る。
 // AI には条件だけを書かせ、点はここで計算する（AI が推移を計算すると、式や桁を間違えた線がそのまま出るため）。
-// 薬の推移は、負傷者の画面と同じ関数（効能は effectAt と singleDosePeak、濃度は concentrationsAt）で出す。
+// 薬ごとの推移は、負傷者の画面と同じ関数（効能は effectAt と singleDosePeak、濃度は concentrationsAt）で出す。
+// 心拍数と血圧は、ゲームと同じく 1 s ごとに進める計算（simulateVitals）で出す。
 import { dosesOf } from "@/features/casualties/casualty-view";
 import {
   buildForecasts,
@@ -9,6 +10,12 @@ import {
   type Dose,
 } from "@/features/casualties/forecast";
 import { DRUG_LABELS } from "@/features/casualties/labels";
+import {
+  bloodPressureMmhg,
+  kpaToMmhg,
+  simulateVitals,
+  type VitalsPoint,
+} from "@/features/casualties/vitals";
 import { spokenDuration } from "@/features/chat/casualty-brief";
 import type { ChartData, ChartSeries, ChartSpec } from "@/features/content/chart";
 import { chartSummary } from "@/features/content/chart-summary";
@@ -17,6 +24,7 @@ import { doseExpirySeconds, drugConfig, singleDosePeak } from "@/features/medica
 import type { MedicationFile } from "@/features/medication/schema";
 import type { Casualty } from "@/lib/bindings/Casualty";
 import type { ChartMetric } from "@/lib/bindings/ChartMetric";
+import type { ChartPatient } from "@/lib/bindings/ChartPatient";
 import type { ChartRequest } from "@/lib/bindings/ChartRequest";
 
 /** 1 つのグラフの線の上限。線の色が 5 色で、超えると同じ色の線ができる */
@@ -28,7 +36,48 @@ const STEP_SECONDS = 5;
 const MS = 1000;
 const X_LABEL = "経過";
 
-const METRIC_LABELS: Record<ChartMetric, string> = { effect: "効能", concentration: "濃度" };
+const PERCENT = 100;
+const ORIGIN = "アプリの計算";
+
+const METRIC_LABELS: Record<ChartMetric, string> = {
+  effect: "効能",
+  concentration: "濃度",
+  heart_rate: "心拍数",
+  blood_pressure: "血圧",
+  mean_pressure: "平均血圧",
+};
+
+/** 薬ごとに 1 本の線になる量。ほかの量は、打った薬をすべて合わせた患者の値で、条件ごとの線になる */
+type DrugMetric = "effect" | "concentration";
+type VitalMetric = Exclude<ChartMetric, DrugMetric>;
+
+function isVitalMetric(metric: ChartMetric): metric is VitalMetric {
+  return metric !== "effect" && metric !== "concentration";
+}
+
+interface VitalLineSpec {
+  name: string;
+  unit: string;
+  value: (point: VitalsPoint) => number;
+}
+
+/** 心拍数・血圧の線。1 つの量から 1 本か 2 本 */
+const VITAL_LINES: Record<VitalMetric, readonly VitalLineSpec[]> = {
+  heart_rate: [{ name: "心拍数", unit: "bpm", value: (p) => p.heartRate }],
+  blood_pressure: [
+    {
+      name: "収縮期血圧",
+      unit: "mmHg",
+      value: (p) => bloodPressureMmhg(p.meanPressureKpa).systolic,
+    },
+    {
+      name: "拡張期血圧",
+      unit: "mmHg",
+      value: (p) => bloodPressureMmhg(p.meanPressureKpa).diastolic,
+    },
+  ],
+  mean_pressure: [{ name: "平均血圧", unit: "mmHg", value: (p) => kpaToMmhg(p.meanPressureKpa) }],
+};
 
 /** まとめる前の線 1 本。 */
 export interface ChartLine {
@@ -82,13 +131,21 @@ export interface AiChartInput {
   casualties: readonly Casualty[];
   /** request.sections の節から取った線（節の HTML を読むのは chat-chart-sections。読めなかった節があれば、ここへ来る前に止める） */
   sections: readonly ChartPart[];
-  /** Circulation を使っているか。使っていなければ薬の濃度の仕組みがないので、薬の推移は出さない（負傷者の画面と同じ） */
+  /** Circulation を使っているか。使っていなければ薬の濃度の仕組みがないので、投与からの推移は出さない（負傷者の画面と同じ） */
   circulation: boolean;
   nowMs: number;
 }
 
 function clockText(seconds: number): string {
   return seconds === 0 ? "0 秒" : spokenDuration(seconds * MS);
+}
+
+/** 線を描く終わりの時刻（秒）。until が 0 なら、すべての投与が体内から消える時刻。それより先は描かない */
+function endSecondsOf(medication: MedicationFile, doses: readonly Dose[], until: number): number {
+  const clear = Math.max(
+    ...doses.map((d) => d.atMs / MS + doseExpirySeconds(drugConfig(medication, d.drug))),
+  );
+  return until === 0 ? clear : Math.min(clear, until);
 }
 
 /**
@@ -98,12 +155,10 @@ function clockText(seconds: number): string {
 function drugLines(
   medication: MedicationFile,
   doses: readonly Dose[],
-  metric: ChartMetric,
+  metric: DrugMetric,
   name: string,
+  endSeconds: number,
 ): ChartLine[] {
-  const endSeconds = Math.max(
-    ...doses.map((d) => d.atMs / MS + doseExpirySeconds(drugConfig(medication, d.drug))),
-  );
   const xs: number[] = [];
   for (let x = 0; x < endSeconds; x += STEP_SECONDS) {
     xs.push(x);
@@ -121,10 +176,105 @@ function drugLines(
       unit: metric === "effect" ? "%" : "nM",
       xLabel: X_LABEL,
       xUnit: "s",
-      origin: "アプリの計算",
+      origin: ORIGIN,
       points: xs.map((x) => ({ x, y: value(x) })),
     };
   });
+}
+
+/**
+ * 投与と患者の状態から、心拍数・血圧の線を量ごとに作る。作れないときは、AI に返す理由の文。
+ * 計算は 1 s ごとだが、点は薬の線と同じ間隔に間引く。線ごとの最大と最小の時刻は残す
+ * （AI に返す最大・最小の値が、間引きでずれないように）。
+ */
+function vitalLines(
+  medication: MedicationFile,
+  doses: readonly Dose[],
+  metrics: readonly VitalMetric[],
+  patient: ChartPatient,
+  name: string,
+  endSeconds: number,
+): { lines: Map<VitalMetric, ChartLine[]>; note: string } | string {
+  const { points, unconsciousAtSeconds, arrestAtSeconds } = simulateVitals({
+    medication,
+    doses,
+    patient: { blood: patient.blood / PERCENT, painHealth: patient.pain / PERCENT },
+    endSeconds: Math.ceil(endSeconds),
+  });
+  const state = `血液量 ${String(patient.blood)}%、痛みの HP ${String(patient.pain)}%`;
+  if (points.length < 2) {
+    return `「${name}」の患者の状態（${state}）では、薬を打つ前に心停止になっていて、推移を計算できません`;
+  }
+  const kept = new Set<VitalsPoint>(
+    points.filter((p, i) => p.seconds % STEP_SECONDS === 0 || i === points.length - 1),
+  );
+  for (const { value } of metrics.flatMap((metric) => VITAL_LINES[metric])) {
+    kept.add(points.reduce((a, b) => (value(b) > value(a) ? b : a)));
+    kept.add(points.reduce((a, b) => (value(b) < value(a) ? b : a)));
+  }
+  const shown = points.filter((p) => kept.has(p));
+  const events: string[] = [];
+  if (unconsciousAtSeconds === 0) {
+    events.push("薬を打つ前から意識がない");
+  } else if (unconsciousAtSeconds !== null && unconsciousAtSeconds !== arrestAtSeconds) {
+    events.push(`経過 ${String(unconsciousAtSeconds)} s で意識を失う`);
+  }
+  if (arrestAtSeconds !== null) {
+    events.push(`経過 ${String(arrestAtSeconds)} s で心停止になり、線はそこで終わる`);
+  }
+  return {
+    lines: new Map(
+      metrics.map((metric) => [
+        metric,
+        VITAL_LINES[metric].map((spec) => ({
+          label: `${spec.name}（${name}）`,
+          axis: `unit:${spec.unit}`,
+          unit: spec.unit,
+          xLabel: X_LABEL,
+          xUnit: "s",
+          origin: ORIGIN,
+          points: shown.map((p) => ({ x: p.seconds, y: spec.value(p) })),
+        })),
+      ]),
+    ),
+    note: `患者の状態: ${state}（計算の間は一定）${events.length === 0 ? "" : `。${events.join("、")}`}`,
+  };
+}
+
+interface DoseParts {
+  lines: ChartLine[];
+  /** 条件の文に書く、量の名前 */
+  metricText: string;
+  /** 条件の文の終わりに足す文。なければ空 */
+  note: string;
+}
+
+/** 1 つの条件（投与の一覧）から、選ばれた量の線を作る。線は、AI が量を並べた順にする。 */
+function doseParts(
+  medication: MedicationFile,
+  doses: readonly Dose[],
+  target: { metrics: readonly ChartMetric[]; patient: ChartPatient; until: number },
+  name: string,
+): DoseParts | string {
+  const endSeconds = endSecondsOf(medication, doses, target.until);
+  const range = target.until === 0 ? "" : `。経過 ${String(endSeconds)} s まで`;
+  const vitalMetrics = target.metrics.filter(isVitalMetric);
+  const vitals =
+    vitalMetrics.length === 0
+      ? null
+      : vitalLines(medication, doses, vitalMetrics, target.patient, name, endSeconds);
+  if (typeof vitals === "string") {
+    return vitals;
+  }
+  return {
+    lines: target.metrics.flatMap((metric) =>
+      isVitalMetric(metric)
+        ? (vitals?.lines.get(metric) ?? [])
+        : drugLines(medication, doses, metric, name, endSeconds),
+    ),
+    metricText: target.metrics.map((m) => METRIC_LABELS[m]).join("・"),
+    note: vitals === null ? range : `${range}。${vitals.note}`,
+  };
 }
 
 function doseText(doses: readonly { drug: DrugId; seconds: number }[]): string {
@@ -152,11 +302,15 @@ function casualtyPart(
   }
   const startMs = Math.min(...active.map((d) => d.atMs));
   const doses = active.map((d) => ({ drug: d.drug, atMs: d.atMs - startMs }));
+  const made = doseParts(input.medication, doses, target, casualty.name);
+  if (typeof made === "string") {
+    return made;
+  }
   return {
-    lines: drugLines(input.medication, doses, target.metric, casualty.name),
-    condition: `負傷者「${casualty.name}」の記録（${METRIC_LABELS[target.metric]}）: ${doseText(
+    lines: made.lines,
+    condition: `負傷者「${casualty.name}」の記録（${made.metricText}）: ${doseText(
       doses.map((d) => ({ drug: d.drug, seconds: Math.round(d.atMs / MS) })),
-    )}。横軸の 0 は ${spokenDuration(input.nowMs - startMs)} 前の投与`,
+    )}。横軸の 0 は ${spokenDuration(input.nowMs - startMs)} 前の投与${made.note}`,
     source: null,
   };
 }
@@ -246,19 +400,23 @@ export function buildAiChart(input: AiChartInput): AiChartResult {
     return {
       ok: false,
       error:
-        "薬の推移は、Circulation を使っているときだけ計算できます（利用者の設定の「使っている MOD」に Circulation がありません）",
+        "投与からの推移は、Circulation を使っているときだけ計算できます（利用者の設定の「使っている MOD」に Circulation がありません）",
     };
   }
   const parts: ChartPart[] = [];
   for (const scenario of request.scenarios) {
+    const made = doseParts(
+      medication,
+      scenario.doses.map((d) => ({ drug: d.drug, atMs: d.seconds * MS })),
+      scenario,
+      scenario.label,
+    );
+    if (typeof made === "string") {
+      return { ok: false, error: made };
+    }
     parts.push({
-      lines: drugLines(
-        medication,
-        scenario.doses.map((d) => ({ drug: d.drug, atMs: d.seconds * MS })),
-        scenario.metric,
-        scenario.label,
-      ),
-      condition: `仮の投与「${scenario.label}」（${METRIC_LABELS[scenario.metric]}）: ${doseText(scenario.doses)}`,
+      lines: made.lines,
+      condition: `仮の投与「${scenario.label}」（${made.metricText}）: ${doseText(scenario.doses)}${made.note}`,
       source: null,
     });
   }

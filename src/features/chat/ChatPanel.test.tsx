@@ -596,7 +596,14 @@ describe("ChatPanel", () => {
             chart: {
               title: "A の推移",
               scenarios: [],
-              casualties: [{ casualty: "c9", metric: "effect" }],
+              casualties: [
+                {
+                  casualty: "c9",
+                  metrics: ["effect"],
+                  patient: { blood: 100, pain: 100 },
+                  until: 0,
+                },
+              ],
               sections: [],
               values: [],
             },
