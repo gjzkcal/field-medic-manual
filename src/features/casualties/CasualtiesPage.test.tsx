@@ -328,6 +328,31 @@ describe("CasualtiesPage", () => {
     expect(screen.getByRole("button", { name: "足す" })).toBeTruthy();
   });
 
+  it("小窓では、タブの横の「＋」で、操作を開かずに次の負傷者を足して選ぶ", async () => {
+    render(<CasualtiesPage compact />);
+    await addCasualty();
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: "足す" })).toBeNull();
+    });
+
+    press("負傷者を足す");
+
+    const added = await screen.findByRole("tab", { name: "負傷者 2" });
+    await waitFor(() => {
+      expect(added.getAttribute("aria-selected")).toBe("true");
+    });
+    expect(screen.getByText("負傷者 2を足しました").getAttribute("role")).toBe("status");
+    // 畳んだままなので、記録のボタンの位置が動かない
+    expect(screen.queryByRole("button", { name: "足す" })).toBeNull();
+    expect(await axeViolations()).toStrictEqual([]);
+  });
+
+  it("メインには「＋」を置かない（名前の欄が常に見えている）", async () => {
+    render(<CasualtiesPage />);
+    await addCasualty();
+    expect(screen.queryByRole("button", { name: "負傷者を足す" })).toBeNull();
+  });
+
   it("小窓でも直前の記録を取り消せる", async () => {
     render(<CasualtiesPage compact />);
     await addCasualty();

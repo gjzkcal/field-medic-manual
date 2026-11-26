@@ -589,6 +589,18 @@ function PageBody({
     }
   }
 
+  function addUnnamed(): void {
+    const name = nextCasualtyName(casualties.map((c) => c.name));
+    void applyCasualtyOp({ op: "add_casualty", name }).then(() => {
+      // 失敗（人数の上限など）は error に入るだけで、一覧は増えない。末尾の人を足した人と取り違えない
+      if (useCasualties.getState().error !== null) {
+        return;
+      }
+      setSelectedId(useCasualties.getState().casualties.at(-1)?.id ?? null);
+      setAnnouncement(`${name}を足しました`);
+    });
+  }
+
   const tools = (
     <>
       <div className="flex flex-wrap items-center gap-2">
@@ -660,13 +672,25 @@ function PageBody({
             setSelectedId(value);
           }}
         >
-          <TabsList aria-label="負傷者" className="h-auto w-full flex-wrap justify-start">
-            {casualties.map((casualty) => (
-              <TabsTrigger key={casualty.id} value={casualty.id} className="flex-none">
-                {casualty.name}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+          <div className="flex items-start gap-1.5">
+            {/* 高さは部品側の指定（横並びのとき 32 px）と同じ条件で打ち消す。素の h-auto では負けて、折り返した段が下の記録のボタンに重なる */}
+            <TabsList
+              aria-label="負傷者"
+              className="min-h-8 min-w-0 flex-1 flex-wrap justify-start group-data-horizontal/tabs:h-auto"
+            >
+              {casualties.map((casualty) => (
+                <TabsTrigger key={casualty.id} value={casualty.id} className="flex-none">
+                  {casualty.name}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            {/* 小窓は名前の欄を畳んでいるので、次の負傷者を 1 手で足せる口をタブの横に置く。メインは名前の欄が常に見えている */}
+            {compact && (
+              <Button variant="outline" size="icon" aria-label="負傷者を足す" onClick={addUnnamed}>
+                <PlusIcon />
+              </Button>
+            )}
+          </div>
           <TabsContent value={selected.id}>
             <CasualtyPanel
               key={selected.id}
