@@ -4,6 +4,7 @@
 //! 最初の 1 回の表示にしか効かず（tao の実装）、2 回目からゲームのフォーカスを奪ってしまうため（2026-09-26 の先行検証）。
 
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::Duration;
 
 use tauri::{AppHandle, Emitter, Manager, WebviewWindow, Window};
 
@@ -48,6 +49,29 @@ fn set_focusable(app: &AppHandle, overlay: &WebviewWindow, focusable: bool) -> t
 
 fn emit_keys(app: &AppHandle, reach: bool) -> tauri::Result<()> {
     app.emit_to(OVERLAY, OVERLAY_KEYS_EVENT, reach)
+}
+
+/// フォーカスを移した後、ウィンドウの状態が落ち着くのを待つ時間。
+const FOCUS_SETTLE: Duration = Duration::from_millis(200);
+
+/// フォーカスを移した後に、キーが届くかを知らせる。
+///
+/// `set_focus` は、前面にできなかったとき（Windows が前面の切り替えを拒んだとき）もエラーを返さない。
+/// 成功したと決めつけて知らせると、キーはゲームに届くのに小窓がキーの案内を出してしまうので、
+/// ウィンドウが実際にフォーカスを得たか（`is_focused`）を確かめて知らせる。
+/// 状態の反映が遅れることがあるので、少し待ってもう一度確かめる。
+fn emit_keys_after_focus(app: &AppHandle, overlay: &WebviewWindow) -> tauri::Result<()> {
+    emit_keys(app, overlay.is_focused()?)?;
+    let app = app.clone();
+    tauri::async_runtime::spawn(async move {
+        tokio::time::sleep(FOCUS_SETTLE).await;
+        if let Some(overlay) = app.get_webview_window(OVERLAY)
+            && let Ok(focused) = overlay.is_focused()
+        {
+            let _ = emit_keys(&app, focused);
+        }
+    });
+    Ok(())
 }
 
 /// 起動時にメインを出す。画面の準備ができたときと、JS が動かないときの保険の両方から呼ばれるので、2 回目以降は何もしない。
@@ -104,7 +128,7 @@ pub fn show(app: &AppHandle, mode: OverlayMode) -> tauri::Result<()> {
             set_focusable(app, &overlay, true)?;
             overlay.show()?;
             overlay.set_focus()?;
-            emit_keys(app, true)?;
+            emit_keys_after_focus(app, &overlay)?;
         }
     }
     app.emit_to(OVERLAY, OVERLAY_MODE_EVENT, mode)
@@ -129,7 +153,7 @@ pub fn activate(app: &AppHandle) -> tauri::Result<()> {
     set_focusable(app, &overlay, true)?;
     overlay.set_focus()?;
     // 押した時点で「フォーカスを得た」のイベントは済んでいて、もう一度届くとは限らないので、ここで知らせる
-    emit_keys(app, true)
+    emit_keys_after_focus(app, &overlay)
 }
 
 /// 小窓のフォーカスが変わったとき。キー入力が届くかを小窓に知らせる。
