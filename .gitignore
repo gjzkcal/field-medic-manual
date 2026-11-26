@@ -3,6 +3,8 @@ dev-docs/
 /CLAUDE.md
 CLAUDE.local.md
 .claude/
+/PRODUCT.md
+.impeccable/
 
 # Dependencies and build output
 node_modules/
