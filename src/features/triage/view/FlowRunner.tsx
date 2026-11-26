@@ -3,6 +3,7 @@ import {
   ChevronRightIcon,
   CircleCheckIcon,
   CornerDownLeftIcon,
+  KeyboardIcon,
   OctagonAlertIcon,
   RotateCcwIcon,
   TriangleAlertIcon,
@@ -34,6 +35,7 @@ import { MARCH_LABELS, marchOf } from "@/features/triage/view/march";
 import { OUTCOME_CLASSES, OUTCOME_LABELS, TONE_CLASSES } from "@/features/triage/view/tone";
 import { TrailNav } from "@/features/triage/view/TrailNav";
 import { useNow } from "@/hooks/use-now";
+import { useKeyInput } from "@/lib/key-input";
 
 /** キーで選べる選択肢の数（選択肢の上限 validate.ts の MAX_CHOICES と同じ） */
 const MAX_KEY_CHOICES = 4;
@@ -50,13 +52,16 @@ interface FlowRunnerProps {
 export function FlowRunner({ root, lookup }: FlowRunnerProps): JSX.Element {
   const { state, choose, back, restart, jumpTo } = useTriageRunner(root, lookup);
   const digitKeys = useViewerSettings((s) => s.settings.triageKeys);
+  const keyInput = useKeyInput();
+  const keyHints = keyInput.receiving;
   const headingRef = useRef<HTMLHeadingElement>(null);
   const pathKey = formatPath(state.path);
 
-  // 進むたびに質問へフォーカスを移す。押したボタンにフォーカスが残ると、次の画面で Enter がそのボタンに当たるため
+  // 進むたびに質問へフォーカスを移す。押したボタンにフォーカスが残ると、次の画面で Enter がそのボタンに当たるため。
+  // キーが届くようになったときも移す。「キーで操作」のボタンは押すと消えるので、フォーカスの行き先が要る
   useEffect(() => {
     headingRef.current?.focus();
-  }, [root.id, pathKey]);
+  }, [root.id, pathKey, keyHints]);
 
   const handleKeyDown = useEffectEvent((event: KeyboardEvent) => {
     if (
@@ -149,7 +154,8 @@ export function FlowRunner({ root, lookup }: FlowRunnerProps): JSX.Element {
         state={state}
         lookup={lookup}
         headingRef={headingRef}
-        digitKeys={digitKeys}
+        digitKeys={digitKeys && keyHints}
+        keyHints={keyHints}
         onChoose={choose}
         onRestart={restart}
       />
@@ -158,13 +164,19 @@ export function FlowRunner({ root, lookup }: FlowRunnerProps): JSX.Element {
         <Button variant="outline" onClick={back} disabled={atStart}>
           <Undo2Icon />
           戻る
-          <Kbd>Backspace</Kbd>
+          {keyHints && <Kbd>Backspace</Kbd>}
         </Button>
         <Button variant="outline" onClick={restart} disabled={atStart}>
           <RotateCcwIcon />
           最初から
-          <Kbd>Esc</Kbd>
+          {keyHints && <Kbd>Esc</Kbd>}
         </Button>
+        {!keyHints && keyInput.activate !== null && (
+          <Button variant="outline" onClick={keyInput.activate}>
+            <KeyboardIcon />
+            キーで操作
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -193,7 +205,10 @@ interface NodeViewProps {
   lookup: FlowLookup;
   headingRef: RefObject<HTMLHeadingElement | null>;
   /** 数字キーで選べるか。オフなら選択肢の番号の印を出さない */
+  /** 数字と Space の案内を出すか（設定でオフのときと、キーが届かないときは出さない） */
   digitKeys: boolean;
+  /** Enter の案内を出すか */
+  keyHints: boolean;
   onChoose: (index: number) => void;
   onRestart: () => void;
 }
@@ -203,6 +218,7 @@ function NodeView({
   lookup,
   headingRef,
   digitKeys,
+  keyHints,
   onChoose,
   onRestart,
 }: NodeViewProps): JSX.Element {
@@ -283,7 +299,7 @@ function NodeView({
             <Button size="lg" className="h-14 text-lg" onClick={onRestart}>
               <RotateCcwIcon />
               最初から
-              <Kbd>Enter</Kbd>
+              {keyHints && <Kbd>Enter</Kbd>}
             </Button>
           )}
         </section>

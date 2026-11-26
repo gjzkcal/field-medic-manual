@@ -296,6 +296,7 @@ export async function mainWindowReady(): Promise<void> {
 
 /** Rust と取り決めたイベント名（src-tauri/src/window/overlay.rs・src-tauri/src/commands/settings.rs）。 */
 const OVERLAY_MODE_EVENT = "overlay-mode";
+const OVERLAY_KEYS_EVENT = "overlay-keys";
 const OPEN_HREF_EVENT = "open-href";
 const SETTINGS_CHANGED_EVENT = "settings-changed";
 const CASUALTIES_CHANGED_EVENT = "casualties-changed";
@@ -303,6 +304,17 @@ const CASUALTIES_CHANGED_EVENT = "casualties-changed";
 /** 小窓が呼び出されたとき（ホットキーやトレイ）。戻り値の関数を呼ぶと購読を解除する。 */
 export async function onOverlayMode(handler: (mode: OverlayMode) => void): Promise<() => void> {
   return listen<OverlayMode>(OVERLAY_MODE_EVENT, (event) => {
+    handler(event.payload);
+  });
+}
+
+/**
+ * キー入力が小窓に届くようになった・届かなくなったとき。戻り値の関数を呼ぶと購読を解除する。
+ * 画面の側では判断できないので Rust から受ける。`document.hasFocus()` はフォーカスのないウィンドウでも true を返し、
+ * ウィンドウのフォーカスのイベントは、フォーカスを取らない表示（閲覧モード）の小窓を押しただけでも届く。
+ */
+export async function onOverlayKeys(handler: (reach: boolean) => void): Promise<() => void> {
+  return listen<boolean>(OVERLAY_KEYS_EVENT, (event) => {
     handler(event.payload);
   });
 }

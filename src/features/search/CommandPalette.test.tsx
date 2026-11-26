@@ -9,6 +9,7 @@ import { usePaletteOpen } from "@/features/search/palette-open";
 import { EMPTY_SEARCH_FILTER, useSearchFilter } from "@/features/search/search-filter";
 import { MARK_END, MARK_START } from "@/features/search/snippet";
 import type { SearchHit } from "@/lib/bindings/SearchHit";
+import { KeyInputContext } from "@/lib/key-input";
 import { axeViolations } from "@/test/axe";
 
 function hit(id: number, title: string, matchedTerms: string[], synonymOnly = false): SearchHit {
@@ -182,6 +183,22 @@ describe("CommandPalette", () => {
     await waitFor(() => {
       expect(queries).toStrictEqual([{ q: "CPR", filter: { modTargets: ["core"] } }]);
     });
+  });
+
+  it("キーが届かない置き場所では、キーの案内を出さない（絞り込みは残す）", () => {
+    const palette = <CommandPalette onSelect={vi.fn<(href: string) => void>()} />;
+    const { rerender } = render(
+      <KeyInputContext value={{ receiving: false, activate: null }}>{palette}</KeyInputContext>,
+    );
+    expect(screen.queryByText("選択")).toBeNull();
+    expect(screen.queryByText("Enter")).toBeNull();
+    expect(screen.getByRole("button", { name: "絞り込み" })).toBeTruthy();
+
+    rerender(
+      <KeyInputContext value={{ receiving: true, activate: null }}>{palette}</KeyInputContext>,
+    );
+    expect(screen.getByText("選択")).toBeTruthy();
+    expect(screen.getByText("Enter")).toBeTruthy();
   });
 });
 

@@ -1,4 +1,4 @@
-import { useEffect, type JSX, type PointerEvent } from "react";
+import { useEffect, useMemo, type JSX, type PointerEvent } from "react";
 import { createMemoryRouter, Navigate } from "react-router";
 import { RouterProvider } from "react-router/dom";
 
@@ -6,6 +6,7 @@ import { RouteErrorPage } from "@/components/RouteErrorPage";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LazyCasualtiesPage } from "@/features/casualties/LazyCasualtiesPage";
 import { DocPage } from "@/features/library/DocPage";
+import { useOverlayKeysReach } from "@/features/overlay/key-reach";
 import {
   hrefForMode,
   OVERLAY_SEARCH_PATH,
@@ -25,6 +26,7 @@ import { isTextEntry } from "@/features/triage/keyboard";
 import { TriageListPage } from "@/features/triage/TriageListPage";
 import { TriageRunPage } from "@/features/triage/TriageRunPage";
 import type { OverlayMode } from "@/lib/bindings/OverlayMode";
+import { KeyInputContext, type KeyInput } from "@/lib/key-input";
 import { historyList, onOverlayMode, overlayActivate } from "@/lib/tauri";
 
 /** 直近のフローを探すときに見る履歴の数。最近見たもの（8 件）より深く見て、文書ばかり開いた後でも見つける */
@@ -87,8 +89,16 @@ function handlePointerDown(event: PointerEvent<HTMLDivElement>): void {
   }
 }
 
+function activateForKeys(): void {
+  overlayActivate().catch(() => {
+    // 移せなくても、ボタンと、ホットキーのトリアージのモードで操作できる
+  });
+}
+
 export function OverlayApp(): JSX.Element {
   const opacity = useOverlaySettings((s) => s.overlay.opacity);
+  const receiving = useOverlayKeysReach();
+  const keyInput = useMemo<KeyInput>(() => ({ receiving, activate: activateForKeys }), [receiving]);
 
   useEffect(() => {
     // アンマウント後（StrictMode の二重実行を含む）に購読を残さないため
@@ -123,7 +133,9 @@ export function OverlayApp(): JSX.Element {
         }}
         onPointerDown={handlePointerDown}
       >
-        <RouterProvider router={overlayRouter} />
+        <KeyInputContext value={keyInput}>
+          <RouterProvider router={overlayRouter} />
+        </KeyInputContext>
       </div>
     </TooltipProvider>
   );

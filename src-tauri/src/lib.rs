@@ -61,6 +61,7 @@ pub fn run() {
         .manage(hotkey::HotkeyState::default())
         .manage(overlay::MainRevealed::default())
         .manage(overlay::ViewMode::default())
+        .manage(overlay::Focusable::default())
         .manage(Arc::new(ai::AiState::default()))
         .manage(backup::pending::PendingRestore::default())
         .setup(|app| {

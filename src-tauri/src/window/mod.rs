@@ -35,8 +35,10 @@ pub fn on_window_event(window: &Window, event: &WindowEvent) {
         }
         return;
     }
-    if matches!(event, WindowEvent::Focused(false)) && window.label() == overlay::OVERLAY {
-        overlay::on_focus_lost(window);
+    if let WindowEvent::Focused(focused) = event {
+        if window.label() == overlay::OVERLAY {
+            overlay::on_focus_changed(window, *focused);
+        }
         return;
     }
     let WindowEvent::CloseRequested { api, .. } = event else {

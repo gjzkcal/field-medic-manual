@@ -29,7 +29,7 @@ export function CountdownTimer({
   spaceKey,
 }: {
   seconds: number;
-  /** Space で開始・一時停止できるか（設定のトリアージのキー操作） */
+  /** Space で開始・一時停止できるか（設定のトリアージのキー操作がオンで、キーがこのウィンドウに届くとき） */
   spaceKey: boolean;
 }): JSX.Element {
   const [timer, setTimer] = useState<TimerState>({ status: "idle" });
