@@ -196,6 +196,20 @@ describe("SectionBody", () => {
     expect(tables[1]?.hasAttribute("aria-labelledby")).toBe(false);
   });
 
+  it("「…:」の後ろに空白や改行があっても、表の名前にする", () => {
+    const html = [
+      "<p>失血の推移: \n</p>",
+      "<table><tbody><tr><td>a</td></tr></tbody></table>",
+      // 文の途中にコロンがあるだけの段落は、名前にしない
+      "<p>注意: 表の説明ではない文</p>",
+      "<table><tbody><tr><td>b</td></tr></tbody></table>",
+    ].join("");
+    render(<SectionBody html={html} resolveAsset={resolveAsset} active={null} />);
+    const tables = screen.getAllByRole("table");
+    expect(tables[0]?.getAttribute("aria-labelledby")).not.toBeNull();
+    expect(tables[1]?.hasAttribute("aria-labelledby")).toBe(false);
+  });
+
   it("外部のリンクには、アプリの外で開くことを読み上げ用に足す", () => {
     render(
       <SectionBody

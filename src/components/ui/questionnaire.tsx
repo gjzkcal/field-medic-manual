@@ -220,7 +220,7 @@ function QuestionnairePrevious({
       )}
       {...props}
     >
-      {children ?? "Previous"}
+      {children ?? "前へ"}
     </QuestionnairePrimitive.Previous>
   );
 }
@@ -245,7 +245,7 @@ function QuestionnaireSkip({
       )}
       {...props}
     >
-      {children ?? "Skip"}
+      {children ?? "スキップ"}
     </QuestionnairePrimitive.Skip>
   );
 }
@@ -270,7 +270,7 @@ function QuestionnaireNext({
       )}
       {...props}
     >
-      {children ?? "Next"}
+      {children ?? "次へ"}
     </QuestionnairePrimitive.Next>
   );
 }
@@ -295,7 +295,7 @@ function QuestionnaireSubmit({
       )}
       {...props}
     >
-      {children ?? "Submit"}
+      {children ?? "送信"}
     </QuestionnairePrimitive.Submit>
   );
 }

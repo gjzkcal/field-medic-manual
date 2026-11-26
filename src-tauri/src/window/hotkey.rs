@@ -172,9 +172,14 @@ fn register(app: &AppHandle, accelerator: &str) -> Binding {
     let result = normalize(accelerator).and_then(|(accelerator, shortcut)| {
         match app.global_shortcut().register(shortcut) {
             Ok(()) => Ok((accelerator, shortcut)),
-            Err(e) => Err(AppError::InvalidInput(format!(
-                "{accelerator} を登録できませんでした。ほかのアプリが使っている可能性があります（{e}）"
-            ))),
+            Err(e) => {
+                // 元のエラーは内部の型の表示（`HotKey { mods: …, id: … }`）で、利用者が次にすることの手がかりにならない。
+                // 画面には出さず、調べるときのためにログへ残す
+                log::warn!("ホットキー {accelerator} を登録できませんでした: {e}");
+                Err(AppError::InvalidInput(format!(
+                    "{accelerator} を登録できませんでした。ほかのアプリが使っている可能性があります。別の組み合わせを押してください"
+                )))
+            }
         }
     });
     match result {

@@ -1,5 +1,5 @@
 import { CircleAlertIcon } from "lucide-react";
-import { useEffect, useRef, type JSX } from "react";
+import { useEffect, useId, useRef, type JSX } from "react";
 
 import { focusTarget } from "@/app/use-route-focus";
 
@@ -30,6 +30,7 @@ function megabytes(bytes: number): string {
 export function UpdateDialog(): JSX.Element | null {
   const status = useUpdateStore((s) => s.status);
   const open = useUpdateStore((s) => s.dialogOpen);
+  const notesId = useId();
 
   if (status.kind !== "available" && status.kind !== "installing") {
     return null;
@@ -58,9 +59,18 @@ export function UpdateDialog(): JSX.Element | null {
         </DialogHeader>
         {info.notes !== "" && (
           <div className="flex flex-col gap-1.5">
-            <h3 className="text-sm font-medium">変更点</h3>
+            <h3 id={notesId} className="text-sm font-medium">
+              変更点
+            </h3>
             {/* 変更点は CHANGELOG の Markdown。HTML にせずテキストのまま出す（無害化が要らない） */}
-            <p className="max-h-64 overflow-y-auto rounded-lg bg-muted px-3 py-2 text-sm whitespace-pre-wrap">
+            <p
+              // 中をスクロールして読むので、キーボードでも届くようにする（WCAG 2.1.1）
+              // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- スクロールする領域は、フォーカスできないとキーボードで読めない
+              tabIndex={0}
+              role="region"
+              aria-labelledby={notesId}
+              className="max-h-64 overflow-y-auto rounded-lg bg-muted px-3 py-2 text-sm whitespace-pre-wrap outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
               {formatReleaseNotes(info.notes)}
             </p>
           </div>

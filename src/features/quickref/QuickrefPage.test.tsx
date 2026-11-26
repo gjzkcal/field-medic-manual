@@ -186,6 +186,53 @@ describe("QuickrefPage", () => {
     expect(scrollIntoView).toHaveBeenCalledWith({ block: "start" });
   });
 
+  it("関連リンクのフローは、id ではなく題名で出す", async () => {
+    const commands: string[] = [];
+    mockIPC((cmd) => {
+      commands.push(cmd);
+      if (cmd === "quickref_list") {
+        return {
+          ...TABLE,
+          rows: [row("limb", { links: ["flow:massive-bleeding", "flow:unknown-flow"] })],
+        };
+      }
+      if (cmd === "triage_list") {
+        return [
+          {
+            id: "massive-bleeding",
+            title: "出血を止める",
+            description: null,
+            modTargets: [],
+            modChannel: null,
+            verifiedAt: null,
+            version: 1,
+            sourceHash: "h",
+            updatedAt: "2026-01-01T00:00:00Z",
+          },
+        ];
+      }
+      return null;
+    });
+    renderPage();
+    expect(await screen.findByRole("button", { name: "フロー: 出血を止める" })).toBeDefined();
+    // 一覧に無いフローは、id のまま出す
+    expect(screen.getByRole("button", { name: "フロー: unknown-flow" })).toBeDefined();
+    expect(commands.filter((cmd) => cmd === "triage_list")).toHaveLength(1);
+  });
+
+  it("フローへのリンクが無い表では、フローの一覧を読まない", async () => {
+    const commands: string[] = [];
+    mockIPC((cmd) => {
+      commands.push(cmd);
+      return cmd === "quickref_list" ? TABLE : null;
+    });
+    renderPage();
+    await waitFor(() => {
+      expect(cards()).toHaveLength(4);
+    });
+    expect(commands).not.toContain("triage_list");
+  });
+
   it("カードと表の表示で、axe の違反がない（WCAG 2.2 A・AA）", async () => {
     renderPage();
     await waitFor(() => {

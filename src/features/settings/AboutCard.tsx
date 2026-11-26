@@ -233,8 +233,12 @@ function ThirdPartyLicenses(): JSX.Element {
         </p>
         {licenses.kind === "ok" ? (
           <pre
+            // 中をスクロールして読むので、キーボードでも届くようにする（WCAG 2.1.1）
+            // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- スクロールする領域は、フォーカスできないとキーボードで読めない
+            tabIndex={0}
+            role="region"
             aria-label="サードパーティのライセンスの全文"
-            className="max-h-96 overflow-auto rounded-lg bg-muted px-3 py-2 text-xs whitespace-pre-wrap"
+            className="max-h-96 overflow-auto rounded-lg bg-muted px-3 py-2 text-xs whitespace-pre-wrap outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {licenses.text}
           </pre>

@@ -43,8 +43,9 @@ export type FlowListLoad =
   | { status: "ready"; flows: TriageSummary[] }
   | { status: "error"; message: string };
 
-export function useFlowList(): FlowListLoad {
-  const load = useSyncedLoad(useFlowSync, "list", triageList);
+/** enabled が false のときは読まない（フローへのリンクがない画面で IPC を呼ばないため） */
+export function useFlowList(enabled = true): FlowListLoad {
+  const load = useSyncedLoad(useFlowSync, enabled ? "list" : null, triageList);
   switch (load.status) {
     case "loading":
       return load;
