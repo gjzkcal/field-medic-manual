@@ -46,7 +46,14 @@ export function ProposalCard({ item, disabled, onDecide }: ProposalCardProps): J
     (op) => !["remove_casualty", "clear_all", "remove_record"].includes(op.action),
   );
   return (
-    <Item variant="outline" size="sm" role="group" aria-label="記録の提案">
+    // 利用者の判断を待っている間は、ほかの行より目立たせる（会話の中に埋もれると、待たれていると気づけない）
+    <Item
+      variant="outline"
+      size="sm"
+      role="group"
+      aria-label="記録の提案"
+      className="ring-2 ring-ring"
+    >
       <ItemMedia variant="icon">
         <ClipboardListIcon />
       </ItemMedia>

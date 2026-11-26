@@ -340,27 +340,46 @@ export function mergeWithMarks(items: readonly TextItem[]): {
   return { text, marks };
 }
 
-/** 文の中のチップの名前の上限（文字数）。長いと同じ文が何度も並んで本文が読みにくくなる */
+/** 文の中のチップの、節の名前の上限（文字数）。長いと同じ文が何度も並んで本文が読みにくくなる */
 const MAX_CHIP_CHARS = 12;
 
 /**
- * 文の中のチップの名前。「フェニレフリン > 効果」なら「効果」のように見出しの最後の段だけにし、長ければ縮める。
+ * 文の中のチップの名前。「フェニレフリン > 効果」なら「フェニレフリン › 効果」のように、マニュアルの名前と
+ * 見出しの最後の段にし、節の名前が長ければ縮める（マニュアルの名前は残す）。
+ * 節の名前だけだと、「使い方」のように別のマニュアルと同じ名前が並んで、開くまで何の節か分からない。
  * クイック表の行は症状の文が長く途中で切ると意味が取れないので「クイック表」にする（載せれば全体が出る）。
  * source から作らないのは、クイック表の行の id（blood-loss など）が利用者には読めないため。
  */
 export function chipLabel(citation: Extract<ChatCitation, { kind: "manual" }>): string {
-  const last = citation.title.split(" > ").at(-1) ?? citation.title;
+  const parts = citation.title.split(" > ");
+  const last = parts.at(-1) ?? citation.title;
+  // 先頭の段（マニュアルの名前、「クイック表」「フロー」）。段が 1 つしかなければ付けない
+  const head = parts.length > 1 ? parts[0] : undefined;
   // 結合文字を途中で切らないよう、見た目の 1 文字ずつに分ける
   const chars = Array.from(
     new Intl.Segmenter("ja", { granularity: "grapheme" }).segment(last),
     (g) => g.segment,
   );
-  if (chars.length <= MAX_CHIP_CHARS) {
-    return last;
+  if (chars.length > MAX_CHIP_CHARS && citation.source.startsWith("quickref:")) {
+    return "クイック表";
   }
-  return citation.source.startsWith("quickref:")
-    ? "クイック表"
-    : `${chars.slice(0, MAX_CHIP_CHARS - 1).join("")}…`;
+  const short =
+    chars.length <= MAX_CHIP_CHARS ? last : `${chars.slice(0, MAX_CHIP_CHARS - 1).join("")}…`;
+  return head === undefined ? short : `${head} › ${short}`;
+}
+
+/**
+ * AI が利用者の操作を待っているか。記録の提案の承認・却下を待っていれば "proposal"、聞き返しへの答えを待っていれば "answer"。
+ * 待っている間は回答が進まないので、画面は「作っている途中」ではなく「待っている」と伝える。
+ */
+export function waitingFor(items: readonly AnswerItem[]): "proposal" | "answer" | null {
+  if (items.some((item) => item.kind === "propose" && item.status === "pending")) {
+    return "proposal";
+  }
+  if (items.some((item) => item.kind === "ask" && item.answer === null)) {
+    return "answer";
+  }
+  return null;
 }
 
 /** 回答の出典を重複なしで（届いた順）。 */

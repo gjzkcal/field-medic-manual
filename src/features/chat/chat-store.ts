@@ -56,6 +56,14 @@ interface ChatState {
   lastTurnEndAt: number | null;
   /** キャッシュの保温で使った分（利用者に見せる。隠すと費用の説明がつかない） */
   keepAlive: { count: number; usage: ChatUsage };
+  /**
+   * 書きかけの質問と、付けた画像。入力欄の中ではなくここに持つのは、パネルを閉じても残すため
+   * （Esc で閉じただけで、打った文と付けた画像が消えないように）
+   */
+  draftText: string;
+  draftImages: PreparedImage[];
+  setDraftText: (text: string) => void;
+  setDraftImages: (update: (current: PreparedImage[]) => PreparedImage[]) => void;
   setPanelOpen: (open: boolean) => void;
   send: (text: string, images: readonly PreparedImage[]) => Promise<void>;
   edit: (turnId: number, text: string) => Promise<void>;
@@ -250,6 +258,14 @@ export const useChatStore = create<ChatState>()((set, get) => {
     lastRequestAt: null,
     lastTurnEndAt: null,
     keepAlive: { count: 0, usage: NO_USAGE },
+    draftText: "",
+    draftImages: [],
+    setDraftText: (text) => {
+      set({ draftText: text });
+    },
+    setDraftImages: (update) => {
+      set((state) => ({ draftImages: update(state.draftImages) }));
+    },
     setPanelOpen: (open) => {
       set({ panelOpen: open });
     },
