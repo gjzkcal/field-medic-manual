@@ -49,7 +49,7 @@ describe("LibraryPage", () => {
             doc("cardiac", "心停止と CPR", {
               modTarget: "circulation",
               modChannel: "dev",
-              modVersion: "1.5.40",
+              modVersion: "1.5.42",
               verifiedAt: null,
             }),
           ]
@@ -62,7 +62,7 @@ describe("LibraryPage", () => {
 
     expect(await screen.findByText("止血")).toBeDefined();
     expect(screen.getByText("2 件")).toBeDefined();
-    expect(screen.getByText("Dev 1.5.40")).toBeDefined();
+    expect(screen.getByText("Dev 1.5.42")).toBeDefined();
     expect(screen.getByText("確認日なし")).toBeDefined();
     expect(screen.getByText("止血").closest("a")?.getAttribute("href")).toBe("/doc/hemorrhage");
 

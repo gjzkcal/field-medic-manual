@@ -2,10 +2,10 @@
 title: このマニュアルの読み方
 mod: general
 channel: dev
-mod_version: "1.5.40"
-ace_commit: "af008614"
+mod_version: "1.5.42"
+ace_commit: "b3db2126"
 game_version: "1.9.0.37"
-verified_at: 2026-11-08
+verified_at: 2026-11-27
 order: 10
 category: はじめに
 ---
@@ -19,17 +19,15 @@ category: はじめに
 
 ## 対象の版と MOD
 
-- 対象は ACE Medical の **Dev 版**。Workshop の版の番号は MOD ごとに違う。
+- 対象は ACE Medical の **Dev 版**。Workshop の版の番号は、どの MOD も 1.5.42。
 
 | MOD（Workshop の名前） | 版 | Workshop の公開 |
 |---|---|---|
-| ACE Medical Breathing Dev | 1.5.41 | 2026-11-06 07:00 JST ／ 原文 2026-11-05 22:00:13 GMT |
-| ACE Core Dev | 1.5.41 | 2026-11-06 06:59 JST ／ 原文 2026-11-05 21:59:52 GMT |
-| ACE Medical Core Dev ／ Hitzones Dev ／ Circulation Dev ／ AI Dev | 1.5.40 | 2026-11-06 00:10〜00:11 JST ／ 原文 2026-11-05 15:10:41〜15:11:57 GMT |
-| ACE All in One Dev | 1.5.40 | 2026-11-06 00:06 JST ／ 原文 2026-11-05 15:06:58 GMT |
+| ACE Core Dev ／ Medical Core Dev ／ Hitzones Dev ／ Circulation Dev ／ Breathing Dev ／ AI Dev | 1.5.42 | 2026-11-26 06:09〜06:12 JST ／ 原文 2026-11-25 21:09:57〜21:12:56 GMT |
+| ACE All in One Dev | 1.5.42 | 2026-11-26 06:08 JST ／ 原文 2026-11-25 21:08:01 GMT |
 
-- 読んだソースは ACE-Anvil のタグ `v1.5.0-dev41`（コミット `af008614`、2026-11-06 06:54 JST ／ 原文 2026-11-05 22:54:46 +0100）。1.5.40 の MOD（タグ `v1.5.0-dev40`）との違いは、King LT・酸素マスクを付ける処理と持ち方の見た目だけで、ほかの医療の挙動は同じ。
-- 各原稿に付けた版は、その原稿の MOD の版。Breathing の原稿は 1.5.41、ほかは 1.5.40。
+- 読んだソースは ACE-Anvil のタグ `v1.5.0-dev42`（コミット `b3db2126`、2026-11-26 05:55 JST ／ 原文 2026-11-25 15:55:02 -0500）。1.5.40・1.5.41 の MOD（タグ `v1.5.0-dev40`・`v1.5.0-dev41`）との違いは、King LT・酸素マスクを付ける処理と見た目、運ばれている人が運ぶ人とぶつかる不具合の修正、内部の名前の変更だけで、医療の数値と挙動は同じ。
+- 各原稿に付けた版は、その原稿の MOD の版（どれも 1.5.42）。
 - ゲーム本体は 1.9.0.37 で確かめた。
 - **Release 版（1.4.3）は対象外**。Release には Circulation・Breathing・AI の MOD が無く、Core の挙動も一部違う。
 - 対象の MOD（いずれも Dev 版）:

@@ -116,7 +116,7 @@ const CARDIAC_ARREST: DocDetail = {
   id: "d3",
   title: "心停止",
   sourcePath: "bundle://manuals/cardiac-arrest.md",
-  meta: { ...HEMORRHAGE.meta, aceCommit: "af008614", gameVersion: "1.9.0.37" },
+  meta: { ...HEMORRHAGE.meta, aceCommit: "b3db2126", gameVersion: "1.9.0.37" },
   assets: [],
   sections: [
     section(10, 1, "心停止", "心停止", "<p>共通</p>"),
@@ -355,14 +355,14 @@ describe("DocPage", () => {
   it("ソースのコミットとゲーム本体の版があれば末尾に出し、コミットを押すと ACE-Anvil のページを開く", async () => {
     renderDoc("/doc/d3");
 
-    const link = await screen.findByRole("link", { name: "af008614" });
+    const link = await screen.findByRole("link", { name: "b3db2126" });
     expect(link.closest("footer")?.textContent).toContain("ソースのコミット");
     expect(link.closest("footer")?.textContent).toContain("ゲーム本体1.9.0.37");
     fireEvent.click(link);
 
     await waitFor(() => {
       expect(opened).toStrictEqual([
-        expect.objectContaining({ url: "https://github.com/acemod/ACE-Anvil/commit/af008614" }),
+        expect.objectContaining({ url: "https://github.com/acemod/ACE-Anvil/commit/b3db2126" }),
       ]);
     });
   });

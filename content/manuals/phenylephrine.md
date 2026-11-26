@@ -2,10 +2,10 @@
 title: フェニレフリン
 mod: circulation
 channel: dev
-mod_version: "1.5.40"
-ace_commit: "af008614"
+mod_version: "1.5.42"
+ace_commit: "b3db2126"
 game_version: "1.9.0.37"
-verified_at: 2026-11-08
+verified_at: 2026-11-27
 tags: [薬・物品]
 order: 190
 category: 物品

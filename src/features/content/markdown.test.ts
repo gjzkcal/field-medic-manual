@@ -19,7 +19,7 @@ const SAMPLE = `---
 title: 止血
 mod: core
 verified_at: 2026-09-25
-ace_commit: " AF008614 "
+ace_commit: " B3DB2126 "
 game_version: 1.9.0.37
 tags: [出血, 止血帯]
 order: 20
@@ -67,7 +67,7 @@ describe("convertManual", { timeout: CONVERT_TIMEOUT_MS }, () => {
       modChannel: null,
       modVersion: null,
       verifiedAt: "2026-09-25",
-      aceCommit: "af008614",
+      aceCommit: "b3db2126",
       gameVersion: "1.9.0.37",
       tags: ["出血", "止血帯"],
       order: 20,
