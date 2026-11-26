@@ -39,6 +39,14 @@ describe("UpdateDialog", () => {
     expect(screen.getByText(/v0\.0\.1 → v0\.0\.2/u)).toBeTruthy();
     expect(screen.getByText(/2026\/09\/30 21:00 JST/u)).toBeTruthy();
     expect(screen.getByText("- クイック表の誤字を直した")).toBeTruthy();
+    // 変更点は中をスクロールして読むので、キーボードでも届く
+    const notes = screen.getByRole("region", { name: "変更点" });
+    expect(notes.textContent).toContain("クイック表の誤字を直した");
+    expect(notes.tabIndex).toBe(0);
+    // 窓より高い中身は、ダイアログの中でスクロールできる
+    const dialog = screen.getByRole("dialog");
+    expect(dialog.className).toContain("max-h-[calc(100dvh-2rem)]");
+    expect(dialog.className).toContain("overflow-y-auto");
 
     fireEvent.click(screen.getByRole("button", { name: "後で" }));
 

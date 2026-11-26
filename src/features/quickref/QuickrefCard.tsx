@@ -23,12 +23,19 @@ interface QuickrefCardProps {
   highlighted: boolean;
   /** 使っている MOD では出ない行（「すべての組み合わせ」か、行を指して開いたときだけ出る） */
   hiddenByMods: boolean;
+  /** 関連リンクのフローの題名を引く（引けなければ id で出る） */
+  flowTitle: (flowId: string) => string | undefined;
 }
 
 /**
  * クイック表の 1 行。小窓（幅 420px）でも読めるよう 1 列で組み、症状を大きく、手順を番号付きで出す。
  */
-export function QuickrefCard({ row, highlighted, hiddenByMods }: QuickrefCardProps): JSX.Element {
+export function QuickrefCard({
+  row,
+  highlighted,
+  hiddenByMods,
+  flowTitle,
+}: QuickrefCardProps): JSX.Element {
   const headingId = useId();
   const severity = toSeverity(row.severity);
   const condition = conditionLabel(row);
@@ -87,7 +94,7 @@ export function QuickrefCard({ row, highlighted, hiddenByMods }: QuickrefCardPro
           {row.notes !== null && (
             <p className="text-sm leading-relaxed text-muted-foreground">{row.notes}</p>
           )}
-          <RelatedLinks links={row.links} />
+          <RelatedLinks links={row.links} flowTitle={flowTitle} />
         </CardContent>
       </Card>
     </article>

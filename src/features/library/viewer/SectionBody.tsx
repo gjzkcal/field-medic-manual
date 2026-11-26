@@ -246,7 +246,7 @@ function markScrollable(el: HTMLElement): void {
 }
 
 /** 表の名前にする段落。原稿は「…の推移:」のように、表の前の 1 文で何の表かを書いている */
-const TABLE_LEAD = /[:：]s*$/u;
+const TABLE_LEAD = /[:：]\s*$/u;
 
 /**
  * 表の直前の「…:」で終わる段落を、表の名前にする（WCAG 1.3.1）。読み上げで表へ跳んだときに、何の表かが分かるようにする。

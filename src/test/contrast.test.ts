@@ -109,6 +109,16 @@ function pairs(theme: keyof typeof THEMES): Pair[] {
     add(`muted-foreground / 検索欄の地 (${s})`, c("muted-foreground"), field, TEXT);
     add(`foreground / 検索欄の地 (${s})`, c("foreground"), field, TEXT);
   }
+  // 小窓の検索欄は、透ける小窓の地の上に、ダークだけ input の 30% を重ねる
+  for (const [name, game] of [
+    ["白", parseColor("#ffffff")],
+    ["黒", parseColor("#000000")],
+  ] as const) {
+    const overlay = over(withAlpha(background, OVERLAY_OPACITY), game);
+    const field = theme === "dark" ? over(withAlpha(c("input"), 0.3), overlay) : overlay;
+    add(`muted-foreground / 小窓の検索欄の地（後ろが${name}）`, c("muted-foreground"), field, TEXT);
+    add(`foreground / 小窓の検索欄の地（後ろが${name}）`, c("foreground"), field, TEXT);
+  }
   for (const s of ["background", "muted"]) {
     add(`manual-link / ${s}`, c("manual-link"), surface(s), TEXT);
   }

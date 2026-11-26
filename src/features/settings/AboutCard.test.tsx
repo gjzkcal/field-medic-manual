@@ -79,5 +79,8 @@ describe("AboutCard", () => {
     const text = await screen.findByLabelText("サードパーティのライセンスの全文");
     expect(text.textContent).toContain("Third-party licenses");
     expect(text.textContent).toContain("Used by: react ");
+    // 中をスクロールして読むので、キーボードでも届く
+    expect(screen.getByRole("region", { name: "サードパーティのライセンスの全文" })).toBe(text);
+    expect(text.tabIndex).toBe(0);
   });
 });

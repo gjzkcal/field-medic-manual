@@ -29,8 +29,8 @@ function Command({
 }
 
 function CommandDialog({
-  title = "Command Palette",
-  description = "Search for a command to run...",
+  title = "検索",
+  description = "語を入力して探します",
   children,
   className,
   showCloseButton = false,
@@ -73,8 +73,9 @@ function CommandInput({
         <CommandPrimitive.Input
           data-slot="command-input"
           className={cn(
-            // iOS は 16px 未満の入力欄にフォーカスすると画面を拡大するので、狭い画面では 16px にする
-            "w-full text-base outline-hidden disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+            // iOS は 16px 未満の入力欄にフォーカスすると画面を拡大するので、狭い画面では 16px にする。
+            // 案内の文字は、ほかの入力欄と同じ不透明の色にする（指定しないと文字色の 50% になり、4.5:1 に届かない）
+            "w-full text-base outline-hidden placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
             className,
           )}
           {...props}

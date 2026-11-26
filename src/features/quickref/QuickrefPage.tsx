@@ -1,5 +1,5 @@
 import { SearchIcon, TriangleAlertIcon } from "lucide-react";
-import { useEffect, useMemo, useRef, type JSX } from "react";
+import { useCallback, useEffect, useMemo, useRef, type JSX } from "react";
 import { useSearchParams } from "react-router";
 
 import { usePageTitle } from "@/app/use-page-title";
@@ -32,6 +32,8 @@ import { useQuickrefSync } from "@/features/quickref/sync";
 import { useQuickrefTable } from "@/features/quickref/use-quickref";
 import { activeMods, modSummary, useModSettings } from "@/features/settings/mod-settings";
 import { SyncStatusCard } from "@/features/sync/SyncStatusCard";
+import { parseFlowLink } from "@/features/triage/links";
+import { useFlowList } from "@/features/triage/use-flows";
 import { useNow } from "@/hooks/use-now";
 import { revealWhenIdle } from "@/lib/reveal-when-idle";
 import type { QuickrefTable } from "@/lib/bindings/QuickrefTable";
@@ -84,6 +86,19 @@ function QuickrefBody({ table, compact }: { table: QuickrefTable; compact: boole
   const view = useQuickrefSettings((s) => s.settings.view);
   const setView = useQuickrefSettings((s) => s.setView);
   const now = useNow();
+
+  // 関連リンクのフローは、id ではなく題名で出す。フローへのリンクがある表のときだけ一覧を読む
+  const linksToFlow = useMemo(
+    () => table.rows.some((r) => r.links.some((text) => parseFlowLink(text)?.kind === "flow")),
+    [table.rows],
+  );
+  const flowList = useFlowList(linksToFlow);
+  const flows = flowList.status === "ready" ? flowList.flows : null;
+  const flowTitles = useMemo(
+    () => new Map((flows ?? []).map((flow) => [flow.id, flow.title])),
+    [flows],
+  );
+  const flowTitle = useCallback((flowId: string) => flowTitles.get(flowId), [flowTitles]);
 
   const categories = categoriesOf(table.rows);
   const shown = visibleRows(table.rows, filters, active);
@@ -264,6 +279,7 @@ function QuickrefBody({ table, compact }: { table: QuickrefTable; compact: boole
                 row={row}
                 highlighted={row.id === targetId}
                 hiddenByMods={hiddenByMods}
+                flowTitle={flowTitle}
               />
             </li>
           ))}
