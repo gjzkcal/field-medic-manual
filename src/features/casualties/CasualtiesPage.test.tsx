@@ -98,6 +98,15 @@ function press(name: string): void {
   fireEvent.click(screen.getByRole("button", { name }));
 }
 
+async function drugCard(name: string): Promise<HTMLElement> {
+  const heading = await screen.findByRole("heading", { level: 3, name });
+  const card = heading.closest("[data-slot=card]");
+  if (!(card instanceof HTMLElement)) {
+    throw new TypeError("薬のカードが見つかりません");
+  }
+  return card;
+}
+
 beforeEach(() => {
   fakeBackend();
   useCasualties.setState({ casualties: [], loaded: false, error: null });
@@ -231,6 +240,31 @@ describe("CasualtiesPage", () => {
     fireEvent.click(screen.getByRole("switch", { name: "痛み・気胸あり" }));
     await screen.findByText("4 本まで OK まで");
     expect(screen.queryByText("フェニレフリンは 1 本でも危険です。")).toBeNull();
+  });
+
+  it("何本まで打てるかをカードの先頭に大きく出し、残り時間は小さくする", async () => {
+    render(<CasualtiesPage />);
+    await addCasualty();
+    press("エピネフリン");
+    const epinephrine = await drugCard("エピネフリン");
+    const [first, ...rest] = within(epinephrine).getAllByRole("timer");
+    expect(first?.textContent).toContain("2 本まで OK まで");
+    expect(first?.querySelector(".text-2xl")).not.toBeNull();
+    // 大きい数字はカードに 1 つ
+    expect(rest.filter((timer) => timer.querySelector(".text-2xl") !== null)).toStrictEqual([]);
+
+    // 過量投与がない薬は、今までどおり残り時間の目安を大きく出す
+    press("ナロキソン");
+    const naloxone = await drugCard("ナロキソン");
+    expect(within(naloxone).queryByText(/本まで OK/u)).toBeNull();
+    const peak = within(naloxone).getByText("ピークまで").closest("[role=timer]");
+    expect(peak?.querySelector(".text-2xl")).not.toBeNull();
+
+    // 既定は痛み・気胸ありで、激痛のフェニレフリンは 1 本でも危ない。カードの先頭で知らせる
+    press("フェニレフリン");
+    const phenylephrine = await drugCard("フェニレフリン");
+    const content = phenylephrine.querySelector("[data-slot=card-content]");
+    expect(content?.firstElementChild?.textContent).toBe("1 本でも危険");
   });
 
   it("意識喪失と心停止を切り替えると、設定に保存して本数が変わる", async () => {
