@@ -178,6 +178,7 @@ export const windowOpenInMain: typeof Desktop.windowOpenInMain = noop;
 export const overlayActivate: typeof Desktop.overlayActivate = noop;
 export const mainWindowReady: typeof Desktop.mainWindowReady = noop;
 export const onOverlayMode: typeof Desktop.onOverlayMode = noopUnlisten;
+export const onOverlayKeys: typeof Desktop.onOverlayKeys = noopUnlisten;
 export const onOpenHref: typeof Desktop.onOpenHref = noopUnlisten;
 export const onSettingsChanged: typeof Desktop.onSettingsChanged = noopUnlisten;
 // 同じブラウザの別のタブが書いたとき。storage イベントは書いたタブには届かない

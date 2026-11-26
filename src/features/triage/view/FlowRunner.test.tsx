@@ -1,7 +1,9 @@
 import { clearMocks, mockIPC } from "@tauri-apps/api/mocks";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import type { JSX } from "react";
 
 import { todayJst } from "@/features/library/stale";
 import { DEFAULT_MOD_SETTINGS, useModSettings } from "@/features/settings/mod-settings";
@@ -10,6 +12,7 @@ import type { FlowLookup } from "@/features/triage/runner";
 import type { Flow } from "@/features/triage/schema";
 import { FlowRunner } from "@/features/triage/view/FlowRunner";
 import type { DocOutline } from "@/lib/bindings/DocOutline";
+import { KeyInputContext, type KeyInput } from "@/lib/key-input";
 import { axeViolations } from "@/test/axe";
 import { action, branch, end, makeFlow, question, subflow } from "@/test/flows";
 
@@ -305,5 +308,62 @@ describe("FlowRunner", () => {
     renderRunner("/triage/root?path=0.0.1.0");
     expect(heading()).toBe("安定。定期的に再評価する");
     expect(await axeViolations()).toStrictEqual([]);
+  });
+
+  it("キーが届く置き場所では、キーの案内を出し、「キーで操作」は出さない", () => {
+    renderRunner();
+    expect(screen.getByText("Backspace")).toBeDefined();
+    expect(screen.getByText("Esc")).toBeDefined();
+    expect(screen.getByText("1")).toBeDefined();
+    expect(screen.queryByRole("button", { name: "キーで操作" })).toBeNull();
+  });
+});
+
+function runnerIn(keyInput: KeyInput, router: ReturnType<typeof createMemoryRouter>): JSX.Element {
+  return (
+    <KeyInputContext value={keyInput}>
+      <RouterProvider router={router} />
+    </KeyInputContext>
+  );
+}
+
+function runnerRouter(initialPath: string): ReturnType<typeof createMemoryRouter> {
+  return createMemoryRouter(
+    [{ path: "/triage/:id", element: <FlowRunner root={ROOT} lookup={LOOKUP} /> }],
+    { initialEntries: [initialPath] },
+  );
+}
+
+describe("FlowRunner（キーが届かない置き場所）", () => {
+  it("キーの案内を出さず、「キーで操作」で届くようにすると、同じ場所で案内が戻る", async () => {
+    const activate = vi.fn<() => void>();
+    const router = runnerRouter("/triage/root?path=0");
+    const { rerender } = render(runnerIn({ receiving: false, activate }, router));
+    expect(heading()).toBe("止血帯で止血する");
+    for (const key of ["Backspace", "Esc", "Space", "1"]) {
+      expect(screen.queryByText(key)).toBeNull();
+    }
+    expect(await axeViolations()).toStrictEqual([]);
+
+    fireEvent.click(screen.getByRole("button", { name: "キーで操作" }));
+    expect(activate).toHaveBeenCalledOnce();
+
+    rerender(runnerIn({ receiving: true, activate }, router));
+    expect(heading()).toBe("止血帯で止血する");
+    for (const key of ["Backspace", "Esc", "Space", "1"]) {
+      expect(screen.getByText(key)).toBeDefined();
+    }
+    // ボタンは消えるので、フォーカスは質問へ移す
+    expect(screen.queryByRole("button", { name: "キーで操作" })).toBeNull();
+    expect(document.activeElement).toBe(screen.getByRole("heading", { level: 2 }));
+  });
+
+  it("終わりの画面の Enter の案内も出さない", () => {
+    const router = runnerRouter("/triage/root?path=0.0.1.0");
+    render(runnerIn({ receiving: false, activate: null }, router));
+    expect(heading()).toBe("安定。定期的に再評価する");
+    expect(screen.queryByText("Enter")).toBeNull();
+    // 届くようにする手段がない置き場所では、ボタンも出さない
+    expect(screen.queryByRole("button", { name: "キーで操作" })).toBeNull();
   });
 });

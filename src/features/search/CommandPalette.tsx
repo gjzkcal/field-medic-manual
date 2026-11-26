@@ -26,6 +26,7 @@ import { toQueryFilter, useSearchFilter } from "@/features/search/search-filter"
 import { SearchFilterPopover } from "@/features/search/SearchFilterPopover";
 import { SnippetText } from "@/features/search/SnippetText";
 import type { SearchHit } from "@/lib/bindings/SearchHit";
+import { useKeyInput } from "@/lib/key-input";
 import { errorMessage, searchQuery } from "@/lib/tauri";
 
 /** 打ち終わるのを待つ時間。1 文字ごとに IPC と DB を走らせず、かつ待たされたと感じない長さ */
@@ -81,6 +82,8 @@ export function CommandPalette({
   className,
 }: CommandPaletteProps): JSX.Element {
   const dropdown = variant === "dropdown";
+  // 小窓は、入力欄を押すまでキーが前面のアプリへ届く。その間は案内を出さない
+  const keyHints = useKeyInput().receiving;
   const ownInputRef = useRef<HTMLInputElement>(null);
   const input = inputRef ?? ownInputRef;
   const rootRef = useRef<HTMLDivElement>(null);
@@ -287,11 +290,15 @@ export function CommandPalette({
         )}
       </CommandList>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t px-3 pt-1.5 text-xs text-muted-foreground">
-        <KeyHint keys={["↑", "↓"]} label="選択" />
-        <KeyHint keys={["Enter"]} label="開く" />
-        {onFavorite !== undefined && <KeyHint keys={["Ctrl", "Enter"]} label="お気に入り" />}
-        {/* 常に一覧を出す置き場所（小窓）では、Esc で閉じるものがない */}
-        {dropdown && <KeyHint keys={["Esc"]} label="閉じる" />}
+        {keyHints && (
+          <>
+            <KeyHint keys={["↑", "↓"]} label="選択" />
+            <KeyHint keys={["Enter"]} label="開く" />
+            {onFavorite !== undefined && <KeyHint keys={["Ctrl", "Enter"]} label="お気に入り" />}
+            {/* 常に一覧を出す置き場所（小窓）では、Esc で閉じるものがない */}
+            {dropdown && <KeyHint keys={["Esc"]} label="閉じる" />}
+          </>
+        )}
         <div className="ml-auto">
           <SearchFilterPopover />
         </div>
