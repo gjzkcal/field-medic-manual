@@ -7,11 +7,11 @@
 #   ja を書いた用語は、原稿などに en が残っているとテストが失敗する。
 # - manual は、日本語で遊んでいても英語で出るもの（Breathing）を、原稿で何と呼ぶか。ja と一緒には書かない。
 # - 本体の表示名は、物品と操作の短い名前だけを載せる（本体の文字列表は写さない）。
-# - 値は ACE Medical の Dev 版（ACE-Anvil の v1.5.0-dev41）とゲーム本体 1.9.0.37 の文字列表と prefab。
+# - 値は ACE Medical の Dev 版（ACE-Anvil の v1.5.0-dev42）とゲーム本体 1.9.0.37 の文字列表と prefab。
 # 次の行は用語集の形式（JSON Schema）。VS Code で開くと、キーの補完と書き間違いの表示が効く
 $schema: ./glossary.v1.schema.json
 modChannel: dev
-verifiedAt: "2026-11-08"
+verifiedAt: "2026-11-27"
 terms:
   # ---- 本体 ----
   - { id: tourniquet, mod: reforger, kind: item, stringId: AR-Item_Tourniquet_Name, en: Tourniquet, ja: 止血帯を使う }

@@ -85,7 +85,7 @@ export function cpr(): NormalizedDoc {
     ["循環"],
     [section(1, "CPR の手順", "cpr-steps", "【要確認】心停止のときは CPR を行う。")],
   );
-  d.meta.modVersion = "1.5.40";
+  d.meta.modVersion = "1.5.42";
   return d;
 }
 
