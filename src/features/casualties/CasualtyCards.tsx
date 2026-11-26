@@ -1,5 +1,5 @@
 // 負傷者のカード。物 1 つにつき 1 枚。残り時間と効能は Readout の部品だけが 1 s ごとに描き直す。
-import { LineChartIcon } from "lucide-react";
+import { LineChartIcon, OctagonAlertIcon } from "lucide-react";
 import { lazy, memo, Suspense, useMemo, type JSX } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -45,14 +45,18 @@ interface TimerProps {
   /** 目標の時刻。null なら「—」 */
   atMs: number | null;
   large?: boolean;
+  /** ラベルそのものが要点のとき（「2 本まで OK まで」の本数）。補足の色にせず、本文の色で出す */
+  strongLabel?: boolean;
   now: number;
 }
 
 /** 毎秒の読み上げが邪魔にならないよう aria-live は切る（カードへ移動すれば数値を読める） */
-function Timer({ label, atMs, large = false, now }: TimerProps): JSX.Element {
+function Timer({ label, atMs, large = false, strongLabel = false, now }: TimerProps): JSX.Element {
   return (
     <div role="timer" aria-live="off" className="flex items-baseline justify-between gap-2">
-      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className={strongLabel ? "text-sm font-medium" : "text-sm text-muted-foreground"}>
+        {label}
+      </span>
       <span className={large ? "text-2xl font-bold tabular-nums" : "text-sm tabular-nums"}>
         {atMs === null ? "—" : formatDuration(atMs - now)}
       </span>
@@ -70,20 +74,28 @@ function ElapsedSince({ label, sinceMs }: { label: string; sinceMs: number }): J
   );
 }
 
+/**
+ * 次に何本まで、いつから打てるか。利用者がカードでいちばん知りたいことなので、先頭に大きく出す。
+ * 状態（待つ・もう打てる・1 本でも危険）で位置と重さを変えない。
+ */
 function OverdoseRow({ timer, now }: { timer: OverdoseTimer; now: number }): JSX.Element | null {
   switch (timer.kind) {
     case "none":
       return null;
     case "danger":
-      return <p className="m-0 text-sm font-medium text-destructive">1 本でも危険</p>;
+      return (
+        <p className="m-0 flex items-center gap-1.5 text-lg font-bold text-destructive">
+          <OctagonAlertIcon aria-hidden className="size-5 shrink-0" />1 本でも危険
+        </p>
+      );
     case "limit": {
       const label = `${String(timer.doses)} 本まで OK`;
       return timer.safeAtMs > now ? (
-        <Timer label={`${label} まで`} atMs={timer.safeAtMs} now={now} />
+        <Timer label={`${label} まで`} atMs={timer.safeAtMs} large strongLabel now={now} />
       ) : (
-        <div className="flex items-baseline justify-between gap-2 text-sm">
-          <span className="text-muted-foreground">{label}</span>
-          <span>OK</span>
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="text-sm font-medium">{label}</span>
+          <span className="text-2xl font-bold">OK</span>
         </div>
       );
     }
@@ -105,8 +117,11 @@ function DrugReadout({
   const value = Math.abs(effectAt(medication, drug, doses, now));
   const percent = (value / singleDosePeak(medication, drug)) * 100;
   const secondary = secondaryTexts(medication, drug, doses, now);
+  // 大きい数字はカードに 1 つ。過量投与の行が無い薬（ナロキソン）だけ、残り時間のうち今の目安を大きくする
+  const largeTimers = overdose.kind === "none";
   return (
     <>
+      <OverdoseRow timer={overdose} now={now} />
       <p className="font-semibold tabular-nums">{primaryText(medication, drug, doses, now)}</p>
       <Progress
         value={Math.min(100, percent)}
@@ -116,17 +131,21 @@ function DrugReadout({
         <p className="text-sm text-muted-foreground tabular-nums">{secondary.join(" / ")}</p>
       )}
       {timers.focus === "peak" ? (
-        <Timer label="ピークまで" atMs={timers.nextPeakAtMs} large now={now} />
+        <Timer label="ピークまで" atMs={timers.nextPeakAtMs} large={largeTimers} now={now} />
       ) : (
-        <Timer label="半分まで" atMs={timers.halfAtMs} large={timers.focus === "half"} now={now} />
+        <Timer
+          label="半分まで"
+          atMs={timers.halfAtMs}
+          large={largeTimers && timers.focus === "half"}
+          now={now}
+        />
       )}
       <Timer
         label="消えるまで"
         atMs={timers.clearAtMs}
-        large={timers.focus === "clear"}
+        large={largeTimers && timers.focus === "clear"}
         now={now}
       />
-      <OverdoseRow timer={overdose} now={now} />
     </>
   );
 }
