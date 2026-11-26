@@ -6,6 +6,7 @@ import {
   ChevronRightIcon,
   CopyIcon,
   GlobeIcon,
+  HourglassIcon,
   MessageCircleQuestionIcon,
   SearchIcon,
   TriangleAlertIcon,
@@ -47,6 +48,7 @@ import {
   citationKey,
   mergeWithMarks,
   turnCitations,
+  waitingFor,
   type AnswerItem,
   type ChatTurn,
   type TextItem,
@@ -54,11 +56,14 @@ import {
 import { ChatMarkdown } from "@/features/chat/ChatMarkdown";
 import { FigureEmbed } from "@/features/chat/FigureEmbed";
 import { ProposalCard } from "@/features/chat/ProposalCard";
+import { sourceKind, sourceLabel } from "@/features/chat/source-label";
 import { useSmoothText } from "@/features/chat/use-smooth-text";
 import { internalHref } from "@/features/content/link-target";
 import { CopyButton } from "@/features/library/viewer/CopyButton";
 import { useOutline } from "@/features/library/viewer/use-doc-data";
+import { useQuickrefTable } from "@/features/quickref/use-quickref";
 import { parseFlowLink } from "@/features/triage/links";
+import { useFlowList } from "@/features/triage/use-flows";
 import type { ChatCitation } from "@/lib/bindings/ChatCitation";
 import type { ChatNotice } from "@/lib/bindings/ChatNotice";
 import type { ChatUsage } from "@/lib/bindings/ChatUsage";
@@ -84,6 +89,7 @@ export function ChatAnswer({ turn, onAnswer, onDecide }: ChatAnswerProps): JSX.E
   const groups = groupItems(turn.items);
   const citations = turnCitations(turn);
   const hasText = turn.items.some((i) => i.kind === "text" && i.text !== "");
+  const waiting = waitingFor(turn.items);
   return (
     <div className="flex min-w-0 flex-col gap-3">
       {groups.map((group) =>
@@ -104,7 +110,21 @@ export function ChatAnswer({ turn, onAnswer, onDecide }: ChatAnswerProps): JSX.E
           <AiChart key={group.key} item={group.item} />
         ) : null,
       )}
-      {streaming && !hasText && (
+      {/*
+        AI が利用者の操作を待っている間は、作っている途中のように見せない
+        （「回答を作っています」のままだと、待っているのが自分だと分からない）
+      */}
+      {streaming && waiting !== null && (
+        <Marker role="status">
+          <MarkerIcon>
+            <HourglassIcon />
+          </MarkerIcon>
+          <MarkerContent>
+            {waiting === "proposal" ? "承認か却下を待っています" : "答えを待っています"}
+          </MarkerContent>
+        </Marker>
+      )}
+      {streaming && waiting === null && !hasText && (
         <Marker role="status">
           <MarkerIcon>
             <Spinner />
@@ -221,9 +241,12 @@ function lineStatus(running: boolean, failed: boolean): { status?: "running" | "
   return failed ? { status: "error" } : {};
 }
 
-/** 考えている途中の要約。考えている間は開き、終わったら閉じる。利用者が開け閉めしたらそれを優先する。 */
+/**
+ * 考えている途中の要約。既定では閉じておき、見たい人が開く。
+ * 要約はモデルが英語で書くことがあり、考えている間に勝手に開くと、日本語の画面に英語の文が流れるため。
+ */
 function Reasoning({ text, running }: { text: string; running: boolean }): JSX.Element {
-  const [open, setOpen] = useState<boolean | undefined>(undefined);
+  const [open, setOpen] = useState(false);
   if (text.trim() === "") {
     return (
       <TraceLine {...lineStatus(running, false)}>
@@ -235,7 +258,7 @@ function Reasoning({ text, running }: { text: string; running: boolean }): JSX.E
     );
   }
   return (
-    <TraceCollapsible open={open ?? running} onOpenChange={setOpen}>
+    <TraceCollapsible open={open} onOpenChange={setOpen}>
       <TraceCollapsibleTrigger>
         <TraceLine {...lineStatus(running, false)}>
           <TraceIcon>
@@ -251,10 +274,26 @@ function Reasoning({ text, running }: { text: string; running: boolean }): JSX.E
   );
 }
 
+/** 読んだ節・行・フローの名前。名前を引くのに要る一覧だけを読む */
+function useSourceLabel(source: string | null): string {
+  const kind = source === null ? "other" : sourceKind(source);
+  const outline = useOutline();
+  const quickref = useQuickrefTable(kind === "quickref");
+  const flowList = useFlowList(kind === "flow");
+  return source === null
+    ? ""
+    : sourceLabel(source, {
+        outline,
+        quickrefRows: quickref.status === "ready" ? quickref.table.rows : [],
+        flows: flowList.status === "ready" ? flowList.flows : [],
+      });
+}
+
 function ToolLine({ item }: { item: Extract<AnswerItem, { kind: "tool" }> }): JSX.Element {
   const running = item.state === "running";
   const failed = item.state === "failed";
-  const { icon, title } = toolText(item, running, failed);
+  const source = useSourceLabel(item.tool === "read_section" ? item.detail : null);
+  const { icon, title } = toolText(item, running, failed, source);
   return (
     <TraceLine {...lineStatus(running, failed)}>
       <TraceIcon>{icon}</TraceIcon>
@@ -267,6 +306,8 @@ function toolText(
   item: Extract<AnswerItem, { kind: "tool" }>,
   running: boolean,
   failed: boolean,
+  /** read_section で読んだ節の名前 */
+  source: string,
 ): { icon: JSX.Element; title: string } {
   switch (item.tool) {
     case "search_manual":
@@ -277,7 +318,7 @@ function toolText(
     case "read_section":
       return {
         icon: <BookOpenIcon />,
-        title: `${running ? "節を読んでいます" : failed ? "節が見つかりませんでした" : "節を読みました"}: ${sourceLabel(item.detail)}`,
+        title: `${running ? "節を読んでいます" : failed ? "節が見つかりませんでした" : "節を読みました"}: ${source}`,
       };
     case "web_search":
       return {
@@ -299,21 +340,6 @@ function toolText(
         title: `${running ? "グラフを作っています" : failed ? "グラフを作れませんでした" : "グラフを作りました"}: ${item.detail}`,
       };
   }
-}
-
-/** `doc:hemorrhage.md#止血帯を使う` を「止血帯を使う」のように短くする。 */
-function sourceLabel(source: string): string {
-  const link = parseFlowLink(source);
-  if (link?.kind === "doc") {
-    return link.anchor ?? link.fileName;
-  }
-  if (link?.kind === "quickref") {
-    return `クイック表（${link.rowId}）`;
-  }
-  if (link?.kind === "flow") {
-    return `フロー（${link.flowId}）`;
-  }
-  return source;
 }
 
 /** まとめた本文。引用の場所ごとに、その場所で引いた出典のチップを文の中に置く。 */
@@ -415,7 +441,8 @@ function CitationChip({
               size="xs"
               className={cn(
                 "max-w-full",
-                inline && "mx-0.5 h-5 max-w-40 px-1.5 align-text-bottom font-normal",
+                // 「マニュアルの名前 › 節」が入る幅。超える分は末尾（節の名前）を省く
+                inline && "mx-0.5 h-5 max-w-56 px-1.5 align-text-bottom font-normal",
               )}
               onClick={() => {
                 open(citation);

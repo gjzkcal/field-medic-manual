@@ -1,5 +1,5 @@
 // 負傷者の記録。メイン・小窓・Web 版で同じ画面を使う。
-import { ChevronDownIcon, PlusIcon, Trash2Icon, Undo2Icon } from "lucide-react";
+import { ChevronDownIcon, PlusIcon, Undo2Icon } from "lucide-react";
 import {
   useEffect,
   useMemo,
@@ -12,16 +12,15 @@ import {
 } from "react";
 
 import { usePageTitle } from "@/app/use-page-title";
+import { ConfirmButton } from "@/components/ConfirmButton";
 import { IssueCard } from "@/components/IssueCard";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -188,62 +187,6 @@ function CompactNotice({
         </div>
       </CollapsibleContent>
     </Collapsible>
-  );
-}
-
-interface ConfirmDialogProps {
-  title: string;
-  description: string;
-  confirmLabel: string;
-  triggerLabel: string;
-  disabled?: boolean;
-  onConfirm: () => void;
-}
-
-/** 記録を消す操作は押し間違えると戻せないので、確かめてから行う */
-function ConfirmButton({
-  title,
-  description,
-  confirmLabel,
-  triggerLabel,
-  disabled = false,
-  onConfirm,
-}: ConfirmDialogProps): JSX.Element {
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      <Button
-        variant="outline"
-        size="sm"
-        disabled={disabled}
-        onClick={() => {
-          setOpen(true);
-        }}
-      >
-        <Trash2Icon />
-        {triggerLabel}
-      </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{title}</DialogTitle>
-            <DialogDescription>{description}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <DialogClose render={<Button variant="outline" />}>キャンセル</DialogClose>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                onConfirm();
-                setOpen(false);
-              }}
-            >
-              {confirmLabel}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
   );
 }
 

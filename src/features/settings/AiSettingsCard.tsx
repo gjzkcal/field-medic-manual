@@ -1,6 +1,7 @@
 import { CheckIcon, KeyRoundIcon } from "lucide-react";
 import { useEffect, useState, type JSX } from "react";
 
+import { ConfirmButton } from "@/components/ConfirmButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -117,16 +118,16 @@ export function AiSettingsCard(): JSX.Element {
             >
               接続を確認
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
+            <ConfirmButton
+              triggerLabel="キーを削除"
+              title="API キーを削除しますか？"
+              description="このパソコンに保存したキーを消します。AI チャットを使うには、もう一度キーを登録する必要があります。Anthropic の Console にあるキーそのものは消えません。"
+              confirmLabel="削除する"
               disabled={busy || status !== "set"}
-              onClick={() => {
+              onConfirm={() => {
                 void act(clear, "API キーを削除しました");
               }}
-            >
-              キーを削除
-            </Button>
+            />
             <Button
               variant="link"
               size="sm"

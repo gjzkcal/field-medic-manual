@@ -52,7 +52,7 @@ import {
   isAiModel,
   useAiSettings,
 } from "@/features/chat/ai-settings";
-import type { PreparedImage } from "@/features/chat/chat-store";
+import { useChatStore, type PreparedImage } from "@/features/chat/chat-store";
 import { isAcceptedImage, MAX_IMAGES, prepareImage } from "@/features/chat/image-prepare";
 import { errorMessage } from "@/lib/tauri";
 
@@ -83,8 +83,11 @@ export function ChatPromptInput({
   onStop,
   ref,
 }: ChatPromptInputProps): JSX.Element {
-  const [text, setText] = useState("");
-  const [images, setImages] = useState<PreparedImage[]>([]);
+  // 書きかけの文と画像は、パネルを閉じても残るようストアに持つ
+  const text = useChatStore((s) => s.draftText);
+  const setText = useChatStore((s) => s.setDraftText);
+  const images = useChatStore((s) => s.draftImages);
+  const setImages = useChatStore((s) => s.setDraftImages);
   const [error, setError] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -139,7 +142,7 @@ export function ChatPromptInput({
     setText("");
     if (!answering) {
       // 送った画像の Blob URL は会話の表示が持つので、ここでは解放しない
-      setImages([]);
+      setImages(() => []);
     }
   }
 

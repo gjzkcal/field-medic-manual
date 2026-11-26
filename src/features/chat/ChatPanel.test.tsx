@@ -1,6 +1,6 @@
 import { Channel } from "@tauri-apps/api/core";
 import { clearMocks, mockIPC } from "@tauri-apps/api/mocks";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { JSX } from "react";
 import { createMemoryRouter, RouterProvider, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -265,6 +265,8 @@ beforeEach(() => {
     busy: false,
     conversation: null,
     notice: null,
+    draftText: "",
+    draftImages: [],
   });
 });
 
@@ -280,6 +282,39 @@ describe("ChatPanel", () => {
     renderPanel();
     expect(await screen.findByText("API キーが登録されていません")).toBeTruthy();
     expect(screen.getByRole("button", { name: "設定を開く" })).toBeTruthy();
+  });
+
+  it("書きかけの質問は、Esc でパネルを閉じて開き直しても残る", async () => {
+    mockBackend({});
+    renderPanel();
+    const input = await screen.findByRole("textbox", { name: "AI への質問" });
+    fireEvent.change(input, { target: { value: "モルヒネは何本まで打てる？" } });
+
+    fireEvent.keyDown(input, { key: "Escape" });
+    expect(screen.queryByRole("textbox", { name: "AI への質問" })).toBeNull();
+    expect(useChatStore.getState().panelOpen).toBe(false);
+
+    act(() => {
+      useChatStore.getState().setPanelOpen(true);
+    });
+    const reopened = await screen.findByRole("textbox", { name: "AI への質問" });
+    expect(reopened).toHaveProperty("value", "モルヒネは何本まで打てる？");
+  });
+
+  it("考えている途中の要約は、既定では閉じておき、押すと開く", async () => {
+    mockBackend({
+      before: [
+        { type: "thinking", block: 0, text: "The user asks about tourniquet placement." },
+        { type: "text", block: 1, text: "腕か脚に巻きます。" },
+      ],
+    });
+    renderPanel();
+    await ask("TQ はどこに巻く？");
+
+    const trigger = await screen.findByRole("button", { name: /考えました|考えています/u });
+    expect(screen.queryByText("The user asks about tourniquet placement.")).toBeNull();
+    fireEvent.click(trigger);
+    expect(await screen.findByText("The user asks about tourniquet placement.")).toBeTruthy();
   });
 
   it(
@@ -312,9 +347,12 @@ describe("ChatPanel", () => {
       await ask("TQ はどこに巻く？");
 
       expect(await screen.findByText("心臓に近い側", {}, RENDER_WAIT)).toBeTruthy();
-      expect(screen.getByText("節を読みました: 巻く位置")).toBeTruthy();
+      // 読んだ節は、アンカーではなくマニュアルの名前と見出しで出す
+      expect(screen.getByText("節を読みました: 止血帯 › 巻く位置")).toBeTruthy();
       // 引用の場所には、その場所の節のチップが文の中に入る。出典の一覧は本文の下にあり、既定で閉じている
-      expect(await screen.findByRole("button", { name: "巻く位置" }, RENDER_WAIT)).toBeTruthy();
+      expect(
+        await screen.findByRole("button", { name: "止血帯 › 巻く位置" }, RENDER_WAIT),
+      ).toBeTruthy();
       expect(screen.queryByText(/\[1\]/u)).toBeNull();
       expect(screen.queryByRole("button", { name: "止血帯 > 巻く位置" })).toBeNull();
       fireEvent.click(screen.getByRole("button", { name: "出典 1 件" }));
@@ -357,6 +395,8 @@ describe("ChatPanel", () => {
       await ask("意識がない");
 
       expect(await screen.findByText("呼吸はありますか？")).toBeTruthy();
+      expect(screen.getByText("答えを待っています")).toBeTruthy();
+      expect(screen.queryByText("回答を作っています")).toBeNull();
       // 選択肢にない答えは、下の入力欄から送る
       expect(screen.getByRole("textbox", { name: "AI への答え" })).toBeTruthy();
       expect(await axeViolations()).toStrictEqual([]);
@@ -396,6 +436,9 @@ describe("ChatPanel", () => {
 
       const approve = await screen.findByRole("button", { name: "承認して記録する" });
       expect(screen.getByText("「A」に記録: モルヒネ")).toBeTruthy();
+      // 待っているのは利用者の判断なので、作っている途中のようには見せない
+      expect(screen.getByText("承認か却下を待っています")).toBeTruthy();
+      expect(screen.queryByText("回答を作っています")).toBeNull();
       expect(screen.getByText("記録の時刻は、承認した時刻になります")).toBeTruthy();
       expect(await axeViolations()).toStrictEqual([]);
       await waitFor(() => {
@@ -412,6 +455,7 @@ describe("ChatPanel", () => {
         { op: { op: "add_record", casualtyId: "c1", entry: { kind: "drug", drug: "morphine" } } },
       ]);
       expect(await screen.findByText("記録しました: A にモルヒネを記録")).toBeTruthy();
+      expect(screen.queryByText("承認か却下を待っています")).toBeNull();
     },
     CONVERT_TIMEOUT_MS * 2,
   );

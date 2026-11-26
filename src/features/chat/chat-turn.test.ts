@@ -14,6 +14,8 @@ import {
   newTurn,
   setChart,
   turnCitations,
+  waitingFor,
+  type AnswerItem,
   type ChatTurn,
   type TextItem,
 } from "@/features/chat/chat-turn";
@@ -292,9 +294,47 @@ describe("グラフ", () => {
   });
 });
 
+function propose(status: "pending" | "applying" | "approved" | "rejected" | "failed"): AnswerItem {
+  return {
+    kind: "propose",
+    toolUseId: "p1",
+    summary: "A にモルヒネを記録",
+    ops: [],
+    status,
+    error: null,
+  };
+}
+
+function askUser(answer: string | null): AnswerItem {
+  return {
+    kind: "ask",
+    toolUseId: "a1",
+    question: "呼吸はありますか？",
+    options: ["ある", "ない"],
+    multiSelect: false,
+    answer,
+  };
+}
+
+describe("waitingFor", () => {
+  it("承認を待つ提案があれば proposal、答えを待つ聞き返しがあれば answer", () => {
+    expect(waitingFor([propose("pending")])).toBe("proposal");
+    expect(waitingFor([askUser(null)])).toBe("answer");
+    expect(waitingFor([askUser(null), propose("pending")])).toBe("proposal");
+  });
+
+  it("決まった提案と、答えた聞き返しは、待っていない", () => {
+    for (const status of ["applying", "approved", "rejected", "failed"] as const) {
+      expect(waitingFor([propose(status)])).toBeNull();
+    }
+    expect(waitingFor([askUser("ある")])).toBeNull();
+    expect(waitingFor([])).toBeNull();
+  });
+});
+
 describe("chipLabel", () => {
-  it("見出しの最後の段にし、長ければクイック表は「クイック表」、ほかは頭を残して縮める", () => {
-    expect(chipLabel(TQ)).toBe("巻く位置");
+  it("マニュアルの名前と見出しの最後の段にし、長ければクイック表は「クイック表」、ほかは節の名前の頭を残して縮める", () => {
+    expect(chipLabel(TQ)).toBe("止血帯 › 巻く位置");
     expect(
       chipLabel({
         ...TQ,
@@ -303,8 +343,22 @@ describe("chipLabel", () => {
       }),
     ).toBe("クイック表");
     expect(chipLabel({ ...TQ, title: "痛みと抑え方 > Circulation を入れている場合" })).toBe(
-      "Circulation…",
+      "痛みと抑え方 › Circulation…",
     );
-    expect(chipLabel({ ...TQ, source: "quickref:x", title: "クイック表 > 出血" })).toBe("出血");
+    expect(chipLabel({ ...TQ, source: "quickref:x", title: "クイック表 > 出血" })).toBe(
+      "クイック表 › 出血",
+    );
+  });
+
+  it("同じ名前の節でも、マニュアルの名前で見分けられる", () => {
+    const tourniquet = chipLabel({ ...TQ, title: "止血帯 > 使い方" });
+    const bandage = chipLabel({ ...TQ, source: "doc:bandage.md#使い方", title: "包帯 > 使い方" });
+    expect(tourniquet).toBe("止血帯 › 使い方");
+    expect(bandage).toBe("包帯 › 使い方");
+  });
+
+  it("見出しが 3 段あるときは、途中の段を省く。段が 1 つなら、そのまま出す", () => {
+    expect(chipLabel({ ...TQ, title: "止血帯 > 使い方 > 巻く位置" })).toBe("止血帯 › 巻く位置");
+    expect(chipLabel({ ...TQ, title: "止血帯" })).toBe("止血帯");
   });
 });
