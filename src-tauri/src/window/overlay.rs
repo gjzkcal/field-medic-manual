@@ -33,7 +33,8 @@ pub struct ViewMode(AtomicBool);
 #[derive(Default)]
 pub struct Focusable(AtomicBool);
 
-/// キー入力が小窓に届くか。フォーカスを得たというイベントは、フォーカスを取れる状態のときだけ信じる。
+/// キー入力が小窓に届きうるか。フォーカスを得たというイベントは、フォーカスを取れる状態のときだけ取り合う
+/// （そのうえで、ウィンドウの実際の状態を `emit_keys_after_focus` で確かめる）。
 #[must_use]
 pub const fn keys_reach(focused: bool, focusable: bool) -> bool {
     focused && focusable
@@ -54,10 +55,11 @@ fn emit_keys(app: &AppHandle, reach: bool) -> tauri::Result<()> {
 /// フォーカスを移した後、ウィンドウの状態が落ち着くのを待つ時間。
 const FOCUS_SETTLE: Duration = Duration::from_millis(200);
 
-/// フォーカスを移した後に、キーが届くかを知らせる。
+/// フォーカスを移した後と、フォーカスを得たというイベントの後に、キーが届くかを知らせる。
 ///
 /// `set_focus` は、前面にできなかったとき（Windows が前面の切り替えを拒んだとき）もエラーを返さない。
-/// 成功したと決めつけて知らせると、キーはゲームに届くのに小窓がキーの案内を出してしまうので、
+/// フォーカスを得たというイベントも、WebView が知らせるもので、ウィンドウが前面にあることを保証しない。
+/// どちらかだけで決めつけて知らせると、キーはゲームに届くのに小窓がキーの案内を出してしまうので、
 /// ウィンドウが実際にフォーカスを得たか（`is_focused`）を確かめて知らせる。
 /// 状態の反映が遅れることがあるので、少し待ってもう一度確かめる。
 fn emit_keys_after_focus(app: &AppHandle, overlay: &WebviewWindow) -> tauri::Result<()> {
@@ -174,7 +176,15 @@ pub fn on_focus_changed(window: &Window, focused: bool) {
     let focusable = app
         .try_state::<Focusable>()
         .is_some_and(|state| state.0.load(Ordering::SeqCst));
-    let _ = emit_keys(app, keys_reach(focused, focusable));
+    if keys_reach(focused, focusable)
+        && let Some(overlay) = app.get_webview_window(OVERLAY)
+    {
+        // フォーカスを取れる状態でも、前面にできていないのにイベントだけ届くことがありうるので、
+        // ここでもウィンドウの実際の状態を確かめる
+        let _ = emit_keys_after_focus(app, &overlay);
+    } else {
+        let _ = emit_keys(app, false);
+    }
 }
 
 /// メインウィンドウを前面に出す。`href` があれば、その画面へ移らせる。
