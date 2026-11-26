@@ -34,7 +34,8 @@ export function sourceLabel(source: string, lookups: SourceLookups): string {
     case "doc": {
       const doc = findDocByFile(lookups.outline, link.fileName);
       if (doc === undefined) {
-        return link.anchor ?? link.fileName;
+        // マニュアルの名前を引けなくても、ファイル名は残す。アンカーだけだと、別のマニュアルの同じ名前の節と見分けられない
+        return link.anchor === null ? link.fileName : `${link.fileName} › ${link.anchor}`;
       }
       if (link.anchor === null) {
         return doc.title;

@@ -78,8 +78,9 @@ describe("sourceLabel", () => {
   it("一覧に見つからないものは、渡された書式から分かる範囲で出す", () => {
     // 見出しだけが見つからない（AI が存在しない節を指した）
     expect(sourceLabel("doc:pain.md#無い節", LOOKUPS)).toBe("痛みと抑え方 › 無い節");
-    // 一覧をまだ読めていない
-    expect(sourceLabel("doc:pain.md#無い節", EMPTY)).toBe("無い節");
+    // 一覧をまだ読めていない。ファイル名を残して、別のマニュアルの同じ名前の節と見分けられるようにする
+    expect(sourceLabel("doc:pain.md#概要", EMPTY)).toBe("pain.md › 概要");
+    expect(sourceLabel("doc:bleeding.md#概要", EMPTY)).toBe("bleeding.md › 概要");
     expect(sourceLabel("doc:pain.md", EMPTY)).toBe("pain.md");
     expect(sourceLabel("quickref:limb-bleeding", EMPTY)).toBe("クイック表（limb-bleeding）");
     expect(sourceLabel("flow:massive-bleeding", EMPTY)).toBe("フロー（massive-bleeding）");
