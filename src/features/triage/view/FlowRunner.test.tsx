@@ -220,11 +220,16 @@ describe("FlowRunner", () => {
     expect(heading()).toBe("周囲は安全？");
   });
 
-  it("危ない選択肢は、色だけでなく読み上げでも分かる", () => {
+  it("答えのボタンは、tone が違っても同じ見た目で、「危険」とも読み上げない", () => {
+    // 状態が重い側の答え（tone: danger）を赤くしたり「危険」と付けたりすると、押してはいけない答えに読める
     renderRunner("/triage/root?path=0.0");
     expect(heading()).toBe("気道がふさがっている？");
-    expect(screen.getByRole("button", { name: /はい（危険）/u })).toBeDefined();
-    expect(screen.getByRole("button", { name: /いいえ/u }).textContent).not.toContain("危険");
+    // たどった経路のボタンにも「はい」が入るので、数字キーの印と文言だけのボタンに絞る
+    const yes = screen.getByRole("button", { name: /^(?:1\s*)?はい$/u });
+    const no = screen.getByRole("button", { name: /^(?:2\s*)?いいえ$/u });
+    expect(yes.className).toBe(no.className);
+    expect(yes.textContent).not.toContain("危険");
+    expect(yes.querySelector("svg")).toBeNull();
   });
 
   it("URL の経路から続きを表示し、無効な部分は捨てる", () => {

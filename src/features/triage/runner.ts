@@ -1,13 +1,6 @@
 // トリアージの実行の状態機械。状態は「ルートのフローの start から、どの選択肢を選んだか」の番号の列だけで表し、
 // 毎回それを再生して作る（URL の ?path= に載せて小窓とメイン画面で引き継ぐため）。
-import type {
-  ActionNode,
-  BranchNode,
-  ChoiceTone,
-  EndNode,
-  Flow,
-  QuestionNode,
-} from "@/features/triage/schema";
+import type { ActionNode, BranchNode, EndNode, Flow, QuestionNode } from "@/features/triage/schema";
 import type { ModTarget } from "@/lib/bindings/ModTarget";
 
 export type FlowLookup = (id: string) => Flow | undefined;
@@ -17,7 +10,6 @@ export type ShownNode = QuestionNode | ActionNode | EndNode;
 
 export interface RunnerOption {
   label: string;
-  tone: ChoiceTone | null;
 }
 
 /** たどった経路の 1 歩（パンくず）。 */
@@ -137,16 +129,13 @@ function arrive(
 function optionsOf(position: Position): RunnerOption[] {
   switch (position.node.type) {
     case "question":
-      return position.node.choices.map((c) => ({ label: c.label, tone: c.tone ?? null }));
+      return position.node.choices.map((c) => ({ label: c.label }));
     case "action":
       return position.node.ifMissing === undefined
-        ? [{ label: NEXT_LABEL, tone: null }]
-        : [
-            { label: NEXT_LABEL, tone: null },
-            { label: missingLabel(position.node), tone: null },
-          ];
+        ? [{ label: NEXT_LABEL }]
+        : [{ label: NEXT_LABEL }, { label: missingLabel(position.node) }];
     case "end":
-      return position.stack.length > 0 ? [{ label: RETURN_LABEL, tone: null }] : [];
+      return position.stack.length > 0 ? [{ label: RETURN_LABEL }] : [];
   }
 }
 
