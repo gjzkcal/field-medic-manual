@@ -347,6 +347,21 @@ describe("CasualtiesPage", () => {
     expect(await axeViolations()).toStrictEqual([]);
   });
 
+  it("「＋」を待たずに続けて押しても、同じ名前の負傷者を作らない", async () => {
+    render(<CasualtiesPage compact />);
+    await addCasualty();
+
+    press("負傷者を足す");
+    press("負傷者を足す");
+
+    await screen.findByRole("tab", { name: "負傷者 3" });
+    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toStrictEqual([
+      "負傷者 1",
+      "負傷者 2",
+      "負傷者 3",
+    ]);
+  });
+
   it("メインには「＋」を置かない（名前の欄が常に見えている）", async () => {
     render(<CasualtiesPage />);
     await addCasualty();

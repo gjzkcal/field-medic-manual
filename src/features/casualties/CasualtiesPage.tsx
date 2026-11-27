@@ -32,11 +32,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Toggle } from "@/components/ui/toggle";
 import { CasualtyCards, CasualtyChartView } from "@/features/casualties/CasualtyCards";
 import {
+  addUnnamedCasualty,
   applyCasualtyOp,
   loadCasualties,
   useCasualties,
 } from "@/features/casualties/casualty-store";
-import { activeTourniquets, dosesOf, nextCasualtyName } from "@/features/casualties/casualty-view";
+import { activeTourniquets, dosesOf } from "@/features/casualties/casualty-view";
 import { setClockPaused } from "@/features/casualties/clock";
 import { buildForecasts } from "@/features/casualties/forecast";
 import {
@@ -522,17 +523,20 @@ function CasualtyPanel({
 
 function AddCasualtyForm({ onAdded }: { onAdded: (id: string | null) => void }): JSX.Element {
   const [name, setName] = useState("");
-  const casualties = useCasualties((s) => s.casualties);
 
   function submit(event: SyntheticEvent): void {
     event.preventDefault();
     const trimmed = name.trim();
-    const op = {
-      op: "add_casualty",
-      name: trimmed === "" ? nextCasualtyName(casualties.map((c) => c.name)) : trimmed,
-    } as const;
     setName("");
-    void applyCasualtyOp(op).then(() => {
+    if (trimmed === "") {
+      void addUnnamedCasualty().then((added) => {
+        if (added !== null) {
+          onAdded(added.id);
+        }
+      });
+      return;
+    }
+    void applyCasualtyOp({ op: "add_casualty", name: trimmed }).then(() => {
       onAdded(useCasualties.getState().casualties.at(-1)?.id ?? null);
     });
   }
@@ -590,14 +594,12 @@ function PageBody({
   }
 
   function addUnnamed(): void {
-    const name = nextCasualtyName(casualties.map((c) => c.name));
-    void applyCasualtyOp({ op: "add_casualty", name }).then(() => {
-      // 失敗（人数の上限など）は error に入るだけで、一覧は増えない。末尾の人を足した人と取り違えない
-      if (useCasualties.getState().error !== null) {
-        return;
+    void addUnnamedCasualty().then((added) => {
+      // 失敗（人数の上限など）では一覧が増えない。選んでいる人を変えない
+      if (added !== null) {
+        setSelectedId(added.id);
+        setAnnouncement(`${added.name}を足しました`);
       }
-      setSelectedId(useCasualties.getState().casualties.at(-1)?.id ?? null);
-      setAnnouncement(`${name}を足しました`);
     });
   }
 

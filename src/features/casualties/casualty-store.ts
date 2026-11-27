@@ -144,6 +144,26 @@ export function applyCasualtyOp(op: CasualtyOp): Promise<void> {
 }
 
 /**
+ * 名前を付けずに負傷者を足し、足した負傷者を返す（失敗は null。理由は `error` に入る）。
+ * 名前は、先に並んでいる操作が終わった後の一覧から決める。呼ぶ側が画面の一覧から決めると、
+ * 続けて押したときに、どちらも同じ一覧を見て同じ名前を作る。
+ */
+export async function addUnnamedCasualty(): Promise<Casualty | null> {
+  const result: { added: Casualty | null } = { added: null };
+  await enqueue(async () => {
+    const current = await casualtyList();
+    const list = await casualtyApply({
+      op: "add_casualty",
+      name: nextCasualtyName(current.map((c) => c.name)),
+    });
+    // 足した負傷者は一覧の末尾に入る
+    result.added = list.at(-1) ?? null;
+    return list;
+  });
+  return result.added;
+}
+
+/**
  * 起動時に 1 回呼ぶ。片方のウィンドウで書いたらもう片方にすぐ出す。
  * 使っている MOD も、カードの出し分けが古いまま残らないよう一緒に追う。
  */
