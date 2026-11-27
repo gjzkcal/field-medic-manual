@@ -179,6 +179,17 @@
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
+    /* 待っている合図まで止めると、読み込み中なのか固まったのかが見分けられない。
+       回転はやめ、位置も大きさも動かない、明るさのゆっくりした変化だけを残す */
+    [data-slot="spinner"],
+    [data-slot="skeleton"] {
+      animation: loading-fade 2s ease-in-out infinite !important;
+    }
+  }
+  @keyframes loading-fade {
+    50% {
+      opacity: 0.5;
+    }
   }
 }
 
