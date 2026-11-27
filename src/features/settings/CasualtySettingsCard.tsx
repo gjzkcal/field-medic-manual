@@ -16,7 +16,7 @@ export function CasualtySettingsCard(): JSX.Element {
           <h2>負傷者</h2>
         </CardTitle>
         <CardDescription>
-          薬のカードの「N 本まで OK まで」を、どちらになる本数で出すか（Circulation のとき）。
+          薬のカードの「N 本まで OK」を、どちらの基準の本数で出すか（Circulation のとき）。
           意識喪失は、心停止と同じか少ない本数で起きます。
         </CardDescription>
       </CardHeader>
