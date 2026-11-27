@@ -1,10 +1,12 @@
-import { SearchIcon, TriangleAlertIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, type JSX } from "react";
+import { ChevronDownIcon, SearchIcon, TriangleAlertIcon } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from "react";
 import { useSearchParams } from "react-router";
 
 import { usePageTitle } from "@/app/use-page-title";
 import { IssueCard } from "@/components/IssueCard";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -86,6 +88,7 @@ function QuickrefBody({ table, compact }: { table: QuickrefTable; compact: boole
   const view = useQuickrefSettings((s) => s.settings.view);
   const setView = useQuickrefSettings((s) => s.setView);
   const now = useNow();
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // 関連リンクのフローは、id ではなく題名で出す。フローへのリンクがある表のときだけ一覧を読む
   const linksToFlow = useMemo(
@@ -142,115 +145,183 @@ function QuickrefBody({ table, compact }: { table: QuickrefTable; compact: boole
     );
   }
 
+  const keywordInput = (
+    <InputGroup className={compact ? "min-w-0 flex-1" : "w-full sm:w-64"}>
+      <InputGroupAddon>
+        <SearchIcon />
+      </InputGroupAddon>
+      <InputGroupInput
+        aria-label="キーワードで絞り込む"
+        placeholder="症状・手順・物品で絞り込む"
+        value={filters.keyword}
+        onChange={(event) => {
+          update({ keyword: event.target.value });
+        }}
+      />
+    </InputGroup>
+  );
+
+  const severityToggle = (
+    <ToggleGroup
+      multiple
+      variant="outline"
+      size="sm"
+      className="flex-wrap"
+      aria-label="重症度で絞り込む"
+      value={filters.severities.map(String)}
+      onValueChange={(values) => {
+        // ToggleGroup は string[] を返すので、既知の値だけを残して型を戻す
+        update({ severities: SEVERITIES.filter((s) => values.includes(String(s))) });
+      }}
+    >
+      {SEVERITIES.map((s) => (
+        <ToggleGroupItem key={s} value={String(s)}>
+          <span
+            aria-hidden
+            className={`size-2.5 rounded-full border ${SEVERITY_BADGE_CLASSES[s]}`}
+          />
+          {severityName(s)}
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
+  );
+
+  const stale = table.verifiedAt !== null && isStale(table.verifiedAt, now);
+  const verifiedBadge = table.verifiedAt !== null && (
+    <Badge variant={stale ? "destructive" : "outline"}>
+      {stale && <TriangleAlertIcon />}
+      確認 {table.verifiedAt}
+    </Badge>
+  );
+
+  const modNote = (
+    <span>
+      {filters.showAll
+        ? "すべての組み合わせの行を表示しています"
+        : `${modSummary(modSettings)} に合う行を表示しています（設定で変更）`}
+    </span>
+  );
+
+  const showAllSwitch = (
+    // Base UI の Switch は囲んだ label の文字を名前にする
+    <label className="flex items-center gap-2 font-medium text-foreground">
+      <Switch
+        checked={filters.showAll}
+        onCheckedChange={(checked) => {
+          update({ showAll: checked });
+        }}
+      />
+      すべての組み合わせを表示
+    </label>
+  );
+
+  const categoryToggle = (
+    // 分類は一覧を絞り込むだけで、切り替わる中身（タブのパネル）を持たないので、タブではなく選択のボタンにする
+    <ToggleGroup
+      variant="outline"
+      size="sm"
+      className="flex-wrap"
+      aria-label="分類"
+      value={[target === undefined ? (filters.category ?? ALL_CATEGORIES) : ALL_CATEGORIES]}
+      onValueChange={(values) => {
+        // 選択中の項目をもう一度押すと空になるので、そのときは今の分類のままにする
+        const [value] = values;
+        if (value === undefined) {
+          return;
+        }
+        update({ category: categories.find((c) => c === value) ?? null });
+      }}
+    >
+      <ToggleGroupItem value={ALL_CATEGORIES}>すべて</ToggleGroupItem>
+      {categories.map((category) => (
+        <ToggleGroupItem key={category} value={category}>
+          {category}
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
+  );
+
+  // 行を指して開いたときは、重症度と分類を外してその行を出すので数えない。
+  // 「すべての組み合わせを表示」だけは、そのときも効く（filter.ts の visibleRows）
+  const filtersInUse =
+    Number(filters.showAll) +
+    (target === undefined
+      ? Number(filters.severities.length > 0) + Number(filters.category !== null)
+      : 0);
+
   return (
     <>
-      <div className="flex flex-wrap items-center gap-2">
-        <InputGroup className="w-full sm:w-64">
-          <InputGroupAddon>
-            <SearchIcon />
-          </InputGroupAddon>
-          <InputGroupInput
-            aria-label="キーワードで絞り込む"
-            placeholder="症状・手順・物品で絞り込む"
-            value={filters.keyword}
-            onChange={(event) => {
-              update({ keyword: event.target.value });
-            }}
-          />
-        </InputGroup>
-        <ToggleGroup
-          multiple
-          variant="outline"
-          size="sm"
-          className="flex-wrap"
-          aria-label="重症度で絞り込む"
-          value={filters.severities.map(String)}
-          onValueChange={(values) => {
-            // ToggleGroup は string[] を返すので、既知の値だけを残して型を戻す
-            update({ severities: SEVERITIES.filter((s) => values.includes(String(s))) });
-          }}
+      {compact ? (
+        // 小窓は、絞り込みを全部並べるとカードが画面の外へ押し出される（最小の大きさでは 1 枚も見えない）。
+        // 打ってすぐ探せるキーワードの欄だけを残し、残りは畳む
+        <Collapsible
+          open={filtersOpen}
+          onOpenChange={setFiltersOpen}
+          className="flex flex-col gap-2"
         >
-          {SEVERITIES.map((s) => (
-            <ToggleGroupItem key={s} value={String(s)}>
-              <span
-                aria-hidden
-                className={`size-2.5 rounded-full border ${SEVERITY_BADGE_CLASSES[s]}`}
-              />
-              {severityName(s)}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-        {!compact && (
-          <ToggleGroup
-            variant="outline"
-            size="sm"
-            aria-label="表示の形"
-            className="sm:ml-auto"
-            value={[view]}
-            onValueChange={(values) => {
-              const next = QUICKREF_VIEWS.find((v) => values.includes(v));
-              // 選択中の項目をもう一度押すと空になるので、そのときは今の形のままにする
-              if (next !== undefined) {
-                setView(next);
-              }
-            }}
-          >
-            {QUICKREF_VIEWS.map((v) => (
-              <ToggleGroupItem key={v} value={v}>
-                {VIEW_LABELS[v]}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-        )}
-      </div>
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm text-muted-foreground">
-        <span>
-          {filters.showAll
-            ? "すべての組み合わせの行を表示しています"
-            : `${modSummary(modSettings)} に合う行を表示しています（設定で変更）`}
-        </span>
-        <span className="flex items-center gap-2">
-          {table.verifiedAt !== null && (
-            <Badge variant={isStale(table.verifiedAt, now) ? "destructive" : "outline"}>
-              {isStale(table.verifiedAt, now) && <TriangleAlertIcon />}
-              確認 {table.verifiedAt}
-            </Badge>
-          )}
-          {/* Base UI の Switch は囲んだ label の文字を名前にする */}
-          <label className="flex items-center gap-2 font-medium text-foreground">
-            <Switch
-              checked={filters.showAll}
-              onCheckedChange={(checked) => {
-                update({ showAll: checked });
+          <div className="flex items-center gap-2">
+            {keywordInput}
+            <CollapsibleTrigger render={<Button variant="outline" />} className="group/filters">
+              絞り込み
+              {filtersInUse > 0 && (
+                <Badge variant="secondary">
+                  {filtersInUse}
+                  <span className="sr-only">件を使用中</span>
+                </Badge>
+              )}
+              <ChevronDownIcon className="transition-transform group-data-panel-open/filters:rotate-180" />
+            </CollapsibleTrigger>
+          </div>
+          {/* 確認日が古いという警告は、畳んだ中に隠さない */}
+          {stale && <div>{verifiedBadge}</div>}
+          <CollapsibleContent>
+            <div className="flex flex-col gap-2">
+              {severityToggle}
+              {categoryToggle}
+              <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+                {showAllSwitch}
+                {modNote}
+                {!stale && <div>{verifiedBadge}</div>}
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      ) : (
+        <>
+          <div className="flex flex-wrap items-center gap-2">
+            {keywordInput}
+            {severityToggle}
+            <ToggleGroup
+              variant="outline"
+              size="sm"
+              aria-label="表示の形"
+              className="sm:ml-auto"
+              value={[view]}
+              onValueChange={(values) => {
+                const next = QUICKREF_VIEWS.find((v) => values.includes(v));
+                // 選択中の項目をもう一度押すと空になるので、そのときは今の形のままにする
+                if (next !== undefined) {
+                  setView(next);
+                }
               }}
-            />
-            すべての組み合わせを表示
-          </label>
-        </span>
-      </div>
-      {/* 分類は一覧を絞り込むだけで、切り替わる中身（タブのパネル）を持たないので、タブではなく選択のボタンにする */}
-      <ToggleGroup
-        variant="outline"
-        size="sm"
-        className="flex-wrap"
-        aria-label="分類"
-        value={[target === undefined ? (filters.category ?? ALL_CATEGORIES) : ALL_CATEGORIES]}
-        onValueChange={(values) => {
-          // 選択中の項目をもう一度押すと空になるので、そのときは今の分類のままにする
-          const [value] = values;
-          if (value === undefined) {
-            return;
-          }
-          update({ category: categories.find((c) => c === value) ?? null });
-        }}
-      >
-        <ToggleGroupItem value={ALL_CATEGORIES}>すべて</ToggleGroupItem>
-        {categories.map((category) => (
-          <ToggleGroupItem key={category} value={category}>
-            {category}
-          </ToggleGroupItem>
-        ))}
-      </ToggleGroup>
+            >
+              {QUICKREF_VIEWS.map((v) => (
+                <ToggleGroupItem key={v} value={v}>
+                  {VIEW_LABELS[v]}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm text-muted-foreground">
+            {modNote}
+            <span className="flex items-center gap-2">
+              {verifiedBadge}
+              {showAllSwitch}
+            </span>
+          </div>
+          {categoryToggle}
+        </>
+      )}
       {/* 打つたび・押すたびに一覧が変わるので、残った行の数を読み上げで伝える（WCAG 4.1.3） */}
       <p role="status" className="sr-only">
         {shown.length === 0 ? "当てはまる行がありません" : `${String(shown.length)} 行`}

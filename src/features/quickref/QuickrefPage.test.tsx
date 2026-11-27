@@ -60,10 +60,13 @@ const TABLE: QuickrefTable = {
 let history: unknown[] = [];
 const scrollIntoView = vi.fn<Element["scrollIntoView"]>();
 
-function renderPage(path = "/quickref"): ReturnType<typeof createMemoryRouter> {
-  const router = createMemoryRouter([{ path: "/quickref", element: <QuickrefPage /> }], {
-    initialEntries: [path],
-  });
+function renderPage(path = "/quickref", compact = false): ReturnType<typeof createMemoryRouter> {
+  const router = createMemoryRouter(
+    [{ path: "/quickref", element: <QuickrefPage compact={compact} /> }],
+    {
+      initialEntries: [path],
+    },
+  );
   render(
     <TooltipProvider>
       <RouterProvider router={router} />
@@ -243,5 +246,49 @@ describe("QuickrefPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "表" }));
     await screen.findByRole("table", { name: "症状ごとの処置" });
     expect(await axeViolations()).toStrictEqual([]);
+  });
+
+  it("小窓では、キーワードの欄と「絞り込み」だけを出し、残りは押すまで畳む", async () => {
+    renderPage("/quickref", true);
+    await waitFor(() => {
+      expect(cards()).toHaveLength(4);
+    });
+    expect(screen.getByRole("textbox", { name: "キーワードで絞り込む" })).toBeDefined();
+    expect(screen.queryByRole("group", { name: "重症度で絞り込む" })).toBeNull();
+    expect(screen.queryByRole("group", { name: "分類" })).toBeNull();
+    expect(screen.queryByRole("switch", { name: "すべての組み合わせを表示" })).toBeNull();
+    expect(await axeViolations()).toStrictEqual([]);
+
+    fireEvent.click(screen.getByRole("button", { name: "絞り込み" }));
+    const severity = await screen.findByRole("group", { name: "重症度で絞り込む" });
+    fireEvent.click(within(severity).getByRole("button", { name: "致命的" }));
+    await waitFor(() => {
+      expect(symptoms()).toStrictEqual(["手足から大量に出血している", "緊張性気胸"]);
+    });
+    fireEvent.click(screen.getByRole("switch", { name: "すべての組み合わせを表示" }));
+    expect(await axeViolations()).toStrictEqual([]);
+
+    // 畳んでも、使っている絞り込みの数がボタンに残る
+    fireEvent.click(screen.getByRole("button", { name: "絞り込み2件を使用中" }));
+    await waitFor(() => {
+      expect(screen.queryByRole("group", { name: "分類" })).toBeNull();
+    });
+    expect(screen.getByRole("button", { name: "絞り込み2件を使用中" })).toBeDefined();
+  });
+
+  it("行を指して開いたときは、そのときも効く「すべての組み合わせを表示」だけを数える", async () => {
+    // 重症度は、行を指している間は外れるので数えない
+    renderPage("/quickref?row=wake-core&sev=1&all=1", true);
+    await waitFor(() => {
+      expect(cards()).toHaveLength(5);
+    });
+    expect(screen.getByRole("button", { name: "絞り込み1件を使用中" })).toBeDefined();
+  });
+
+  it("小窓でも、確認日が古いという警告は畳まずに出す", async () => {
+    mockIPC((cmd) => (cmd === "quickref_list" ? { ...TABLE, verifiedAt: "2000-01-01" } : null));
+    renderPage("/quickref", true);
+    expect(await screen.findByText("確認 2000-01-01")).toBeDefined();
+    expect(screen.queryByRole("group", { name: "分類" })).toBeNull();
   });
 });
