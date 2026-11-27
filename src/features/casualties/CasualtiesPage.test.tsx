@@ -267,13 +267,13 @@ describe("CasualtiesPage", () => {
     expect(content?.firstElementChild?.textContent).toBe("1 本でも危険");
   });
 
-  it("意識喪失と心停止を切り替えると、設定に保存して本数が変わる", async () => {
+  it("OK の基準を切り替えると、設定に保存して本数が変わる", async () => {
     render(<CasualtiesPage />);
     await addCasualty();
     fireEvent.click(screen.getByRole("switch", { name: "痛み・気胸あり" }));
     press("メトプロロール");
     await screen.findByText("2 本まで OK まで");
-    fireEvent.click(screen.getByRole("button", { name: "心停止" }));
+    fireEvent.click(screen.getByRole("button", { name: "心停止しない" }));
     await screen.findByText("3 本まで OK まで");
     expect(useViewerSettings.getState().settings.overdoseLine).toBe("arrest");
   });

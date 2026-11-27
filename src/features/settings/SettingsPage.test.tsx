@@ -225,7 +225,7 @@ describe("SettingsPage", () => {
       .toEqual({ key: "viewer", value: { ...DEFAULT_VIEWER_SETTINGS, triageKeys: false } });
   });
 
-  it("負傷者の危ない線を心停止に変え、viewer に保存する", async () => {
+  it("負傷者の OK の基準を心停止に変え、viewer に保存する", async () => {
     const saved: unknown[] = [];
     mockIPC((cmd, args) => {
       if (cmd === "settings_set") {
@@ -236,9 +236,9 @@ describe("SettingsPage", () => {
     });
     renderPage();
 
-    const group = screen.getByRole("group", { name: "危ない線" });
+    const group = screen.getByRole("group", { name: "OK の基準" });
     expect(group).toBeDefined();
-    fireEvent.click(screen.getByRole("button", { name: "心停止" }));
+    fireEvent.click(screen.getByRole("button", { name: "心停止しない" }));
     await expect
       .poll(() => saved.at(-1))
       .toEqual({ key: "viewer", value: { ...DEFAULT_VIEWER_SETTINGS, overdoseLine: "arrest" } });
