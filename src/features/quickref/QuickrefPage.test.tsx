@@ -276,6 +276,15 @@ describe("QuickrefPage", () => {
     expect(screen.getByRole("button", { name: "絞り込み2件を使用中" })).toBeDefined();
   });
 
+  it("行を指して開いたときは、そのときも効く「すべての組み合わせを表示」だけを数える", async () => {
+    // 重症度は、行を指している間は外れるので数えない
+    renderPage("/quickref?row=wake-core&sev=1&all=1", true);
+    await waitFor(() => {
+      expect(cards()).toHaveLength(5);
+    });
+    expect(screen.getByRole("button", { name: "絞り込み1件を使用中" })).toBeDefined();
+  });
+
   it("小窓でも、確認日が古いという警告は畳まずに出す", async () => {
     mockIPC((cmd) => (cmd === "quickref_list" ? { ...TABLE, verifiedAt: "2000-01-01" } : null));
     renderPage("/quickref", true);

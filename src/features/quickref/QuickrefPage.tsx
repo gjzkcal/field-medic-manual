@@ -241,13 +241,13 @@ function QuickrefBody({ table, compact }: { table: QuickrefTable; compact: boole
     </ToggleGroup>
   );
 
-  // 行を指して開いたときは絞り込みを使わずにその行を出すので、数えない
+  // 行を指して開いたときは、重症度と分類を外してその行を出すので数えない。
+  // 「すべての組み合わせを表示」だけは、そのときも効く（filter.ts の visibleRows）
   const filtersInUse =
-    target === undefined
-      ? Number(filters.severities.length > 0) +
-        Number(filters.category !== null) +
-        Number(filters.showAll)
-      : 0;
+    Number(filters.showAll) +
+    (target === undefined
+      ? Number(filters.severities.length > 0) + Number(filters.category !== null)
+      : 0);
 
   return (
     <>
