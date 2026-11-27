@@ -41,6 +41,20 @@ describe("部品の既定の見た目", () => {
     expect(link.split(" ")).toContain("underline");
   });
 
+  it("動きを減らす設定でも、待っている合図（スピナーとスケルトン）は止めない", () => {
+    // CSS は data-slot で部品を選ぶ。部品の更新で data-slot が変わると、合図がまた止まる
+    const css = readFileSync(resolve(REPO_ROOT, "src", "index.css"), "utf8");
+    const reduced = /@media \(prefers-reduced-motion: reduce\) \{([\s\S]*?)\n {2}\}\n/u.exec(
+      css,
+    )?.[1];
+    expect(reduced).toMatch(
+      /\[data-slot="spinner"\],\s*\[data-slot="skeleton"\] \{\s*animation: loading-fade [^;]*infinite !important;/u,
+    );
+    expect(css).toContain("@keyframes loading-fade");
+    expect(source("spinner.tsx")).toContain('data-slot="spinner"');
+    expect(source("skeleton.tsx")).toContain('data-slot="skeleton"');
+  });
+
   it("検索欄の案内の文字は、不透明の色にする", () => {
     // 指定しないと文字色の 50% になり、4.5:1 に届かない。色の組み合わせは contrast.test.ts で測っている
     expect(source("command.tsx")).toContain("placeholder:text-muted-foreground");
