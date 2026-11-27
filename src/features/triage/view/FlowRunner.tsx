@@ -32,7 +32,7 @@ import type { Flow, MarchStep, Outcome } from "@/features/triage/schema";
 import { useTriageRunner } from "@/features/triage/use-triage-runner";
 import { CountdownTimer } from "@/features/triage/view/CountdownTimer";
 import { MARCH_LABELS, marchOf } from "@/features/triage/view/march";
-import { OUTCOME_CLASSES, OUTCOME_LABELS, TONE_CLASSES } from "@/features/triage/view/tone";
+import { OUTCOME_CLASSES, OUTCOME_LABELS } from "@/features/triage/view/tone";
 import { TrailNav } from "@/features/triage/view/TrailNav";
 import { useNow } from "@/hooks/use-now";
 import { useKeyInput } from "@/lib/key-input";
@@ -332,26 +332,13 @@ function ChoiceButtons({
           <Button
             key={`${String(i)}:${option.label}`}
             variant={filled ? "default" : "outline"}
-            className={cn(
-              "h-auto min-h-14 justify-start gap-3 px-4 py-3 text-left text-lg whitespace-normal",
-              option.tone !== null && !filled && TONE_CLASSES[option.tone],
-            )}
+            className="h-auto min-h-14 justify-start gap-3 px-4 py-3 text-left text-lg whitespace-normal"
             onClick={() => {
               onChoose(i);
             }}
           >
             {digitKeys && <Kbd className="h-6 min-w-6 text-sm">{i + 1}</Kbd>}
             <span className="flex-1">{option.label}</span>
-            {/* 色だけに頼らず、危ない選択肢だと形と読み上げでも分かるようにする（WCAG 1.4.1） */}
-            {option.tone === "danger" && (
-              <>
-                <OctagonAlertIcon
-                  aria-hidden
-                  className={cn(!filled && "text-red-700 dark:text-red-300")}
-                />
-                <span className="sr-only">（危険）</span>
-              </>
-            )}
             {filled && <ChevronRightIcon />}
           </Button>
         );

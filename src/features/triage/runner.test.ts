@@ -63,7 +63,7 @@ describe("replay", () => {
     expect(back.nodeId).toBe("a1");
   });
 
-  it("選択肢の tone を渡す", () => {
+  it("選択肢は文言だけを渡す（tone は見た目に使わない）", () => {
     const flow = makeFlow("t", "q", {
       q: {
         type: "question",
@@ -76,8 +76,8 @@ describe("replay", () => {
       e: end("e"),
     });
     expect(replay(flow, lookupOf(flow), []).options).toStrictEqual([
-      { label: "はい", tone: "yes" },
-      { label: "いいえ", tone: null },
+      { label: "はい" },
+      { label: "いいえ" },
     ]);
   });
 
@@ -98,8 +98,8 @@ describe("replay", () => {
 
     it("「次へ」の次に、物品の名前をつないだ「持っていない」を出す", () => {
       expect(replay(flow, items, []).options).toStrictEqual([
-        { label: "次へ", tone: null },
-        { label: "止血帯・包帯を持っていない", tone: null },
+        { label: "次へ" },
+        { label: "止血帯・包帯を持っていない" },
       ]);
     });
 

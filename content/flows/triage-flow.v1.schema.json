@@ -123,7 +123,7 @@
                       "description": "選んだときに進むノードの id"
                     },
                     "tone": {
-                      "description": "ボタンの色（yes = 緑、no = 青、danger = 赤）",
+                      "description": "答えの種類（yes・no・neutral、danger = 状態が重い側の答え）。原稿の意味づけで、ボタンの見た目には使わない",
                       "type": "string",
                       "enum": [
                         "yes",

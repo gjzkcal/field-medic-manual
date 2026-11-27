@@ -62,10 +62,10 @@ const march = z.array(z.enum(MARCH_STEPS)).min(1, "march には 1 つ以上書�
 export const choiceSchema = z.strictObject({
   label: text.meta({ description: "ボタンの文言" }),
   next: text.meta({ description: "選んだときに進むノードの id" }),
-  tone: z
-    .enum(["yes", "no", "neutral", "danger"])
-    .optional()
-    .meta({ description: "ボタンの色（yes = 緑、no = 青、danger = 赤）" }),
+  tone: z.enum(["yes", "no", "neutral", "danger"]).optional().meta({
+    description:
+      "答えの種類（yes・no・neutral、danger = 状態が重い側の答え）。原稿の意味づけで、ボタンの見た目には使わない",
+  }),
 });
 
 // 作者の書き間違い（help を hlep と書くなど）に気づけるよう、知らないキーはエラーにする
@@ -179,7 +179,6 @@ export type ActionNode = z.infer<typeof actionSchema>;
 export type EndNode = z.infer<typeof endSchema>;
 export type BranchNode = z.infer<typeof branchSchema>;
 export type Choice = z.infer<typeof choiceSchema>;
-export type ChoiceTone = NonNullable<Choice["tone"]>;
 export type Outcome = EndNode["outcome"];
 export type MarchStep = (typeof MARCH_STEPS)[number];
 
